@@ -3671,11 +3671,13 @@ int restart_wait(struct thr_info *thr, unsigned int mstime)
 	
 static void flush_queue(struct cgpu_info *cgpu);
 
-static void restart_threads(void)
+static void *restart_thread(void __maybe_unused *arg)
 {
 	struct pool *cp = current_pool();
 	struct cgpu_info *cgpu;
 	int i, mt;
+
+	pthread_detach(pthread_self());
 
 	/* Artificially set the lagging flag to avoid pool not providing work
 	 * fast enough  messages after every long poll */
@@ -3702,6 +3704,18 @@ static void restart_threads(void)
 	mutex_lock(&restart_lock);
 	pthread_cond_broadcast(&restart_cond);
 	mutex_unlock(&restart_lock);
+
+	return NULL;
+}
+
+/* In order to prevent a deadlock via the various drv->flush_work
+ * implementations we send the restart messages via a separate thread. */
+static void restart_threads(void)
+{
+	pthread_t rthread;
+
+	if (unlikely(pthread_create(&rthread, NULL, restart_thread, NULL)))
+		quit(1, "Failed to create restart thread");
 }
 
 static void signal_work_update(void)
