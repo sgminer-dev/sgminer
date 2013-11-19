@@ -3876,6 +3876,7 @@ void api(int api_thr_id)
 								}
 							}
 						}
+						json_decref(json_config);
 					}
 				}
 
