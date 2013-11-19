@@ -221,8 +221,8 @@ char *set_kernel(char *arg)
 	int i, device = 0;
 	char *nextptr;
 
-	if (opt_scrypt)
-		return "Cannot specify a kernel with scrypt";
+	// FIXME: executes always (add more kernels!)
+	return "Cannot specify a kernel with scrypt";
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
 		return "Invalid parameters for set kernel";
@@ -1096,7 +1096,7 @@ static void set_threads_hashes(unsigned int vectors,int64_t *hashes, size_t *glo
 	unsigned int threads = 0;
 
 	while (threads < minthreads) {
-		threads = 1 << ((opt_scrypt ? 0 : 15) + *intensity);
+		threads = 1 << *intensity;
 		if (threads < minthreads) {
 			if (likely(*intensity < MAX_INTENSITY))
 				(*intensity)++;
@@ -1242,17 +1242,11 @@ static void opencl_detect(bool hotplug)
 	if (!nDevs)
 		return;
 
-	/* If opt_g_threads is not set, use default 1 thread on scrypt and
-	 * 2 for regular mining */
-	if (opt_g_threads == -1) {
-		if (opt_scrypt)
-			opt_g_threads = 1;
-		else
-			opt_g_threads = 2;
-	}
+	/* If opt_g_threads is not set, use default 1 thread */
+	if (opt_g_threads == -1)
+		opt_g_threads = 1;
 
-	if (opt_scrypt)
-		opencl_drv.max_diff = 65536;
+	opencl_drv.max_diff = 65536;
 
 	for (i = 0; i < nDevs; ++i) {
 		struct cgpu_info *cgpu;
@@ -1322,7 +1316,7 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 	int virtual_gpu = cgpu->virtual_gpu;
 	int i = thr->id;
 	static bool failmessage = false;
-	int buffersize = opt_scrypt ? SCRYPT_BUFFERSIZE : BUFFERSIZE;
+	int buffersize = SCRYPT_BUFFERSIZE;
 
 	if (!blank_res)
 		blank_res = calloc(buffersize, 1);
@@ -1404,7 +1398,7 @@ static bool opencl_thread_init(struct thr_info *thr)
 	cl_int status = 0;
 	thrdata = calloc(1, sizeof(*thrdata));
 	thr->cgpu_data = thrdata;
-	int buffersize = opt_scrypt ? SCRYPT_BUFFERSIZE : BUFFERSIZE;
+	int buffersize = SCRYPT_BUFFERSIZE;
 
 	if (!thrdata) {
 		applog(LOG_ERR, "Failed to calloc in opencl_thread_init");
@@ -1458,11 +1452,8 @@ static bool opencl_thread_init(struct thr_info *thr)
 static bool opencl_prepare_work(struct thr_info __maybe_unused *thr, struct work *work)
 {
 #ifdef USE_SCRYPT
-	if (opt_scrypt)
-		work->blk.work = work;
-	else
+	work->blk.work = work;
 #endif
-		precalc_hash(&work->blk, (uint32_t *)(work->midstate), (uint32_t *)(work->data + 64));
 	return true;
 }
 
@@ -1482,8 +1473,8 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 	size_t globalThreads[1];
 	size_t localThreads[1] = { clState->wsize };
 	int64_t hashes;
-	int found = opt_scrypt ? SCRYPT_FOUND : FOUND;
-	int buffersize = opt_scrypt ? SCRYPT_BUFFERSIZE : BUFFERSIZE;
+	int found = SCRYPT_FOUND;
+	int buffersize = SCRYPT_BUFFERSIZE;
 
 	/* Windows' timer resolution is only 15ms so oversample 5x */
 	if (gpu->dynamic && (++gpu->intervals * dynamic_us) > 70000) {

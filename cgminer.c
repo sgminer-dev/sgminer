@@ -2869,8 +2869,8 @@ static bool submit_upstream_work(struct work *work, CURL *curl, bool resubmit)
 
 			snprintf(worktime, sizeof(worktime),
 				" <-%08lx.%08lx M:%c D:%1.*f G:%02d:%02d:%02d:%1.3f %s (%1.3f) W:%1.3f (%1.3f) S:%1.3f R:%02d:%02d:%02d",
-				(unsigned long)be32toh(*(uint32_t *)&(work->data[opt_scrypt ? 32 : 28])),
-				(unsigned long)be32toh(*(uint32_t *)&(work->data[opt_scrypt ? 28 : 24])),
+				(unsigned long)be32toh(*(uint32_t *)&(work->data[32])),
+				(unsigned long)be32toh(*(uint32_t *)&(work->data[28])),
 				work->getwork_mode, diffplaces, work->work_difficulty,
 				tm_getwork.tm_hour, tm_getwork.tm_min,
 				tm_getwork.tm_sec, getwork_time, workclone,
@@ -3127,9 +3127,7 @@ static void calc_diff(struct work *work, double known)
 	else {
 		double d64, dcut64;
 
-		d64 = truediffone;
-		if (opt_scrypt)
-			d64 *= (double)65536;
+		d64 = (double)65536 * truediffone;
 		dcut64 = le256todouble(work->target);
 		if (unlikely(!dcut64))
 			dcut64 = 1;
@@ -3763,9 +3761,7 @@ static uint64_t share_diff(const struct work *work)
 	double d64, s64;
 	uint64_t ret;
 
-	d64 = truediffone;
-	if (opt_scrypt)
-		d64 *= (double)65536;
+	d64 = (double)65536 * truediffone;
 	s64 = le256todouble(work->hash);
 	if (unlikely(!s64))
 		s64 = 0;
@@ -3788,6 +3784,7 @@ static uint64_t share_diff(const struct work *work)
 	return ret;
 }
 
+// FIXME: not used?
 static void regen_hash(struct work *work)
 {
 	uint32_t *data32 = (uint32_t *)(work->data);
@@ -3800,12 +3797,10 @@ static void regen_hash(struct work *work)
 	sha256(hash1, 32, (unsigned char *)(work->hash));
 }
 
+// FIXME: just call scrypt_regenhash where needed
 static void rebuild_hash(struct work *work)
 {
-	if (opt_scrypt)
-		scrypt_regenhash(work);
-	else
-		regen_hash(work);
+	scrypt_regenhash(work);
 }
 
 static bool cnx_needed(struct pool *pool);
@@ -6001,9 +5996,7 @@ void set_target(unsigned char *dest_target, double diff)
 		diff = 1.0;
 	}
 
-	d64 = truediffone;
-	if (opt_scrypt)
-		d64 *= (double)65536;
+	d64 = (double)65536 * truediffone;
 	d64 /= diff;
 
 	dcut64 = d64 / bits192;
@@ -6214,7 +6207,7 @@ bool test_nonce(struct work *work, uint32_t nonce)
 	uint32_t diff1targ;
 
 	rebuild_nonce(work, nonce);
-	diff1targ = opt_scrypt ? 0x0000ffffUL : 0;
+	diff1targ = 0x0000ffffUL;
 
 	return (le32toh(*hash_32) <= diff1targ);
 }
@@ -6225,7 +6218,7 @@ bool test_nonce_diff(struct work *work, uint32_t nonce, double diff)
 	uint64_t *hash64 = (uint64_t *)(work->hash + 24), diff64;
 
 	rebuild_nonce(work, nonce);
-	diff64 = opt_scrypt ? 0x0000ffff00000000ULL : 0x00000000ffff0000ULL;
+	diff64 = 0x0000ffff00000000ULL;
 	diff64 /= diff;
 
 	return (le64toh(*hash64) <= diff64);
@@ -6237,8 +6230,7 @@ static void update_work_stats(struct thr_info *thr, struct work *work)
 
 	work->share_diff = share_diff(work);
 
-	if (opt_scrypt)
-		test_diff *= 65536;
+	test_diff *= 65536;
 
 	if (unlikely(work->share_diff >= test_diff)) {
 		work->block = true;
@@ -8162,9 +8154,9 @@ int main(int argc, char *argv[])
 	if (want_per_device_stats)
 		opt_log_output = true;
 
-	/* Use a shorter scantime for scrypt */
+	/* Use a shorter scantime for scrypt (SHA256d had 60) */
 	if (opt_scantime < 0)
-		opt_scantime = opt_scrypt ? 30 : 60;
+		opt_scantime = 30;
 
 	total_control_threads = 9;
 	control_thr = calloc(total_control_threads, sizeof(*thr));
