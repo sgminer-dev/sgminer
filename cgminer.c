@@ -1085,7 +1085,6 @@ static struct opt_table opt_config_table[] = {
 		     set_gpu_vddc, NULL, NULL,
 		     "Set the GPU voltage in Volts - one value for all or separate by commas for per card"),
 #endif
-#ifdef USE_SCRYPT
 	OPT_WITH_ARG("--lookup-gap",
 		     set_lookup_gap, NULL, NULL,
 		     "Set GPU lookup gap for scrypt mining, comma separated"),
@@ -1094,13 +1093,6 @@ static struct opt_table opt_config_table[] = {
 		     "Intensity of GPU scanning (d or " MIN_INTENSITY_STR
 		     " -> " MAX_INTENSITY_STR
 		     ",default: d to maintain desktop interactivity)"),
-#else
-	OPT_WITH_ARG("--intensity|-I",
-		     set_intensity, NULL, NULL,
-		     "Intensity of GPU scanning (d or " MIN_INTENSITY_STR
-		     " -> " MAX_INTENSITY_STR
-		     ",default: d to maintain desktop interactivity)"),
-#endif
 #endif
 	OPT_WITH_ARG("--hotplug",
 		     set_int_0_to_9999, NULL, &hotplug_time,
@@ -1250,11 +1242,9 @@ static struct opt_table opt_config_table[] = {
 			opt_hidden
 #endif
 	),
-#ifdef USE_SCRYPT
 	OPT_WITH_ARG("--thread-concurrency",
 		     set_thread_concurrency, NULL, NULL,
 		     "Set GPU thread concurrency for scrypt mining, comma separated"),
-#endif
 	OPT_WITH_ARG("--url|-o",
 		     set_url, NULL, NULL,
 		     "URL for bitcoin JSON-RPC server"),
@@ -1437,13 +1427,10 @@ extern const char *opt_argv0;
 static char *opt_verusage_and_exit(const char *extra)
 {
 	printf("%s\nBuilt with "
-#ifdef HAVE_OPENCL
+#ifdef HAVE_OPENCL // FIXME: true always
 		"GPU "
 #endif
-#ifdef USE_SCRYPT
-		"scrypt "
-#endif
-		"mining support.\n"
+		"scrypt mining support.\n"
 		, packagename);
 	printf("%s", opt_usage(opt_argv0, extra));
 	fflush(stdout);
@@ -4262,7 +4249,6 @@ void write_config(FILE *fcfg)
 					break;
 			}
 		}
-#ifdef USE_SCRYPT
 		fputs("\",\n\"lookup-gap\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
@@ -4275,7 +4261,6 @@ void write_config(FILE *fcfg)
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
 				(int)gpus[i].shaders);
-#endif
 #ifdef HAVE_ADL
 		fputs("\",\n\"gpu-engine\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)

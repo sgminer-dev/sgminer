@@ -1407,9 +1407,7 @@ static bool opencl_thread_init(struct thr_info *thr)
 
 static bool opencl_prepare_work(struct thr_info __maybe_unused *thr, struct work *work)
 {
-#ifdef USE_SCRYPT
 	work->blk.work = work;
-#endif
 	return true;
 }
 

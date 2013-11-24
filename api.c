@@ -161,9 +161,7 @@ static const char *NULLSTR = "(null)";
 static const char *TRUESTR = "true";
 static const char *FALSESTR = "false";
 
-#ifdef USE_SCRYPT
 static const char *SCRYPTSTR = "scrypt";
-#endif
 static const char *SHA256STR = "sha256";
 
 static const char *DEVICECODE = ""
