@@ -6,8 +6,7 @@ JANSSON_INCLUDES= -I$(top_builddir)/compat/jansson-2.5/src -I$(top_srcdir)/compa
 EXTRA_DIST	= example.conf m4/gnulib-cache.m4 linux-usb-cgminer \
 		  ADL_SDK/readme.txt api-example.php miner.php	\
 		  API.class API.java api-example.c windows-build.txt \
-		  bitstreams/* API-README SCRYPT-README \
-		  hexdump.c GPU-README
+		  API-README SCRYPT-README hexdump.c GPU-README
 
 SUBDIRS		= lib compat ccan
 

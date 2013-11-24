@@ -209,7 +209,7 @@ if test "$found_opencl" = 1; then
 	fi
 
 	AC_ARG_ENABLE([scrypt],
-		[AC_HELP_STRING([--enable-scrypt],[Compile support for scrypt litecoin mining (default disabled)])],
+		[AC_HELP_STRING([--enable-scrypt],[Compile support for scrypt litecoin mining (default enabled)])],
 		[scrypt=$enableval]
 		)
 	if test "x$scrypt" = xyes; then

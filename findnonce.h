@@ -4,13 +4,10 @@
 #include "config.h"
 
 #define MAXTHREADS (0xFFFFFFFEULL)
-#define MAXBUFFERS (0x10)
-#define BUFFERSIZE (sizeof(uint32_t) * MAXBUFFERS)
-#define FOUND (0x0F)
 
-#define SCRYPT_MAXBUFFERS (0x100)
-#define SCRYPT_BUFFERSIZE (sizeof(uint32_t) * SCRYPT_MAXBUFFERS)
-#define SCRYPT_FOUND (0xFF)
+#define MAXBUFFERS (0x100)
+#define BUFFERSIZE (sizeof(uint32_t) * MAXBUFFERS)
+#define FOUND (0xFF)
 
 #ifdef HAVE_OPENCL
 extern void precalc_hash(dev_blk_ctx *blk, uint32_t *state, uint32_t *data);

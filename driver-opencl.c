@@ -121,7 +121,6 @@ char *set_worksize(char *arg)
 	return NULL;
 }
 
-#ifdef USE_SCRYPT
 char *set_shaders(char *arg)
 {
 	int i, val = 0, device = 0;
@@ -196,22 +195,12 @@ char *set_thread_concurrency(char *arg)
 
 	return NULL;
 }
-#endif
 
 static enum cl_kernels select_kernel(char *arg)
 {
-	if (!strcmp(arg, "diablo"))
-		return KL_DIABLO;
-	if (!strcmp(arg, "diakgcn"))
-		return KL_DIAKGCN;
-	if (!strcmp(arg, "poclbm"))
-		return KL_POCLBM;
-	if (!strcmp(arg, "phatk"))
-		return KL_PHATK;
-#ifdef USE_SCRYPT
 	if (!strcmp(arg, "scrypt"))
 		return KL_SCRYPT;
-#endif
+
 	return KL_NONE;
 }
 
@@ -223,6 +212,7 @@ char *set_kernel(char *arg)
 
 	// FIXME: executes always (add more kernels!)
 	return "Cannot specify a kernel with scrypt";
+
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
 		return "Invalid parameters for set kernel";
@@ -785,15 +775,10 @@ retry:
 			wlogprint("Invalid selection\n");
 			goto retry;
 		}
-		if (opt_scrypt) {
-			intvar = curses_input("Set GPU scan intensity (d or "
-					      MIN_SCRYPT_INTENSITY_STR " -> "
-					      MAX_SCRYPT_INTENSITY_STR ")");
-		} else {
-			intvar = curses_input("Set GPU scan intensity (d or "
-					      MIN_SHA_INTENSITY_STR " -> "
-					      MAX_SHA_INTENSITY_STR ")");
-		}
+
+		intvar = curses_input("Set GPU scan intensity (d or "
+							  MIN_INTENSITY_STR " -> "
+							  MAX_INTENSITY_STR ")");		
 		if (!intvar) {
 			wlogprint("Invalid input\n");
 			goto retry;
@@ -1066,7 +1051,6 @@ static cl_int queue_diablo_kernel(_clState *clState, dev_blk_ctx *blk, cl_uint t
 	return status;
 }
 
-#ifdef USE_SCRYPT
 static cl_int queue_scrypt_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_unused cl_uint threads)
 {
 	unsigned char *midstate = blk->work->midstate;
@@ -1088,7 +1072,6 @@ static cl_int queue_scrypt_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_u
 
 	return status;
 }
-#endif
 
 static void set_threads_hashes(unsigned int vectors,int64_t *hashes, size_t *globalThreads,
 			       unsigned int minthreads, __maybe_unused int *intensity)
@@ -1231,7 +1214,7 @@ static void opencl_detect(bool hotplug)
 {
 	int i;
 
-	if (opt_nogpu || hotplug)
+	if (opt_nogpu)
 		return;
 	nDevs = clDevicesNum();
 	if (nDevs < 0) {
@@ -1316,7 +1299,7 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 	int virtual_gpu = cgpu->virtual_gpu;
 	int i = thr->id;
 	static bool failmessage = false;
-	int buffersize = SCRYPT_BUFFERSIZE;
+	int buffersize = BUFFERSIZE;
 
 	if (!blank_res)
 		blank_res = calloc(buffersize, 1);
@@ -1359,22 +1342,8 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 	if (!cgpu->kname)
 	{
 		switch (clStates[i]->chosen_kernel) {
-			case KL_DIABLO:
-				cgpu->kname = "diablo";
-				break;
-			case KL_DIAKGCN:
-				cgpu->kname = "diakgcn";
-				break;
-			case KL_PHATK:
-				cgpu->kname = "phatk";
-				break;
-#ifdef USE_SCRYPT
 			case KL_SCRYPT:
 				cgpu->kname = "scrypt";
-				break;
-#endif
-			case KL_POCLBM:
-				cgpu->kname = "poclbm";
 				break;
 			default:
 				break;
@@ -1398,7 +1367,7 @@ static bool opencl_thread_init(struct thr_info *thr)
 	cl_int status = 0;
 	thrdata = calloc(1, sizeof(*thrdata));
 	thr->cgpu_data = thrdata;
-	int buffersize = SCRYPT_BUFFERSIZE;
+	int buffersize = BUFFERSIZE;
 
 	if (!thrdata) {
 		applog(LOG_ERR, "Failed to calloc in opencl_thread_init");
@@ -1406,23 +1375,10 @@ static bool opencl_thread_init(struct thr_info *thr)
 	}
 
 	switch (clState->chosen_kernel) {
-		case KL_POCLBM:
-			thrdata->queue_kernel_parameters = &queue_poclbm_kernel;
-			break;
-		case KL_PHATK:
-			thrdata->queue_kernel_parameters = &queue_phatk_kernel;
-			break;
-		case KL_DIAKGCN:
-			thrdata->queue_kernel_parameters = &queue_diakgcn_kernel;
-			break;
-#ifdef USE_SCRYPT
 		case KL_SCRYPT:
 			thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
 			break;
-#endif
 		default:
-		case KL_DIABLO:
-			thrdata->queue_kernel_parameters = &queue_diablo_kernel;
 			break;
 	}
 
@@ -1473,8 +1429,8 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 	size_t globalThreads[1];
 	size_t localThreads[1] = { clState->wsize };
 	int64_t hashes;
-	int found = SCRYPT_FOUND;
-	int buffersize = SCRYPT_BUFFERSIZE;
+	int found = FOUND;
+	int buffersize = BUFFERSIZE;
 
 	/* Windows' timer resolution is only 15ms so oversample 5x */
 	if (gpu->dynamic && (++gpu->intervals * dynamic_us) > 70000) {

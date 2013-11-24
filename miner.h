@@ -31,10 +31,6 @@ extern char *curly;
 # include <netdb.h>
 #endif
 
-#ifdef USE_USBUTILS
-#include <semaphore.h>
-#endif
-
 #ifdef HAVE_OPENCL
 #ifdef __APPLE_CC__
 #include <OpenCL/opencl.h>
@@ -125,14 +121,6 @@ static inline int fsync (int fd)
 
 #ifdef HAVE_ADL
  #include "ADL_SDK/adl_sdk.h"
-#endif
-
-#ifdef USE_USBUTILS
-  #include <libusb.h>
-#endif
-
-#ifdef USE_USBUTILS
-  #include "usbutils.h"
 #endif
 
 #if (!defined(WIN32) && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3))) \
@@ -234,27 +222,11 @@ static inline int fsync (int fd)
 #define MAX(x, y)	((x) > (y) ? (x) : (y))
 #endif
 
-/* Put avalon last to make it the last device it tries to detect to prevent it
- * trying to claim same chip but different devices. Adding a device here will
- * update all macros in the code that use the *_PARSE_COMMANDS macros for each
- * listed driver. */
-#define FPGA_PARSE_COMMANDS(DRIVER_ADD_COMMAND) \
-	DRIVER_ADD_COMMAND(bitforce) \
-	DRIVER_ADD_COMMAND(icarus) \
-	DRIVER_ADD_COMMAND(modminer)
-
-#define ASIC_PARSE_COMMANDS(DRIVER_ADD_COMMAND) \
-	DRIVER_ADD_COMMAND(bflsc) \
-	DRIVER_ADD_COMMAND(bitfury) \
-	DRIVER_ADD_COMMAND(hashfast) \
-	DRIVER_ADD_COMMAND(klondike) \
-	DRIVER_ADD_COMMAND(knc) \
-	DRIVER_ADD_COMMAND(avalon)
-
+/* Adding a device here will update all macros in the code that use
+ * the *_PARSE_COMMANDS macros for each listed driver.
+ */
 #define DRIVER_PARSE_COMMANDS(DRIVER_ADD_COMMAND) \
-	DRIVER_ADD_COMMAND(opencl) \
-	FPGA_PARSE_COMMANDS(DRIVER_ADD_COMMAND) \
-	ASIC_PARSE_COMMANDS(DRIVER_ADD_COMMAND)
+	DRIVER_ADD_COMMAND(opencl)
 
 #define DRIVER_ENUM(X) DRIVER_##X,
 #define DRIVER_PROTOTYPE(X) struct device_drv X##_drv;
@@ -474,37 +446,7 @@ struct cgpu_info {
 	char *name;
 	char *device_path;
 	void *device_data;
-#ifdef USE_USBUTILS
-	struct cg_usb_device *usbdev;
-#endif
-#ifdef USE_AVALON
-	struct work **works;
-	int work_array;
-	int queued;
-	int results;
-#endif
-#ifdef USE_USBUTILS
-	struct cg_usb_info usbinfo;
-#endif
-#ifdef USE_MODMINER
-	char fpgaid;
-	unsigned char clock;
-	pthread_mutex_t *modminer_mutex;
-#endif
-#ifdef USE_BITFORCE
-	struct timeval work_start_tv;
-	unsigned int wait_ms;
-	unsigned int sleep_ms;
-	double avg_wait_f;
-	unsigned int avg_wait_d;
-	uint32_t nonces;
-	bool nonce_range;
-	bool polling;
-	bool flash_led;
-#endif /* USE_BITFORCE */
-#if defined(USE_BITFORCE) || defined(USE_BFLSC)
-	pthread_mutex_t device_mutex;
-#endif /* USE_BITFORCE || USE_BFLSC */
+
 	enum dev_enable deven;
 	int accepted;
 	int rejected;
@@ -1036,25 +978,7 @@ extern bool opt_api_network;
 extern bool opt_delaynet;
 extern bool opt_restart;
 extern bool opt_nogpu;
-extern char *opt_icarus_options;
-extern char *opt_icarus_timing;
 extern bool opt_worktime;
-#ifdef USE_AVALON
-extern char *opt_avalon_options;
-extern char *opt_bitburner_fury_options;
-#endif
-#ifdef USE_KLONDIKE
-extern char *opt_klondike_options;
-#endif
-#ifdef USE_USBUTILS
-extern char *opt_usb_select;
-extern int opt_usbdump;
-extern bool opt_usb_list_all;
-extern cgsem_t usb_resource_sem;
-#endif
-#ifdef USE_BITFORCE
-extern bool opt_bfl_noncerange;
-#endif
 extern int swork_id;
 
 #if LOCK_TRACKING
@@ -1088,12 +1012,6 @@ extern bool fulltest(const unsigned char *hash, const unsigned char *target);
 extern int opt_queue;
 extern int opt_scantime;
 extern int opt_expiry;
-
-#ifdef USE_USBUTILS
-extern pthread_mutex_t cgusb_lock;
-extern pthread_mutex_t cgusbres_lock;
-extern cglock_t cgusb_fd_lock;
-#endif
 
 extern cglock_t control_lock;
 extern pthread_mutex_t hash_lock;
@@ -1135,27 +1053,11 @@ extern bool add_pool_details(struct pool *pool, bool live, char *url, char *user
 #define MAX_GPUDEVICES 16
 #define MAX_DEVICES 4096
 
-#define MIN_SHA_INTENSITY -10
-#define MIN_SHA_INTENSITY_STR "-10"
-#define MAX_SHA_INTENSITY 14
-#define MAX_SHA_INTENSITY_STR "14"
-#define MIN_SCRYPT_INTENSITY 8
-#define MIN_SCRYPT_INTENSITY_STR "8"
-#define MAX_SCRYPT_INTENSITY 20
-#define MAX_SCRYPT_INTENSITY_STR "20"
-#ifdef USE_SCRYPT
-#define MIN_INTENSITY (opt_scrypt ? MIN_SCRYPT_INTENSITY : MIN_SHA_INTENSITY)
-#define MIN_INTENSITY_STR (opt_scrypt ? MIN_SCRYPT_INTENSITY_STR : MIN_SHA_INTENSITY_STR)
-#define MAX_INTENSITY (opt_scrypt ? MAX_SCRYPT_INTENSITY : MAX_SHA_INTENSITY)
-#define MAX_INTENSITY_STR (opt_scrypt ? MAX_SCRYPT_INTENSITY_STR : MAX_SHA_INTENSITY_STR)
-#define MAX_GPU_INTENSITY MAX_SCRYPT_INTENSITY
-#else
-#define MIN_INTENSITY MIN_SHA_INTENSITY
-#define MIN_INTENSITY_STR MIN_SHA_INTENSITY_STR
-#define MAX_INTENSITY MAX_SHA_INTENSITY
-#define MAX_INTENSITY_STR MAX_SHA_INTENSITY_STR
-#define MAX_GPU_INTENSITY MAX_SHA_INTENSITY
-#endif
+#define MIN_INTENSITY 8
+#define MIN_INTENSITY_STR "8"
+#define MAX_INTENSITY 20
+#define MAX_INTENSITY_STR "20"
+#define MAX_GPU_INTENSITY 20
 
 extern bool hotplug_mode;
 extern int hotplug_time;
@@ -1169,11 +1071,6 @@ extern struct thr_info *control_thr;
 extern struct thr_info **mining_thr;
 extern struct cgpu_info gpus[MAX_GPUDEVICES];
 extern int gpu_threads;
-#ifdef USE_SCRYPT
-extern bool opt_scrypt;
-#else
-#define opt_scrypt (0)
-#endif
 extern double total_secs;
 extern int mining_threads;
 extern int total_devices;
@@ -1462,34 +1359,6 @@ struct work {
 	struct timeval	tv_work_found;
 	char		getwork_mode;
 };
-
-#ifdef USE_MODMINER 
-struct modminer_fpga_state {
-	bool work_running;
-	struct work running_work;
-	struct timeval tv_workstart;
-	uint32_t hashes;
-
-	char next_work_cmd[46];
-	char fpgaid;
-
-	bool overheated;
-	bool new_work;
-
-	uint32_t shares;
-	uint32_t shares_last_hw;
-	uint32_t hw_errors;
-	uint32_t shares_to_good;
-	uint32_t timeout_fail;
-	uint32_t success_more;
-	struct timeval last_changed;
-	struct timeval last_nonce;
-	struct timeval first_work;
-	bool death_stage_one;
-	bool tried_two_byte_temp;
-	bool one_byte_temp;
-};
-#endif
 
 #define TAILBUFSIZ 64
 

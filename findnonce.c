@@ -174,7 +174,7 @@ void precalc_hash(dev_blk_ctx *blk, uint32_t *state, uint32_t *data)
 struct pc_data {
 	struct thr_info *thr;
 	struct work *work;
-	uint32_t res[SCRYPT_MAXBUFFERS];
+	uint32_t res[MAXBUFFERS];
 	pthread_t pth;
 	int found;
 };
@@ -184,7 +184,8 @@ static void *postcalc_hash(void *userdata)
 	struct pc_data *pcd = (struct pc_data *)userdata;
 	struct thr_info *thr = pcd->thr;
 	unsigned int entry = 0;
-	int found = SCRYPT_FOUND;
+
+	int found = FOUND;
 
 	pthread_detach(pthread_self());
 
@@ -223,7 +224,8 @@ void postcalc_hash_async(struct thr_info *thr, struct work *work, uint32_t *res)
 
 	pcd->thr = thr;
 	pcd->work = copy_work(work);
-	buffersize = SCRYPT_BUFFERSIZE;
+	buffersize = BUFFERSIZE;
+
 	memcpy(&pcd->res, res, buffersize);
 
 	if (pthread_create(&pcd->pth, NULL, postcalc_hash, (void *)pcd)) {
