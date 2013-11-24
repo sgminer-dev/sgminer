@@ -135,7 +135,7 @@ if test -n "$CGMINER_SDK"; then
 	LDFLAGS="-L$CGMINER_SDK/lib/$target $LDFLAGS"
 fi
 
-opencl="no"
+opencl="yes"
 
 AC_ARG_ENABLE([opencl],
 	[AC_HELP_STRING([--enable-opencl],[Enable support for GPU mining with opencl])],
@@ -379,21 +379,13 @@ echo "  curses.TUI...........: $cursesmsg"
 if test "x$opencl" != xno; then
 	if test $found_opencl = 1; then
 		echo "  OpenCL...............: FOUND. GPU mining support enabled"
-	if test "x$scrypt" != xno; then
-		echo "  scrypt...............: Enabled"
-	else
-		echo "  scrypt...............: Disabled"
-	fi
-
 	else
 		echo "  OpenCL...............: NOT FOUND. GPU mining support DISABLED"
 		AC_MSG_ERROR([No mining configured in])
-		echo "  scrypt...............: Disabled (needs OpenCL)"
 	fi
 else
 	echo "  OpenCL...............: Detection overrided. GPU mining support DISABLED"
 	AC_MSG_ERROR([No mining configured in])
-	echo "  scrypt...............: Disabled (needs OpenCL)"
 fi
 
 if test "x$adl" != xno; then
