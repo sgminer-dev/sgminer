@@ -191,8 +191,6 @@ AC_ARG_ENABLE([adl],
 	[adl=$enableval]
 	)
 
-scrypt="yes"
-
 if test "$found_opencl" = 1; then
 	if test "x$adl" != xno; then
 		ADL_CPPFLAGS=
@@ -207,19 +205,9 @@ if test "$found_opencl" = 1; then
 			DLOPEN_FLAGS=""
 		fi
 	fi
-
-	AC_ARG_ENABLE([scrypt],
-		[AC_HELP_STRING([--enable-scrypt],[Compile support for scrypt litecoin mining (default enabled)])],
-		[scrypt=$enableval]
-		)
-	if test "x$scrypt" = xyes; then
-		AC_DEFINE([USE_SCRYPT], [1], [Defined to 1 if scrypt support is wanted])
-	fi
 else
 	DLOPEN_FLAGS=""
 fi
-
-AM_CONDITIONAL([HAS_SCRYPT], [test x$scrypt = xyes])
 
 curses="auto"
 
