@@ -158,10 +158,6 @@ static int input_thr_id;
 #endif
 int gpur_thr_id;
 static int api_thr_id;
-#ifdef USE_USBUTILS
-static int usbres_thr_id;
-static int hotplug_thr_id;
-#endif
 static int total_control_threads;
 bool hotplug_mode;
 static int new_devices;
@@ -170,12 +166,6 @@ int hotplug_time = 5;
 
 #if LOCK_TRACKING
 pthread_mutex_t lockstat_lock;
-#endif
-
-#ifdef USE_USBUTILS
-pthread_mutex_t cgusb_lock;
-pthread_mutex_t cgusbres_lock;
-cglock_t cgusb_fd_lock;
 #endif
 
 pthread_mutex_t hash_lock;
@@ -1008,16 +998,6 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--benchmark",
 			opt_set_bool, &opt_benchmark,
 			"Run cgminer in benchmark mode - produces no shares"),
-#if defined(USE_BITFORCE)
-	OPT_WITHOUT_ARG("--bfl-range",
-			opt_set_bool, &opt_bfl_noncerange,
-			"Use nonce range on bitforce devices if supported"),
-#endif
-#ifdef USE_BFLSC
-	OPT_WITH_ARG("--bflsc-overheat",
-		     set_int_0_to_200, opt_show_intval, &opt_bflsc_overheat,
-		     "Set overheat temperature where BFLSC devices throttle, 0 to disable"),
-#endif
 #ifdef HAVE_CURSES
 	OPT_WITHOUT_ARG("--compact",
 			opt_set_bool, &opt_compact,
@@ -1094,14 +1074,6 @@ static struct opt_table opt_config_table[] = {
 		     " -> " MAX_INTENSITY_STR
 		     ",default: d to maintain desktop interactivity)"),
 #endif
-	OPT_WITH_ARG("--hotplug",
-		     set_int_0_to_9999, NULL, &hotplug_time,
-#ifdef USE_USBUTILS
-		     "Seconds between hotplug checks (0 means never check)"
-#else
-		     opt_hidden
-#endif
-		    ),
 #if defined(HAVE_OPENCL)
 	OPT_WITH_ARG("--kernel-path|-K",
 		     opt_set_charp, opt_show_charp, &opt_kernel_path,
@@ -1251,17 +1223,6 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--user|-u",
 		     set_user, NULL, NULL,
 		     "Username for bitcoin JSON-RPC server"),
-#ifdef USE_USBUTILS
-	OPT_WITH_ARG("--usb",
-		     set_usb_select, NULL, NULL,
-		     "USB device selection"),
-	OPT_WITH_ARG("--usb-dump",
-		     set_int_0_to_10, opt_show_intval, &opt_usbdump,
-		     opt_hidden),
-	OPT_WITHOUT_ARG("--usb-list-all",
-			opt_set_bool, &opt_usb_list_all,
-			opt_hidden),
-#endif
 #ifdef HAVE_OPENCL
 	OPT_WITH_ARG("--vectors|-v",
 		     set_vector, NULL, NULL,
@@ -1437,16 +1398,11 @@ static char *opt_verusage_and_exit(const char *extra)
 	exit(0);
 }
 
-#if defined(HAVE_OPENCL) || defined(USE_USBUTILS)
+#if defined(HAVE_OPENCL)
 char *display_devs(int *ndevs)
 {
 	*ndevs = 0;
-#ifdef HAVE_OPENCL
 	print_ndevs(ndevs);
-#endif
-#ifdef USE_USBUTILS
-	usb_all(0);
-#endif
 	exit(*ndevs);
 }
 #endif
@@ -1464,17 +1420,11 @@ static struct opt_table opt_cmdline_table[] = {
 	OPT_WITHOUT_ARG("--help|-h",
 			opt_verusage_and_exit, NULL,
 			"Print this message"),
-#if defined(HAVE_OPENCL) || defined(USE_USBUTILS)
+#if defined(HAVE_OPENCL)
 	OPT_WITHOUT_ARG("--ndevs|-n",
 			display_devs, &nDevs,
-			"Display "
-#ifdef HAVE_OPENCL
-			"number of detected GPUs, OpenCL platform information, "
-#endif
-#ifdef USE_USBUTILS
-			"all USB devices, "
-#endif
-			"and exit"),
+			"Display number of detected GPUs, OpenCL platform "
+			"information, and exit"),
 #endif
 	OPT_WITHOUT_ARG("--version|-V",
 			opt_version_and_exit, packagename,
@@ -2169,11 +2119,6 @@ static void curses_print_devstatus(struct cgpu_info *cgpu, int count)
 	suffix_string(dh64, displayed_hashes, sizeof(displayed_hashes), 4);
 	suffix_string(dr64, displayed_rolling, sizeof(displayed_rolling), 4);
 
-#ifdef USE_USBUTILS
-	if (cgpu->usbinfo.nodev)
-		cg_wprintw(statuswin, "ZOMBIE");
-	else
-#endif
 	if (cgpu->status == LIFE_DEAD)
 		cg_wprintw(statuswin, "DEAD  ");
 	else if (cgpu->status == LIFE_SICK)
@@ -2184,6 +2129,7 @@ static void curses_print_devstatus(struct cgpu_info *cgpu, int count)
 		cg_wprintw(statuswin, "REST  ");
 	else
 		cg_wprintw(statuswin, "%6s", displayed_rolling);
+
 	adj_fwidth(cgpu->diff_accepted, &dawidth);
 	adj_fwidth(cgpu->diff_rejected, &drwidth);
 	adj_width(cgpu->hw_errors, &hwwidth);
@@ -3790,13 +3736,6 @@ static void restart_threads(void)
 	mutex_lock(&restart_lock);
 	pthread_cond_broadcast(&restart_cond);
 	mutex_unlock(&restart_lock);
-
-#ifdef USE_USBUTILS
-	/* Cancels any cancellable usb transfers. Flagged as such it means they
-	 * are usualy waiting on a read result and it's safe to abort the read
-	 * early. */
-	cancel_usb_transfers();
-#endif
 }
 
 static void signal_work_update(void)
@@ -6894,20 +6833,11 @@ static void *watchdog_thread(void __maybe_unused *userdata)
 			count = 0;
 			for (i = 0; i < total_devices; i++) {
 				cgpu = get_devices(i);
-#ifndef USE_USBUTILS
+
 				if (cgpu)
-#else
-				if (cgpu && !cgpu->usbinfo.nodev)
-#endif
 					curses_print_devstatus(cgpu, count++);
 			}
-#ifdef USE_USBUTILS
-			for (i = 0; i < total_devices; i++) {
-				cgpu = get_devices(i);
-				if (cgpu && cgpu->usbinfo.nodev)
-					curses_print_devstatus(cgpu, count++);
-			}
-#endif
+
 			touchwin(statuswin);
 			wrefresh(statuswin);
 			touchwin(logwin);
@@ -7136,12 +7066,6 @@ static void clean_up(bool restarting)
 #ifdef HAVE_OPENCL
 	clear_adl(nDevs);
 #endif
-#ifdef USE_USBUTILS
-	usb_polling = false;
-	pthread_join(usb_poll_thread, NULL);
-        libusb_exit(NULL);
-#endif
-
 	cgtime(&total_tv_end);
 #ifdef WIN32
 	timeEndPeriod(1);
@@ -7590,111 +7514,6 @@ struct device_drv *copy_drv(struct device_drv *drv)
 	return copy;
 }
 
-#ifdef USE_USBUTILS
-static void hotplug_process(void)
-{
-	struct thr_info *thr;
-	int i, j;
-
-	for (i = 0; i < new_devices; i++) {
-		struct cgpu_info *cgpu;
-		int dev_no = total_devices + i;
-
-		cgpu = devices[dev_no];
-		if (!opt_devs_enabled || (opt_devs_enabled && devices_enabled[dev_no]))
-			enable_device(cgpu);
-		cgpu->cgminer_stats.getwork_wait_min.tv_sec = MIN_SEC_UNSET;
-		cgpu->rolling = cgpu->total_mhashes = 0;
-	}
-
-	wr_lock(&mining_thr_lock);
-	mining_thr = realloc(mining_thr, sizeof(thr) * (mining_threads + new_threads + 1));
-
-	if (!mining_thr)
-		quit(1, "Failed to hotplug realloc mining_thr");
-	for (i = 0; i < new_threads; i++) {
-		mining_thr[mining_threads + i] = calloc(1, sizeof(*thr));
-		if (!mining_thr[mining_threads + i])
-			quit(1, "Failed to hotplug calloc mining_thr[%d]", i);
-	}
-
-	// Start threads
-	for (i = 0; i < new_devices; ++i) {
-		struct cgpu_info *cgpu = devices[total_devices];
-		cgpu->thr = malloc(sizeof(*cgpu->thr) * (cgpu->threads+1));
-		cgpu->thr[cgpu->threads] = NULL;
-		cgpu->status = LIFE_INIT;
-		cgtime(&(cgpu->dev_start_tv));
-
-		for (j = 0; j < cgpu->threads; ++j) {
-			thr = __get_thread(mining_threads);
-			thr->id = mining_threads;
-			thr->cgpu = cgpu;
-			thr->device_thread = j;
-
-			if (cgpu->drv->thread_prepare && !cgpu->drv->thread_prepare(thr))
-				continue;
-
-			if (unlikely(thr_info_create(thr, NULL, miner_thread, thr)))
-				quit(1, "hotplug thread %d create failed", thr->id);
-
-			cgpu->thr[j] = thr;
-
-			/* Enable threads for devices set not to mine but disable
-			 * their queue in case we wish to enable them later */
-			if (cgpu->deven != DEV_DISABLED) {
-				applog(LOG_DEBUG, "Pushing sem post to thread %d", thr->id);
-				cgsem_post(&thr->sem);
-			}
-
-			mining_threads++;
-		}
-		total_devices++;
-		applog(LOG_WARNING, "Hotplug: %s added %s %i", cgpu->drv->dname, cgpu->drv->name, cgpu->device_id);
-	}
-	wr_unlock(&mining_thr_lock);
-
-	adjust_mostdevs();
-	switch_logsize(true);
-}
-
-#define DRIVER_DRV_DETECT_HOTPLUG(X) X##_drv.drv_detect(true);
-
-static void *hotplug_thread(void __maybe_unused *userdata)
-{
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-
-	RenameThread("hotplug");
-
-	hotplug_mode = true;
-
-	cgsleep_ms(5000);
-
-	while (0x2a) {
-// Version 0.1 just add the devices on - worry about using nodev later
-
-		if (hotplug_time == 0)
-			cgsleep_ms(5000);
-		else {
-			new_devices = 0;
-			new_threads = 0;
-
-			/* Use the DRIVER_PARSE_COMMANDS macro to detect all
-			 * devices */
-			DRIVER_PARSE_COMMANDS(DRIVER_DRV_DETECT_HOTPLUG)
-
-			if (new_devices)
-				hotplug_process();
-
-			// hotplug_time >0 && <=9999
-			cgsleep_ms(hotplug_time * 1000);
-		}
-	}
-
-	return NULL;
-}
-#endif
-
 static void probe_pools(void)
 {
 	int i;
@@ -7709,45 +7528,6 @@ static void probe_pools(void)
 
 #define DRIVER_FILL_DEVICE_DRV(X) fill_device_drv(&X##_drv);
 #define DRIVER_DRV_DETECT_ALL(X) X##_drv.drv_detect(false);
-
-#ifdef USE_USBUTILS
-static void *libusb_poll_thread(void __maybe_unused *arg)
-{
-	struct timeval tv_end = {1, 0};
-
-	RenameThread("usbpoll");
-
-	while (usb_polling)
-		libusb_handle_events_timeout_completed(NULL, &tv_end, NULL);
-
-	/* Cancel any cancellable usb transfers */
-	cancel_usb_transfers();
-
-	/* Keep event handling going until there are no async transfers in
-	 * flight. */
-	do {
-		libusb_handle_events_timeout_completed(NULL, &tv_end, NULL);
-	} while (async_usb_transfers());
-
-	return NULL;
-}
-
-static void initialise_usb(void) {
-	int err = libusb_init(NULL);
-	if (err) {
-		fprintf(stderr, "libusb_init() failed err %d", err);
-		fflush(stderr);
-		quit(1, "libusb_init() failed");
-	}
-	mutex_init(&cgusb_lock);
-	mutex_init(&cgusbres_lock);
-	cglock_init(&cgusb_fd_lock);
-	usb_polling = true;
-	pthread_create(&usb_poll_thread, NULL, libusb_poll_thread, NULL);
-}
-#else
-#define initialise_usb() {}
-#endif
 
 int main(int argc, char *argv[])
 {
@@ -7796,8 +7576,6 @@ int main(int argc, char *argv[])
 
 	if (unlikely(pthread_cond_init(&gws_cond, NULL)))
 		quit(1, "Failed to pthread_cond_init gws_cond");
-
-	initialise_usb();
 
 	snprintf(packagename, sizeof(packagename), "%s %s", PACKAGE, VERSION);
 
