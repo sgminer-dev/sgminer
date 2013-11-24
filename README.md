@@ -1,7 +1,7 @@
 cgminer
 =======
 
-WARNING: THIS CODE IS CURRENTLY UNUSABLE!
+WARNING: this code is only meant to support Scrypt.
 
 Introduction
 ------------
