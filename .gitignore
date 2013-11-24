@@ -3,6 +3,7 @@ cgminer.exe
 minerd
 minerd.exe
 *.o
+*.lo
 *.bin
 
 autom4te.cache
