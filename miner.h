@@ -372,10 +372,6 @@ enum dev_enable {
 
 enum cl_kernels {
 	KL_NONE,
-	KL_POCLBM,
-	KL_PHATK,
-	KL_DIAKGCN,
-	KL_DIABLO,
 	KL_SCRYPT,
 };
 

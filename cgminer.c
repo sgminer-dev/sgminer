@@ -4232,18 +4232,6 @@ void write_config(FILE *fcfg)
 			switch (gpus[i].kernel) {
 				case KL_NONE: // Shouldn't happen
 					break;
-				case KL_POCLBM:
-					fprintf(fcfg, "poclbm");
-					break;
-				case KL_PHATK:
-					fprintf(fcfg, "phatk");
-					break;
-				case KL_DIAKGCN:
-					fprintf(fcfg, "diakgcn");
-					break;
-				case KL_DIABLO:
-					fprintf(fcfg, "diablo");
-					break;
 				case KL_SCRYPT:
 					fprintf(fcfg, "scrypt");
 					break;
@@ -5755,7 +5743,7 @@ void set_target(unsigned char *dest_target, double diff)
 		diff = 1.0;
 	}
 
-	// FIXME: target set wrong?
+	// FIXME: is target set right?
 	d64 = (double)65536 * truediffone;
 	d64 /= diff;
 
