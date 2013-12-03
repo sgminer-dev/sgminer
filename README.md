@@ -45,10 +45,7 @@ If building from git:
 
 
 CGMiner specific configuration options:
-  --disable-opencl        Disable support for GPU mining with opencl
   --disable-adl           Override detection and disable building with adl
-  --enable-scrypt         Compile support for scrypt litecoin mining (default
-                          disabled)
   --without-curses        Compile support for curses TUI (default enabled)
 
 Basic *nix build instructions:
