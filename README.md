@@ -1,8 +1,9 @@
 cgminer
 =======
 
-WARNING: this version of cgminer is only meant to support Scrypt. It will be
-renamed appropriately to reflect the fact when ready for general use.
+WARNING: this experimental version of cgminer is only meant to support Scrypt.
+It will be renamed appropriately to reflect the fact if ever ready for
+general use.
 
 Introduction
 ------------
@@ -10,13 +11,14 @@ Introduction
 This is a multi-threaded multi-pool GPU miner with ATI GPU monitoring,
 (over)clocking and fanspeed support for scrypt-based coins. It is based on
 cgminer by Con Kolivas (ckolivas), which is in turn based on cpuminer by
-Jeff Garzik.
+Jeff Garzik (jgarzik).
 
 GIT TREE: https://github.com/veox/cgminer
 
 License: GPLv3.  See COPYING for details.
 
-SEE ALSO API-README, GPU-README AND SCRYPT-README FOR MORE INFORMATION ON EACH.
+See also API-README, GPU-README and SCRYPT-README for more information on
+each.
 
 
 Building
