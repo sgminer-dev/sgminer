@@ -47,30 +47,29 @@ setx GPU_USE_SYNC_OBJECTS 1
 
 --intensity XX (-I XX)
 
-Just like in bitcoin mining, scrypt mining takes an intensity, however the
-scale goes from 0 to 20 to mimic the "Aggression" used in mtrlt's reaper. The
-reason this is crucial is that too high an intensity can actually be
-disastrous with scrypt because it CAN run out of ram. High intensities
-start writing over the same ram and it is highly dependent on the GPU, but
-they
-can start actually DECREASING your hashrate, or even worse, start producing
-garbage with HW errors skyrocketing. Note that if you do NOT specify an
-intensity, cgminer uses dynamic mode which is designed to minimise the harm
-to a running desktop and performance WILL be poor. The lower limit to intensity
-with scrypt is usually 8 and cgminer will prevent it going too low.
+The scale goes from 0 to 42. The reason this is crucial is that too
+high an intensity can actually be disastrous with scrypt because it CAN
+run out of ram. High intensities start writing over the same ram and it
+is highly dependent on the GPU, but they can start actually DECREASING
+your hashrate, or even worse, start producing garbage with HW errors
+skyrocketing, or locking up the system altogether. Note that if you do
+NOT specify an intensity, cgminer uses dynamic mode which is designed
+to minimise the harm to a running desktop and performance WILL be poor.
+The lower limit to intensity with scrypt is usually 8 and cgminer will
+prevent it going too low.
 SUMMARY: Setting this for reasonable hashrates is mandatory.
 
 --shaders XXX
 
-is a new option where you tell cgminer how many shaders your GPU has. This
-helps cgminer try to choose some meaningful baseline parameters. Use this table
-below to determine how many shaders your GPU has, and note that there are some
-variants of these cards, and nvidia shaders are much much lower and virtually
-pointless trying to mine on. If this is not set, cgminer will query the
-device for how much memory it supports and will try to set a value based on
-that.
+is an option where you tell cgminer how many shaders your GPU has. This
+helps cgminer try to choose some meaningful baseline parameters. Use
+this table below to determine how many shaders your GPU has, and note
+that there are some variants of these cards, and nvidia shaders are much
+much lower and virtually pointless trying to mine on. If this is not
+set, cgminer will query the device for how much memory it supports and
+will try to set a value based on that.
 SUMMARY: This will get you started but fine tuning for optimal performance is
-required.
+required. Using --thread-concurrency is recommended instead.
 
 GPU  Shaders
 7750 512
