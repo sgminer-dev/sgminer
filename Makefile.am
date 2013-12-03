@@ -27,22 +27,18 @@ endif
 
 cgminer_CPPFLAGS += $(ADL_CPPFLAGS)
 
-# common sources
 cgminer_SOURCES := cgminer.c
+cgminer_SOURCES	+= api.c
+cgminer_SOURCES	+= elist.h miner.h compat.h bench_block.h
+cgminer_SOURCES	+= util.c util.h uthash.h
+cgminer_SOURCES	+= sha2.c sha2.h
+cgminer_SOURCES	+= logging.c logging.h
+cgminer_SOURCES += driver-opencl.c driver-opencl.h
+cgminer_SOURCES += ocl.c ocl.h
+cgminer_SOURCES += findnonce.c findnonce.h
+cgminer_SOURCES += adl.c adl.h adl_functions.h
+cgminer_SOURCES += scrypt.c scrypt.h
+cgminer_SOURCES += *.cl
 
-cgminer_SOURCES	+= elist.h miner.h compat.h bench_block.h	\
-		   util.c util.h uthash.h logging.h		\
-		   sha2.c sha2.h api.c
-
-cgminer_SOURCES	+= logging.c
-
-if HAS_OPENCL
 bin_SCRIPTS	= $(top_srcdir)/*.cl
 
-cgminer_SOURCES += driver-opencl.h driver-opencl.c
-cgminer_SOURCES += ocl.c ocl.h findnonce.c findnonce.h
-cgminer_SOURCES += adl.c adl.h adl_functions.h
-cgminer_SOURCES += *.cl
-cgminer_SOURCES += scrypt.c scrypt.h
-
-endif
