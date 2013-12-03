@@ -18,9 +18,8 @@ GPU ram. If you have less system ram than your GPU has, it may not be possible
 to mine at any reasonable rate.
 
 There are 5 main parameters to tuning scrypt, all of which are optional for
-further fine tuning. When you start scrypt mining with the --scrypt option,
-cgminer will fail IN RANDOM WAYS. They are all due to parameters being outside
-what the GPU can cope with.
+further fine tuning. When you start mining, cgminer may fail IN RANDOM WAYS.
+They are all due to parameters being outside what the GPU can cope with.
 
 NOTE that if it does not fail at startup, the presence of hardware errors (HW)
 are a sure sign that you have set the parameters too high.
@@ -33,7 +32,7 @@ break scrypt mining entirely while others give poor hashrates. As for the
 OpenCL SDK installed, for AMD it must be version 2.6 or later.
 
 
-Step 1 on linux:
+Step 1 on Linux:
 export GPU_MAX_ALLOC_PERCENT=100
 If you do not do this, you may find it impossible to scrypt mine. You may find
 a value of 40 is enough and increasing this further has little effect.
@@ -52,7 +51,8 @@ Just like in bitcoin mining, scrypt mining takes an intensity, however the
 scale goes from 0 to 20 to mimic the "Aggression" used in mtrlt's reaper. The
 reason this is crucial is that too high an intensity can actually be
 disastrous with scrypt because it CAN run out of ram. High intensities
-start writing over the same ram and it is highly dependent on the GPU, but they
+start writing over the same ram and it is highly dependent on the GPU, but
+they
 can start actually DECREASING your hashrate, or even worse, start producing
 garbage with HW errors skyrocketing. Note that if you do NOT specify an
 intensity, cgminer uses dynamic mode which is designed to minimise the harm
