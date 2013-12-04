@@ -26,13 +26,13 @@ information on each.
 
 Mandatory:
 
-    curl dev library 	http://curl.haxx.se/libcurl/
+    curl dev library    http://curl.haxx.se/libcurl/
     (libcurl4-openssl-dev)
 
-    pkg-config		http://www.freedesktop.org/wiki/Software/pkg-config
-    libtool		http://www.gnu.org/software/libtool/
+    pkg-config          http://www.freedesktop.org/wiki/Software/pkg-config
+    libtool             hhttp://www.gnu.org/software/libtool/
 
-    AMD APP SDK		http://developer.amd.com/sdks/AMDAPPSDK
+    AMD APP SDK         http://developer.amd.com/sdks/AMDAPPSDK
     (This sdk is mandatory for GPU mining)
 
 Optional:
@@ -40,7 +40,7 @@ Optional:
     curses dev library
     (libncurses5-dev or libpdcurses on WIN32 for text user interface)
 
-    AMD ADL SDK		http://developer.amd.com/sdks/ADLSDK
+    AMD ADL SDK         http://developer.amd.com/sdks/ADLSDK
     (This sdk is mandatory for ATI GPU monitoring & clocking)
 
 If building from git:
