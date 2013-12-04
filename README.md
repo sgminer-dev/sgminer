@@ -33,7 +33,6 @@ Mandatory:
     libtool             hhttp://www.gnu.org/software/libtool/
 
     AMD APP SDK         http://developer.amd.com/sdks/AMDAPPSDK
-    (This sdk is mandatory for GPU mining)
 
 Optional:
 
@@ -41,7 +40,7 @@ Optional:
     (libncurses5-dev or libpdcurses on WIN32 for text user interface)
 
     AMD ADL SDK         http://developer.amd.com/sdks/ADLSDK
-    (This sdk is mandatory for ATI GPU monitoring & clocking)
+    (Required for ATI GPU monitoring & clocking)
 
 If building from git:
 
@@ -55,6 +54,7 @@ CGMiner specific configuration options:
 
 ### *nix build instructions
 
+    # Optionally place the contents of ADL_SDK_4.0.zip in cgminer/ADL_SDK.
     ./autoreconf -i
     CFLAGS="-O2 -Wall -march=native" ./configure <options>
 
