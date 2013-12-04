@@ -53,7 +53,7 @@ CGMiner specific configuration options:
     --disable-adl           Override detection and disable building with adl
     --without-curses        Compile support for curses TUI (default enabled)
 
-### *nix build instructions:
+### *nix build instructions
 
     ./autoreconf -i
     CFLAGS="-O2 -Wall -march=native" ./configure <options>
