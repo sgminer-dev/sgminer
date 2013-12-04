@@ -1,12 +1,11 @@
-cgminer
-=======
+# cgminer
 
-WARNING: this experimental version of cgminer is only meant to support Scrypt.
-It will be renamed appropriately to reflect the fact if ever ready for
-general use.
+**WARNING**: this experimental version of cgminer is only meant to
+support Scrypt. It will be renamed appropriately to reflect the fact if
+ever ready for general use.
 
-Introduction
-------------
+
+## Introduction
 
 This is a multi-threaded multi-pool GPU miner with ATI GPU monitoring,
 (over)clocking and fanspeed support for scrypt-based coins. It is based on
@@ -15,56 +14,63 @@ Jeff Garzik (jgarzik).
 
 GIT TREE: https://github.com/veox/cgminer
 
-License: GPLv3.  See COPYING for details.
+License: GPLv3.  See `COPYING` for details.
 
-See also API-README, GPU-README and SCRYPT-README for more information on
-each.
+See also `API-README`, `GPU-README` and `SCRYPT-README` for more
+information on each.
 
 
-Building
---------
+## Building
 
-DEPENDENCIES:
+### Dependencies
+
 Mandatory:
-	curl dev library 	http://curl.haxx.se/libcurl/
-	(libcurl4-openssl-dev)
 
-	pkg-config		http://www.freedesktop.org/wiki/Software/pkg-config
-	libtool			http://www.gnu.org/software/libtool/
+    curl dev library 	http://curl.haxx.se/libcurl/
+    (libcurl4-openssl-dev)
+
+    pkg-config		http://www.freedesktop.org/wiki/Software/pkg-config
+    libtool		http://www.gnu.org/software/libtool/
+
+    AMD APP SDK		http://developer.amd.com/sdks/AMDAPPSDK
+    (This sdk is mandatory for GPU mining)
+
 Optional:
-	curses dev library
-	(libncurses5-dev or libpdcurses on WIN32 for text user interface)
 
-	AMD APP SDK		http://developer.amd.com/sdks/AMDAPPSDK
-	(This sdk is mandatory for GPU mining)
+    curses dev library
+    (libncurses5-dev or libpdcurses on WIN32 for text user interface)
 
-	AMD ADL SDK		http://developer.amd.com/sdks/ADLSDK
-	(This sdk is mandatory for ATI GPU monitoring & clocking)
+    AMD ADL SDK		http://developer.amd.com/sdks/ADLSDK
+    (This sdk is mandatory for ATI GPU monitoring & clocking)
 
 If building from git:
-	autoconf
-	automake
 
+    autoconf
+    automake
 
 CGMiner specific configuration options:
-  --disable-adl           Override detection and disable building with adl
-  --without-curses        Compile support for curses TUI (default enabled)
 
-Basic *nix build instructions:
-	To actually build:
+    --disable-adl           Override detection and disable building with adl
+    --without-curses        Compile support for curses TUI (default enabled)
 
-	./autogen.sh	# only needed if building from git repo
-	CFLAGS="-O2 -Wall -march=native" ./configure <options>
+### *nix build instructions:
 
-	No installation is necessary. You may run cgminer from the build
-	directory directly, but you may do make install if you wish to install
-	cgminer to a system location or location you specified.
+    ./autoreconf -i
+    CFLAGS="-O2 -Wall -march=native" ./configure <options>
 
-Native WIN32 build instructions: see windows-build.txt
+Systemwide installation is optional. You may run cgminer from the build
+directory directly, or `make install` if you wish to install
+cgminer to a system location or location you specified with `--prefix`.
+
+### Windows build instructions
+
+See `windows-build.txt` (might be outdated).
 
 
-Basic Usage
------------
+## Basic Usage
+
+**WARNING**: documentation below this point has not been updated since the
+fork.
 
 After saving configuration from the menu, you do not need to give cgminer
 any arguments and it will load your configuration.
@@ -120,8 +126,7 @@ See GPU-README for more information regarding GPU mining and
 SCRYPT-README for more information regarding litecoin mining.
 
 
-Runtime usage
--------------
+## Runtime usage
 
 The following options are available while running with a single keypress:
 
@@ -189,11 +194,6 @@ The 8 byte hex value are the 2nd 8 bytes of the share being submitted to the
 pool. The 2 diff values are the actual difficulty target that share reached
 followed by the difficulty target the pool is currently asking for.
 
----
-Also many issues and FAQs are covered in the forum thread
-dedicated to this program,
-	http://forum.bitcoin.org/index.php?topic=28402.0
-
 The output line shows the following:
 (5s):1713.6 (avg):1707.8 Mh/s | A:729  R:8  HW:0  WU:22.53/m
 
@@ -236,29 +236,33 @@ and the all time best difficulty share you've found since starting cgminer
 this time.
 
 
----
-MULTIPOOL
+## Multipool
 
-FAILOVER STRATEGIES WITH MULTIPOOL:
+### Failover strategies
+
 A number of different strategies for dealing with multipool setups are
 available. Each has their advantages and disadvantages so multiple strategies
 are available by user choice, as per the following list:
 
-FAILOVER:
+#### Failover
+
 The default strategy is failover. This means that if you input a number of
 pools, it will try to use them as a priority list, moving away from the 1st
 to the 2nd, 2nd to 3rd and so on. If any of the earlier pools recover, it will
 move back to the higher priority ones.
 
-ROUND ROBIN:
+#### Round robin
+
 This strategy only moves from one pool to the next when the current one falls
 idle and makes no attempt to move otherwise.
 
-ROTATE:
+#### Rotate
+
 This strategy moves at user-defined intervals from one active pool to the next,
 skipping pools that are idle.
 
-LOAD BALANCE:
+#### Load balance
+
 This strategy sends work to all the pools on a quota basis. By default, all
 pools are allocated equal quotas unless specified with --quota. This
 apportioning of work is based on work handed out, not shares returned so is
@@ -273,13 +277,13 @@ mode and it will distribute quota back to priority pool 0 from any pools that
 are unable to provide work for any reason so as to maintain quota ratios
 between the rest of the pools.
 
-BALANCE:
+#### Balance
+
 This strategy monitors the amount of difficulty 1 shares solved for each pool
 and uses it to try to end up doing the same amount of work for all pools.
 
 
----
-QUOTAS
+### Quotas
 
 The load-balance multipool strategy works off a quota based scheduler. The
 quotas handed out by default are equal, but the user is allowed to specify any
@@ -301,10 +305,10 @@ For example:
 --url poola:porta -u usernamea -p passa --quota "2;poolb:portb" -u usernameb -p passb
 Will give poola 1/3 of the work and poolb 2/3 of the work.
 
-Writing configuration files with quotas is likewise supported. To use the above
-quotas in a configuration file they would be specified thus:
+Writing configuration files with quotas is likewise supported. To use
+the above quotas in a configuration file they would be specified thus:
 
-"pools" : [
+    "pools" : [
         {
                 "url" : "poola:porta",
                 "user" : "usernamea",
@@ -315,24 +319,17 @@ quotas in a configuration file they would be specified thus:
                 "user" : "usernameb",
                 "pass" : "passb"
         }
-]
+    ]
 
 
----
-LOGGING
+## Logging
 
-cgminer will log to stderr if it detects stderr is being redirected to a file.
-To enable logging simply add 2>logfile.txt to your command line and logfile.txt
-will contain the logged output at the log level you specify (normal, verbose,
-debug etc.)
+cgminer will log to stderr if it detects stderr is being redirected to a
+file. To enable logging simply append `2>logfile.txt` to your command line
+and `logfile.txt` will contain the logged output at the log level you
+specify (normal, verbose, debug etc.)
 
-In other words if you would normally use:
-./cgminer -o xxx -u yyy -p zzz
-if you use
-./cgminer -o xxx -u yyy -p zzz 2>logfile.txt
-it will log to a file called logfile.txt and otherwise work the same.
-
-There is also the -m option on linux which will spawn a command of your choice
+There is also the -m option on Linux which will spawn a command of your choice
 and pipe the output directly to that command.
 
 The WorkTime details 'debug' option adds details on the end of each line
@@ -379,7 +376,6 @@ For example (this is wrapped, but it's all on one line for real):
     0000000000000000000000000000000000000000000000000000000080020000
 
 
----
-RPC API
+## RPC API
 
-For RPC API details see the API-README file
+See `API-README`.
