@@ -9,7 +9,6 @@
  */
 
 #include "config.h"
-#ifdef HAVE_OPENCL
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -233,4 +232,3 @@ void postcalc_hash_async(struct thr_info *thr, struct work *work, uint32_t *res)
 		return;
 	}
 }
-#endif /* HAVE_OPENCL */

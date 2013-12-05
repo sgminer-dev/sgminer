@@ -8,7 +8,6 @@
  */
 
 #include "config.h"
-#ifdef HAVE_OPENCL
 
 #include <signal.h>
 #include <stdlib.h>
@@ -772,5 +771,4 @@ built:
 
 	return clState;
 }
-#endif /* HAVE_OPENCL */
 

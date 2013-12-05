@@ -31,13 +31,11 @@ extern char *curly;
 # include <netdb.h>
 #endif
 
-#ifdef HAVE_OPENCL
 #ifdef __APPLE_CC__
 #include <OpenCL/opencl.h>
 #else
 #include <CL/cl.h>
 #endif
-#endif /* HAVE_OPENCL */
 
 #ifdef STDC_HEADERS
 # include <stdlib.h>
@@ -460,7 +458,6 @@ struct cgpu_info {
 	int64_t max_hashes;
 
 	const char *kname;
-#ifdef HAVE_OPENCL
 	bool mapped;
 	int virtual_gpu;
 	int virtual_adl;
@@ -477,7 +474,6 @@ struct cgpu_info {
 	size_t shaders;
 	struct timeval tv_gpustart;
 	int intervals;
-#endif
 
 	bool new_work;
 
@@ -1092,7 +1088,6 @@ extern uint64_t best_diff;
 extern struct timeval block_timeval;
 extern char *workpadding;
 
-#ifdef HAVE_OPENCL
 typedef struct {
 	cl_uint ctx_a; cl_uint ctx_b; cl_uint ctx_c; cl_uint ctx_d;
 	cl_uint ctx_e; cl_uint ctx_f; cl_uint ctx_g; cl_uint ctx_h;
@@ -1119,11 +1114,6 @@ typedef struct {
 
 	struct work *work;
 } dev_blk_ctx;
-#else
-typedef struct {
-	uint32_t nonce;
-} dev_blk_ctx;
-#endif
 
 struct curl_ent {
 	CURL *curl;

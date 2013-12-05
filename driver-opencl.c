@@ -62,7 +62,6 @@ extern int gpu_fanspeed(int gpu);
 extern int gpu_fanpercent(int gpu);
 #endif
 
-#ifdef HAVE_OPENCL
 char *set_vector(char *arg)
 {
 	int i, val = 0, device = 0;
@@ -235,7 +234,6 @@ char *set_kernel(char *arg)
 
 	return NULL;
 }
-#endif
 
 #ifdef HAVE_ADL
 /* This function allows us to map an adl device to an opencl device for when
@@ -522,7 +520,7 @@ char *set_temp_target(char *arg)
 	return NULL;
 }
 #endif
-#ifdef HAVE_OPENCL
+
 char *set_intensity(char *arg)
 {
 	int i, device = 0, *tt;
@@ -575,12 +573,9 @@ void print_ndevs(int *ndevs)
 	clear_adl(*ndevs);
 	applog(LOG_INFO, "%i GPU devices max detected", *ndevs);
 }
-#endif
 
 struct cgpu_info gpus[MAX_GPUDEVICES]; /* Maximum number apparently possible */
 struct cgpu_info *cpus;
-
-#ifdef HAVE_OPENCL
 
 /* In dynamic mode, only the first thread of each device will be in use.
  * This potentially could start a thread that was stopped with the start-stop
@@ -605,9 +600,7 @@ void pause_dynamic_threads(int gpu)
 	}
 }
 
-#endif /* HAVE_OPENCL */
-
-#if defined(HAVE_OPENCL) && defined(HAVE_CURSES)
+#if defined(HAVE_CURSES)
 void manage_gpu(void)
 {
 	struct thr_info *thr;
@@ -832,8 +825,6 @@ void manage_gpu(void)
 }
 #endif
 
-
-#ifdef HAVE_OPENCL
 static _clState *clStates[MAX_GPUDEVICES];
 
 #define CL_SET_BLKARG(blkvar) status |= clSetKernelArg(*kernel, num++, sizeof(uint), (void *)&blk->blkvar)
@@ -880,10 +871,7 @@ static void set_threads_hashes(unsigned int vectors,int64_t *hashes, size_t *glo
 	*globalThreads = threads;
 	*hashes = threads * vectors;
 }
-#endif /* HAVE_OPENCL */
 
-
-#ifdef HAVE_OPENCL
 /* We have only one thread that ever re-initialises GPUs, thus if any GPU
  * init command fails due to a completely wedged GPU, the thread will never
  * return, unable to harm other GPUs. If it does return, it means we only had
@@ -990,15 +978,7 @@ select_cgpu:
 out:
 	return NULL;
 }
-#else
-void *reinit_gpu(__maybe_unused void *userdata)
-{
-	return NULL;
-}
-#endif
 
-
-#ifdef HAVE_OPENCL
 static void opencl_detect(bool hotplug)
 {
 	int i;
@@ -1322,4 +1302,3 @@ struct device_drv opencl_drv = {
 	.scanhash = opencl_scanhash,
 	.thread_shutdown = opencl_thread_shutdown,
 };
-#endif

@@ -90,14 +90,10 @@ static const bool opt_time = true;
 unsigned long long global_hashrate;
 unsigned long global_quota_gcd = 1;
 
-#if defined(HAVE_OPENCL)
 int nDevs;
-#endif
-#ifdef HAVE_OPENCL
 int opt_dynamic_interval = 7;
 int opt_g_threads = -1;
 int gpu_threads;
-#endif
 bool opt_restart = true;
 bool opt_nogpu;
 
@@ -1009,14 +1005,6 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--device|-d",
 		     set_devices, NULL, NULL,
 	             "Select device to use, one value, range and/or comma separated (e.g. 0-2,4) default: all"),
-	OPT_WITHOUT_ARG("--disable-gpu|-G",
-			opt_set_bool, &opt_nogpu,
-#ifdef HAVE_OPENCL
-			"Disable GPU mining even if suitable devices exist"
-#else
-			opt_hidden
-#endif
-	),
 	OPT_WITHOUT_ARG("--disable-rejecting",
 			opt_set_bool, &opt_disable_pool,
 			"Automatically disable pools that continually reject shares"),
@@ -1029,7 +1017,6 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--fix-protocol",
 			opt_set_bool, &opt_fix_protocol,
 			"Do not redirect to a different getwork protocol (eg. stratum)"),
-#ifdef HAVE_OPENCL
 	OPT_WITH_ARG("--gpu-dyninterval",
 		     set_int_1_to_65535, opt_show_intval, &opt_dynamic_interval,
 		     "Set the refresh interval in ms for GPUs using dynamic intensity"),
@@ -1073,17 +1060,12 @@ static struct opt_table opt_config_table[] = {
 		     "Intensity of GPU scanning (d or " MIN_INTENSITY_STR
 		     " -> " MAX_INTENSITY_STR
 		     ",default: d to maintain desktop interactivity)"),
-#endif
-#if defined(HAVE_OPENCL)
 	OPT_WITH_ARG("--kernel-path|-K",
 		     opt_set_charp, opt_show_charp, &opt_kernel_path,
 	             "Specify a path to where kernel files are"),
-#endif
-#ifdef HAVE_OPENCL
 	OPT_WITH_ARG("--kernel|-k",
 		     set_kernel, NULL, NULL,
 		     "Override kernel to use - one value or comma separated"),
-#endif
 	OPT_WITHOUT_ARG("--load-balance",
 		     set_loadbalance, &pool_strategy,
 		     "Change multipool strategy from failover to quota based balance"),
@@ -1114,12 +1096,7 @@ static struct opt_table opt_config_table[] = {
 			opt_hidden),
 	OPT_WITHOUT_ARG("--no-restart",
 			opt_set_invbool, &opt_restart,
-#ifdef HAVE_OPENCL
-			"Do not attempt to restart GPUs that hang"
-#else
-			opt_hidden
-#endif
-	),
+			"Do not attempt to restart GPUs that hang"),
 	OPT_WITHOUT_ARG("--no-submit-stale",
 			opt_set_invbool, &opt_submit_stale,
 		        "Don't submit shares if they are detected as stale"),
@@ -1223,19 +1200,15 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--user|-u",
 		     set_user, NULL, NULL,
 		     "Username for bitcoin JSON-RPC server"),
-#ifdef HAVE_OPENCL
 	OPT_WITH_ARG("--vectors|-v",
 		     set_vector, NULL, NULL,
 		     "Override detected optimal vector (1, 2 or 4) - one value or comma separated list"),
-#endif
 	OPT_WITHOUT_ARG("--verbose",
 			opt_set_bool, &opt_log_output,
 			"Log verbose output to stderr as well as status output"),
-#ifdef HAVE_OPENCL
 	OPT_WITH_ARG("--worksize|-w",
 		     set_worksize, NULL, NULL,
 		     "Override detected optimal worksize - one value or comma separated list"),
-#endif
 	OPT_WITH_ARG("--userpass|-O",
 		     set_userpass, NULL, NULL,
 		     "Username:Password pair for bitcoin JSON-RPC server"),
@@ -1387,25 +1360,18 @@ extern const char *opt_argv0;
 
 static char *opt_verusage_and_exit(const char *extra)
 {
-	printf("%s\nBuilt with "
-#ifdef HAVE_OPENCL // FIXME: true always
-		"GPU "
-#endif
-		"scrypt mining support.\n"
-		, packagename);
+	printf("%s\n", packagename);
 	printf("%s", opt_usage(opt_argv0, extra));
 	fflush(stdout);
 	exit(0);
 }
 
-#if defined(HAVE_OPENCL)
 char *display_devs(int *ndevs)
 {
 	*ndevs = 0;
 	print_ndevs(ndevs);
 	exit(*ndevs);
 }
-#endif
 
 /* These options are available from commandline only */
 static struct opt_table opt_cmdline_table[] = {
@@ -1420,12 +1386,10 @@ static struct opt_table opt_cmdline_table[] = {
 	OPT_WITHOUT_ARG("--help|-h",
 			opt_verusage_and_exit, NULL,
 			"Print this message"),
-#if defined(HAVE_OPENCL)
 	OPT_WITHOUT_ARG("--ndevs|-n",
 			display_devs, &nDevs,
 			"Display number of detected GPUs, OpenCL platform "
 			"information, and exit"),
-#endif
 	OPT_WITHOUT_ARG("--version|-V",
 			opt_version_and_exit, packagename,
 			"Display version and exit"),
@@ -1889,9 +1853,7 @@ static int devcursor, logstart, logcursor;
 /* statusy is where the status window goes up to in cases where it won't fit at startup */
 static int statusy;
 #endif
-#ifdef HAVE_OPENCL
 struct cgpu_info gpus[MAX_GPUDEVICES]; /* Maximum number apparently possible */
-#endif
 
 #ifdef HAVE_CURSES
 static inline void unlock_curses(void)
@@ -4151,7 +4113,6 @@ void write_config(FILE *fcfg)
 		}
 	fputs("\n]\n", fcfg);
 
-#ifdef HAVE_OPENCL
 	if (nDevs) {
 		/* Write GPU device values */
 		fputs(",\n\"intensity\" : \"", fcfg);
@@ -4219,7 +4180,6 @@ void write_config(FILE *fcfg)
 #endif
 		fputs("\"", fcfg);
 	}
-#endif
 #ifdef HAVE_ADL
 	if (opt_reorder)
 		fprintf(fcfg, ",\n\"gpu-reorder\" : true");
@@ -4772,10 +4732,8 @@ static void *input_thread(void __maybe_unused *userdata)
 			display_pools();
 		else if (!strncasecmp(&input, "s", 1))
 			set_options();
-#if HAVE_OPENCL
 		else if (have_opencl && !strncasecmp(&input, "g", 1))
 			manage_gpu();
-#endif
 		if (opt_realquiet) {
 			disable_curses();
 			break;
@@ -7063,7 +7021,7 @@ void print_summary(void)
 
 static void clean_up(bool restarting)
 {
-#ifdef HAVE_OPENCL
+#ifdef HAVE_ADL
 	clear_adl(nDevs);
 #endif
 	cgtime(&total_tv_end);
@@ -7448,11 +7406,9 @@ void enable_device(struct cgpu_info *cgpu)
 		adj_width(mining_threads, &dev_width);
 #endif
 	}
-#ifdef HAVE_OPENCL
 	if (cgpu->drv->drv_id == DRIVER_opencl) {
 		gpu_threads += cgpu->threads;
 	}
-#endif
 	rwlock_init(&cgpu->qlock);
 	cgpu->queued_work = NULL;
 }
@@ -7611,11 +7567,9 @@ int main(int argc, char *argv[])
 
 	INIT_LIST_HEAD(&scan_devices);
 
-#ifdef HAVE_OPENCL
 	memset(gpus, 0, sizeof(gpus));
 	for (i = 0; i < MAX_GPUDEVICES; i++)
 		gpus[i].dynamic = true;
-#endif
 
 	/* parse command line */
 	opt_register_table(opt_config_table,
@@ -7895,11 +7849,9 @@ begin_bench:
 		}
 	}
 
-#ifdef HAVE_OPENCL
 	applog(LOG_INFO, "%d gpu miner threads started", gpu_threads);
 	for (i = 0; i < nDevs; i++)
 		pause_dynamic_threads(i);
-#endif
 
 	cgtime(&total_tv_start);
 	cgtime(&total_tv_end);
@@ -7918,7 +7870,6 @@ begin_bench:
 		quit(1, "watchdog thread create failed");
 	pthread_detach(thr->pth);
 
-#ifdef HAVE_OPENCL
 	/* Create reinit gpu thread */
 	gpur_thr_id = 5;
 	thr = &control_thr[gpur_thr_id];
@@ -7927,7 +7878,6 @@ begin_bench:
 		quit(1, "tq_new failed for gpur_thr_id");
 	if (thr_info_create(thr, NULL, reinit_gpu, thr))
 		quit(1, "reinit_gpu thread create failed");
-#endif	
 
 	/* Create API socket thread */
 	api_thr_id = 6;

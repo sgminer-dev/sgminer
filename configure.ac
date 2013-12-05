@@ -158,7 +158,6 @@ if test "x$opencl" != xno; then
 	]],
 	[[return clSetKernelArg(0, 0, 0, 0); ]])],
 	[AC_MSG_RESULT(yes)
-	AC_DEFINE([HAVE_OPENCL], [1], [Defined to 1 if OpenCL is present on the system.])
 	found_opencl=1
 	],
 	[AC_MSG_RESULT(no)
