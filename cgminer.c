@@ -945,6 +945,12 @@ static char *set_null(const char __maybe_unused *arg)
 	return NULL;
 }
 
+static char *deprecated_scrypt(void *arg)
+{
+	applog(LOG_WARNING, "Option --scrypt is deprecated !");
+	return NULL;
+}
+
 /* These options are available from config file or commandline */
 static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--api-allow",
@@ -1150,6 +1156,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--sched-stop",
 		     set_schedtime, NULL, &schedstop,
 		     "Set a time of day in HH:MM to stop mining (will quit without a start time)"),
+	OPT_WITHOUT_ARG("--scrypt",
+			deprecated_scrypt, NULL,
+			"Use the scrypt algorithm for mining (DEPRECATED)"),
 	OPT_WITH_ARG("--shaders",
 		     set_shaders, NULL, NULL,
 		     "GPU shaders per card for tuning scrypt, comma separated"),
