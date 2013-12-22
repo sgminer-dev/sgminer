@@ -947,7 +947,7 @@ static char *set_null(const char __maybe_unused *arg)
 
 static char *deprecated_scrypt(void *arg)
 {
-	applog(LOG_WARNING, "Option --scrypt is deprecated !");
+	applog(LOG_WARNING, "Option --scrypt is deprecated and will be removed in future versions. Remove it from your launch scripts.");
 	return NULL;
 }
 
