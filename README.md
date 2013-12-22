@@ -55,7 +55,7 @@ CGMiner specific configuration options:
 ### *nix build instructions
 
     # Optionally place the contents of ADL_SDK_4.0.zip in cgminer/ADL_SDK.
-    ./autoreconf -i
+    autoreconf -i
     CFLAGS="-O2 -Wall -march=native" ./configure <options>
 
 Systemwide installation is optional. You may run cgminer from the build
