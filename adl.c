@@ -349,6 +349,7 @@ void init_adl(int nDevs)
 		int lpAdapterID;
 		ADLODPerformanceLevels *lpOdPerformanceLevels;
 		int lev, adlGpu;
+		size_t plsize;
 
 		adlGpu = gpus[gpu].virtual_adl;
 		i = vadapters[adlGpu].id;
@@ -396,8 +397,9 @@ void init_adl(int nDevs)
 
 		lev = ga->lpOdParameters.iNumberOfPerformanceLevels - 1;
 		/* We're only interested in the top performance level */
-		lpOdPerformanceLevels = malloc(sizeof(ADLODPerformanceLevels) + (lev * sizeof(ADLODPerformanceLevel)));
-		lpOdPerformanceLevels->iSize = sizeof(ADLODPerformanceLevels) + sizeof(ADLODPerformanceLevel) * lev;
+		plsize = sizeof(ADLODPerformanceLevels) + lev * sizeof(ADLODPerformanceLevel);
+		lpOdPerformanceLevels = malloc(plsize);
+		lpOdPerformanceLevels->iSize = plsize;
 
 		/* Get default performance levels first */
 		if (ADL_Overdrive5_ODPerformanceLevels_Get(iAdapterIndex, 1, lpOdPerformanceLevels) != ADL_OK)
@@ -410,10 +412,15 @@ void init_adl(int nDevs)
 		ga->lpFanSpeedValue.iSize = ga->DefFanSpeedValue.iSize = sizeof(ADLFanSpeedValue);
 		ga->lpFanSpeedValue.iSpeedType = ADL_DL_FANCTRL_SPEED_TYPE_PERCENT;
 		ga->DefFanSpeedValue.iSpeedType = ADL_DL_FANCTRL_SPEED_TYPE_PERCENT;
+
 		/* Now get the current performance levels for any existing overclock */
-		ADL_Overdrive5_ODPerformanceLevels_Get(iAdapterIndex, 0, lpOdPerformanceLevels);
-		/* Save these values as the defaults in case we wish to reset to defaults */
-		ga->DefPerfLev = lpOdPerformanceLevels;
+		if (ADL_Overdrive5_ODPerformanceLevels_Get(iAdapterIndex, 0, lpOdPerformanceLevels) != ADL_OK)
+			applog(LOG_INFO, "Failed to ADL_Overdrive5_ODPerformanceLevels_Get");
+		else {
+			/* Save these values as the defaults in case we wish to reset to defaults */
+			ga->DefPerfLev = malloc(plsize);
+			memcpy(ga->DefPerfLev, lpOdPerformanceLevels, plsize);
+		}
 
 		if (gpus[gpu].gpu_engine) {
 			int setengine = gpus[gpu].gpu_engine * 100;
@@ -1248,7 +1255,8 @@ void set_defaultengine(int gpu)
 
 	ga = &gpus[gpu].adl;
 	lock_adl();
-	ADL_Overdrive5_ODPerformanceLevels_Set(ga->iAdapterIndex, ga->DefPerfLev);
+	if (ga->DefPerfLev)
+		ADL_Overdrive5_ODPerformanceLevels_Set(ga->iAdapterIndex, ga->DefPerfLev);
 	unlock_adl();
 }
 
@@ -1435,7 +1443,7 @@ void clear_adl(int nDevs)
 	for (i = 0; i < nDevs; i++) {
 		ga = &gpus[i].adl;
 		/*  Only reset the values if we've changed them at any time */
-		if (!gpus[i].has_adl || !ga->managed)
+		if (!gpus[i].has_adl || !ga->managed || !ga->DefPerfLev)
 			continue;
 		ADL_Overdrive5_ODPerformanceLevels_Set(ga->iAdapterIndex, ga->DefPerfLev);
 		free(ga->DefPerfLev);
