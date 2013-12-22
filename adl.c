@@ -388,6 +388,7 @@ void init_adl(int nDevs)
 		strcpy(ga->strAdapterName, lpInfo[i].strAdapterName);
 		ga->DefPerfLev = NULL;
 		ga->twin = NULL;
+		ga->def_fan_valid = false;
 
 		ga->lpOdParameters.iSize = sizeof(ADLODParameters);
 		if (ADL_Overdrive5_ODParameters_Get(iAdapterIndex, &ga->lpOdParameters) != ADL_OK)
@@ -407,6 +408,8 @@ void init_adl(int nDevs)
 		ga->lpTemperature.iSize = sizeof(ADLTemperature);
 		ga->lpFanSpeedInfo.iSize = sizeof(ADLFanSpeedInfo);
 		ga->lpFanSpeedValue.iSize = ga->DefFanSpeedValue.iSize = sizeof(ADLFanSpeedValue);
+		ga->lpFanSpeedValue.iSpeedType = ADL_DL_FANCTRL_SPEED_TYPE_PERCENT;
+		ga->DefFanSpeedValue.iSpeedType = ADL_DL_FANCTRL_SPEED_TYPE_PERCENT;
 		/* Now get the current performance levels for any existing overclock */
 		ADL_Overdrive5_ODPerformanceLevels_Get(iAdapterIndex, 0, lpOdPerformanceLevels);
 		/* Save these values as the defaults in case we wish to reset to defaults */
@@ -469,7 +472,10 @@ void init_adl(int nDevs)
 			ga->has_fanspeed = true;
 
 		/* Save the fanspeed values as defaults in case we reset later */
-		ADL_Overdrive5_FanSpeed_Get(ga->iAdapterIndex, 0, &ga->DefFanSpeedValue);
+		if (ADL_Overdrive5_FanSpeed_Get(ga->iAdapterIndex, 0, &ga->DefFanSpeedValue) != ADL_OK)
+			applog(LOG_INFO, "Failed to ADL_Overdrive5_FanSpeed_Get for default value");
+		else
+			ga->def_fan_valid = true;
 		if (gpus[gpu].gpu_fan)
 			set_fanspeed(gpu, gpus[gpu].gpu_fan);
 		else
@@ -1229,7 +1235,8 @@ void set_defaultfan(int gpu)
 
 	ga = &gpus[gpu].adl;
 	lock_adl();
-	ADL_Overdrive5_FanSpeed_Set(ga->iAdapterIndex, 0, &ga->DefFanSpeedValue);
+	if (ga->def_fan_valid)
+		ADL_Overdrive5_FanSpeed_Set(ga->iAdapterIndex, 0, &ga->DefFanSpeedValue);
 	unlock_adl();
 }
 
@@ -1432,7 +1439,8 @@ void clear_adl(int nDevs)
 			continue;
 		ADL_Overdrive5_ODPerformanceLevels_Set(ga->iAdapterIndex, ga->DefPerfLev);
 		free(ga->DefPerfLev);
-		ADL_Overdrive5_FanSpeed_Set(ga->iAdapterIndex, 0, &ga->DefFanSpeedValue);
+		if (ga->def_fan_valid)
+			ADL_Overdrive5_FanSpeed_Set(ga->iAdapterIndex, 0, &ga->DefFanSpeedValue);
 		ADL_Overdrive5_FanSpeedToDefault_Set(ga->iAdapterIndex, 0);
 	}
 	adl_active = false;

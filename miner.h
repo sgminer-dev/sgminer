@@ -278,6 +278,8 @@ struct gpu_adl {
 	ADLFanSpeedValue lpFanSpeedValue;
 	ADLFanSpeedValue DefFanSpeedValue;
 
+	bool def_fan_valid;
+
 	int iEngineClock;
 	int iMemoryClock;
 	int iVddc;
