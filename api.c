@@ -760,6 +760,7 @@ static struct api_data *api_add_data_full(struct api_data *root, char *name, enu
 				break;
 			case API_VOLTS:
 			case API_TEMP:
+			case API_AVG:
 				api_data->data = (void *)malloc(sizeof(float));
 				*((float *)(api_data->data)) = *((float *)data);
 				break;
@@ -894,6 +895,11 @@ struct api_data *api_add_percent(struct api_data *root, char *name, double *data
 	return api_add_data_full(root, name, API_PERCENT, (void *)data, copy_data);
 }
 
+struct api_data *api_add_avg(struct api_data *root, char *name, float *data, bool copy_data)
+{
+	return api_add_data_full(root, name, API_AVG, (void *)data, copy_data);
+}
+
 static struct api_data *print_data(struct api_data *root, char *buf, bool isjson, bool precom)
 {
 	struct api_data *tmp;
@@ -973,6 +979,7 @@ static struct api_data *print_data(struct api_data *root, char *buf, bool isjson
 				sprintf(buf, "%.0f", *((double *)(root->data)));
 				break;
 			case API_VOLTS:
+			case API_AVG:
 				sprintf(buf, "%.3f", *((float *)(root->data)));
 				break;
 			case API_MHTOTAL:
