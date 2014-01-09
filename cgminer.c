@@ -6735,11 +6735,11 @@ static void *watchpool_thread(void __maybe_unused *userdata)
 			}
 
 			/* Only switch pools if the failback pool has been
-			 * alive for more than 5 minutes to prevent
+			 * alive for more than one minute to prevent
 			 * intermittently failing pools from being used. */
 			if (!pool->idle && pool_strategy == POOL_FAILOVER && pool->prio < cp_prio() &&
-			    now.tv_sec - pool->tv_idle.tv_sec > 300) {
-				applog(LOG_WARNING, "Pool %d %s stable for 5 mins",
+			    now.tv_sec - pool->tv_idle.tv_sec > 60) {
+				applog(LOG_WARNING, "Pool %d %s stable for 1 minute",
 				       pool->pool_no, pool->rpc_url);
 				switch_pools(NULL);
 			}
