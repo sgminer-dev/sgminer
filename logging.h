@@ -26,6 +26,8 @@ extern bool want_per_device_stats;
 /* global log_level, messages with lower or equal prio are logged */
 extern int opt_log_level;
 
+extern int opt_log_dateformat;
+
 #define LOGBUFSIZ 256
 
 extern void _applog(int prio, const char *str, bool force);
