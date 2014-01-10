@@ -83,6 +83,7 @@ static	ADL_ADAPTER_NUMBEROFADAPTERS_GET	ADL_Adapter_NumberOfAdapters_Get;
 static	ADL_ADAPTER_ADAPTERINFO_GET	ADL_Adapter_AdapterInfo_Get;
 static	ADL_ADAPTER_ID_GET		ADL_Adapter_ID_Get;
 static	ADL_MAIN_CONTROL_REFRESH	ADL_Main_Control_Refresh;
+static	ADL_ADAPTER_VIDEOBIOSINFO_GET	ADL_Adapter_VideoBiosInfo_Get;
 
 static	ADL_OVERDRIVE_CAPS		ADL_Overdrive_Caps;
 
@@ -223,11 +224,12 @@ static bool prepare_adl(void)
 	ADL_Adapter_AdapterInfo_Get = (ADL_ADAPTER_ADAPTERINFO_GET) GetProcAddress(hDLL,"ADL_Adapter_AdapterInfo_Get");
 	ADL_Adapter_ID_Get = (ADL_ADAPTER_ID_GET) GetProcAddress(hDLL,"ADL_Adapter_ID_Get");
 	ADL_Main_Control_Refresh = (ADL_MAIN_CONTROL_REFRESH) GetProcAddress(hDLL, "ADL_Main_Control_Refresh");
+	ADL_Adapter_VideoBiosInfo_Get = (ADL_ADAPTER_VIDEOBIOSINFO_GET)GetProcAddress(hDLL,"ADL_Adapter_VideoBiosInfo_Get");
 	ADL_Overdrive_Caps = (ADL_OVERDRIVE_CAPS)GetProcAddress(hDLL, "ADL_Overdrive_Caps");
 	if (!ADL_Main_Control_Create || !ADL_Main_Control_Destroy ||
 		!ADL_Adapter_NumberOfAdapters_Get || !ADL_Adapter_AdapterInfo_Get ||
 		!ADL_Adapter_ID_Get || !ADL_Main_Control_Refresh ||
-		!ADL_Overdrive_Caps) {
+		!ADL_Adapter_VideoBiosInfo_Get || !ADL_Overdrive_Caps) {
 			applog(LOG_WARNING, "ATI ADL's API is missing");
 		return false;
 	}
@@ -407,6 +409,7 @@ void init_adl(int nDevs)
 		ADLODPerformanceLevels *lpOdPerformanceLevels;
 		int lev, adlGpu;
 		size_t plsize;
+		ADLBiosInfo BiosInfo;
 
 		adlGpu = gpus[gpu].virtual_adl;
 		i = vadapters[adlGpu].id;
@@ -447,6 +450,9 @@ void init_adl(int nDevs)
 		ga->DefPerfLev = NULL;
 		ga->twin = NULL;
 		ga->def_fan_valid = false;
+
+		if (ADL_Adapter_VideoBiosInfo_Get(iAdapterIndex, &BiosInfo) != ADL_ERR)
+			applog(LOG_INFO, "GPU %d BIOS partno.: %s, version: %s, date: %s", gpu, BiosInfo.strPartNumber, BiosInfo.strVersion, BiosInfo.strDate);
 
 		ga->lpOdParameters.iSize = sizeof(ADLODParameters);
 		if (ADL_Overdrive5_ODParameters_Get(iAdapterIndex, &ga->lpOdParameters) != ADL_OK)
