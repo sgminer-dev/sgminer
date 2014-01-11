@@ -95,7 +95,6 @@ int opt_dynamic_interval = 7;
 int opt_g_threads = -1;
 int gpu_threads;
 bool opt_restart = true;
-bool opt_nogpu;
 
 struct list_head scan_devices;
 static bool devices_enabled[MAX_DEVICES];

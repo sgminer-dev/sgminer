@@ -969,7 +969,6 @@ extern bool opt_api_listen;
 extern bool opt_api_network;
 extern bool opt_delaynet;
 extern bool opt_restart;
-extern bool opt_nogpu;
 extern bool opt_worktime;
 extern int swork_id;
 
