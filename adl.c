@@ -198,7 +198,7 @@ static bool init_overdrive6()
 	}
 
 	return true;
-} 
+}
 
 static bool prepare_adl(void)
 {
