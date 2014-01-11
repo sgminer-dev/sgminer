@@ -3,7 +3,8 @@
 ## Current
 
 * Scrypt-only refactor and maintenance: Noel Maersk <veox at wemakethings dot net> LfxRFgXzA13TSTxgFGUFEtumv5ShGzAmLw
-* Benjamin Herrenschmidt (ozbenh)
+* Many improvements to core: Martin Danielsen <kalroth@gmail.com>
+* ADL bugfix to R290x cards: Benjamin Herrenschmidt (ozbenh)
 
 ## Legacy
 

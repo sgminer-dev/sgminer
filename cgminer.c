@@ -2044,12 +2044,6 @@ static void adj_width(int var, int *length)
 		(*length)++;
 }
 
-static void adj_fwidth(float var, int *length)
-{
-	if ((int)(log10(var) + 1) > *length)
-		(*length)++;
-}
-
 static int dev_width;
 
 static void curses_print_devstatus(struct cgpu_info *cgpu, int count)
