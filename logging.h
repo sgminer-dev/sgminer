@@ -26,7 +26,7 @@ extern bool want_per_device_stats;
 /* global log_level, messages with lower or equal prio are logged */
 extern int opt_log_level;
 
-extern int opt_log_dateformat;
+extern int opt_log_show_date;
 
 #define LOGBUFSIZ 256
 

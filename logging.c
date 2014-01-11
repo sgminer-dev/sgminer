@@ -18,7 +18,7 @@
 bool opt_debug = false;
 bool opt_log_output = false;
 int last_date_output_day = 0;
-int opt_log_dateformat = 0;
+int opt_log_show_date = false;
 
 /* per default priorities higher than LOG_NOTICE are logged */
 int opt_log_level = LOG_NOTICE;
@@ -71,7 +71,8 @@ void _applog(int prio, const char *str, bool force)
 		const time_t tmp_time = tv.tv_sec;
 		tm = localtime(&tmp_time);
 
-		if ((opt_log_dateformat == 0) && (last_date_output_day != tm->tm_mday))
+		/* Day changed. */
+		if (opt_log_show_date && (last_date_output_day != tm->tm_mday))
 		{
 			last_date_output_day = tm->tm_mday;
 			char date_output_str[64];
@@ -83,7 +84,7 @@ void _applog(int prio, const char *str, bool force)
 			
 		}
 
-		if (opt_log_dateformat == 1)
+		if (opt_log_show_date)
 		{
 			snprintf(datetime, sizeof(datetime), " [%d-%02d-%02d %02d:%02d:%02d] ",
 				tm->tm_year + 1900,
