@@ -32,15 +32,15 @@ Mandatory:
     pkg-config          http://www.freedesktop.org/wiki/Software/pkg-config
     libtool             hhttp://www.gnu.org/software/libtool/
 
-    AMD APP SDK         http://developer.amd.com/sdks/AMDAPPSDK
+    AMD APP SDK         http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/downloads/
 
 Optional:
 
     curses dev library
     (libncurses5-dev or libpdcurses on WIN32 for text user interface)
 
-    AMD ADL SDK         http://developer.amd.com/sdks/ADLSDK
-    (Required for ATI GPU monitoring & clocking)
+    AMD ADL SDK         http://developer.amd.com/tools-and-sdks/graphics-development/display-library-adl-sdk/
+    (Version 5 or 6, required for ATI GPU monitoring & clocking)
 
 If building from git:
 
@@ -54,7 +54,8 @@ CGMiner specific configuration options:
 
 ### *nix build instructions
 
-    # Optionally place the contents of ADL_SDK_4.0.zip in cgminer/ADL_SDK.
+If needed, place include headers from ADL_SDK_*<VERSION>*.zip in cgminer/ADL_SDK.
+
     autoreconf -i
     CFLAGS="-O2 -Wall -march=native" ./configure <options>
 
