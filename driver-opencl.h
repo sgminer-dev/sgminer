@@ -26,7 +26,6 @@ extern char *set_kernel(char *arg);
 void manage_gpu(void);
 extern void pause_dynamic_threads(int gpu);
 
-extern bool have_opencl;
 extern int opt_platform_id;
 
 extern struct device_drv opencl_drv;
