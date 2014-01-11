@@ -86,7 +86,7 @@ void _applog(int prio, const char *str, bool force)
 
 		if (opt_log_show_date)
 		{
-			snprintf(datetime, sizeof(datetime), " [%d-%02d-%02d %02d:%02d:%02d] ",
+			snprintf(datetime, sizeof(datetime), "[%d-%02d-%02d %02d:%02d:%02d] ",
 				tm->tm_year + 1900,
 				tm->tm_mon + 1,
 				tm->tm_mday,
@@ -96,7 +96,7 @@ void _applog(int prio, const char *str, bool force)
 		}
 		else
 		{
-			snprintf(datetime, sizeof(datetime), " [%02d:%02d:%02d] ",
+			snprintf(datetime, sizeof(datetime), "[%02d:%02d:%02d] ",
 				tm->tm_hour,
 				tm->tm_min,
 				tm->tm_sec);
