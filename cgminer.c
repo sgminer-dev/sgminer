@@ -2053,9 +2053,10 @@ static int dev_width;
 
 static void curses_print_devstatus(struct cgpu_info *cgpu, int count)
 {
-	static int dawidth = 1, drwidth = 1, hwwidth = 1, wuwidth = 1;
+	static int drwidth = 5, hwwidth = 1, wuwidth = 1;
 	char logline[256];
 	char displayed_hashes[16], displayed_rolling[16];
+	float reject_pct = 0.0;
 	uint64_t dh64, dr64;
 	struct timeval now;
 	double dev_runtime, wu;
@@ -2104,14 +2105,11 @@ static void curses_print_devstatus(struct cgpu_info *cgpu, int count)
 	else
 		cg_wprintw(statuswin, "%6s", displayed_rolling);
 
-	adj_fwidth(cgpu->diff_accepted, &dawidth);
-	adj_fwidth(cgpu->diff_rejected, &drwidth);
-	adj_width(cgpu->hw_errors, &hwwidth);
-	adj_width(wu, &wuwidth);
-
-	float reject_pct = 0.0;
 	if ((cgpu->diff_accepted + cgpu->diff_rejected) > 0)
 		reject_pct = (cgpu->diff_rejected / (cgpu->diff_accepted + cgpu->diff_rejected)) * 100;
+
+	adj_width(cgpu->hw_errors, &hwwidth);
+	adj_width(wu, &wuwidth);
 
 	cg_wprintw(statuswin, "/%6sh/s | R:%*.1f%% HW:%*d WU:%*.1f/m",
 			displayed_hashes,
