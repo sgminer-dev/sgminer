@@ -29,16 +29,7 @@
 #include "miner.h"
 #include "util.h"
 
-#if defined(USE_BFLSC) || defined(USE_AVALON) || defined(USE_HASHFAST) || defined(USE_BITFURY) || defined(USE_KLONDIKE) || defined(USE_KNC)
-#define HAVE_AN_ASIC 1
-#endif
-
-#if defined(USE_BITFORCE) || defined(USE_ICARUS) || defined(USE_MODMINER)
-#define HAVE_AN_FPGA 1
-#endif
-
 // Big enough for largest API request
-//  though a PC with 100s of PGAs may exceed the size ...
 //  data is truncated at the end of the last record that fits
 //	but still closed correctly for JSON
 // Current code assumes it can socket send this size + JSON_CLOSE + JSON_END
@@ -48,7 +39,6 @@
 #define TMPBUFSIZ	8192
 
 // Number of requests to queue - normally would be small
-// However lots of PGA's may mean more
 #define QUEUE	100
 
 #if defined WIN32
@@ -158,7 +148,6 @@ static const char *TRUESTR = "true";
 static const char *FALSESTR = "false";
 
 static const char *SCRYPTSTR = "scrypt";
-static const char *SHA256STR = "sha256";
 
 static const char *DEVICECODE = "GPU ";
 
@@ -220,8 +209,6 @@ static const char ISJSON = '{';
 #define JSON_GPU	JSON1 _GPU JSON2
 
 #define JSON_GPUS	JSON1 _GPUS JSON2
-#define JSON_PGAS	JSON1 _PGAS JSON2
-#define JSON_ASCS	JSON1 _ASCS JSON2
 #define JSON_NOTIFY	JSON1 _NOTIFY JSON2
 #define JSON_DEVDETAILS	JSON1 _DEVDETAILS JSON2
 #define JSON_BYE	JSON1 _BYE JSON1
@@ -309,8 +296,6 @@ static const char *JSON_PARAMETER = "parameter";
 #define MSG_FOO 77
 #define MSG_MINECOIN 78
 #define MSG_DEBUGSET 79
-#define MSG_PGAIDENT 80
-#define MSG_PGANOID 81
 #define MSG_SETCONFIG 82
 #define MSG_UNKCON 83
 #define MSG_INVNUM 84
@@ -323,12 +308,6 @@ static const char *JSON_PARAMETER = "parameter";
 #define MSG_ZERINV 95
 #define MSG_ZERSUM 96
 #define MSG_ZERNOSUM 97
-#define MSG_PGAUSBNODEV 98
-#define MSG_INVHPLG 99
-#define MSG_HOTPLUG 100
-#define MSG_DISHPLG 101
-#define MSG_NOHPLG 102
-#define MSG_MISHPLG 103
 
 #define MSG_INVNEG 121
 #define MSG_SETQUOTA 122
@@ -345,12 +324,8 @@ enum code_severity {
 
 enum code_parameters {
 	PARAM_GPU,
-	PARAM_PGA,
-	PARAM_ASC,
 	PARAM_PID,
 	PARAM_GPUMAX,
-	PARAM_PGAMAX,
-	PARAM_ASCMAX,
 	PARAM_PMAX,
 	PARAM_POOLMAX,
 
@@ -455,11 +430,6 @@ struct CODES {
  { SEVERITY_ERR,   MSG_ZERINV,	PARAM_STR,	"Invalid zero parameter '%s'" },
  { SEVERITY_SUCC,  MSG_ZERSUM,	PARAM_STR,	"Zeroed %s stats with summary" },
  { SEVERITY_SUCC,  MSG_ZERNOSUM, PARAM_STR,	"Zeroed %s stats without summary" },
- { SEVERITY_ERR,   MSG_INVHPLG,	PARAM_STR,	"Invalid value for hotplug (%s) must be 0..9999" },
- { SEVERITY_SUCC,  MSG_HOTPLUG,	PARAM_INT,	"Hotplug check set to %ds" },
- { SEVERITY_SUCC,  MSG_DISHPLG,	PARAM_NONE,	"Hotplug disabled" },
- { SEVERITY_WARN,  MSG_NOHPLG,	PARAM_NONE,	"Hotplug is not available" },
- { SEVERITY_ERR,   MSG_MISHPLG,	PARAM_NONE,	"Missing hotplug parameter" },
  { SEVERITY_SUCC,  MSG_LOCKOK,	PARAM_NONE,	"Lock stats created" },
  { SEVERITY_WARN,  MSG_LOCKDIS,	PARAM_NONE,	"Lock stats not enabled" },
  { SEVERITY_FAIL, 0, 0, NULL }
@@ -1108,8 +1078,6 @@ static void message(struct io_data *io_data, int messageid, int paramid, char *p
 
 			switch(codes[i].params) {
 				case PARAM_GPU:
-				case PARAM_PGA:
-				case PARAM_ASC:
 				case PARAM_PID:
 				case PARAM_INT:
 					sprintf(buf, codes[i].description, paramid);
@@ -1594,8 +1562,6 @@ static void minerconfig(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __
 	char buf[TMPBUFSIZ];
 	bool io_open;
 	int gpucount = 0;
-	int asccount = 0;
-	int pgacount = 0;
 	char *adlinuse = (char *)NO;
 #ifdef HAVE_ADL
 	const char *adl = YES;

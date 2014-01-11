@@ -1147,11 +1147,6 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--round-robin",
 		     set_rr, &pool_strategy,
 		     "Change multipool strategy from failover to round robin on failure"),
-#ifdef USE_FPGA_SERIAL
-	OPT_WITH_ARG("--scan-serial|-S",
-		     add_serial, NULL, NULL,
-		     "Serial port to probe for Serial FPGA Mining device"),
-#endif
 	OPT_WITH_ARG("--scan-time|-s",
 		     set_int_0_to_9999, opt_show_intval, &opt_scantime,
 		     "Upper bound on time spent scanning current work, in seconds"),
