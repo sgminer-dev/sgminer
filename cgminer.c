@@ -135,6 +135,11 @@ bool opt_delaynet;
 bool opt_disable_pool;
 static bool no_work;
 bool opt_worktime;
+#if defined(HAVE_LIBCURL) && defined(CURL_HAS_KEEPALIVE)
+int opt_tcp_keepalive = 30;
+#else
+int opt_tcp_keepalive;
+#endif
 
 char *opt_kernel_path;
 char *cgminer_path;
@@ -1176,6 +1181,14 @@ static struct opt_table opt_config_table[] = {
 			opt_set_bool, &use_syslog,
 			"Use system log for output messages (default: standard error)"),
 #endif
+	OPT_WITH_ARG("--tcp-keepalive",
+		     set_int_0_to_9999, opt_show_intval, &opt_tcp_keepalive,
+#if defined(HAVE_LIBCURL) && defined(CURL_HAS_KEEPALIVE)
+		     "TCP keepalive packet idle time"
+#else
+		     opt_hidden
+#endif
+	),
 #ifdef HAVE_ADL
 	OPT_WITH_ARG("--temp-cutoff",
 		     set_temp_cutoff, opt_show_intval, &opt_cutofftemp,
