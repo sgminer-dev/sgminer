@@ -3464,25 +3464,6 @@ static uint64_t share_diff(const struct work *work)
 	return ret;
 }
 
-// FIXME: not used?
-static void regen_hash(struct work *work)
-{
-	uint32_t *data32 = (uint32_t *)(work->data);
-	unsigned char swap[80];
-	uint32_t *swap32 = (uint32_t *)swap;
-	unsigned char hash1[32];
-
-	flip80(swap32, data32);
-	sha256(swap, 80, hash1);
-	sha256(hash1, 32, (unsigned char *)(work->hash));
-}
-
-// FIXME: just call scrypt_regenhash where needed
-static void rebuild_hash(struct work *work)
-{
-	scrypt_regenhash(work);
-}
-
 static bool cnx_needed(struct pool *pool);
 
 /* Find the pool that currently has the highest priority */
