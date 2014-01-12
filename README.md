@@ -54,7 +54,9 @@ CGMiner specific configuration options:
 
 ### *nix build instructions
 
-If needed, place include headers from ADL_SDK_*<VERSION>*.zip in cgminer/ADL_SDK.
+If needed, place include headers (`*.h` files) from `ADL_SDK_*<VERSION>*.zip` in `cgminer/ADL_SDK`.
+
+Then:
 
     autoreconf -i
     CFLAGS="-O2 -Wall -march=native" ./configure <options>
