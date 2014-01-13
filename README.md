@@ -16,8 +16,18 @@ GIT TREE: https://github.com/veox/cgminer
 
 License: GPLv3.  See `COPYING` for details.
 
-See also `API-README`, `GPU-README` and `SCRYPT-README` for more
-information on each.
+
+## Documentation
+
+Documentation is available in directory `doc`. For details on several topics, see:
+
+* `API` for the RPC API specification;
+* `SCRYPT` for how to find the right balance in GPU configuration to mine Scrypt-based coins effectively;
+* `FAQ` for frequently asked questions;
+* `GPU` for semi-obsolete information on mining SHA256d-based coins;
+* `windows-build` for information on how to build on Windows.
+
+Note that **most of the documentation is outdated**. If you want to contribute, fork this repository, update as needed, and submit a pull request.
 
 
 ## Building
@@ -125,8 +135,8 @@ above.
 
 For more advanced usage , run `cgminer --help`.
 
-See GPU-README for more information regarding GPU mining and
-SCRYPT-README for more information regarding litecoin mining.
+See `doc/GPU` for more information regarding GPU mining and
+`doc/SCRYPT` for more information regarding Scrypt mining.
 
 
 ## Runtime usage
@@ -377,8 +387,3 @@ For example (this is wrapped, but it's all on one line for real):
     000000004a4366808f81d44f26df3d69d7dc4b3473385930462d9ab707b50498
     f681634a4f1f63d01a0cd43fb338000000000080000000000000000000000000
     0000000000000000000000000000000000000000000000000000000080020000
-
-
-## RPC API
-
-See `API-README`.
