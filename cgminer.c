@@ -149,7 +149,6 @@ char *cgminer_path;
 struct thr_info *control_thr;
 struct thr_info **mining_thr;
 static int gwsched_thr_id;
-static int stage_thr_id;
 static int watchpool_thr_id;
 static int watchdog_thr_id;
 #ifdef HAVE_CURSES
@@ -2325,7 +2324,7 @@ share_result(json_t *val, json_t *res, json_t *err, const struct work *work,
 				       hashshow, cgpu->drv->name, cgpu->device_id, resubmit ? "(resubmit)" : "", worktime);
 		}
 		sharelog("accept", work);
-		if (opt_shares && total_accepted >= opt_shares) {
+		if (opt_shares && total_diff_accepted >= opt_shares) {
 			applog(LOG_WARNING, "Successfully mined %d accepted shares as requested and exiting.", opt_shares);
 			kill_work();
 			return;
@@ -2416,25 +2415,6 @@ share_result(json_t *val, json_t *res, json_t *err, const struct work *work,
 	}
 }
 
-#ifdef HAVE_LIBCURL
-static void text_print_status(int thr_id)
-{
-	struct cgpu_info *cgpu;
-	char logline[256];
-
-	cgpu = get_thr_cgpu(thr_id);
-	if (cgpu) {
-		get_statline(logline, sizeof(logline), cgpu);
-		printf("%s\n", logline);
-	}
-}
-
-static void print_status(int thr_id)
-{
-	if (!curses_active)
-		text_print_status(thr_id);
-}
-
 static void show_hash(struct work *work, char *hashshow)
 {
 	unsigned char rhash[32];
@@ -2454,6 +2434,25 @@ static void show_hash(struct work *work, char *hashshow)
 	suffix_string(work->share_diff, diffdisp, sizeof (diffdisp), 0);
 	snprintf(hashshow, 64, "%08lx Diff %s/%d%s", h32, diffdisp, intdiff,
 		 work->block? " BLOCK!" : "");
+}
+
+#ifdef HAVE_LIBCURL
+static void text_print_status(int thr_id)
+{
+	struct cgpu_info *cgpu;
+	char logline[256];
+
+	cgpu = get_thr_cgpu(thr_id);
+	if (cgpu) {
+		get_statline(logline, sizeof(logline), cgpu);
+		printf("%s\n", logline);
+	}
+}
+
+static void print_status(int thr_id)
+{
+	if (!curses_active)
+		text_print_status(thr_id);
 }
 
 static bool submit_upstream_work(struct work *work, CURL *curl, bool resubmit)
@@ -3006,11 +3005,7 @@ static void __kill_work(void)
 
 	cg_completion_timeout(&kill_mining, NULL, 3000);
 
-	forcelog(LOG_DEBUG, "Killing off stage thread");
 	/* Stop the others */
-	thr = &control_thr[stage_thr_id];
-	kill_timeout(thr);
-
 	forcelog(LOG_DEBUG, "Killing off API thread");
 	thr = &control_thr[api_thr_id];
 	kill_timeout(thr);
@@ -3910,42 +3905,6 @@ static bool hash_push(struct work *work)
 	mutex_unlock(stgd_lock);
 
 	return rc;
-}
-
-static void *stage_thread(void *userdata)
-{
-	struct thr_info *mythr = userdata;
-	bool ok = true;
-
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-
-	RenameThread("stage");
-
-	while (ok) {
-		struct work *work = NULL;
-
-		applog(LOG_DEBUG, "Popping work to stage thread");
-
-		work = tq_pop(mythr->q, NULL);
-		if (unlikely(!work)) {
-			applog(LOG_ERR, "Failed to tq_pop in stage_thread");
-			ok = false;
-			break;
-		}
-		work->work_block = work_block;
-
-		test_work_current(work);
-
-		applog(LOG_DEBUG, "Pushing work to getwork queue");
-
-		if (unlikely(!hash_push(work))) {
-			applog(LOG_WARNING, "Failed to hash_push in stage_thread");
-			continue;
-		}
-	}
-
-	tq_freeze(mythr->q);
-	return NULL;
 }
 
 static void stage_work(struct work *work)
@@ -5198,8 +5157,7 @@ static void *stratum_rthread(void *userdata)
 
 		if (!parse_method(pool, s) && !parse_stratum_response(pool, s))
 			applog(LOG_INFO, "Unknown stratum msg: %s", s);
-		free(s);
-		if (pool->swork.clean) {
+		else if (pool->swork.clean) {
 			struct work *work = make_work();
 
 			/* Generate a single work item to update the current
@@ -5212,6 +5170,7 @@ static void *stratum_rthread(void *userdata)
 			test_work_current(work);
 			free_work(work);
 		}
+		free(s);
 	}
 
 out:
@@ -5488,7 +5447,7 @@ retry_stratum:
 			calc_diff(work, 0);
 			applog(LOG_DEBUG, "Pushing pooltest work to base pool");
 
-			tq_push(control_thr[stage_thr_id].q, work);
+			stage_work(work);
 			total_getworks++;
 			pool->getwork_requested++;
 			ret = true;
@@ -6301,17 +6260,21 @@ void hash_queued_work(struct thr_info *mythr)
 		struct timeval diff;
 		int64_t hashes;
 
-		mythr->work_restart = mythr->work_update = false;
+		mythr->work_update = false;
 
 		fill_queue(mythr, cgpu, drv, thr_id);
 
 		hashes = drv->scanwork(mythr);
 
+		/* Reset the bool here in case the driver looks for it
+		 * synchronously in the scanwork loop. */
+		mythr->work_restart = false;
+
 		if (unlikely(hashes == -1 )) {
 			applog(LOG_ERR, "%s %d failure, disabling!", drv->name, cgpu->device_id);
 			cgpu->deven = DEV_DISABLED;
 			dev_error(cgpu, REASON_THREAD_ZERO_HASH);
-			mt_disable(mythr, thr_id, drv);
+			break;
 		}
 
 		hashes_done += hashes;
@@ -6350,15 +6313,19 @@ void hash_driver_work(struct thr_info *mythr)
 		struct timeval diff;
 		int64_t hashes;
 
-		mythr->work_restart = mythr->work_update = false;
+		mythr->work_update = false;
 
 		hashes = drv->scanwork(mythr);
+
+		/* Reset the bool here in case the driver looks for it
+		 * synchronously in the scanwork loop. */
+		mythr->work_restart = false;
 
 		if (unlikely(hashes == -1 )) {
 			applog(LOG_ERR, "%s %d failure, disabling!", drv->name, cgpu->device_id);
 			cgpu->deven = DEV_DISABLED;
 			dev_error(cgpu, REASON_THREAD_ZERO_HASH);
-			mt_disable(mythr, thr_id, drv);
+			break;
 		}
 
 		hashes_done += hashes;
@@ -7003,9 +6970,9 @@ void print_summary(void)
 	}
 
 	if (opt_shares) {
-		applog(LOG_WARNING, "Mined %d accepted shares of %d requested\n", total_accepted, opt_shares);
-		if (opt_shares > total_accepted)
-			applog(LOG_WARNING, "WARNING - Mined only %d shares of %d requested.", total_accepted, opt_shares);
+		applog(LOG_WARNING, "Mined %.0f accepted shares of %d requested\n", total_diff_accepted, opt_shares);
+		if (opt_shares > total_diff_accepted)
+			applog(LOG_WARNING, "WARNING - Mined only %.0f shares of %d requested.", total_diff_accepted, opt_shares);
 	}
 	applog(LOG_WARNING, " ");
 
@@ -7527,6 +7494,13 @@ int main(int argc, char *argv[])
 	if (unlikely(pthread_cond_init(&gws_cond, NULL)))
 		quit(1, "Failed to pthread_cond_init gws_cond");
 
+	/* Create a unique get work queue */
+	getq = tq_new();
+	if (!getq)
+		quit(1, "Failed to create getq");
+	/* We use the getq mutex as the staged lock */
+	stgd_lock = &getq->mutex;
+
 	snprintf(packagename, sizeof(packagename), "%s %s", PACKAGE, VERSION);
 
 	handler.sa_handler = &sighandler;
@@ -7630,7 +7604,7 @@ int main(int argc, char *argv[])
 	if (opt_scantime < 0)
 		opt_scantime = 30;
 
-	total_control_threads = 9;
+	total_control_threads = 8;
 	control_thr = calloc(total_control_threads, sizeof(*thr));
 	if (!control_thr)
 		quit(1, "Failed to calloc control_thr");
@@ -7745,23 +7719,6 @@ int main(int argc, char *argv[])
 			quit(1, "Failed to calloc mining_thr[%d]", i);
 	}
 
-	stage_thr_id = 2;
-	thr = &control_thr[stage_thr_id];
-	thr->q = tq_new();
-	if (!thr->q)
-		quit(1, "Failed to tq_new");
-	/* start stage thread */
-	if (thr_info_create(thr, NULL, stage_thread, thr))
-		quit(1, "stage thread create failed");
-	pthread_detach(thr->pth);
-
-	/* Create a unique get work queue */
-	getq = tq_new();
-	if (!getq)
-		quit(1, "Failed to create getq");
-	/* We use the getq mutex as the staged lock */
-	stgd_lock = &getq->mutex;
-
 	if (opt_benchmark)
 		goto begin_bench;
 
@@ -7857,14 +7814,14 @@ begin_bench:
 	cgtime(&total_tv_start);
 	cgtime(&total_tv_end);
 
-	watchpool_thr_id = 3;
+	watchpool_thr_id = 2;
 	thr = &control_thr[watchpool_thr_id];
 	/* start watchpool thread */
 	if (thr_info_create(thr, NULL, watchpool_thread, NULL))
 		quit(1, "watchpool thread create failed");
 	pthread_detach(thr->pth);
 
-	watchdog_thr_id = 4;
+	watchdog_thr_id = 3;
 	thr = &control_thr[watchdog_thr_id];
 	/* start watchdog thread */
 	if (thr_info_create(thr, NULL, watchdog_thread, NULL))
@@ -7872,7 +7829,7 @@ begin_bench:
 	pthread_detach(thr->pth);
 
 	/* Create reinit gpu thread */
-	gpur_thr_id = 5;
+	gpur_thr_id = 4;
 	thr = &control_thr[gpur_thr_id];
 	thr->q = tq_new();
 	if (!thr->q)
@@ -7881,7 +7838,7 @@ begin_bench:
 		quit(1, "reinit_gpu thread create failed");
 
 	/* Create API socket thread */
-	api_thr_id = 6;
+	api_thr_id = 5;
 	thr = &control_thr[api_thr_id];
 	if (thr_info_create(thr, NULL, api_thread, thr))
 		quit(1, "API thread create failed");
@@ -7890,7 +7847,7 @@ begin_bench:
 	/* Create curses input thread for keyboard input. Create this last so
 	 * that we know all threads are created since this can call kill_work
 	 * to try and shut down all previous threads. */
-	input_thr_id = 8;
+	input_thr_id = 7;
 	thr = &control_thr[input_thr_id];
 	if (thr_info_create(thr, NULL, input_thread, thr))
 		quit(1, "input thread create failed");
@@ -7898,8 +7855,8 @@ begin_bench:
 #endif
 
 	/* Just to be sure */
-	if (total_control_threads != 9)
-		quit(1, "incorrect total_control_threads (%d) should be 9", total_control_threads);
+	if (total_control_threads != 8)
+		quit(1, "incorrect total_control_threads (%d) should be 8", total_control_threads);
 
 	/* Once everything is set up, main() becomes the getwork scheduler */
 	while (42) {
