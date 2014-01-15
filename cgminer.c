@@ -1615,13 +1615,15 @@ static void gen_gbt_work(struct pool *pool, struct work *work)
 {
 	unsigned char *merkleroot;
 	struct timeval now;
+	uint64_t nonce2le;
 
 	cgtime(&now);
 	if (now.tv_sec - pool->tv_lastwork.tv_sec > 60)
 		update_gbt(pool);
 
 	cg_wlock(&pool->gbt_lock);
-	memcpy(pool->coinbase + pool->nonce2_offset, &pool->nonce2, 4);
+	nonce2le = htole64(pool->nonce2);
+	memcpy(pool->coinbase + pool->nonce2_offset, &nonce2le, pool->n2size);
 	pool->nonce2++;
 	cg_dwlock(&pool->gbt_lock);
 	merkleroot = __gbt_merkleroot(pool);
@@ -1720,8 +1722,9 @@ static bool gbt_decode(struct pool *pool, json_t *res_val)
 	free(pool->coinbasetxn);
 	pool->coinbasetxn = strdup(coinbasetxn);
 	cbt_len = strlen(pool->coinbasetxn) / 2;
-	pool->coinbase_len = cbt_len + 4;
-	/* We add 4 bytes of extra data corresponding to nonce2 of stratum */
+	/* We add 8 bytes of extra data corresponding to nonce2 */
+	pool->n2size = 8;
+	pool->coinbase_len = cbt_len + pool->n2size;
 	cal_len = pool->coinbase_len + 1;
 	align_len(&cal_len);
 	free(pool->coinbase);
@@ -1732,7 +1735,7 @@ static bool gbt_decode(struct pool *pool, json_t *res_val)
 	extra_len = (uint8_t *)(pool->coinbase + 41);
 	orig_len = *extra_len;
 	hex2bin(pool->coinbase + 42, pool->coinbasetxn + 84, orig_len);
-	*extra_len += 4;
+	*extra_len += pool->n2size;
 	hex2bin(pool->coinbase + 42 + *extra_len, pool->coinbasetxn + 84 + (orig_len * 2),
 		cbt_len - orig_len - 42);
 	pool->nonce2_offset = orig_len + 42;
@@ -3350,6 +3353,17 @@ static void _copy_work(struct work *work, const struct work *base_work, int noff
 		work->coinbase = strdup(base_work->coinbase);
 }
 
+void set_work_ntime(struct work *work, int ntime)
+{
+	uint32_t *work_ntime = (uint32_t *)(work->data + 68);
+
+	*work_ntime = htobe32(ntime);
+	if (work->ntime) {
+		free(work->ntime);
+		work->ntime = bin2hex((unsigned char *)work_ntime, 4);
+	}
+}
+
 /* Generates a copy of an existing work struct, creating fresh heap allocations
  * for all dynamically allocated arrays within the struct. noffset is used for
  * when a driver has internally rolled the ntime, noffset is a relative value.
@@ -3660,11 +3674,13 @@ int restart_wait(struct thr_info *thr, unsigned int mstime)
 	
 static void flush_queue(struct cgpu_info *cgpu);
 
-static void restart_threads(void)
+static void *restart_thread(void __maybe_unused *arg)
 {
 	struct pool *cp = current_pool();
 	struct cgpu_info *cgpu;
-	int i;
+	int i, mt;
+
+	pthread_detach(pthread_self());
 
 	/* Artificially set the lagging flag to avoid pool not providing work
 	 * fast enough  messages after every long poll */
@@ -3674,19 +3690,35 @@ static void restart_threads(void)
 	discard_stale();
 
 	rd_lock(&mining_thr_lock);
-	for (i = 0; i < mining_threads; i++) {
+	mt = mining_threads;
+	rd_unlock(&mining_thr_lock);
+
+	for (i = 0; i < mt; i++) {
 		cgpu = mining_thr[i]->cgpu;
 		if (unlikely(!cgpu))
+			continue;
+		if (cgpu->deven != DEV_ENABLED)
 			continue;
 		mining_thr[i]->work_restart = true;
 		flush_queue(cgpu);
 		cgpu->drv->flush_work(cgpu);
 	}
-	rd_unlock(&mining_thr_lock);
 
 	mutex_lock(&restart_lock);
 	pthread_cond_broadcast(&restart_cond);
 	mutex_unlock(&restart_lock);
+
+	return NULL;
+}
+
+/* In order to prevent a deadlock via the various drv->flush_work
+ * implementations we send the restart messages via a separate thread. */
+static void restart_threads(void)
+{
+	pthread_t rthread;
+
+	if (unlikely(pthread_create(&rthread, NULL, restart_thread, NULL)))
+		quit(1, "Failed to create restart thread");
 }
 
 static void signal_work_update(void)
@@ -4299,6 +4331,30 @@ void zero_stats(void)
 	}
 }
 
+static void set_highprio(void)
+{
+#ifndef WIN32
+	int ret = nice(-10);
+
+	if (!ret)
+		applog(LOG_DEBUG, "Unable to set thread to high priority");
+#else
+	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+#endif
+}
+
+static void set_lowprio(void)
+{
+#ifndef WIN32
+	int ret = nice(10);
+
+	if (!ret)
+		applog(LOG_INFO, "Unable to set thread to low priority");
+#else
+	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_LOWEST);
+#endif
+}
+
 #ifdef HAVE_CURSES
 static void display_pools(void)
 {
@@ -4706,6 +4762,7 @@ static void *api_thread(void *userdata)
 
 	RenameThread("api");
 
+	set_lowprio();
 	api(api_thr_id);
 
 	PTH(mythr) = 0L;
@@ -5195,10 +5252,11 @@ static void *stratum_sthread(void *userdata)
 		quit(1, "Failed to create stratum_q in stratum_sthread");
 
 	while (42) {
-		char noncehex[12], nonce2hex[20];
+		char noncehex[12], nonce2hex[20], s[1024];
 		struct stratum_share *sshare;
 		uint32_t *hash32, nonce;
-		char s[1024], nonce2[8];
+		unsigned char nonce2[8];
+		uint64_t *nonce2_64;
 		struct work *work;
 		bool submitted;
 
@@ -5233,10 +5291,9 @@ static void *stratum_sthread(void *userdata)
 		sshare->id = swork_id++;
 		mutex_unlock(&sshare_lock);
 
-		memset(nonce2, 0, 8);
-		/* We only use uint32_t sized nonce2 increments internally */
-		memcpy(nonce2, &work->nonce2, sizeof(uint32_t));
-		__bin2hex(nonce2hex, (const unsigned char *)nonce2, work->nonce2_len);
+		nonce2_64 = (uint64_t *)nonce2;
+		*nonce2_64 = htole64(work->nonce2);
+		__bin2hex(nonce2hex, nonce2, work->nonce2_len);
 
 		snprintf(s, sizeof(s),
 			"{\"params\": [\"%s\", \"%s\", \"%s\", \"%s\", \"%s\"], \"id\": %d, \"method\": \"mining.submit\"}",
@@ -5368,7 +5425,7 @@ retry_stratum:
 	}
 
 	/* Probe for GBT support on first pass */
-	if (!pool->probed && !opt_fix_protocol) {
+	if (!pool->probed) {
 		applog(LOG_DEBUG, "Probing for GBT support");
 		val = json_rpc_call(curl, pool->rpc_url, pool->rpc_userpass,
 				    gbt_req, true, false, &rolltime, pool, false);
@@ -5641,12 +5698,15 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
 {
 	unsigned char merkle_root[32], merkle_sha[64];
 	uint32_t *data32, *swap32;
+	uint64_t nonce2le;
 	int i;
 
 	cg_wlock(&pool->data_lock);
 
-	/* Update coinbase */
-	memcpy(pool->coinbase + pool->nonce2_offset, &pool->nonce2, sizeof(uint32_t));
+	/* Update coinbase. Always use an LE encoded nonce2 to fill in values
+	 * from left to right and prevent overflow errors with small n2sizes */
+	nonce2le = htole64(pool->nonce2);
+	memcpy(pool->coinbase + pool->nonce2_offset, &nonce2le, pool->n2size);
 	work->nonce2 = pool->nonce2++;
 	work->nonce2_len = pool->n2size;
 
@@ -5686,7 +5746,8 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
 		merkle_hash = bin2hex((const unsigned char *)merkle_root, 32);
 		applog(LOG_DEBUG, "Generated stratum merkle %s", merkle_hash);
 		applog(LOG_DEBUG, "Generated stratum header %s", header);
-		applog(LOG_DEBUG, "Work job_id %s nonce2 %d ntime %s", work->job_id, work->nonce2, work->ntime);
+		applog(LOG_DEBUG, "Work job_id %s nonce2 %"PRIu64" ntime %s", work->job_id,
+		       work->nonce2, work->ntime);
 		free(header);
 		free(merkle_hash);
 	}
@@ -6197,6 +6258,30 @@ void __work_completed(struct cgpu_info *cgpu, struct work *work)
 	cgpu->queued_count--;
 	HASH_DEL(cgpu->queued_work, work);
 }
+
+/* This iterates over a queued hashlist finding work started more than secs
+ * seconds ago and discards the work as completed. The driver must set the
+ * work->tv_work_start value appropriately. Returns the number of items aged. */
+int age_queued_work(struct cgpu_info *cgpu, double secs)
+{
+	struct work *work, *tmp;
+	struct timeval tv_now;
+	int aged = 0;
+
+	cgtime(&tv_now);
+
+	wr_lock(&cgpu->qlock);
+	HASH_ITER(hh, cgpu->queued_work, work, tmp) {
+		if (tdiff(&tv_now, &work->tv_work_start) > secs) {
+			__work_completed(cgpu, work);
+			aged++;
+		}
+	}
+	wr_unlock(&cgpu->qlock);
+
+	return aged;
+}
+
 /* This function should be used by queued device drivers when they're sure
  * the work struct is no longer in use. */
 void work_completed(struct cgpu_info *cgpu, struct work *work)
@@ -6368,6 +6453,7 @@ void *miner_thread(void *userdata)
 	applog(LOG_DEBUG, "Waiting on sem in miner thread");
 	cgsem_wait(&mythr->sem);
 
+	set_highprio();
 	drv->hash_work(mythr);
 out:
 	drv->thread_shutdown(mythr);
@@ -6646,6 +6732,8 @@ static void *watchpool_thread(void __maybe_unused *userdata)
 
 	RenameThread("watchpool");
 
+	set_lowprio();
+
 	while (42) {
 		struct timeval now;
 		int i;
@@ -6729,6 +6817,7 @@ static void *watchdog_thread(void __maybe_unused *userdata)
 
 	RenameThread("watchdog");
 
+	set_lowprio();
 	memset(&zero_tv, 0, sizeof(struct timeval));
 	cgtime(&rotate_tv);
 
@@ -7719,6 +7808,37 @@ int main(int argc, char *argv[])
 			quit(1, "Failed to calloc mining_thr[%d]", i);
 	}
 
+	// Start threads
+	k = 0;
+	for (i = 0; i < total_devices; ++i) {
+		struct cgpu_info *cgpu = devices[i];
+		cgpu->thr = malloc(sizeof(*cgpu->thr) * (cgpu->threads+1));
+		cgpu->thr[cgpu->threads] = NULL;
+		cgpu->status = LIFE_INIT;
+
+		for (j = 0; j < cgpu->threads; ++j, ++k) {
+			thr = get_thread(k);
+			thr->id = k;
+			thr->cgpu = cgpu;
+			thr->device_thread = j;
+
+			if (!cgpu->drv->thread_prepare(thr))
+				continue;
+
+			if (unlikely(thr_info_create(thr, NULL, miner_thread, thr)))
+				quit(1, "thread %d create failed", thr->id);
+
+			cgpu->thr[j] = thr;
+
+			/* Enable threads for devices set not to mine but disable
+			 * their queue in case we wish to enable them later */
+			if (cgpu->deven != DEV_DISABLED) {
+				applog(LOG_DEBUG, "Pushing sem post to thread %d", thr->id);
+				cgsem_post(&thr->sem);
+			}
+		}
+	}
+
 	if (opt_benchmark)
 		goto begin_bench;
 
@@ -7775,44 +7895,6 @@ begin_bench:
 	cgtime(&total_tv_start);
 	cgtime(&total_tv_end);
 	get_datestamp(datestamp, sizeof(datestamp), &total_tv_start);
-
-	// Start threads
-	k = 0;
-	for (i = 0; i < total_devices; ++i) {
-		struct cgpu_info *cgpu = devices[i];
-		cgpu->thr = malloc(sizeof(*cgpu->thr) * (cgpu->threads+1));
-		cgpu->thr[cgpu->threads] = NULL;
-		cgpu->status = LIFE_INIT;
-
-		for (j = 0; j < cgpu->threads; ++j, ++k) {
-			thr = get_thread(k);
-			thr->id = k;
-			thr->cgpu = cgpu;
-			thr->device_thread = j;
-
-			if (!cgpu->drv->thread_prepare(thr))
-				continue;
-
-			if (unlikely(thr_info_create(thr, NULL, miner_thread, thr)))
-				quit(1, "thread %d create failed", thr->id);
-
-			cgpu->thr[j] = thr;
-
-			/* Enable threads for devices set not to mine but disable
-			 * their queue in case we wish to enable them later */
-			if (cgpu->deven != DEV_DISABLED) {
-				applog(LOG_DEBUG, "Pushing sem post to thread %d", thr->id);
-				cgsem_post(&thr->sem);
-			}
-		}
-	}
-
-	applog(LOG_INFO, "%d gpu miner threads started", gpu_threads);
-	for (i = 0; i < nDevs; i++)
-		pause_dynamic_threads(i);
-
-	cgtime(&total_tv_start);
-	cgtime(&total_tv_end);
 
 	watchpool_thr_id = 2;
 	thr = &control_thr[watchpool_thr_id];
