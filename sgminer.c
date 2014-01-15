@@ -7603,7 +7603,7 @@ int main(int argc, char *argv[])
 	timeBeginPeriod(1);
 #endif
 	opt_kernel_path = alloca(PATH_MAX);
-	strcpy(opt_kernel_path, CGMINER_PREFIX);
+	strcpy(opt_kernel_path, SGMINER_PREFIX);
 	cgminer_path = alloca(PATH_MAX);
 	s = strdup(argv[0]);
 	strcpy(cgminer_path, dirname(s));
