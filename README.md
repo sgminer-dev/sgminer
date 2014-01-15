@@ -20,7 +20,7 @@ Documentation is available in directory `doc`. For details on several topics, se
 * `API` for the RPC API specification;
 * `SCRYPT` for how to find the right balance in GPU configuration to mine Scrypt-based coins effectively;
 * `FAQ` for frequently asked questions;
-* `GPU` for semi-obsolete information on mining SHA256d-based coins;
+* `GPU` for semi-obsolete information on GPU configuration options and mining SHA256d-based coins;
 * `windows-build` for information on how to build on Windows.
 
 Note that **most of the documentation is outdated**. If you want to contribute, fork this repository, update as needed, and submit a pull request.
