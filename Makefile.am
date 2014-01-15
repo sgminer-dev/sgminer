@@ -5,17 +5,16 @@ JANSSON_CPPFLAGS= -I$(top_builddir)/compat/jansson-2.5/src -I$(top_srcdir)/compa
 
 EXTRA_DIST	= example.conf m4/gnulib-cache.m4 \
 		  ADL_SDK/readme.txt api-example.php miner.php	\
-		  API.class API.java api-example.c windows-build.txt \
-		  API-README SCRYPT-README hexdump.c GPU-README
+		  API.class API.java api-example.c hexdump.c \
+		  doc/API doc/FAQ doc/GPU doc/SCRYPT doc/windows-build.txt
 
 SUBDIRS		= lib compat ccan
 
-INCLUDES	= $(PTHREAD_FLAGS) -fno-strict-aliasing $(JANSSON_CPPFLAGS)
+bin_PROGRAMS     = sgminer
 
-bin_PROGRAMS	= sgminer
-
-sgminer_LDFLAGS	= $(PTHREAD_FLAGS)
-sgminer_LDADD	= $(DLOPEN_FLAGS) @LIBCURL_LIBS@ @JANSSON_LIBS@ @PTHREAD_LIBS@ \
+sgminer_CPPFLAGS = $(PTHREAD_FLAGS) -fno-strict-aliasing $(JANSSON_CPPFLAGS)
+sgminer_LDFLAGS  = $(PTHREAD_FLAGS)
+sgminer_LDADD    = $(DLOPEN_FLAGS) @LIBCURL_LIBS@ @JANSSON_LIBS@ @PTHREAD_LIBS@ \
 		  @OPENCL_LIBS@ @NCURSES_LIBS@ @PDCURSES_LIBS@ @WS2_LIBS@ \
 		  @MM_LIBS@ @RT_LIBS@ @MATH_LIBS@ lib/libgnu.a ccan/libccan.a
 
