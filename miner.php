@@ -22,7 +22,7 @@ $doctype = "<!DOCTYPE html>\n";
 $title = 'Mine';
 #
 # Set $readonly to true to force miner.php to be readonly
-# Set $readonly to false then it will check cgminer 'privileged'
+# Set $readonly to false then it will check sgminer 'privileged'
 $readonly = false;
 #
 # Set $userlist to null to allow anyone access or read API-README
@@ -44,7 +44,7 @@ $checklastshare = true;
 # N.B. also if $readonly is true, it will not display the fields
 $poolinputs = false;
 #
-# Set $rigs to an array of your cgminer rigs that are running
+# Set $rigs to an array of your sgminer rigs that are running
 #  format: 'IP:Port' or 'Host:Port' or 'Host:Port:Name'
 $rigs = array('127.0.0.1:4028');
 #
@@ -54,16 +54,16 @@ $mcast = false;
 # Set $mcastexpect to at least how many rigs you expect it to find
 $mcastexpect = 0;
 #
-# API Multicast address all cgminers are listening on
+# API Multicast address all sgminers are listening on
 $mcastaddr = '224.0.0.75';
 #
-# API Multicast UDP port all cgminers are listening on
+# API Multicast UDP port all sgminers are listening on
 $mcastport = 4028;
 #
-# The code all cgminers expect in the Multicast message sent
+# The code all sgminers expect in the Multicast message sent
 $mcastcode = 'FTW';
 #
-# UDP port cgminers are to reply on (by request)
+# UDP port sgminers are to reply on (by request)
 $mcastlistport = 4027;
 #
 # Set $mcasttimeout to the number of seconds (floating point)
@@ -437,7 +437,7 @@ function mcastrigs()
 		return;
 	}
 
-	$buf = "cgminer-$mcastcode-$mcastlistport";
+	$buf = "sgminer-$mcastcode-$mcastlistport";
 	socket_sendto($mcast_soc, $buf, strlen($buf), 0, $mcastaddr, $mcastport);
 	socket_close($mcast_soc);
 
@@ -1569,7 +1569,7 @@ function rigbutton($rig, $rigname, $when, $row)
 #
 function showrigs($anss, $headname, $rigname)
 {
- $dthead = array($headname => 1, 'STATUS' => 1, 'Description' => 1, 'When' => 1, 'API' => 1, 'CGMiner' => 1);
+ $dthead = array($headname => 1, 'STATUS' => 1, 'Description' => 1, 'When' => 1, 'API' => 1, 'sgminer' => 1);
  showhead('', $dthead);
 
  foreach ($anss as $rig => $ans)
@@ -1850,8 +1850,8 @@ function pagebuttons($rig, $pg)
 	$rg = '';
 	if (count($rigs) > 1)
 		$rg = " Rig $rig";
-	echo "<input type=button value='Restart' onclick='prc(\"restart&rig=$rig\",\"Restart CGMiner$rg\")'>";
-	echo "&nbsp;<input type=button value='Quit' onclick='prc(\"quit&rig=$rig\",\"Quit CGMiner$rg\")'>";
+	echo "<input type=button value='Restart' onclick='prc(\"restart&rig=$rig\",\"Restart sgminer$rg\")'>";
+	echo "&nbsp;<input type=button value='Quit' onclick='prc(\"quit&rig=$rig\",\"Quit sgminer$rg\")'>";
  }
  refreshbuttons();
  if (isset($_SESSION[$ses]))
@@ -1881,7 +1881,7 @@ function doOne($rig, $preprocess)
  if ($notify)
 	$cmds['notify'] = 'device status';
 
- $cmds['config'] = 'cgminer config';
+ $cmds['config'] = 'sgminer config';
 
  process($cmds, $rig);
 

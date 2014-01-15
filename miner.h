@@ -403,7 +403,7 @@ enum dev_reason {
 
 #define MIN_SEC_UNSET 99999999
 
-struct cgminer_stats {
+struct sgminer_stats {
 	uint32_t getwork_calls;
 	struct timeval getwork_wait;
 	struct timeval getwork_wait_max;
@@ -411,7 +411,7 @@ struct cgminer_stats {
 };
 
 // Just the actual network getworks to the pool
-struct cgminer_pool_stats {
+struct sgminer_pool_stats {
 	uint32_t getwork_calls;
 	uint32_t getwork_attempts;
 	struct timeval getwork_wait;
@@ -436,7 +436,7 @@ struct cgminer_pool_stats {
 };
 
 struct cgpu_info {
-	int cgminer_id;
+	int sgminer_id;
 	struct device_drv *drv;
 	int device_id;
 	char *name;
@@ -517,7 +517,7 @@ struct cgpu_info {
 	int dev_comms_error_count;
 	int dev_throttle_count;
 
-	struct cgminer_stats cgminer_stats;
+	struct sgminer_stats sgminer_stats;
 
 	pthread_rwlock_t qlock;
 	struct work *queued_work;
@@ -951,7 +951,7 @@ extern bool opt_protocol;
 extern bool have_longpoll;
 extern char *opt_kernel_path;
 extern char *opt_socks_proxy;
-extern char *cgminer_path;
+extern char *sgminer_path;
 extern bool opt_fail_only;
 extern bool opt_autofan;
 extern bool opt_autoengine;
@@ -1214,8 +1214,8 @@ struct pool {
 	double last_share_diff;
 	uint64_t best_diff;
 
-	struct cgminer_stats cgminer_stats;
-	struct cgminer_pool_stats cgminer_pool_stats;
+	struct sgminer_stats sgminer_stats;
+	struct sgminer_pool_stats sgminer_pool_stats;
 
 	/* The last block this particular pool knows about */
 	char prev_block[32];

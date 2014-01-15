@@ -53,7 +53,7 @@ class MCast implements Runnable
 		System.err.println("usAge: java MCast [-v] [code [toaddr [port [replyport [wait]]]]]");
 		System.err.println("       -v=report elapsed ms to last reply");
 		System.err.println("     Anything below missing or blank will use it's default");
-		System.err.println("       code=X in cgminer-X-Port default="+MCAST_CODE);
+		System.err.println("       code=X in sgminer-X-Port default="+MCAST_CODE);
 		System.err.println("       toaddr=multicast address default="+MCAST_ADDR);
 		System.err.println("       port=multicast port default="+MCAST_PORT);
 		System.err.println("       replyport=local post to listen for replies default="+MCAST_REPORT);
@@ -188,7 +188,7 @@ class MCast implements Runnable
 	{
 		try
 		{
-			String message = new String("cgminer-" + code + "-" + report);
+			String message = new String("sgminer-" + code + "-" + report);
 			MulticastSocket socket = null;
 			DatagramPacket packet = null;
 

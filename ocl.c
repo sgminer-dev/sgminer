@@ -47,8 +47,8 @@ char *file_contents(const char *filename, int *length)
 	/* Try in the optional kernel path or installed prefix first */
 	f = fopen(fullpath, "rb");
 	if (!f) {
-		/* Then try from the path cgminer was called */
-		strcpy(fullpath, cgminer_path);
+		/* Then try from the path sgminer was called */
+		strcpy(fullpath, sgminer_path);
 		strcat(fullpath, filename);
 		f = fopen(fullpath, "rb");
 	}

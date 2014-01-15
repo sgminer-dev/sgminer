@@ -142,7 +142,7 @@ int opt_tcp_keepalive;
 #endif
 
 char *opt_kernel_path;
-char *cgminer_path;
+char *sgminer_path;
 
 #define QUIET	(opt_quiet || opt_realquiet)
 
@@ -256,7 +256,7 @@ static struct stratum_share *stratum_shares = NULL;
 
 char *opt_socks_proxy = NULL;
 
-static const char def_conf[] = "cgminer.conf";
+static const char def_conf[] = "sgminer.conf";
 static char *default_config;
 static bool config_loaded;
 static int include_count;
@@ -960,7 +960,7 @@ static struct opt_table opt_config_table[] = {
 		     "Allow API access only to the given list of [G:]IP[/Prefix] addresses[/subnets]"),
 	OPT_WITH_ARG("--api-description",
 		     set_api_description, NULL, NULL,
-		     "Description placed in the API status header, default: cgminer version"),
+		     "Description placed in the API status header, default: sgminer version"),
 	OPT_WITH_ARG("--api-groups",
 		     set_api_groups, NULL, NULL,
 		     "API one letter groups G:cmd:cmd[,P:cmd:*...] defining the cmds a groups can use"),
@@ -1001,7 +1001,7 @@ static struct opt_table opt_config_table[] = {
 		     "Change multipool strategy from failover to even share balance"),
 	OPT_WITHOUT_ARG("--benchmark",
 			opt_set_bool, &opt_benchmark,
-			"Run cgminer in benchmark mode - produces no shares"),
+			"Run sgminer in benchmark mode - produces no shares"),
 #ifdef HAVE_CURSES
 	OPT_WITHOUT_ARG("--compact",
 			opt_set_bool, &opt_compact,
@@ -2632,7 +2632,7 @@ out:
 static bool get_upstream_work(struct work *work, CURL *curl)
 {
 	struct pool *pool = work->pool;
-	struct cgminer_pool_stats *pool_stats = &(pool->cgminer_pool_stats);
+	struct sgminer_pool_stats *pool_stats = &(pool->sgminer_pool_stats);
 	struct timeval tv_elapsed;
 	json_t *val = NULL;
 	bool rc = false;
@@ -2836,7 +2836,7 @@ static double le256todouble(const void *target)
  */
 static void calc_diff(struct work *work, double known)
 {
-	struct cgminer_pool_stats *pool_stats = &(work->pool->cgminer_pool_stats);
+	struct sgminer_pool_stats *pool_stats = &(work->pool->sgminer_pool_stats);
 	double difficulty;
 	int intdiff;
 
@@ -2876,7 +2876,7 @@ static void calc_diff(struct work *work, double known)
 static void get_benchmark_work(struct work *work)
 {
 	// Use a random work block pulled from a pool
-	static uint8_t bench_block[] = { CGMINER_BENCHMARK_BLOCK };
+	static uint8_t bench_block[] = { SGMINER_BENCHMARK_BLOCK };
 
 	size_t bench_size = sizeof(*work);
 	size_t work_size = sizeof(bench_block);
@@ -3437,7 +3437,7 @@ static bool stale_work(struct work *work, bool share)
 
 	/* Factor in the average getwork delay of this pool, rounding it up to
 	 * the nearest second */
-	getwork_delay = pool->cgminer_pool_stats.getwork_wait_rolling * 5 + 1;
+	getwork_delay = pool->sgminer_pool_stats.getwork_wait_rolling * 5 + 1;
 	work_expiry -= getwork_delay;
 	if (unlikely(work_expiry < 5))
 		work_expiry = 5;
@@ -4626,7 +4626,7 @@ void default_save_file(char *filename)
 	}
 	else
 		strcpy(filename, "");
-	strcat(filename, ".cgminer/");
+	strcat(filename, ".sgminer/");
 	mkdir(filename, 0777);
 #else
 	strcpy(filename, "");
@@ -5995,8 +5995,8 @@ static void hash_sole_work(struct thr_info *mythr)
 	struct cgpu_info *cgpu = mythr->cgpu;
 	struct device_drv *drv = cgpu->drv;
 	struct timeval getwork_start, tv_start, *tv_end, tv_workstart, tv_lastupdate;
-	struct cgminer_stats *dev_stats = &(cgpu->cgminer_stats);
-	struct cgminer_stats *pool_stats;
+	struct sgminer_stats *dev_stats = &(cgpu->sgminer_stats);
+	struct sgminer_stats *pool_stats;
 	/* Try to cycle approximately 5 times before each log update */
 	const long cycle = opt_log_interval / 5 ? : 1;
 	const bool primary = (!mythr->device_thread) || mythr->primary_thread;
@@ -6054,7 +6054,7 @@ static void hash_sole_work(struct thr_info *mythr)
 				copy_time(&dev_stats->getwork_wait_min, &getwork_start);
 			dev_stats->getwork_calls++;
 
-			pool_stats = &(work->pool->cgminer_stats);
+			pool_stats = &(work->pool->sgminer_stats);
 
 			addtime(&getwork_start, &pool_stats->getwork_wait);
 			if (time_more(&getwork_start, &pool_stats->getwork_wait_max))
@@ -7335,7 +7335,7 @@ void enable_curses(void) {
 }
 #endif
 
-static int cgminer_id_count = 0;
+static int sgminer_id_count = 0;
 
 /* Various noop functions for drivers that don't support or need their
  * variants. */
@@ -7442,7 +7442,7 @@ void enable_device(struct cgpu_info *cgpu)
 	cgpu->deven = DEV_ENABLED;
 
 	wr_lock(&devices_lock);
-	devices[cgpu->cgminer_id = cgminer_id_count++] = cgpu;
+	devices[cgpu->sgminer_id = sgminer_id_count++] = cgpu;
 	wr_unlock(&devices_lock);
 
 	if (hotplug_mode) {
@@ -7604,11 +7604,11 @@ int main(int argc, char *argv[])
 #endif
 	opt_kernel_path = alloca(PATH_MAX);
 	strcpy(opt_kernel_path, SGMINER_PREFIX);
-	cgminer_path = alloca(PATH_MAX);
+	sgminer_path = alloca(PATH_MAX);
 	s = strdup(argv[0]);
-	strcpy(cgminer_path, dirname(s));
+	strcpy(sgminer_path, dirname(s));
 	free(s);
-	strcat(cgminer_path, "/");
+	strcat(sgminer_path, "/");
 
 	devcursor = 8;
 	logstart = devcursor + 1;
@@ -7675,7 +7675,7 @@ int main(int argc, char *argv[])
 			case -1:
 				applog(LOG_WARNING, "Error in configuration file, partially loaded.");
 				if (use_curses)
-					applog(LOG_WARNING, "Start cgminer with -T to see what failed to load.");
+					applog(LOG_WARNING, "Start sgminer with -T to see what failed to load.");
 				break;
 			default:
 				break;
@@ -7730,7 +7730,7 @@ int main(int argc, char *argv[])
 				devices[i]->deven = DEV_DISABLED;
 			}
 		}
-		total_devices = cgminer_id_count;
+		total_devices = sgminer_id_count;
 	} else {
 		for (i = 0; i < total_devices; ++i)
 			enable_device(devices[i]);
@@ -7744,7 +7744,7 @@ int main(int argc, char *argv[])
 	load_temp_cutoffs();
 
 	for (i = 0; i < total_devices; ++i)
-		devices[i]->cgminer_stats.getwork_wait_min.tv_sec = MIN_SEC_UNSET;
+		devices[i]->sgminer_stats.getwork_wait_min.tv_sec = MIN_SEC_UNSET;
 
 	if (!opt_compact) {
 		logstart += most_devices;
@@ -7773,8 +7773,8 @@ int main(int argc, char *argv[])
 		struct pool *pool = pools[i];
 		size_t siz;
 
-		pool->cgminer_stats.getwork_wait_min.tv_sec = MIN_SEC_UNSET;
-		pool->cgminer_pool_stats.getwork_wait_min.tv_sec = MIN_SEC_UNSET;
+		pool->sgminer_stats.getwork_wait_min.tv_sec = MIN_SEC_UNSET;
+		pool->sgminer_pool_stats.getwork_wait_min.tv_sec = MIN_SEC_UNSET;
 
 		if (!pool->rpc_userpass) {
 			if (!pool->rpc_user || !pool->rpc_pass)
@@ -7874,7 +7874,7 @@ int main(int argc, char *argv[])
 #ifdef HAVE_CURSES
 			if (use_curses) {
 				halfdelay(150);
-				applog(LOG_ERR, "Press any key to exit, or cgminer will try again in 15s.");
+				applog(LOG_ERR, "Press any key to exit, or sgminer will try again in 15s.");
 				if (getch() != ERR)
 					quit(0, "No servers could be used! Exiting.");
 				cbreak();

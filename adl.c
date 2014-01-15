@@ -790,7 +790,7 @@ int gpu_fanpercent(int gpu)
 		/* Recursive calling applog causes a hang, so disable messages */
 		applog(LOG_WARNING, "GPU %d stopped reporting fanspeed due to driver corruption", gpu);
 		if (opt_restart) {
-			applog(LOG_WARNING, "Restart enabled, will attempt to restart cgminer");
+			applog(LOG_WARNING, "Restart enabled, will attempt to restart sgminer");
 			applog(LOG_WARNING, "You can disable this with the --no-restart option");
 			app_restart();
 		}
