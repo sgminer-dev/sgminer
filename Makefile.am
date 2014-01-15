@@ -12,33 +12,33 @@ SUBDIRS		= lib compat ccan
 
 INCLUDES	= $(PTHREAD_FLAGS) -fno-strict-aliasing $(JANSSON_CPPFLAGS)
 
-bin_PROGRAMS	= cgminer
+bin_PROGRAMS	= sgminer
 
-cgminer_LDFLAGS	= $(PTHREAD_FLAGS)
-cgminer_LDADD	= $(DLOPEN_FLAGS) @LIBCURL_LIBS@ @JANSSON_LIBS@ @PTHREAD_LIBS@ \
+sgminer_LDFLAGS	= $(PTHREAD_FLAGS)
+sgminer_LDADD	= $(DLOPEN_FLAGS) @LIBCURL_LIBS@ @JANSSON_LIBS@ @PTHREAD_LIBS@ \
 		  @OPENCL_LIBS@ @NCURSES_LIBS@ @PDCURSES_LIBS@ @WS2_LIBS@ \
 		  @MM_LIBS@ @RT_LIBS@ @MATH_LIBS@ lib/libgnu.a ccan/libccan.a
 
-cgminer_CPPFLAGS += -I$(top_builddir)/lib -I$(top_srcdir)/lib @OPENCL_FLAGS@
+sgminer_CPPFLAGS += -I$(top_builddir)/lib -I$(top_srcdir)/lib @OPENCL_FLAGS@
 
 if !HAVE_WINDOWS
-cgminer_CPPFLAGS += @LIBCURL_CFLAGS@
+sgminer_CPPFLAGS += @LIBCURL_CFLAGS@
 endif
 
-cgminer_CPPFLAGS += $(ADL_CPPFLAGS)
+sgminer_CPPFLAGS += $(ADL_CPPFLAGS)
 
-cgminer_SOURCES := cgminer.c
-cgminer_SOURCES	+= api.c
-cgminer_SOURCES	+= elist.h miner.h compat.h bench_block.h
-cgminer_SOURCES	+= util.c util.h uthash.h
-cgminer_SOURCES	+= sha2.c sha2.h
-cgminer_SOURCES	+= logging.c logging.h
-cgminer_SOURCES += driver-opencl.c driver-opencl.h
-cgminer_SOURCES += ocl.c ocl.h
-cgminer_SOURCES += findnonce.c findnonce.h
-cgminer_SOURCES += adl.c adl.h adl_functions.h
-cgminer_SOURCES += scrypt.c scrypt.h
-cgminer_SOURCES += *.cl
+sgminer_SOURCES := sgminer.c
+sgminer_SOURCES	+= api.c
+sgminer_SOURCES	+= elist.h miner.h compat.h bench_block.h
+sgminer_SOURCES	+= util.c util.h uthash.h
+sgminer_SOURCES	+= sha2.c sha2.h
+sgminer_SOURCES	+= logging.c logging.h
+sgminer_SOURCES += driver-opencl.c driver-opencl.h
+sgminer_SOURCES += ocl.c ocl.h
+sgminer_SOURCES += findnonce.c findnonce.h
+sgminer_SOURCES += adl.c adl.h adl_functions.h
+sgminer_SOURCES += scrypt.c scrypt.h
+sgminer_SOURCES += *.cl
 
 bin_SCRIPTS	= $(top_srcdir)/*.cl
 

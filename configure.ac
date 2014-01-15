@@ -11,12 +11,12 @@ m4_define([lt_age], v_min)
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 
-AC_INIT([cgminer], [v_ver], [kernel@kolivas.org])
+AC_INIT([sgminer], [v_ver], [kernel@kolivas.org])
 
 AC_PREREQ(2.59)
 AC_CANONICAL_SYSTEM
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR([cgminer.c])
+AC_CONFIG_SRCDIR([sgminer.c])
 AC_CONFIG_HEADERS([config.h])
 
 AM_INIT_AUTOMAKE([foreign subdir-objects])
@@ -27,9 +27,9 @@ AC_USE_SYSTEM_EXTENSIONS
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 m4_ifdef([v_rev], , [m4_define([v_rev], [0])])
 m4_ifdef([v_rel], , [m4_define([v_rel], [])])
-AC_DEFINE_UNQUOTED(CGMINER_MAJOR_VERSION, [v_maj], [Major version])
-AC_DEFINE_UNQUOTED(CGMINER_MINOR_VERSION, [v_min], [Minor version])
-AC_DEFINE_UNQUOTED(CGMINER_MINOR_SUBVERSION, [v_mic], [Micro version])
+AC_DEFINE_UNQUOTED(SGMINER_MAJOR_VERSION, [v_maj], [Major version])
+AC_DEFINE_UNQUOTED(SGMINER_MINOR_VERSION, [v_min], [Minor version])
+AC_DEFINE_UNQUOTED(SGMINER_MINOR_SUBVERSION, [v_mic], [Micro version])
 version_info="lt_rev:lt_cur:lt_age"
 release_info="v_rel"
 AC_SUBST(version_info)
@@ -128,11 +128,11 @@ if test "x$have_win32" != xtrue; then
 	fi
 fi
 
-have_cgminer_sdk=false
-if test -n "$CGMINER_SDK"; then
-	have_cgminer_sdk=true
-	CPPFLAGS="-I$CGMINER_SDK/include $CPPFLAGS"
-	LDFLAGS="-L$CGMINER_SDK/lib/$target $LDFLAGS"
+have_sgminer_sdk=false
+if test -n "$SGMINER_SDK"; then
+	have_sgminer_sdk=true
+	CPPFLAGS="-I$SGMINER_SDK/include $CPPFLAGS"
+	LDFLAGS="-L$SGMINER_SDK/lib/$target $LDFLAGS"
 fi
 
 opencl="yes"
@@ -194,8 +194,8 @@ if test "$found_opencl" = 1; then
 	if test "x$adl" != xno; then
 		ADL_CPPFLAGS=
 		AC_CHECK_FILE([$srcdir/ADL_SDK/adl_sdk.h], [have_adl=true; ADL_CPPFLAGS=-I$srcdir], have_adl=false,)
-		if test x$have_adl+$have_cgminer_sdk = xfalse+true; then
-			AC_CHECK_FILE([$CGMINER_SDK/include/ADL_SDK/adl_sdk.h], [have_adl=true; ADL_CPPFLAGS=-I$CGMINER_SDK/include], have_adl=false,)
+		if test x$have_adl+$have_sgminer_sdk = xfalse+true; then
+			AC_CHECK_FILE([$SGMINER_SDK/include/ADL_SDK/adl_sdk.h], [have_adl=true; ADL_CPPFLAGS=-I$SGMINER_SDK/include], have_adl=false,)
 		fi
 		if test x$have_adl = xtrue
 		then
@@ -241,14 +241,14 @@ JANSSON_LIBS="compat/jansson-2.5/src/.libs/libjansson.a"
 
 PKG_PROG_PKG_CONFIG()
 
-if test "x$have_cgminer_sdk" = "xtrue"; then
+if test "x$have_sgminer_sdk" = "xtrue"; then
 	if test "x$have_x86_64" = xtrue; then
 		ARCH_DIR=x86_64
 	else
 		ARCH_DIR=x86
 	fi
-	PKG_CONFIG="${PKG_CONFIG:-pkg-config} --define-variable=arch=$ARCH_DIR --define-variable=target=$target --define-variable=cgminersdkdir=$CGMINER_SDK"
-	PKG_CONFIG_PATH="$CGMINER_SDK/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+	PKG_CONFIG="${PKG_CONFIG:-pkg-config} --define-variable=arch=$ARCH_DIR --define-variable=target=$target --define-variable=sgminersdkdir=$SGMINER_SDK"
+	PKG_CONFIG_PATH="$SGMINER_SDK/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 fi
 
 AC_ARG_ENABLE([libcurl],
@@ -315,7 +315,7 @@ if test "x$prefix" = xNONE; then
 	prefix=/usr/local
 fi
 
-AC_DEFINE_UNQUOTED([CGMINER_PREFIX], ["$prefix/bin"], [Path to cgminer install])
+AC_DEFINE_UNQUOTED([SGMINER_PREFIX], ["$prefix/bin"], [Path to sgminer install])
 
 AC_DEFINE_UNQUOTED([SCRYPT_KERNNAME], ["scrypt130511"], [Filename for scrypt kernel])
 

@@ -1,8 +1,4 @@
-# cgminer
-
-**WARNING**: this experimental version of cgminer is only meant to
-support Scrypt. It will be renamed appropriately to reflect the fact if
-ever ready for general use.
+# sgminer
 
 
 ## Introduction
@@ -12,7 +8,7 @@ This is a multi-threaded multi-pool GPU miner with ATI GPU monitoring,
 cgminer by Con Kolivas (ckolivas), which is in turn based on cpuminer by
 Jeff Garzik (jgarzik).
 
-GIT TREE: https://github.com/veox/cgminer
+GIT TREE: https://github.com/veox/sgminer
 
 License: GPLv3.  See `COPYING` for details.
 
@@ -57,27 +53,27 @@ If building from git:
     autoconf
     automake
 
-CGMiner specific configuration options:
+sgminer-specific configuration options:
 
     --disable-adl           Override detection and disable building with adl
-    --without-curses        Compile support for curses TUI (default enabled)
+    --without-curses        Do not compile support for curses TUI
 
 ### *nix build instructions
 
-If needed, place include headers (`*.h` files) from `ADL_SDK_*<VERSION>*.zip` in `cgminer/ADL_SDK`.
+If needed, place include headers (`*.h` files) from `ADL_SDK_*<VERSION>*.zip` in `sgminer/ADL_SDK`.
 
 Then:
 
     autoreconf -i
     CFLAGS="-O2 -Wall -march=native" ./configure <options>
 
-Systemwide installation is optional. You may run cgminer from the build
+Systemwide installation is optional. You may run `sgminer` from the build
 directory directly, or `make install` if you wish to install
-cgminer to a system location or location you specified with `--prefix`.
+`sgminer` to a system location or a location you specified with `--prefix`.
 
 ### Windows build instructions
 
-See `windows-build.txt` (might be outdated).
+See `doc/windows-build.txt` (might be outdated).
 
 
 ## Basic Usage
@@ -85,7 +81,7 @@ See `windows-build.txt` (might be outdated).
 **WARNING**: documentation below this point has not been updated since the
 fork.
 
-After saving configuration from the menu, you do not need to give cgminer
+After saving configuration from the menu, you do not need to give sgminer
 any arguments and it will load your configuration.
 
 Any configuration file may also contain a single
@@ -99,23 +95,23 @@ output.
 
 Single pool:
 
-cgminer -o http://pool:port -u username -p password
+sgminer -o http://pool:port -u username -p password
 
 Multiple pools:
 
-cgminer -o http://pool1:port -u pool1username -p pool1password -o http://pool2:port -u pool2usernmae -p pool2password
+sgminer -o http://pool1:port -u pool1username -p pool1password -o http://pool2:port -u pool2usernmae -p pool2password
 
 Single pool with a standard http proxy, regular desktop:
 
-cgminer -o "http:proxy:port|http://pool:port" -u username -p password
+sgminer -o "http:proxy:port|http://pool:port" -u username -p password
 
 Single pool with a socks5 proxy, regular desktop:
 
-cgminer -o "socks5:proxy:port|http://pool:port" -u username -p password
+sgminer -o "socks5:proxy:port|http://pool:port" -u username -p password
 
 Single pool with stratum protocol support:
 
-cgminer -o stratum+tcp://pool:port -u username -p password
+sgminer -o stratum+tcp://pool:port -u username -p password
 
 The list of proxy types are:
  http:    standard http 1.1 proxy
@@ -125,15 +121,15 @@ The list of proxy types are:
  socks4a: socks4a proxy
  socks5h: socks5 proxy using a hostname
 
-If you compile cgminer with a version of CURL before 7.19.4 then some of
+If you compile sgminer with a version of CURL before 7.19.4 then some of
 the above will not be available. All are available since CURL version
 7.19.4.
 
-If you specify the --socks-proxy option to cgminer, it will only be
+If you specify the --socks-proxy option to sgminer, it will only be
 applied to all pools that don't specify their own proxy setting like
 above.
 
-For more advanced usage , run `cgminer --help`.
+For more advanced usage , run `sgminer --help`.
 
 See `doc/GPU` for more information regarding GPU mining and
 `doc/SCRYPT` for more information regarding Scrypt mining.
@@ -231,7 +227,7 @@ The total difficulty of rejected shares
 The number of hardware erorrs
 The work utility defined as the number of diff1 shares work / minute
 
-The cgminer status line shows:
+The sgminer status line shows:
  ST: 1  SS: 0  NB: 1  LW: 8  GF: 1  RF: 1
 
 ST is STaged work items (ready to use).
@@ -245,7 +241,7 @@ The block display shows:
 Block: 0074c5e482e34a506d2a051a...  Started: [17:17:22]  Best share: 2.71K
 
 This shows a short stretch of the current block, when the new block started,
-and the all time best difficulty share you've found since starting cgminer
+and the all time best difficulty share you've found since starting sgminer
 this time.
 
 
@@ -337,7 +333,7 @@ the above quotas in a configuration file they would be specified thus:
 
 ## Logging
 
-cgminer will log to stderr if it detects stderr is being redirected to a
+sgminer will log to stderr if it detects stderr is being redirected to a
 file. To enable logging simply append `2>logfile.txt` to your command line
 and `logfile.txt` will contain the logged output at the log level you
 specify (normal, verbose, debug etc.)
@@ -366,14 +362,14 @@ usually 0.000 unless there was a problem with submitting the work,
 S:n.nnn is how long it took to submit the completed work and await the reply,
 R:hh:mm:ss is the actual time the work submit reply was received
 
-If you start cgminer with the --sharelog option, you can get detailed
+If you start sgminer with the --sharelog option, you can get detailed
 information for each share found. The argument to the option may be "-" for
 standard output (not advisable with the ncurses UI), any valid positive number
 for that file descriptor, or a filename.
 
 To log share data to a file named "share.log", you can use either:
-./cgminer --sharelog 50 -o xxx -u yyy -p zzz 50>share.log
-./cgminer --sharelog share.log -o xxx -u yyy -p zzz
+./sgminer --sharelog 50 -o xxx -u yyy -p zzz 50>share.log
+./sgminer --sharelog share.log -o xxx -u yyy -p zzz
 
 For every share found, data will be logged in a CSV (Comma Separated Value)
 format:

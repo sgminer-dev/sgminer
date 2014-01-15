@@ -1,13 +1,13 @@
 
-This README contains details about the cgminer RPC API
+This README contains details about the sgminer RPC API
 
 It also includes some detailed information at the end,
 about using miner.php
 
 
-If you start cgminer with the "--api-listen" option, it will listen on a
+If you start sgminer with the "--api-listen" option, it will listen on a
 simple TCP/IP socket for single string API requests from the same machine
-running cgminer and reply with a string and then close the socket each time
+running sgminer and reply with a string and then close the socket each time
 If you add the "--api-network" option, it will accept API requests from any
 network attached computer.
 
@@ -22,7 +22,7 @@ IP addresses are automatically padded with extra '.0's as needed
 Without a /prefix is the same as specifying /32
 0/0 means all IP addresses.
 The 'W:' on the front gives that address/subnet privileged access to commands
-that modify cgminer (thus all API commands)
+that modify sgminer (thus all API commands)
 Without it those commands return an access denied status.
 See --api-groups below to define other groups like W:
 Privileged access is checked in the order the IP addresses were supplied to
@@ -32,7 +32,7 @@ Using the "--api-allow" option overides the "--api-network" option if they
 are both specified
 With "--api-allow", 127.0.0.1 is not by default given access unless specified
 
-If you start cgminer also with the "--api-mcast" option, it will listen for
+If you start sgminer also with the "--api-mcast" option, it will listen for
 a multicast message and reply to it with a message containing it's API port
 number, but only if the IP address of the sender is allowed API access
 
@@ -106,7 +106,7 @@ The STATUS section is:
    Message matching the Code value N
 
   Description=string
-   This defaults to the cgminer version but is the value of --api-description
+   This defaults to the sgminer version but is the value of --api-description
    if it was specified at runtime.
 
 For API version 1.10 and later:
@@ -115,7 +115,7 @@ The list of requests - a (*) means it requires privileged access - and replies:
 
  Request       Reply Section  Details
  -------       -------------  -------
- version       VERSION        CGMiner=cgminer, version
+ version       VERSION        SGMiner=sgminer, version
                               API=API| version
 
  config        CONFIG         Some miner configuration information:
@@ -241,13 +241,13 @@ The list of requests - a (*) means it requires privileged access - and replies:
 
  save|filename (*)
                none           There is no reply section just the STATUS section
-                              stating success or failure saving the cgminer
+                              stating success or failure saving the sgminer
                               config to filename
-                              The filename is optional and will use the cgminer
+                              The filename is optional and will use the sgminer
                               default if not specified
 
  quit (*)      none           There is no status section but just a single "BYE"
-                              reply before cgminer quits
+                              reply before sgminer quits
 
  notify        NOTIFY         The last status and history count of each devices
                               problem
@@ -260,7 +260,7 @@ The list of requests - a (*) means it requires privileged access - and replies:
                               stating an error if you do not have privileged
                               access to the API and success if you do have
                               privilege
-                              The command doesn't change anything in cgminer
+                              The command doesn't change anything in sgminer
 
  pgaenable|N (*)
                none           There is no reply section just the STATUS section
@@ -298,7 +298,7 @@ The list of requests - a (*) means it requires privileged access - and replies:
                               e.g. DEVDETAILS=0,Name=GPU,ID=0,Driver=opencl,...|
 
  restart (*)   none           There is no status section but just a single
-                              "RESTART" reply before cgminer restarts
+                              "RESTART" reply before sgminer restarts
 
  stats         STATS          Each device or pool that has 1 or more getworks
                               with a list of stats regarding getwork times
@@ -370,14 +370,14 @@ The list of requests - a (*) means it requires privileged access - and replies:
                none           There is no reply section just the STATUS section
                               stating that the zero, and optional summary, was
                               done
-                              If Which='all', all normal cgminer and API
+                              If Which='all', all normal sgminer and API
                               statistics will be zeroed other than the numbers
                               displayed by the usbstats and stats commands
                               If Which='bestshare', only the 'Best Share' values
                               are zeroed for each pool and the global
                               'Best Share'
                               The true/false option determines if a full summary
-                              is shown on the cgminer display like is normally
+                              is shown on the sgminer display like is normally
                               displayed on exit.
 
  hotplug|N (*) none           There is no reply section just the STATUS section
@@ -440,11 +440,11 @@ The list of requests - a (*) means it requires privileged access - and replies:
  lockstats (*) none           There is no reply section just the STATUS section
                               stating the results of the request
                               A warning reply means lock stats are not compiled
-                              into cgminer
+                              into sgminer
                               The API writes all the lock stats to stderr
 
 When you enable, disable or restart a GPU, PGA or ASC, you will also get
-Thread messages in the cgminer status window
+Thread messages in the sgminer status window
 
 The 'poolpriority' command can be used to reset the priority order of multiple
 pools with a single command - 'switchpool' only sets a single pool to first
@@ -457,13 +457,13 @@ If the priority change affects the miner's preference for mining, it may switch
 immediately
 
 When you switch to a different pool to the current one (including by priority
-change), you will get a 'Switching to URL' message in the cgminer status
+change), you will get a 'Switching to URL' message in the sgminer status
 windows
 
 Obviously, the JSON format is simply just the names as given before the '='
 with the values after the '='
 
-If you enable cgminer debug (-D or --debug) or, when cgminer debug is off,
+If you enable sgminer debug (-D or --debug) or, when sgminer debug is off,
 turn on debug with the API command 'debug|debug' you will also get messages
 showing some details of the requests received and the replies
 
@@ -474,7 +474,7 @@ api-example.php - a php script to access the API
  by default it sends a 'summary' request to the miner at 127.0.0.1:4028
  If you specify a command it will send that request instead
  You must modify the line "$socket = getsock('127.0.0.1', 4028);" at the
- beginning of "function request($cmd)" to change where it looks for cgminer
+ beginning of "function request($cmd)" to change where it looks for sgminer
 
 API.java/API.class
  a java program to access the API (with source code)
@@ -497,24 +497,24 @@ miner.php - an example web page to access the API
 Feature Changelog for external applications using the API:
 
 
-API V1.32 (cgminer v3.6.5)
+API V1.32 (sgminer v3.6.5)
 
 Modified API commands:
  'devs' 'gpu' 'pga' and 'asc' - add 'Device Elapsed'
 
 ---------
 
-API V1.31 (cgminer v3.6.3)
+API V1.31 (sgminer v3.6.3)
 
 Added API command:
- 'lockstats' - display cgminer dev lock stats if compiled in
+ 'lockstats' - display sgminer dev lock stats if compiled in
 
 Modified API command:
  'summary' - add 'MHS %ds' (where %d is the log interval)
 
 ---------
 
-API V1.30 (cgminer v3.4.3)
+API V1.30 (sgminer v3.4.3)
 
 Added API command:
  'poolquota' - Set pool quota for load-balance strategy.
@@ -524,13 +524,13 @@ Modified API command:
 
 ---------
 
-API V1.29 (cgminer v3.4.1)
+API V1.29 (sgminer v3.4.1)
 
 Muticast identification added to the API
 
 ----------
 
-API V1.28 (cgminer v3.3.4)
+API V1.28 (sgminer v3.3.4)
 
 Modified API commands:
  'devs', 'pga', 'asc', 'gpu' - add 'Device Hardware%' and 'Device Rejected%'
@@ -540,7 +540,7 @@ Modified API commands:
 
 ----------
 
-API V1.27 (cgminer v3.3.2)
+API V1.27 (sgminer v3.3.2)
 
 Added API commands:
  'ascset' - with: BTB opt=millivolts val=1000 to 1310 - core voltage
@@ -548,9 +548,9 @@ Added API commands:
 
 ----------
 
-API V1.26 (cgminer v3.2.3)
+API V1.26 (sgminer v3.2.3)
 
-Remove all CPU support (cgminer v3.0.0)
+Remove all CPU support (sgminer v3.0.0)
 
 Added API commands:
  'asc'
@@ -576,7 +576,7 @@ Modified API commands:
 
 ----------
 
-API V1.24 (cgminer v2.11.0)
+API V1.24 (sgminer v2.11.0)
 
 Added API commands:
  'zero'
@@ -588,14 +588,14 @@ Modified API commands:
 
 ----------
 
-API V1.23 (cgminer v2.10.2)
+API V1.23 (sgminer v2.10.2)
 
 Added API commands:
  'pgaset' - with: MMQ opt=clock val=160 to 230 (and a multiple of 2)
 
 ----------
 
-API V1.22 (cgminer v2.10.1)
+API V1.22 (sgminer v2.10.1)
 
 Enforced output limitation:
  all extra records beyond the output limit of the API (~64k) are ignored
@@ -608,7 +608,7 @@ Modified API commands:
 
 ----------
 
-API V1.21 (cgminer v2.10.0)
+API V1.21 (sgminer v2.10.0)
 
 Added API commands:
  'usbstats'
@@ -621,14 +621,14 @@ Modified output:
 
 ----------
 
-API V1.20 (cgminer v2.8.5)
+API V1.20 (sgminer v2.8.5)
 
 Modified API commands:
  'pools' - add 'Has Stratum', 'Stratum Active', 'Stratum URL'
 
 ----------
 
-API V1.19 (cgminer v2.7.6)
+API V1.19 (sgminer v2.7.6)
 
 Added API commands:
  'debug'
@@ -652,7 +652,7 @@ Modified API commands:
 
 ----------
 
-API V1.18 (cgminer v2.7.4)
+API V1.18 (sgminer v2.7.4)
 
 Modified API commands:
  'stats' - add 'Work Had Roll Time', 'Work Can Roll', 'Work Had Expire',
@@ -661,7 +661,7 @@ Modified API commands:
 
 ----------
 
-API V1.17 (cgminer v2.7.1)
+API V1.17 (sgminer v2.7.1)
 
 Added API commands:
  'coin'
@@ -672,7 +672,7 @@ Modified API commands:
 
 ----------
 
-API V1.16 (cgminer v2.6.5)
+API V1.16 (sgminer v2.6.5)
 
 Added API commands:
  'failover-only'
@@ -682,14 +682,14 @@ Modified API commands:
 
 ----------
 
-API V1.15 (cgminer v2.6.1)
+API V1.15 (sgminer v2.6.1)
 
 Added API commands:
  'poolpriority'
 
 ----------
 
-API V1.14 (cgminer v2.5.0)
+API V1.14 (sgminer v2.5.0)
 
 Modified API commands:
  'stats' - more icarus timing stats added
@@ -700,17 +700,17 @@ Completely backward compatible
 
 ----------
 
-API V1.13 (cgminer v2.4.4)
+API V1.13 (sgminer v2.4.4)
 
 Added API commands:
  'check'
 
-Support was added to cgminer for API access groups with the --api-groups option
+Support was added to sgminer for API access groups with the --api-groups option
 It's 100% backward compatible with previous --api-access commands
 
 ----------
 
-API V1.12 (cgminer v2.4.3)
+API V1.12 (sgminer v2.4.3)
 
 Modified API commands:
  'stats' - more pool stats added
@@ -719,7 +719,7 @@ Support for the ModMinerQuad FPGA was added
 
 ----------
 
-API V1.11 (cgminer v2.4.2)
+API V1.11 (sgminer v2.4.2)
 
 Modified API commands:
  'save' no longer requires a filename (use default if not specified)
@@ -729,7 +729,7 @@ It now correctly returns S (success)
 
 ----------
 
-API V1.10 (cgminer v2.4.1)
+API V1.10 (sgminer v2.4.1)
 
 Added API commands:
  'stats'
@@ -737,14 +737,14 @@ Added API commands:
 N.B. the 'stats' command can change at any time so any specific content
 present should not be relied upon.
 The data content is mainly used for debugging purposes or hidden options
-in cgminer and can change as development work requires
+in sgminer and can change as development work requires
 
 Modified API commands:
  'pools' added "Last Share Time"
 
 ----------
 
-API V1.9 (cgminer v2.4.0)
+API V1.9 (sgminer v2.4.0)
 
 Added API commands:
  'restart'
@@ -754,7 +754,7 @@ Modified API commands:
 
 ----------
 
-API V1.8 (cgminer v2.3.5)
+API V1.8 (sgminer v2.3.5)
 
 Added API commands:
  'devdetails'
@@ -763,7 +763,7 @@ Support for the ZTex FPGA was added
 
 ----------
 
-API V1.7 (cgminer v2.3.4)
+API V1.7 (sgminer v2.3.4)
 
 Added API commands:
  'removepool'
@@ -778,7 +778,7 @@ For Text the 4 characters '|' ',' '=' and '\' are escaped the same way
 
 ----------
 
-API V1.6 (cgminer v2.3.2)
+API V1.6 (sgminer v2.3.2)
 
 Added API commands:
  'pga'
@@ -799,7 +799,7 @@ API V1.5 was not released
 
 ----------
 
-API V1.4 (Kano's interim release of cgminer v2.3.1)
+API V1.4 (Kano's interim release of sgminer v2.3.1)
 
 Added API commands:
  'notify'
@@ -811,7 +811,7 @@ Added "When" to the STATUS reply section of all commands
 
 ----------
 
-API V1.3 (cgminer v2.3.1-2)
+API V1.3 (sgminer v2.3.1-2)
 
 Added API commands:
  'addpool'
@@ -822,7 +822,7 @@ Modified API commands:
 
 ----------
 
-API V1.2 (cgminer v2.3.0)
+API V1.2 (sgminer v2.3.0)
 
 Added API commands:
  'enablepool'
@@ -838,15 +838,15 @@ security, will return an "Access denied" Error Status
 
 ----------
 
-API V1.1 (cgminer v2.2.4)
+API V1.1 (sgminer v2.2.4)
 
-There were no changes to the API commands in cgminer v2.2.4,
-however support was added to cgminer for IP address restrictions
+There were no changes to the API commands in sgminer v2.2.4,
+however support was added to sgminer for IP address restrictions
 with the --api-allow option
 
 ----------
 
-API V1.1 (cgminer v2.2.2)
+API V1.1 (sgminer v2.2.2)
 
 Prior to V1.1, devs/gpu incorrectly reported GPU0 Intensity for all GPUs
 
@@ -855,7 +855,7 @@ Modified API commands:
 
 ----------
 
-API V1.0 (cgminer v2.2.0)
+API V1.0 (sgminer v2.2.0)
 
 Remove default CPU support
 
@@ -873,9 +873,9 @@ Added API commands:
 
 ----------
 
-API V0.7 (cgminer v2.1.0)
+API V0.7 (sgminer v2.1.0)
 
-Initial release of the API in the main cgminer git
+Initial release of the API in the main sgminer git
 
 Commands:
  'version'
@@ -896,18 +896,18 @@ Commands:
 miner.php
 =========
 
-miner.php is a PHP based interface to the cgminer RPC API
+miner.php is a PHP based interface to the sgminer RPC API
 (referred to simply as the API below)
 
 It can show rig details, summaries and input fields to allow you to change
-cgminer
+sgminer
 You can also create custom summary pages with it
 
 It has two levels to the security:
-1) cgminer can be configured to allow or disallow API access and access level
+1) sgminer can be configured to allow or disallow API access and access level
    security for miner.php
-2) miner.php can be configured to allow or disallow privileged cgminer
-   access, if cgminer is configured to allow privileged access for miner.php
+2) miner.php can be configured to allow or disallow privileged sgminer
+   access, if sgminer is configured to allow privileged access for miner.php
 
 ---------
 
@@ -931,40 +931,40 @@ Try one of these (apparently the first one is easiest - thanks jborkl)
 
 ---------
 
-The basic cgminer option to enable the API is:
+The basic sgminer option to enable the API is:
 
  --api-listen
 
-or in your cgminer.conf
+or in your sgminer.conf
 
  "api-listen" : true,
 
 (without the ',' on the end if it is the last item)
 
-If the web server is running on the cgminer computer, the above
+If the web server is running on the sgminer computer, the above
 is the only change required to give miner.php basic access to
-the cgminer API
+the sgminer API
 
 -
 
-If the web server runs on a different computer to cgminer,
-you will also need to tell cgminer to allow the web server
-to access cgminer's API and tell miner.php where cgminer is
+If the web server runs on a different computer to sgminer,
+you will also need to tell sgminer to allow the web server
+to access sgminer's API and tell miner.php where sgminer is
 
 Assuming a.b.c.d is the IP address of the web server, you
-would add the following to cgminer:
+would add the following to sgminer:
 
  --api-listen --api-allow a.b.c.d
 
-or in your cgminer.conf
+or in your sgminer.conf
 
  "api-listen" : true,
  "api-allow" : "a.b.c.d",
 
-to tell cgminer to give the web server read access to the API
+to tell sgminer to give the web server read access to the API
 
-You also need to tell miner.php where cgminer is.
-Assuming cgminer is at IP address e.f.g.h, then you would
+You also need to tell miner.php where sgminer is.
+Assuming sgminer is at IP address e.f.g.h, then you would
 edit miner.php and change the line
 
  $rigs = array('127.0.0.1:4028');
@@ -976,14 +976,14 @@ to
 See --api-network or --api-allow for more access details
 and how to give write access
 
-You can however, also tell miner.php to find your cgminer rigs automatically
+You can however, also tell miner.php to find your sgminer rigs automatically
 on the local subnet
 
-Add the following to each cgminer:
+Add the following to each sgminer:
 
  --api-mcast
 
-or in your cgminer.conf
+or in your sgminer.conf
 
  "api-mcast" : true,
 
@@ -1020,7 +1020,7 @@ Done :)
 
 The rest of this documentation deals with the more complex
 functions of miner.php, using myminer.php, creaing custom
-summaries and displaying multiple cgminer rigs
+summaries and displaying multiple sgminer rigs
 
 ---------
 
@@ -1125,13 +1125,13 @@ Default:
  $readonly = false;
 
 Set $readonly to true to force miner.php to be readonly
-This means it won't allow you to change cgminer even if the cgminer API
+This means it won't allow you to change sgminer even if the sgminer API
 options allow it to
 
-If you set $readonly to false then it will check cgminer 'privileged'
+If you set $readonly to false then it will check sgminer 'privileged'
 and will show input fields and buttons on the single rig page
 allowing you to change devices, pools and even quit or restart
-cgminer
+sgminer
 
 However, if the 'privileged' test fails, the code will set $readonly to
 true
@@ -1178,7 +1178,7 @@ table of data
 
 Set $notify to true to attempt to display the notify command on
 the single rig page
-If your older version of cgminer returns an 'Invalid command'
+If your older version of sgminer returns an 'Invalid command'
 coz it doesn't have notify - it just shows the error status table
 
 ---------
@@ -1218,7 +1218,7 @@ However, if $readonly is true, it will not display them
 Default:
  $rigs = array('127.0.0.1:4028');
 
-Set $rigs to an array of your cgminer rigs that are running
+Set $rigs to an array of your sgminer rigs that are running
  format: 'IP:Port' or 'Host:Port' or 'Host:Port:Name'
 If you only have one rig, it will just show the detail of that rig
 If you have more than one rig it will show a summary of all the rigs
@@ -1247,21 +1247,21 @@ If fewer are found, an error will be included at the top of the page
 Default:
  $mcastaddr = '224.0.0.75';
 
-API Multicast address all cgminers are listening on
+API Multicast address all sgminers are listening on
 
 ---------
 
 Default:
  $mcastport = 4028;
 
-API Multicast UDP port all cgminers are listening on
+API Multicast UDP port all sgminers are listening on
 
 ---------
 
 Default:
  $mcastcode = 'FTW';
 
-The code all cgminers expect in the Multicast message sent
+The code all sgminers expect in the Multicast message sent
 The message sent is "cgm-code-listport"
 Don't use the '-' character if you change it
 
@@ -1271,7 +1271,7 @@ Default:
  $mcastlistport = 4027;
 
 UDP port number that is added to the broadcast message sent
-that specifies to the cgminers the port to reply on
+that specifies to the sgminers the port to reply on
 
 ---------
 
@@ -1292,7 +1292,7 @@ Set $mcastretries to the number of times to retry the multicast
 
 If $mcastexpect is 0, this is simply the number of extra times
 that it will send the multicast request
-N.B. cgminer doesn't listen for multicast requests for 1000ms after
+N.B. sgminer doesn't listen for multicast requests for 1000ms after
 each one it hears
 
 If $mcastexpect is > 0, it will stop looking for replies once it
@@ -1353,9 +1353,9 @@ The numbers are integer seconds
 
 The defaults should be OK for most cases
 However, the longer SND is, the longer you have to wait while
-php hangs if the target cgminer isn't runnning or listening
+php hangs if the target sgminer isn't runnning or listening
 
-RCV should only ever be relevant if cgminer has hung but the
+RCV should only ever be relevant if sgminer has hung but the
 API thread is still running, RCV would normally be >= SND
 
 Feel free to increase SND if your network is very slow
@@ -1575,10 +1575,10 @@ The example given:
 
 ---------
 
-With cgminer 2.10.2 and later, miner.php includes an extension to
+With sgminer 2.10.2 and later, miner.php includes an extension to
 the custom pages that allows you to apply SQL style commands to
 the data: where, group, and having
-cgminer 3.4.2 also includes another option 'gen'
+sgminer 3.4.2 also includes another option 'gen'
 
 As an example, miner.php includes a more complex custom page called 'Pools'
 this includes the extension:
@@ -1655,10 +1655,10 @@ in this case is the average difficulty of each share submitted
 
 THERE IS A SECURITY RISK WITH HOW GEN WORKS
 It simply replaces all the variables with their values and then requests PHP
-to execute the formula - thus if a field value returned from a cgminer API
+to execute the formula - thus if a field value returned from a sgminer API
 request contained PHP code, it could be executed by your web server
-Of course cgminer doesn't do this, but if you do not control the cgminer that
-returns the data in the API calls, someone could modify cgminer to return a
+Of course sgminer doesn't do this, but if you do not control the sgminer that
+returns the data in the API calls, someone could modify sgminer to return a
 PHP string in a field you use in 'gen'
 Thus use 'gen' at your own risk
 If someone feels the urge to write a mathematical interpreter in PHP to get

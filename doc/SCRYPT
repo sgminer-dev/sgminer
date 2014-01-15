@@ -18,7 +18,7 @@ GPU ram. If you have less system ram than your GPU has, it may not be possible
 to mine at any reasonable rate.
 
 There are 5 main parameters to tuning scrypt, all of which are optional for
-further fine tuning. When you start mining, cgminer may fail IN RANDOM WAYS.
+further fine tuning. When you start mining, sgminer may fail IN RANDOM WAYS.
 They are all due to parameters being outside what the GPU can cope with.
 
 NOTE that if it does not fail at startup, the presence of hardware errors (HW)
@@ -41,7 +41,7 @@ export GPU_USE_SYNC_OBJECTS=1
 may help CPU usage a little as well.
 
 On windows the same commands can be passed via a batch file if the following
-lines are in the .bat before starting cgminer:
+lines are in the .bat before starting sgminer:
 setx GPU_MAX_ALLOC_PERCENT 100
 setx GPU_USE_SYNC_OBJECTS 1
 
@@ -53,20 +53,20 @@ run out of ram. High intensities start writing over the same ram and it
 is highly dependent on the GPU, but they can start actually DECREASING
 your hashrate, or even worse, start producing garbage with HW errors
 skyrocketing, or locking up the system altogether. Note that if you do
-NOT specify an intensity, cgminer uses dynamic mode which is designed
+NOT specify an intensity, sgminer uses dynamic mode which is designed
 to minimise the harm to a running desktop and performance WILL be poor.
-The lower limit to intensity with scrypt is usually 8 and cgminer will
+The lower limit to intensity with scrypt is usually 8 and sgminer will
 prevent it going too low.
 SUMMARY: Setting this for reasonable hashrates is mandatory.
 
 --shaders XXX
 
-is an option where you tell cgminer how many shaders your GPU has. This
-helps cgminer try to choose some meaningful baseline parameters. Use
+is an option where you tell sgminer how many shaders your GPU has. This
+helps sgminer try to choose some meaningful baseline parameters. Use
 this table below to determine how many shaders your GPU has, and note
 that there are some variants of these cards, and nvidia shaders are much
 much lower and virtually pointless trying to mine on. If this is not
-set, cgminer will query the device for how much memory it supports and
+set, sgminer will query the device for how much memory it supports and
 will try to set a value based on that.
 SUMMARY: This will get you started but fine tuning for optimal performance is
 required. Using --thread-concurrency is recommended instead.
@@ -99,7 +99,7 @@ GPU  Shaders
 5870 1600
 5970 (5870x2)
 
-These are only used as a rough guide for cgminer, and it is rare that this is
+These are only used as a rough guide for sgminer, and it is rare that this is
 all you will need to set.
 
 
@@ -108,7 +108,7 @@ Optional parameters to tune:
 
 --thread-concurrency:
 This tunes the optimal size of work that scrypt can do. It is internally tuned
-by cgminer to be the highest reasonable multiple of shaders that it can
+by sgminer to be the highest reasonable multiple of shaders that it can
 allocate on your GPU. Ideally it should be a multiple of your shader count.
 vliw5 architecture (R5XXX) would be best at 5x shaders, while VLIW4 (R6xxx and
 R7xxx) are best at 4x. Setting thread concurrency overrides anything you put
@@ -118,7 +118,7 @@ and increases hashrate.
 
 -g:
 Once you have found the optimal shaders and intensity, you can start increasing
-the -g value till cgminer fails to start. This is really only of value if you
+the -g value till sgminer fails to start. This is really only of value if you
 want to run low intensities as you will be unable to run more than 1.
 SUMMARY: Don't touch this.
 
@@ -126,7 +126,7 @@ SUMMARY: Don't touch this.
 This tunes a compromise between ram usage and performance. Performance peaks
 at a gap of 2, but increasing the gap can save you some GPU ram, but almost
 always at the cost of significant loss of hashrate. Setting lookup gap
-overrides the default of 2, but cgminer will use the --shaders value to choose
+overrides the default of 2, but sgminer will use the --shaders value to choose
 a thread-concurrency if you haven't chosen one.
 SUMMARY: Don't touch this.
 
@@ -173,7 +173,7 @@ export GPU_MAX_ALLOC_PERCENT=100
 or on windows this:
 setx GPU_MAX_ALLOC_PERCENT 100
 in the same console/bash/dos prompt/bat file/whatever you want to call it,
-before running cgminer.
+before running sgminer.
 
 First, find the highest thread concurrency that you can start it at. They should
 all start at 8192 but some will go up to 3 times that. Don't go too high on the
@@ -183,9 +183,9 @@ intensity while testing and don't change gpu threads. If you cannot go above
 Delete any .bin files so you're starting from scratch and see what bins get
 generated.
 
-First try without any thread concurrency or even shaders, as cgminer will try to
+First try without any thread concurrency or even shaders, as sgminer will try to
 find an optimal value
-cgminer -I 13
+sgminer -I 13
 
 If that starts mining, see what bin was generated, it is likely the largest
 meaningful TC you can set.

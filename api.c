@@ -368,7 +368,7 @@ struct CODES {
  { SEVERITY_ERR,   MSG_MISID,	PARAM_NONE,	"Missing device id parameter" },
  { SEVERITY_SUCC,  MSG_GPUDEV,	PARAM_GPU,	"GPU%d" },
  { SEVERITY_SUCC,  MSG_NUMGPU,	PARAM_NONE,	"GPU count" },
- { SEVERITY_SUCC,  MSG_VERSION,	PARAM_NONE,	"CGMiner versions" },
+ { SEVERITY_SUCC,  MSG_VERSION,	PARAM_NONE,	"SGMiner versions" },
  { SEVERITY_ERR,   MSG_INVJSON,	PARAM_NONE,	"Invalid JSON" },
  { SEVERITY_ERR,   MSG_MISCMD,	PARAM_CMD,	"Missing JSON '%s'" },
  { SEVERITY_ERR,   MSG_MISPID,	PARAM_NONE,	"Missing pool id parameter" },
@@ -1552,7 +1552,7 @@ static void apiversion(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
 	message(io_data, MSG_VERSION, 0, NULL, isjson);
 	io_open = io_add(io_data, isjson ? COMSTR JSON_VERSION : _VERSION COMSTR);
 
-	root = api_add_string(root, "CGMiner", VERSION, false);
+	root = api_add_string(root, "SGMiner", VERSION, false);
 	root = api_add_const(root, "API", APIVERSION, false);
 
 	root = print_data(root, buf, isjson, false);

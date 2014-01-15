@@ -59,9 +59,9 @@ Ctrl-D or typing "logout" and pressing the enter key should get you out of the
 window.
 
 **************************************************************************************
-* Copy CGMiner source to your MSYS working directory                                 *
+* Copy sgminer source to your MSYS working directory                                 *
 **************************************************************************************
-Copy CGMiner source code directory into:
+Copy sgminer source code directory into:
 \MinGW\msys\1.0\home\(folder with your user name)
 
 **************************************************************************************
@@ -87,7 +87,7 @@ Go to this url ==> http://developer.amd.com/tools/graphics-development/display-l
 Download and unzip the file you downloaded.
 Pull adl_defines.h, adl_sdk.h, and adl_structures.h out of the include folder
 Put those files into the ADL_SDK folder in your source tree as shown below.
-\MinGW\msys\1.0\home\(folder with your user name)\cgminer-x.x.x\ADL_SDK
+\MinGW\msys\1.0\home\(folder with your user name)\sgminer-x.x.x\ADL_SDK
 
 **************************************************************************************
 * Install GTK-WIN, required for Pkg-config in the next step                          *
@@ -125,12 +125,12 @@ Edit the file \MinGW\lib\pkgconfig\libcurl.pc and change "-lcurl" to
 Ref. http://old.nabble.com/gcc-working-with-libcurl-td20506927.html
 
 **************************************************************************************
-* Build cgminer.exe                                                                  *
+* Build sgminer.exe                                                                  *
 **************************************************************************************
 Run the MinGW MSYS shell
 (Start Icon/keyboard key ==> All Programs ==> MinGW ==> MinGW Shell).
-Change the working directory to your CGMiner project folder.
-Example: cd cgminer-2.1.2 [Enter Key] if you are unsure then type "ls -la"
+Change the working directory to your sgminer project folder.
+Example: cd sgminer-2.1.2 [Enter Key] if you are unsure then type "ls -la"
 Another way is to type "cd cg" and then press the tab key; It will auto fill.
 Type the lines below one at a time. Look for problems after each one before going on
 to the next.
@@ -139,18 +139,18 @@ to the next.
       autoreconf -fvi
       CFLAGS="-O2 -msse2" ./configure (additional config options, see below)
       make
-      strip cgminer.exe  <== only do this if you are not compiling for debugging
+      strip sgminer.exe  <== only do this if you are not compiling for debugging
 
 **************************************************************************************
 * Copy files to a build directory/folder                                             *
 **************************************************************************************
-Make a directory and copy the following files into it. This will be your CGMiner
+Make a directory and copy the following files into it. This will be your sgminer
 Folder that you use for mining. Remember the .cl filenames could change on later
 releases. If you installed a different version of libcurl then some of those dll's
 may be different as well.
-  cgminer.exe     from \MinGW\msys\1.0\home\(username)\cgminer-x.x.x
-  *.cl            from \MinGW\msys\1.0\home\(username)\cgminer-x.x.x
-  README          from \MinGW\msys\1.0\home\(username)\cgminer-x.x.x
+  sgminer.exe     from \MinGW\msys\1.0\home\(username)\sgminer-x.x.x
+  *.cl            from \MinGW\msys\1.0\home\(username)\sgminer-x.x.x
+  README          from \MinGW\msys\1.0\home\(username)\sgminer-x.x.x
   libcurl.dll     from \MinGW\bin
   libidn-11.dll   from \MinGW\bin
   libeay32.dll    from \MinGW\bin
@@ -169,7 +169,7 @@ Extract the share\git-core folder and place it into \MinGW\share.
 After the previous step you should have a folder called \MinGW\share\git-core.
 To test if it is working, open a MinGW shell and type the following:
   git config -–global core.autocrlf false (note: one time run only)
-  git clone git://github.com/ckolivas/cgminer.git
+  git clone git://github.com/ckolivas/sgminer.git
 
 If you simply just want to update the source after you have already cloned, type:
   git pull
@@ -187,7 +187,7 @@ Copy the ADL .h files into that folder/directory.
 Open your favorite text editor and type the following into it.
  cp -av ../ADL_SDK/*.h ADL_SDK
 Save the file as "adl.sh" and then place the file into "\MinGW\msys\1.0\bin".
-From now on when your current working directory is the cgminer source directory
+From now on when your current working directory is the sgminer source directory
 You can simply type "adl.sh" and it will place the ADL header files into place
 For you. Make sure you never remove the ADL_SDK folder from your home folder.
 
@@ -217,7 +217,7 @@ You may now exit the MSYS shell.
 Ctrl-D or typing "logout" and pressing the enter key should get you out of the
 window.
 
-You will have to copy "libusb-1.0.dll" to your working cgminer binary directory.
+You will have to copy "libusb-1.0.dll" to your working sgminer binary directory.
 You will find "libusb-1.0.dll" in the \MinGW\bin directory/folder.
 
 Use this method if libusb does not work for you on Ztex. Once someone lets us know
@@ -235,7 +235,7 @@ Extract the the following from the file and place in where directed.
 Copy libusb.h from include\libusbx-1.0 to \MinGW\include\libusb-1.0\libusb.h
 Copy contents of MinGW32\static \MinGW\lib
 Copy contents of MinGW32\dll to \MinGW\lib
-You will have to copy "libusb-1.0.dll" to your working cgminer binary directory.
+You will have to copy "libusb-1.0.dll" to your working sgminer binary directory.
 
 **************************************************************************************
 * Some ./configure options                                                           *
