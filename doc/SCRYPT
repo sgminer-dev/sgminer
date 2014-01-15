@@ -137,10 +137,6 @@ Has a minor effect, should be a multiple of 64 up to 256 maximum.
 SUMMARY: Worth playing with once everything else has been tried but will
 probably do nothing.
 
---vectors XX (-v XX)
-Vectors are NOT used by the scrypt mining kernel.
-SUMMARY: Does nothing.
-
 
 Overclocking for scrypt mining:
 First of all, do not underclock your memory initially. Scrypt mining requires
