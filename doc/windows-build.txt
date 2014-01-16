@@ -1,6 +1,6 @@
 ######################################################################################
 #                                                                                    #
-#          Native WIN32 setup and build instructions (on mingw32/Windows):           #
+#          SGMINER WIN32 setup and build instructions (on mingw32/Windows):           #
 #                                                                                    #
 ######################################################################################
 
@@ -34,14 +34,13 @@ what you copied.
 **************************************************************************************
 * Install mingw32                                                                    *
 **************************************************************************************
-Go to this url ==> http://www.mingw.org/wiki/Getting_Started
-Click the link that says "Download and run the latest mingw-get-inst version."
-Download and run the latest file. Install MinGW in the default directory.
-(I downloaded the one labeled "mingw-get-inst-20120426" - note that this could
-be a different version later.)
-Make sure to check the option for "Download latest repository catalogs".
-I just selected all the check boxes (excluding "Fortran Compiler") so that everything
-was installed.
+Download and install the following Mingw32 version by doing a google search for:
+"mingw-get-inst-20120426"
+*This is currently a known working version as of SGMINER 4.0.0, but this could be a 
+different version later.
+
+During installation, select all the check boxes (excluding "Fortran Compiler") so that
+everything is installed.
 
 **************************************************************************************
 * Run the MSYS shell for the first time to create your user directory                *
@@ -64,6 +63,10 @@ window.
 Copy sgminer source code directory into:
 \MinGW\msys\1.0\home\(folder with your user name)
 
+For SGMINER it will look like:
+\MinGW\msys\1.0\home\(folder with your user name)\Sgminer-Master\ 
+when unzipped.
+
 **************************************************************************************
 * Install AMD APP SDK, latest version (only if you want GPU mining)                  *
 **************************************************************************************
@@ -72,7 +75,7 @@ Go to this url for the latest AMD APP SDK:
  http://developer.amd.com/tools/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/downloads/
 Go to this url for legacy AMD APP SDK's:
  http://developer.amd.com/tools/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/downloads/download-archive/
-Download and install whichever version you like best.
+Download and install the Windows 32 bit version.
 Copy the folders in \Program Files (x86)\AMD APP\include to \MinGW\include
 Copy \Program Files (x86)\AMD APP\lib\x86\libOpenCL.a to \MinGW\lib
 Note: If you are on a 32 bit version of windows "Program Files (x86)" will be
@@ -105,8 +108,8 @@ Note: If you are on a 32 bit version of windows "Program Files (x86)" will be
 * Install pkg-config                                                                 *
 **************************************************************************************
 Go to this url ==> http://www.gtk.org/download/win32.php
-Scroll down to where it shows pkg-cfg.
-Download the file from the tool link. Extract "pkg-config.exe" from bin and place in
+Scroll down to where it shows pkg-cfg under GTK+ 2.x
+Download the file from the "Tool" link. Extract "pkg-config.exe" from bin and place in
 your  \MinGW\bin directory.
 Download the file from the "Dev" link. Extract "pkg.m4" from share\aclocal and place
 in your \MingW\share\aclocal directory.
@@ -120,8 +123,8 @@ Win32 2000.XP 7.27.0 libcurl SSL and download it.
 The one I downloaded may not be current for you. Choose the latest.
 Extract the files that are in the zip (bin, include, and lib) to their respective
 locations in MinGW (\MinGW\bin, \MinGW\include, and \MinGW\lib).
-Edit the file \MinGW\lib\pkgconfig\libcurl.pc and change "-lcurl" to
-"-lcurl -lcurldll".
+Edit the file \MinGW\lib\pkgconfig\libcurl.pc and search for the line that ends 
+with "-lcurl", and make it say "-lcurl -lcurldll".
 Ref. http://old.nabble.com/gcc-working-with-libcurl-td20506927.html
 
 **************************************************************************************
@@ -130,16 +133,20 @@ Ref. http://old.nabble.com/gcc-working-with-libcurl-td20506927.html
 Run the MinGW MSYS shell
 (Start Icon/keyboard key ==> All Programs ==> MinGW ==> MinGW Shell).
 Change the working directory to your sgminer project folder.
-Example: cd sgminer-2.1.2 [Enter Key] if you are unsure then type "ls -la"
-Another way is to type "cd cg" and then press the tab key; It will auto fill.
+Example: cd sgminer-master [Enter Key] if you are unsure then type "ls -la"
+Another way is to type "cd sg" and then press the tab key; It will auto fill.
 Type the lines below one at a time. Look for problems after each one before going on
 to the next.
 
-      adl.sh (optional - see below)
+      adl.sh (optional - see below - skip this entirely)
       autoreconf -fvi
       CFLAGS="-O2 -msse2" ./configure (additional config options, see below)
       make
       strip sgminer.exe  <== only do this if you are not compiling for debugging
+      
+In the event ther are error messages, you MAY have to start from scratch by going
+back to the "Install AMD APP SDK, latest version" step because these lines will modify
+your files from the original form.
 
 **************************************************************************************
 * Copy files to a build directory/folder                                             *
