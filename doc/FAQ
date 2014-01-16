@@ -67,8 +67,8 @@ though.
 
 Q: I'm having an issue. What debugging information should I provide?
 A: Start sgminer with your regular commands and add -D -T --verbose and provide
-the full startup output and a summary of your hardware, operating system, ATI
-driver version and ATI stream version.
+the full startup output and a summary of your hardware, operating system, AMD
+driver version and AMD stream version.
 
 Q: Why don't you provide win64 builds?
 A: Win32 builds work everywhere and there is precisely zero advantage to a
@@ -85,12 +85,7 @@ A: sgminer will compile on OSX, but the performance of GPU mining is
 compromised due to the opencl implementation on OSX, there is no temperature
 or fanspeed monitoring, and the cooling design of most MACs, despite having
 powerful GPUs, will usually not cope with constant usage leading to a high
-risk of thermal damage. It is highly recommended not to mine on a MAC unless
-it is to a USB device.
-
-Q: I'm trying to mine litecoin but sgminer shows MH values instead of kH and
-submits no shares?
-A: Add the --scrypt parameter.
+risk of thermal damage. It is highly recommended not to mine on a MAC.
 
 Q: I switch users on windows and my mining stops working?
 A: That's correct, it does. It's a permissions issue that there is no known
@@ -116,19 +111,8 @@ it fail when php is installed properly but I only get errors about Sockets not
 working in the logs?
 A: http://us.php.net/manual/en/sockets.installation.php
 
-Q: What is a PGA?
-A: At the moment, sgminer supports 3 FPGAs: BitForce, Icarus and ModMiner.
-They are Field-Programmable Gate Arrays that have been programmed to do Bitcoin
-mining. Since the acronym needs to be only 3 characters, the "Field-" part has
-been skipped.
-
-Q: What is an ASIC?
-A: sgminer currently supports 2 ASICs: Avalon and BitForce SC devices. They
-are Application Specify Integrated Circuit devices and provide the highest
-performance per unit power due to being dedicated to only one purpose.
-
 Q: Can I mine scrypt with FPGAs or ASICs?
-A: No.
+A: As of Jan 15 2014, no.
 
 Q: What is stratum and how do I use it?
 A: Stratum is a protocol designed for pooled mining in such a way as to
@@ -161,13 +145,6 @@ expressed by sgminer is as multiples of difficulty 1 shares.
 Q: Can I make a donation in litecoin?
 A: Yes, see SCRYPT-README for the address, but the author prefers bitcoin if
 possible.
-
-Q: My keyboard input momentarily pauses or repeats keys every so often on
-windows while mining?
-A: The USB implementation on windows can be very flaky on some hardware and
-every time sgminer looks for new hardware to hotplug it it can cause these
-sorts of problems. You can disable hotplug with:
---hotplug 0
 
 Q: What should my Work Utility (WU) be?
 A: Work utility is the product of hashrate * luck and only stabilises over a
