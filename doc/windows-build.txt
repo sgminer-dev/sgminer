@@ -169,7 +169,7 @@ Extract the share\git-core folder and place it into \MinGW\share.
 After the previous step you should have a folder called \MinGW\share\git-core.
 To test if it is working, open a MinGW shell and type the following:
   git config -–global core.autocrlf false (note: one time run only)
-  git clone git://github.com/ckolivas/sgminer.git
+  git clone git://github.com/veox/sgminer.git
 
 If you simply just want to update the source after you have already cloned, type:
   git pull
@@ -192,64 +192,12 @@ You can simply type "adl.sh" and it will place the ADL header files into place
 For you. Make sure you never remove the ADL_SDK folder from your home folder.
 
 **************************************************************************************
-* Optional - Install libusb if you need auto USB device detection; required for Ztex *
-**************************************************************************************
-Go to this url ==> http://git.libusb.org/?p=libusb.git;a=snapshot;h=master;sf=zip
-save the file to your local storage. Open the file and copy the libusb* folder to
-\MinGW\msys\1.0\home\(your user directory/folder).
-Or if you do not want to download the file directly and would like to use git then
-Type the following from the MSYS shell in your home folder.
-git clone git://git.libusb.org/libusb.git
-
-Run the MinGW MSYS shell
-(Start Icon/keyboard key ==> All Programs ==> MinGW ==> MinGW Shell).
-Change the working directory to your libusb project folder.
-Example: cd libusb-something [Enter Key] if you are unsure then type "ls -la"
-Another way is to type "cd libusb" and then press the tab key; It will auto fill.
-Type the lines below one at a time. Look for problems after each one before going on
-to the next.
-
-./autogen.sh --disable-debug-log --prefix=/MinGW
-make
-make install
-
-You may now exit the MSYS shell.
-Ctrl-D or typing "logout" and pressing the enter key should get you out of the
-window.
-
-You will have to copy "libusb-1.0.dll" to your working sgminer binary directory.
-You will find "libusb-1.0.dll" in the \MinGW\bin directory/folder.
-
-Use this method if libusb does not work for you on Ztex. Once someone lets us know
-Libusb works instead of libusbx then we will remove the section below this line.
-Run the MSYS shell and change into the libusb folder as above.
-Type ==> make uninstall
-Go to this url ==> http://libusbx.org/
-Click on the "Downloads" tab.
-Click on "releases".
-Click on the latest version. I downloaded 1.0.14; yours may be newer.
-Do not download from the link that says "Looking for the latest version?".
-Click on "Windows"
-Click on the file and download it. I downloaded libusbx-1.0.12-win.7z.
-Extract the the following from the file and place in where directed.
-Copy libusb.h from include\libusbx-1.0 to \MinGW\include\libusb-1.0\libusb.h
-Copy contents of MinGW32\static \MinGW\lib
-Copy contents of MinGW32\dll to \MinGW\lib
-You will have to copy "libusb-1.0.dll" to your working sgminer binary directory.
-
-**************************************************************************************
 * Some ./configure options                                                           *
 **************************************************************************************
---enable-cpumining      Build with cpu mining support(default disabled)
---disable-opencl        Override detection and disable building with opencl
+--enable-opencl         Enable support for GPU mining with opencl
 --disable-adl           Override detection and disable building with adl
---enable-bitforce       Compile support for BitForce FPGAs(default disabled)
---enable-icarus         Compile support for Icarus Board(default disabled)
---enable-modminer       Compile support for ModMiner FPGAs(default disabled)
---enable-ztex           Compile support for Ztex Board(default disabled)
---enable-scrypt         Compile support for scrypt litecoin mining (default disabled)
+--disable-libcurl       Disable building with libcurl for getwork and GBT support
 --without-curses        Compile support for curses TUI (default enabled)
---without-libudev       Autodetect FPGAs using libudev (default enabled)
 
 ######################################################################################
 #                                                                                    #
