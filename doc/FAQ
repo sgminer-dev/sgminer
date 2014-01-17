@@ -65,10 +65,11 @@ Q: GUI version?
 A: No. The RPC interface makes it possible for someone else to write one
 though.
 
-Q: I'm having an issue. What debugging information should I provide?
+Q: I'm having an issue. What debugging information should I provide in the
+bug report?
 A: Start sgminer with your regular commands and add -D -T --verbose and provide
 the full startup output and a summary of your hardware, operating system, AMD
-driver version and AMD stream version.
+driver version and AMD APP SDK version (if installed separately).
 
 Q: Why don't you provide win64 builds?
 A: Win32 builds work everywhere and there is precisely zero advantage to a
@@ -99,8 +100,7 @@ Q: How do I tune for p2pool?
 A: p2pool has very rapid expiration of work and new blocks, it is suggested you
 decrease intensity by 1 from your optimal value, and decrease GPU threads to 1
 with -g 1. It is also recommended to use --failover-only since the work is
-effectively like a different block chain. If mining with a minirig, it is worth
-adding the --bfl-range option.
+effectively like a different block chain.
 
 Q: Are OpenCL kernels from other mining software useable in sgminer?
 A: No, the APIs are slightly different between the different software and they
@@ -142,9 +142,8 @@ multiples of the BTC difficulty it currently is (eg 28) whereas the shares of
 "difficulty 1" are actually 65536 times smaller than the BTC ones. The diff
 expressed by sgminer is as multiples of difficulty 1 shares.
 
-Q: Can I make a donation in litecoin?
-A: Yes, see SCRYPT-README for the address, but the author prefers bitcoin if
-possible.
+Q: Can I make a donation?
+A: Yes, see AUTHORS.md for authors' donation addresses.
 
 Q: What should my Work Utility (WU) be?
 A: Work utility is the product of hashrate * luck and only stabilises over a
