@@ -208,9 +208,6 @@ char *set_kernel(char *arg)
 	int i, device = 0;
 	char *nextptr;
 
-	// FIXME: executes always (add more kernels!)
-	return "Cannot specify a kernel with scrypt";
-
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
 		return "Invalid parameters for set kernel";
