@@ -3266,7 +3266,7 @@ static void *submit_work_thread(void *userdata)
 
 	pthread_detach(pthread_self());
 
-	RenameThread("submit_work");
+	RenameThread("SubmitWork");
 
 	applog(LOG_DEBUG, "Creating extra submit work thread");
 
@@ -4831,7 +4831,7 @@ static void *input_thread(void __maybe_unused *userdata)
 {
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
-	RenameThread("input");
+	RenameThread("Input");
 
 	if (!curses_active)
 		return NULL;
@@ -4868,7 +4868,7 @@ static void *api_thread(void *userdata)
 	pthread_detach(pthread_self());
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
-	RenameThread("api");
+	RenameThread("API");
 
 	set_lowprio();
 	api(api_thr_id);
@@ -5244,7 +5244,7 @@ static void *stratum_rthread(void *userdata)
 
 	pthread_detach(pthread_self());
 
-	snprintf(threadname, 16, "StratumR/%d", pool->pool_no);
+	snprintf(threadname, sizeof(threadname), "%d/RStratum", pool->pool_no);
 	RenameThread(threadname);
 
 	while (42) {
@@ -5354,7 +5354,7 @@ static void *stratum_sthread(void *userdata)
 
 	pthread_detach(pthread_self());
 
-	snprintf(threadname, 16, "StratumS/%d", pool->pool_no);
+	snprintf(threadname, sizeof(threadname), "%d/SStratum", pool->pool_no);
 	RenameThread(threadname);
 
 	pool->stratum_q = tq_new();
@@ -6545,9 +6545,9 @@ void *miner_thread(void *userdata)
 	const int thr_id = mythr->id;
 	struct cgpu_info *cgpu = mythr->cgpu;
 	struct device_drv *drv = cgpu->drv;
-	char threadname[24];
+	char threadname[16];
 
-        snprintf(threadname, 24, "miner/%d", thr_id);
+        snprintf(threadname, sizeof(threadname), "%d/Miner", thr_id);
 	RenameThread(threadname);
 
 	thread_reportout(mythr);
@@ -6675,7 +6675,7 @@ static void *longpoll_thread(void *userdata)
 	char *lp_url;
 	int rolltime;
 
-	snprintf(threadname, 16, "longpoll/%d", cp->pool_no);
+	snprintf(threadname, sizeof(threadname), "%d/Longpoll", cp->pool_no);
 	RenameThread(threadname);
 
 	curl = curl_easy_init();
@@ -6836,7 +6836,7 @@ static void *watchpool_thread(void __maybe_unused *userdata)
 
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
-	RenameThread("watchpool");
+	RenameThread("Watchpool");
 
 	set_lowprio();
 
@@ -6920,7 +6920,7 @@ static void *watchdog_thread(void __maybe_unused *userdata)
 
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
-	RenameThread("watchdog");
+	RenameThread("Watchdog");
 
 	set_lowprio();
 	memset(&zero_tv, 0, sizeof(struct timeval));
