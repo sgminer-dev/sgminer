@@ -1302,7 +1302,7 @@ bool stratum_send(struct pool *pool, char *s, ssize_t len)
 		case SEND_OK:
 			break;
 		case SEND_SELECTFAIL:
-			applog(LOG_DEBUG, "Write select failed on pool %d sock", pool->pool_no);
+			applog(LOG_DEBUG, "Write select failed on %s sock", pool->poolname);
 			suspend_stratum(pool);
 			break;
 		case SEND_SENDFAIL:
@@ -1651,14 +1651,11 @@ static bool parse_diff(struct pool *pool, json_t *val)
 		int idiff = diff;
 
 		if ((double)idiff == diff)
-			applog(LOG_NOTICE, "Pool %d difficulty changed to %d",
-			       pool->pool_no, idiff);
+			applog(LOG_NOTICE, "%s difficulty changed to %d", pool->poolname ,idiff);
 		else
-			applog(LOG_NOTICE, "Pool %d difficulty changed to %f",
-			       pool->pool_no, diff);
+			applog(LOG_NOTICE, "%s difficulty changed to %f", pool->poolname, diff);
 	} else
-		applog(LOG_DEBUG, "Pool %d difficulty set to %f", pool->pool_no,
-		       diff);
+		applog(LOG_DEBUG, "%s difficulty set to %f", pool->poolname, diff);
 
 	return true;
 }
@@ -1683,7 +1680,7 @@ static bool parse_reconnect(struct pool *pool, json_t *val)
 
 	pool->stratum_url = pool->sockaddr_url;
 
-	applog(LOG_NOTICE, "Reconnect requested from pool %d to %s", pool->pool_no, address);
+	applog(LOG_NOTICE, "Reconnect requested from %s to %s", pool->poolname, address);
 
 	if (!restart_stratum(pool))
 		return false;
@@ -1715,7 +1712,7 @@ static bool show_message(struct pool *pool, json_t *val)
 	msg = (char *)json_string_value(json_array_get(val, 0));
 	if (!msg)
 		return false;
-	applog(LOG_NOTICE, "Pool %d message: %s", pool->pool_no, msg);
+	applog(LOG_NOTICE, "%s message: %s", pool->poolname, msg);
 	return true;
 }
 
@@ -1837,14 +1834,14 @@ bool auth_stratum(struct pool *pool)
 			ss = json_dumps(err_val, JSON_INDENT(3));
 		else
 			ss = strdup("(unknown reason)");
-		applog(LOG_INFO, "pool %d JSON stratum auth failed: %s", pool->pool_no, ss);
+		applog(LOG_INFO, "%s JSON stratum auth failed: %s", pool->poolname, ss);
 		free(ss);
 
 		goto out;
 	}
 
 	ret = true;
-	applog(LOG_INFO, "Stratum authorisation success for pool %d", pool->pool_no);
+	applog(LOG_INFO, "Stratum authorisation success for %s", pool->poolname);
 	pool->probed = true;
 	successful_connect = true;
 
@@ -2260,7 +2257,7 @@ out:
 void suspend_stratum(struct pool *pool)
 {
 	clear_sockbuf(pool);
-	applog(LOG_INFO, "Closing socket for stratum pool %d", pool->pool_no);
+	applog(LOG_INFO, "Closing socket for stratum %s", pool->poolname);
 
 	mutex_lock(&pool->stratum_lock);
 	pool->stratum_active = pool->stratum_notify = false;
@@ -2369,7 +2366,7 @@ resend:
 	cg_wunlock(&pool->data_lock);
 
 	if (sessionid)
-		applog(LOG_DEBUG, "Pool %d stratum session id: %s", pool->pool_no, pool->sessionid);
+		applog(LOG_DEBUG, "%s stratum session id: %s", pool->poolname, pool->sessionid);
 
 	ret = true;
 out:
@@ -2379,8 +2376,8 @@ out:
 		pool->stratum_active = true;
 		pool->swork.diff = 1;
 		if (opt_protocol) {
-			applog(LOG_DEBUG, "Pool %d confirmed mining.subscribe with extranonce1 %s extran2size %d",
-			       pool->pool_no, pool->nonce1, pool->n2size);
+			applog(LOG_DEBUG, "%s confirmed mining.subscribe with extranonce1 %s extran2size %d",
+			       pool->poolname, pool->nonce1, pool->n2size);
 		}
 	} else {
 		if (recvd && !noresume) {
