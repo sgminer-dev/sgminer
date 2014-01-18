@@ -17,6 +17,7 @@ extern char *set_gpu_vddc(char *arg);
 extern char *set_temp_overheat(char *arg);
 extern char *set_temp_target(char *arg);
 extern char *set_intensity(char *arg);
+extern char *set_xintensity(char *arg);
 extern char *set_vector(char *arg);
 extern char *set_worksize(char *arg);
 extern char *set_shaders(char *arg);

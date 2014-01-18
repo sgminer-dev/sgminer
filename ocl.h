@@ -29,6 +29,7 @@ typedef struct {
 	cl_uint vwidth;
 	size_t max_work_size;
 	size_t wsize;
+	size_t compute_shaders;
 	enum cl_kernels chosen_kernel;
 } _clState;
 
