@@ -1120,9 +1120,9 @@ static void get_opencl_statline_before(char *buf, size_t bufsiz, struct cgpu_inf
 static void get_opencl_statline(char *buf, size_t bufsiz, struct cgpu_info *gpu)
 {
 	if (gpu->xintensity > 0)
-		tailsprintf(buf, bufsiz, " xI:%3d", gpu->threads, gpu->xintensity);
+		tailsprintf(buf, bufsiz, " xI:%3d", gpu->xintensity);
 	else
-		tailsprintf(buf, bufsiz, " I:%2d", gpu->threads, gpu->intensity);
+		tailsprintf(buf, bufsiz, " I:%2d", gpu->intensity);
 }
 
 struct opencl_thread_data {
