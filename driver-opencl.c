@@ -693,10 +693,10 @@ retry:
 			mhash_base = false;
 		}
 
-		wlog("GPU %d: %.1f / %.1f %sh/s | A:%d  R:%d  HW:%d  U:%.2f/m  I:%d\n",
+		wlog("GPU %d: %.1f / %.1f %sh/s | A:%d  R:%d  HW:%d  U:%.2f/m  I:%d  xI:%d\n",
 			gpu, displayed_rolling, displayed_total, mhash_base ? "M" : "K",
 			cgpu->accepted, cgpu->rejected, cgpu->hw_errors,
-			cgpu->utility, cgpu->intensity);
+			cgpu->utility, cgpu->intensity, cgpu->xintensity);
 #ifdef HAVE_ADL
 		if (gpus[gpu].has_adl) {
 			int engineclock = 0, memclock = 0, activity = 0, fanspeed = 0, fanpercent = 0, powertune = 0;
@@ -732,11 +732,6 @@ retry:
 		}
 #endif
 		wlog("Last initialised: %s\n", cgpu->init);
-		wlog("Intensity: ");
-		if (gpus[gpu].dynamic)
-			wlog("Dynamic (only one thread in use)\n");
-		else
-			wlog("%d\n", gpus[gpu].intensity);
 		for (i = 0; i < mining_threads; i++) {
 			thr = get_thread(i);
 			if (thr->cgpu != cgpu)
@@ -769,7 +764,7 @@ retry:
 		wlog("\n");
 	}
 
-	wlogprint("[E]nable [D]isable [I]ntensity [R]estart GPU %s\n",adl_active ? "[C]hange settings" : "");
+	wlogprint("[E]nable [D]isable [I]ntensity [x]Intensity [R]estart GPU %s\n",adl_active ? "[C]hange settings" : "");
 
 	wlogprint("Or press any other key to continue\n");
 	logwin_update();
@@ -855,7 +850,36 @@ retry:
 		}
 		gpus[selected].dynamic = false;
 		gpus[selected].intensity = intensity;
+		gpus[selected].xintensity = 0; // disable
 		wlogprint("Intensity on gpu %d set to %d\n", selected, intensity);
+		pause_dynamic_threads(selected);
+		goto retry;
+	} else if (!strncasecmp(&input, "x", 1)) {
+		int xintensity;
+		char *intvar;
+
+		if (selected)
+			selected = curses_int("Select GPU to change experimental intensity on");
+		if (selected < 0 || selected >= nDevs) {
+			wlogprint("Invalid selection\n");
+			goto retry;
+		}
+
+		intvar = curses_input("Set experimental GPU scan intensity (1 -> 999)"); // FIXME: no magic numbers
+		if (!intvar) {
+			wlogprint("Invalid input\n");
+			goto retry;
+		}
+		xintensity = atoi(intvar);
+		free(intvar);
+		if (xintensity < 1 || xintensity > 999) { // FIXME: no magic numbers
+			wlogprint("Invalid selection\n");
+			goto retry;
+		}
+		gpus[selected].dynamic = false;
+		gpus[selected].intensity = 0; // disable
+		gpus[selected].xintensity = xintensity;
+		wlogprint("Experimental intensity on gpu %d set to %d\n", selected, xintensity);
 		pause_dynamic_threads(selected);
 		goto retry;
 	} else if (!strncasecmp(&input, "r", 1)) {
@@ -937,6 +961,8 @@ static void set_threads_hashes(unsigned int vectors, unsigned int compute_shader
 
 	*globalThreads = threads;
 	*hashes = threads * vectors;
+
+	applog(LOG_DEBUG, "Set globalThreads to %d, hashes to %d", *globalThreads, *hashes);
 }
 
 /* We have only one thread that ever re-initialises GPUs, thus if any GPU
