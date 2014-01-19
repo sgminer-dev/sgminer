@@ -603,7 +603,7 @@ char *set_xintensity(char *arg)
 	if (nextptr == NULL)
 		return "Invalid parameters for shader based intensity";
 	val = atoi(nextptr);
-	if (val < 1 || val > 9999)
+	if (val < MIN_XINTENSITY || val > MAX_XINTENSITY)
 		return "Invalid value passed to set shader intensity";
 
 	gpus[device].dynamic = false; // Disable dynamic intensity
@@ -613,7 +613,7 @@ char *set_xintensity(char *arg)
 
 	while ((nextptr = strtok(NULL, ",")) != NULL) {
 		val = atoi(nextptr);
-		if (val < 1 || val > 9999)
+		if (val < MIN_XINTENSITY || val > MAX_XINTENSITY)
 			return "Invalid value passed to set shader based intensity";
 		gpus[device].dynamic = false; // Disable dynamic intensity
 		gpus[device].intensity = 0; // Disable regular intensity
@@ -678,7 +678,7 @@ void manage_gpu(void)
 	opt_loginput = true;
 	immedok(logwin, true);
 	clear_logwin();
-retry:
+retry: // TODO: refactor
 
 	for (gpu = 0; gpu < nDevs; gpu++) {
 		struct cgpu_info *cgpu = &gpus[gpu];
@@ -865,14 +865,14 @@ retry:
 			goto retry;
 		}
 
-		intvar = curses_input("Set experimental GPU scan intensity (1 -> 999)"); // FIXME: no magic numbers
+		intvar = curses_input("Set experimental GPU scan intensity (" MIN_XINTENSITY_STR " -> " MAX_XINTENSITY_STR ")");
 		if (!intvar) {
 			wlogprint("Invalid input\n");
 			goto retry;
 		}
 		xintensity = atoi(intvar);
 		free(intvar);
-		if (xintensity < 1 || xintensity > 999) { // FIXME: no magic numbers
+		if (xintensity < MIN_XINTENSITY || xintensity > MAX_XINTENSITY) {
 			wlogprint("Invalid selection\n");
 			goto retry;
 		}

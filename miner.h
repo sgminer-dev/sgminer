@@ -1050,6 +1050,10 @@ extern bool add_pool_details(struct pool *pool, bool live, char *url, char *user
 #define MIN_INTENSITY_STR "8"
 #define MAX_INTENSITY 31
 #define MAX_INTENSITY_STR "31"
+#define MIN_XINTENSITY 1
+#define MIN_XINTENSITY_STR "1"
+#define MAX_XINTENSITY 999
+#define MAX_XINTENSITY_STR "999"
 
 extern bool hotplug_mode;
 extern int hotplug_time;
