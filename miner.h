@@ -373,6 +373,7 @@ enum dev_enable {
 enum cl_kernels {
 	KL_NONE,
 	KL_CKOLIVAS,
+	KL_ZUIKKIS,
 };
 
 enum dev_reason {

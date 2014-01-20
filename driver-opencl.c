@@ -198,6 +198,8 @@ static enum cl_kernels select_kernel(char *arg)
 {
 	if (!strcmp(arg, "ckolivas"))
 		return KL_CKOLIVAS;
+	if (!strcmp(arg, "zuikkis"))
+		return KL_ZUIKKIS;
 
 	return KL_NONE;
 }
@@ -1211,7 +1213,10 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 	{
 		switch (clStates[i]->chosen_kernel) {
 			case KL_CKOLIVAS:
-				cgpu->kname = "scrypt";
+				cgpu->kname = "ckolivas";
+				break;
+			case KL_ZUIKKIS:
+				cgpu->kname = "zuikkis";
 				break;
 			default:
 				break;
@@ -1242,6 +1247,9 @@ static bool opencl_thread_init(struct thr_info *thr)
 
 	switch (clState->chosen_kernel) {
 		case KL_CKOLIVAS:
+			thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
+			break;
+		case KL_ZUIKKIS:
 			thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
 			break;
 		default:

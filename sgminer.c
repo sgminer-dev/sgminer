@@ -4124,6 +4124,9 @@ void write_config(FILE *fcfg)
 				case KL_CKOLIVAS:
 					fprintf(fcfg, "ckolivas");
 					break;
+				case KL_ZUIKKIS:
+					fprintf(fcfg, "zuikkis");
+					break;
 			}
 		}
 		fputs("\",\n\"lookup-gap\" : \"", fcfg);

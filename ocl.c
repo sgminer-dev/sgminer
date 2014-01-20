@@ -422,6 +422,12 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 			/* Scrypt only supports vector 1 */
 			cgpu->vwidth = 1;
 			break;
+		case KL_ZUIKKIS:
+			strcpy(filename, ZUIKKIS_KERNNAME".cl");
+			strcpy(binaryfilename, ZUIKKIS_KERNNAME);
+			/* Scrypt only supports vector 1 */
+			cgpu->vwidth = 1;
+			break;
 		case KL_NONE: /* Shouldn't happen */
 			break;
 	}
