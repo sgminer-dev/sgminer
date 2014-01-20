@@ -317,7 +317,7 @@ fi
 
 AC_DEFINE_UNQUOTED([SGMINER_PREFIX], ["$prefix/bin"], [Path to sgminer install])
 
-AC_DEFINE_UNQUOTED([SCRYPT_KERNNAME], ["scrypt130511"], [Filename for scrypt kernel])
+AC_DEFINE_UNQUOTED([CKOLIVAS_KERNNAME], ["ckolivas"], [Filename for original scrypt kernel])
 
 
 AC_SUBST(OPENCL_LIBS)

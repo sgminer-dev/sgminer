@@ -4121,8 +4121,8 @@ void write_config(FILE *fcfg)
 			switch (gpus[i].kernel) {
 				case KL_NONE: // Shouldn't happen
 					break;
-				case KL_SCRYPT:
-					fprintf(fcfg, "scrypt");
+				case KL_CKOLIVAS:
+					fprintf(fcfg, "ckolivas");
 					break;
 			}
 		}

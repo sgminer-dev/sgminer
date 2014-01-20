@@ -372,7 +372,7 @@ enum dev_enable {
 
 enum cl_kernels {
 	KL_NONE,
-	KL_SCRYPT,
+	KL_CKOLIVAS,
 };
 
 enum dev_reason {

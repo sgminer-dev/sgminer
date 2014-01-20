@@ -196,8 +196,8 @@ char *set_thread_concurrency(char *arg)
 
 static enum cl_kernels select_kernel(char *arg)
 {
-	if (!strcmp(arg, "scrypt"))
-		return KL_SCRYPT;
+	if (!strcmp(arg, "ckolivas"))
+		return KL_CKOLIVAS;
 
 	return KL_NONE;
 }
@@ -1210,7 +1210,7 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 	if (!cgpu->kname)
 	{
 		switch (clStates[i]->chosen_kernel) {
-			case KL_SCRYPT:
+			case KL_CKOLIVAS:
 				cgpu->kname = "scrypt";
 				break;
 			default:
@@ -1241,7 +1241,7 @@ static bool opencl_thread_init(struct thr_info *thr)
 	}
 
 	switch (clState->chosen_kernel) {
-		case KL_SCRYPT:
+		case KL_CKOLIVAS:
 			thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
 			break;
 		default:

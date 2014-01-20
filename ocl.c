@@ -400,8 +400,8 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	char numbuf[16];
 
 	if (cgpu->kernel == KL_NONE) {
-		applog(LOG_INFO, "Selecting scrypt kernel");
-		clState->chosen_kernel = KL_SCRYPT;
+		applog(LOG_INFO, "Selecting kernel ckolivas");
+		clState->chosen_kernel = KL_CKOLIVAS;
 		cgpu->kernel = clState->chosen_kernel;
 	} else {
 		clState->chosen_kernel = cgpu->kernel;
@@ -416,9 +416,9 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 		preferred_vwidth = 2;
 
 	switch (clState->chosen_kernel) {
-		case KL_SCRYPT:
-			strcpy(filename, SCRYPT_KERNNAME".cl");
-			strcpy(binaryfilename, SCRYPT_KERNNAME);
+		case KL_CKOLIVAS:
+			strcpy(filename, CKOLIVAS_KERNNAME".cl");
+			strcpy(binaryfilename, CKOLIVAS_KERNNAME);
 			/* Scrypt only supports vector 1 */
 			cgpu->vwidth = 1;
 			break;
