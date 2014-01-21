@@ -68,6 +68,8 @@ Then:
     CFLAGS="-O2 -Wall -march=native" ./configure <options>
     make
 
+To compile a debug version, replace `-O2` with `-ggdb`.
+
 Systemwide installation is optional. You may run `sgminer` from the build
 directory directly, or `make install` if you wish to install
 `sgminer` to a system location or a location you specified with `--prefix`.
