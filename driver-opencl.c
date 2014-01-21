@@ -1256,14 +1256,15 @@ static bool opencl_thread_init(struct thr_info *thr)
 	}
 
 	switch (clState->chosen_kernel) {
-		case KL_CKOLIVAS:
-			thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
-			break;
-		case KL_ZUIKKIS:
-			thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
-			break;
-		default:
-			break;
+	case KL_ALEXKARNEW:
+	case KL_ALEXKAROLD:
+	case KL_CKOLIVAS:
+	case KL_ZUIKKIS:
+		thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
+		break;
+	default:
+		applog(LOG_ERR, "Failed to choose kernel in opencl_thread_init");
+		break;
 	}
 
 	thrdata->res = calloc(buffersize, 1);
