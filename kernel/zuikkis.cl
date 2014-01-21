@@ -673,7 +673,7 @@ void shittify(uint4 B[8])
 	tmp[2] = (uint4)(B[3].x,B[0].y,B[1].z,B[2].w);
 	tmp[3] = (uint4)(B[0].x,B[1].y,B[2].z,B[3].w);
 	
-//#pragma unroll
+
 	for(uint i=0; i<4; ++i)
 		B[i] = EndianSwap(tmp[i]);
 
@@ -682,7 +682,7 @@ void shittify(uint4 B[8])
 	tmp[2] = (uint4)(B[7].x,B[4].y,B[5].z,B[6].w);
 	tmp[3] = (uint4)(B[4].x,B[5].y,B[6].z,B[7].w);
 	
-//#pragma unroll
+
 	for(uint i=0; i<4; ++i)
 		B[i+4] = EndianSwap(tmp[i]);
 }
@@ -695,7 +695,7 @@ void unshittify(uint4 B[8])
 	tmp[2] = (uint4)(B[1].x,B[0].y,B[3].z,B[2].w);
 	tmp[3] = (uint4)(B[2].x,B[1].y,B[0].z,B[3].w);
 	
-//#pragma unroll
+
 	for(uint i=0; i<4; ++i)
 		B[i] = EndianSwap(tmp[i]);
 
@@ -704,7 +704,7 @@ void unshittify(uint4 B[8])
 	tmp[2] = (uint4)(B[5].x,B[4].y,B[7].z,B[6].w);
 	tmp[3] = (uint4)(B[6].x,B[5].y,B[4].z,B[7].w);
 	
-//#pragma unroll
+
 	for(uint i=0; i<4; ++i)
 		B[i+4] = EndianSwap(tmp[i]);
 }
@@ -713,11 +713,11 @@ void salsa(uint4 B[8])
 {
 	uint4 w[4];
 
-//#pragma unroll
+
 	for(uint i=0; i<4; ++i)
 		w[i] = (B[i]^=B[i+4]);
 
-//#pragma unroll
+
 	for(uint i=0; i<4; ++i)
 	{
 		w[0] ^= rotl(w[3]     +w[2]     , 7U);
@@ -730,11 +730,11 @@ void salsa(uint4 B[8])
 		w[3] ^= rotl(w[0].wxyz+w[1].zwxy,18U);
 	}
 
-//#pragma unroll
+
 	for(uint i=0; i<4; ++i)
 		w[i] = (B[i+4]^=(B[i]+=w[i]));
 
-//#pragma unroll
+
 	for(uint i=0; i<4; ++i)
 	{
 		w[0] ^= rotl(w[3]     +w[2]     , 7U);
@@ -747,7 +747,7 @@ void salsa(uint4 B[8])
 		w[3] ^= rotl(w[0].wxyz+w[1].zwxy,18U);
 	}
 
-//#pragma unroll
+
 	for(uint i=0; i<4; ++i)
 		B[i+4] += w[i];
 }
@@ -765,7 +765,7 @@ void scrypt_core(uint4 X[8], __global uint4*restrict lookup)
 
 	for(uint y=0; y<1024/LOOKUP_GAP; ++y)
 	{
-//#pragma unroll
+
 		for(uint z=0; z<zSIZE; ++z)
 			lookup[CO] = X[z];
 		for(uint i=0; i<LOOKUP_GAP; ++i) 
@@ -796,8 +796,8 @@ void scrypt_core(uint4 X[8], __global uint4*restrict lookup)
 	unshittify(X);
 }
 
-#define SCRYPT_FOUND (0xFF)
-#define SETFOUND(Xnonce) output[output[SCRYPT_FOUND]++] = Xnonce
+#define FOUND (0xFF)
+#define SETFOUND(Xnonce) output[output[FOUND]++] = Xnonce
 
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
 __kernel void search(__global const uint4 * restrict input,
@@ -818,7 +818,7 @@ const uint4 midstate0, const uint4 midstate16, const uint target)
 	tmp1 = tstate1;
 	SHA256(&tstate0, &tstate1, input[0],input[1],input[2],input[3]);
 
-//#pragma unroll
+
 	for (uint i=0; i<4; i++) 
 	{
 		pad0 = tstate0;
