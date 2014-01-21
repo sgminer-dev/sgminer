@@ -4121,6 +4121,12 @@ void write_config(FILE *fcfg)
 			switch (gpus[i].kernel) {
 				case KL_NONE: // Shouldn't happen
 					break;
+				case KL_ALEXKARNEW:
+					fprintf(fcfg, "alexkarnew");
+					break;
+				case KL_ALEXKAROLD:
+					fprintf(fcfg, "alexkarold");
+					break;
 				case KL_CKOLIVAS:
 					fprintf(fcfg, "ckolivas");
 					break;

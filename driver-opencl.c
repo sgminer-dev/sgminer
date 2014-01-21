@@ -196,6 +196,10 @@ char *set_thread_concurrency(char *arg)
 
 static enum cl_kernels select_kernel(char *arg)
 {
+	if (!strcmp(arg, "alexkarnew"))
+		return KL_ALEXKARNEW;
+	if (!strcmp(arg, "alexkarold"))
+		return KL_ALEXKAROLD;
 	if (!strcmp(arg, "ckolivas"))
 		return KL_CKOLIVAS;
 	if (!strcmp(arg, "zuikkis"))
@@ -1212,6 +1216,12 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 	if (!cgpu->kname)
 	{
 		switch (clStates[i]->chosen_kernel) {
+			case KL_ALEXKARNEW:
+				cgpu->kname = "alexkarnew";
+				break;
+			case KL_ALEXKAROLD:
+				cgpu->kname = "alexkarold";
+				break;
 			case KL_CKOLIVAS:
 				cgpu->kname = "ckolivas";
 				break;

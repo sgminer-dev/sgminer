@@ -416,16 +416,28 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 		preferred_vwidth = 2;
 
 	switch (clState->chosen_kernel) {
+		case KL_ALEXKARNEW:
+			strcpy(filename, ALEXKARNEW_KERNNAME".cl");
+			strcpy(binaryfilename, ALEXKARNEW_KERNNAME);
+			/* Kernel only supports vector 1 */
+			cgpu->vwidth = 1;
+			break;
+		case KL_ALEXKAROLD:
+			strcpy(filename, ALEXKAROLD_KERNNAME".cl");
+			strcpy(binaryfilename, ALEXKAROLD_KERNNAME);
+			/* Kernel only supports vector 1 */
+			cgpu->vwidth = 1;
+			break;
 		case KL_CKOLIVAS:
 			strcpy(filename, CKOLIVAS_KERNNAME".cl");
 			strcpy(binaryfilename, CKOLIVAS_KERNNAME);
-			/* Scrypt only supports vector 1 */
+			/* Kernel only supports vector 1 */
 			cgpu->vwidth = 1;
 			break;
 		case KL_ZUIKKIS:
 			strcpy(filename, ZUIKKIS_KERNNAME".cl");
 			strcpy(binaryfilename, ZUIKKIS_KERNNAME);
-			/* Scrypt only supports vector 1 */
+			/* Kernel only supports vector 1 */
 			cgpu->vwidth = 1;
 			break;
 		case KL_NONE: /* Shouldn't happen */
