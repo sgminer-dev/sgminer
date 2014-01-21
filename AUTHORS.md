@@ -11,7 +11,10 @@
 
 ## Bug fixes
 
-Too many to list. See:
+* Gabriel Devenyi
+* ADL R9 crash: Benjamin Herrenschmidt
+
+...and many others. See:
 
 * [veox/sgminer](https://github.com/veox/sgminer/graphs/contributors)
 * [ckolivas/cgminer](https://github.com/ckolivas/cgminer/graphs/contributors)
