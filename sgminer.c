@@ -1089,7 +1089,12 @@ static struct opt_table opt_config_table[] = {
 		     ",default: d to maintain desktop interactivity)"),
 	OPT_WITH_ARG("--xintensity|-X",
 		     set_xintensity, NULL, NULL,
-		     "Shader based intensity of GPU scanning (0 to 9999), overrides --intensity|-I."),
+		     "Shader based intensity of GPU scanning (" MIN_XINTENSITY_STR " to "
+			 MAX_XINTENSITY_STR "), overrides --intensity|-I and -rawintensity."),
+	OPT_WITH_ARG("--rawintensity",
+		     set_rawintensity, NULL, NULL,
+		     "Raw intensity of GPU scanning (" MIN_RAWINTENSITY_STR " to "
+			 MAX_RAWINTENSITY_STR "), overrides --intensity|-I and --xintensity|-X."),
 	OPT_WITH_ARG("--kernel-path|-K",
 		     opt_set_charp, opt_show_charp, &opt_kernel_path,
 	             "Specify a path to where kernel files are"),
