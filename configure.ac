@@ -11,7 +11,7 @@ m4_define([lt_age], v_min)
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 
-AC_INIT([sgminer], [v_ver], [kernel@kolivas.org])
+AC_INIT([sgminer], [v_ver], [https://github.com/veox/sgminer/issues])
 
 AC_PREREQ(2.59)
 AC_CANONICAL_SYSTEM
