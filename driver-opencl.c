@@ -809,7 +809,8 @@ retry: // TODO: refactor
 		wlog("\n");
 	}
 
-	wlogprint("[E]nable [D]isable [I]ntensity [x]Intensity R[a]w Intensity [R]estart GPU %s\n",adl_active ? "[C]hange settings" : "");
+	wlogprint("[E]nable  [D]isable  [R]estart GPU  %s\n",adl_active ? "[C]hange settings" : "");
+	wlogprint("[I]ntensity  E[x]perimental intensity  R[a]w Intensity\n");
 
 	wlogprint("Or press any other key to continue\n");
 	logwin_update();
