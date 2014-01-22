@@ -3,7 +3,7 @@
 ## Current
 
 * Scrypt-only refactor and maintenance: Noel Maersk <veox@wemakethings.net> LfxRFgXzA13TSTxgFGUFEtumv5ShGzAmLw
-* Core: Martin Danielsen <kalroth@gmail.com>
+* Core: Martin Danielsen <kalroth@gmail.com> 1DNBcSEENBwDKrcTyTW61ezWhzsPy5imkn
 * Core: Con Kolivas <kernel@kolivas.org> 15qSxP1SQcUX3o4nhkfdbgyoWEFMomJ4rZ
 * Core: Luke Dashjr <luke-jr+cgminer@utopios.org> 1QATWksNFGeUJCWBrN4g6hGM178Lovm7Wh
 * API: Andrew Smith <kan0i {at} kano-kun [dot] net> 1Jjk2LmktEQKnv8r2cZ9MvLiZwZ9gxabKm
