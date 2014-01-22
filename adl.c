@@ -39,6 +39,7 @@
 
 bool adl_active;
 bool opt_reorder = false;
+bool adl6 = false;
 
 int opt_hysteresis = 3;
 const int opt_targettemp = 75;
@@ -63,7 +64,7 @@ static void * __stdcall ADL_Main_Memory_Alloc(int iSize)
 // Optional Memory de-allocation function
 static void __stdcall ADL_Main_Memory_Free (void **lpBuffer)
 {
-	if (*lpBuffer) {
+	if (NULL != *lpBuffer) {
 		free (*lpBuffer);
 		*lpBuffer = NULL;
 	}
@@ -77,13 +78,15 @@ static void *GetProcAddress(void *pLibrary, const char *name)
 }
 #endif
 
-static	ADL_MAIN_CONTROL_CREATE		ADL_Main_Control_Create;
-static	ADL_MAIN_CONTROL_DESTROY	ADL_Main_Control_Destroy;
+static	ADL_MAIN_CONTROL_CREATE				ADL_Main_Control_Create;
+static	ADL_MAIN_CONTROL_DESTROY			ADL_Main_Control_Destroy;
 static	ADL_ADAPTER_NUMBEROFADAPTERS_GET	ADL_Adapter_NumberOfAdapters_Get;
-static	ADL_ADAPTER_ADAPTERINFO_GET	ADL_Adapter_AdapterInfo_Get;
-static	ADL_ADAPTER_ID_GET		ADL_Adapter_ID_Get;
-static	ADL_MAIN_CONTROL_REFRESH	ADL_Main_Control_Refresh;
-static	ADL_ADAPTER_VIDEOBIOSINFO_GET	ADL_Adapter_VideoBiosInfo_Get;
+static	ADL_ADAPTER_ADAPTERINFO_GET			ADL_Adapter_AdapterInfo_Get;
+static	ADL_ADAPTER_ID_GET					ADL_Adapter_ID_Get;
+static	ADL_MAIN_CONTROL_REFRESH			ADL_Main_Control_Refresh;
+static	ADL_ADAPTER_VIDEOBIOSINFO_GET		ADL_Adapter_VideoBiosInfo_Get;
+static	ADL_DISPLAY_DISPLAYINFO_GET			ADL_Display_DisplayInfo_Get;
+static	ADL_ADAPTER_ACCESSIBILITY_GET		ADL_Adapter_Accessibility_Get;
 
 static	ADL_OVERDRIVE_CAPS		ADL_Overdrive_Caps;
 
@@ -119,6 +122,7 @@ static	ADL_OVERDRIVE6_POWERCONTROL_SET ADL_Overdrive6_PowerControl_Set;
 #endif
 static int iNumberAdapters;
 static LPAdapterInfo lpInfo = NULL;
+static LPADLDisplayInfo lpAdlDisplayInfo = NULL;
 
 int set_fanspeed(int gpu, int iFanSpeed);
 static float __gpu_temp(struct gpu_adl *ga);
@@ -169,6 +173,10 @@ static bool init_overdrive5()
 			applog(LOG_WARNING, "ATI ADL Overdrive5's API is missing");
 		return false;
 	}
+	else 
+	{
+		applog(LOG_INFO, "ATI ADL Overdrive5 API found.");
+	}
 
 	return true;
 }
@@ -197,6 +205,11 @@ static bool init_overdrive6()
 			applog(LOG_WARNING, "ATI ADL Overdrive6's API is missing");
 		return false;
 	}
+	else
+	{
+		adl6 = true;
+		applog(LOG_INFO, "ATI ADL Overdrive6 API found.");
+	}
 
 	return true;
 }
@@ -222,12 +235,17 @@ static bool prepare_adl(void)
 	ADL_Main_Control_Destroy = (ADL_MAIN_CONTROL_DESTROY) GetProcAddress(hDLL,"ADL_Main_Control_Destroy");
 	ADL_Adapter_NumberOfAdapters_Get = (ADL_ADAPTER_NUMBEROFADAPTERS_GET) GetProcAddress(hDLL,"ADL_Adapter_NumberOfAdapters_Get");
 	ADL_Adapter_AdapterInfo_Get = (ADL_ADAPTER_ADAPTERINFO_GET) GetProcAddress(hDLL,"ADL_Adapter_AdapterInfo_Get");
+	ADL_Display_DisplayInfo_Get = (ADL_DISPLAY_DISPLAYINFO_GET) GetProcAddress(hDLL,"ADL_Display_DisplayInfo_Get");
 	ADL_Adapter_ID_Get = (ADL_ADAPTER_ID_GET) GetProcAddress(hDLL,"ADL_Adapter_ID_Get");
 	ADL_Main_Control_Refresh = (ADL_MAIN_CONTROL_REFRESH) GetProcAddress(hDLL, "ADL_Main_Control_Refresh");
 	ADL_Adapter_VideoBiosInfo_Get = (ADL_ADAPTER_VIDEOBIOSINFO_GET)GetProcAddress(hDLL,"ADL_Adapter_VideoBiosInfo_Get");
 	ADL_Overdrive_Caps = (ADL_OVERDRIVE_CAPS)GetProcAddress(hDLL, "ADL_Overdrive_Caps");
+
+	ADL_Adapter_Accessibility_Get = (ADL_ADAPTER_ACCESSIBILITY_GET)GetProcAddress(hDLL, "ADL_Adapter_Accessibility_Get");
+
 	if (!ADL_Main_Control_Create || !ADL_Main_Control_Destroy ||
 		!ADL_Adapter_NumberOfAdapters_Get || !ADL_Adapter_AdapterInfo_Get ||
+		!ADL_Display_DisplayInfo_Get ||
 		!ADL_Adapter_ID_Get || !ADL_Main_Control_Refresh ||
 		!ADL_Adapter_VideoBiosInfo_Get || !ADL_Overdrive_Caps) {
 			applog(LOG_WARNING, "ATI ADL's API is missing");
@@ -249,6 +267,7 @@ static bool prepare_adl(void)
 	}
 
 	init_overdrive5();
+	init_overdrive6();
 
 	return true;
 }
@@ -258,6 +277,10 @@ void init_adl(int nDevs)
 	int result, i, j, devices = 0, last_adapter = -1, gpu = 0, dummy = 0;
 	struct gpu_adapters adapters[MAX_GPUDEVICES], vadapters[MAX_GPUDEVICES];
 	bool devs_match = true;
+	ADLBiosInfo BiosInfo;
+	int  iNumDisplays;
+
+	applog(LOG_INFO, "Number of ADL devices %d", nDevs);
 
 	if (unlikely(pthread_mutex_init(&adl_lock, NULL))) {
 		applog(LOG_ERR, "Failed to init adl_lock in init_adl");
@@ -290,14 +313,24 @@ void init_adl(int nDevs)
 		return;
 	}
 
+	applog(LOG_INFO, "Found %d ADL adapters", iNumberAdapters);
+
 	/* Iterate over iNumberAdapters and find the lpAdapterID of real devices */
 	for (i = 0; i < iNumberAdapters; i++) {
 		int iAdapterIndex;
 		int lpAdapterID;
 
 		iAdapterIndex = lpInfo[i].iAdapterIndex;
+
 		/* Get unique identifier of the adapter, 0 means not AMD */
 		result = ADL_Adapter_ID_Get(iAdapterIndex, &lpAdapterID);
+
+		if (ADL_Adapter_VideoBiosInfo_Get(iAdapterIndex, &BiosInfo) == ADL_ERR) {
+			applog(LOG_INFO, "ADL index %d, id %d - FAILED to get BIOS info", iAdapterIndex, lpAdapterID);
+		} else {
+			applog(LOG_INFO, "ADL index %d, id %d - BIOS partno.: %s, version: %s, date: %s", iAdapterIndex, lpAdapterID, BiosInfo.strPartNumber, BiosInfo.strVersion, BiosInfo.strDate);
+		}
+
 		if (result != ADL_OK) {
 			applog(LOG_INFO, "Failed to ADL_Adapter_ID_Get. Error %d", result);
 			if (result == -10)
@@ -306,22 +339,27 @@ void init_adl(int nDevs)
 		}
 
 		/* Each adapter may have multiple entries */
-		if (lpAdapterID == last_adapter)
+		if (lpAdapterID == last_adapter) {
 			continue;
+		}
 
-		applog(LOG_DEBUG, "GPU %d "
-		       "iAdapterIndex %d "
-		       "strUDID %s "
-		       "iBusNumber %d "
-		       "iDeviceNumber %d "
-		       "iFunctionNumber %d "
-		       "iVendorID %d "
-		       "strAdapterName  %s ",
+		applog(LOG_INFO, "GPU %d assigned: "
+		       "iAdapterIndex:%d "
+			   "iPresent:%d "
+		       "strUDID:%s "
+		       "iBusNumber:%d "
+		       "iDeviceNumber:%d "
+			   "iDrvIndex:%d "
+		       "iFunctionNumber:%d "
+		       "iVendorID:%d "
+		       "name:%s",
 		       devices,
-		       iAdapterIndex,
+		       lpInfo[i].iAdapterIndex,
+		       lpInfo[i].iPresent,
 		       lpInfo[i].strUDID,
 		       lpInfo[i].iBusNumber,
 		       lpInfo[i].iDeviceNumber,
+		       lpInfo[i].iDrvIndex,
 		       lpInfo[i].iFunctionNumber,
 		       lpInfo[i].iVendorID,
 		       lpInfo[i].strAdapterName);
@@ -365,8 +403,9 @@ void init_adl(int nDevs)
 		if (gpus[i].mapped) {
 			vadapters[gpus[i].virtual_adl].virtual_gpu = i;
 			applog(LOG_INFO, "Mapping OpenCL device %d to ADL device %d", i, gpus[i].virtual_adl);
-		} else
+		} else {
 			gpus[i].virtual_adl = i;
+		}
 	}
 
 	if (!devs_match) {
@@ -450,6 +489,8 @@ void init_adl(int nDevs)
 		ga->DefPerfLev = NULL;
 		ga->twin = NULL;
 		ga->def_fan_valid = false;
+
+		applog(LOG_INFO, "ADL GPU %d is Adapter index %d and maps to adapter id %d", ga->gpu, ga->iAdapterIndex, ga->lpAdapterID);
 
 		if (ADL_Adapter_VideoBiosInfo_Get(iAdapterIndex, &BiosInfo) != ADL_ERR)
 			applog(LOG_INFO, "GPU %d BIOS partno.: %s, version: %s, date: %s", gpu, BiosInfo.strPartNumber, BiosInfo.strVersion, BiosInfo.strDate);
@@ -545,7 +586,7 @@ void init_adl(int nDevs)
 			ga->has_fanspeed = true;
 
 		/* Save the fanspeed values as defaults in case we reset later */
-		if (ADL_Overdrive5_FanSpeed_Get(ga->iAdapterIndex, 0, &ga->DefFanSpeedValue) != ADL_OK)
+		if (ADL_Overdrive5_FanSpeed_Get(iAdapterIndex, 0, &ga->DefFanSpeedValue) != ADL_OK)
 			applog(LOG_INFO, "Failed to ADL_Overdrive5_FanSpeed_Get for default value");
 		else
 			ga->def_fan_valid = true;
@@ -556,12 +597,12 @@ void init_adl(int nDevs)
 			gpus[gpu].gpu_fan = 85; /* Set a nominal upper limit of 85% */
 
 		/* Not fatal if powercontrol get fails */
-		if (ADL_Overdrive5_PowerControl_Get(ga->iAdapterIndex, &ga->iPercentage, &dummy) != ADL_OK)
+		if (ADL_Overdrive5_PowerControl_Get(iAdapterIndex, &ga->iPercentage, &dummy) != ADL_OK)
 			applog(LOG_INFO, "Failed to ADL_Overdrive5_PowerControl_get");
 
 		if (gpus[gpu].gpu_powertune) {
-			ADL_Overdrive5_PowerControl_Set(ga->iAdapterIndex, gpus[gpu].gpu_powertune);
-			ADL_Overdrive5_PowerControl_Get(ga->iAdapterIndex, &ga->iPercentage, &dummy);
+			ADL_Overdrive5_PowerControl_Set(iAdapterIndex, gpus[gpu].gpu_powertune);
+			ADL_Overdrive5_PowerControl_Get(iAdapterIndex, &ga->iPercentage, &dummy);
 			ga->managed = true;
 		}
 
