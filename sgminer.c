@@ -115,6 +115,7 @@ bool use_curses;
 static bool opt_submit_stale = true;
 static int opt_shares;
 bool opt_fail_only;
+int opt_fail_switch_delay = 60;
 static bool opt_fix_protocol;
 static bool opt_lowmem;
 bool opt_autofan;
@@ -1033,6 +1034,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--failover-only",
 			opt_set_bool, &opt_fail_only,
 			"Don't leak work to backup pools when primary pool is lagging"),
+	OPT_WITH_ARG("--failover-switch-delay",
+			set_int_1_to_65535, opt_show_intval, &opt_fail_switch_delay,
+			"Delay in seconds before switching back to a failed pool"),
 	OPT_WITHOUT_ARG("--fix-protocol",
 			opt_set_bool, &opt_fix_protocol,
 			"Do not redirect to a different getwork protocol (eg. stratum)"),
@@ -6774,11 +6778,11 @@ static void *watchpool_thread(void __maybe_unused *userdata)
 			}
 
 			/* Only switch pools if the failback pool has been
-			 * alive for more than one minute to prevent
+			 * alive for more than 60 seconds (default) to prevent
 			 * intermittently failing pools from being used. */
 			if (!pool->idle && pool_strategy == POOL_FAILOVER && pool->prio < cp_prio() &&
-			    now.tv_sec - pool->tv_idle.tv_sec > 60) {
-				applog(LOG_WARNING, "%s %s stable for 1 minute", pool->poolname, pool->rpc_url);
+			    now.tv_sec - pool->tv_idle.tv_sec > opt_fail_switch_delay) {
+				applog(LOG_WARNING, "%s %s stable for %d seconds", pool->poolname, pool->rpc_url, opt_fail_switch_delay);
 				switch_pools(NULL);
 			}
 		}
