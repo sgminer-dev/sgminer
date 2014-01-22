@@ -3394,10 +3394,10 @@ static void pool_died(struct pool *pool)
 	if (!pool_tset(pool, &pool->idle)) {
 		cgtime(&pool->tv_idle);
 		if (pool == current_pool()) {
-			applog(LOG_WARNING, "%s %s not responding!", pool->poolname, pool->rpc_url);
+			applog(LOG_WARNING, "%s not responding!", pool->poolname);
 			switch_pools(NULL);
 		} else
-			applog(LOG_INFO, "%s %s failed to return work", pool->poolname, pool->rpc_url);
+			applog(LOG_INFO, "%s failed to return work", pool->poolname);
 	}
 }
 
@@ -5485,7 +5485,7 @@ retry_stratum:
 	/* Detect if a http getwork pool has an X-Stratum header at startup,
 	 * and if so, switch to that in preference to getwork if it works */
 	if (pool->stratum_url && !opt_fix_protocol && stratum_works(pool)) {
-		applog(LOG_NOTICE, "Switching %s %s to %s", pool->poolname, pool->rpc_url, pool->stratum_url);
+		applog(LOG_NOTICE, "Switching %s to %s", pool->poolname, pool->stratum_url);
 		if (!pool->rpc_url)
 			pool->rpc_url = strdup(pool->stratum_url);
 		pool->has_stratum = true;
@@ -6782,7 +6782,7 @@ static void *watchpool_thread(void __maybe_unused *userdata)
 			 * intermittently failing pools from being used. */
 			if (!pool->idle && pool_strategy == POOL_FAILOVER && pool->prio < cp_prio() &&
 			    now.tv_sec - pool->tv_idle.tv_sec > opt_fail_switch_delay) {
-				applog(LOG_WARNING, "%s %s stable for %d seconds", pool->poolname, pool->rpc_url, opt_fail_switch_delay);
+				applog(LOG_WARNING, "%s stable for %d seconds", pool->poolname, opt_fail_switch_delay);
 				switch_pools(NULL);
 			}
 		}
