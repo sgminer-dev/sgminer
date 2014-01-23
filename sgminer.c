@@ -4122,16 +4122,16 @@ void write_config(FILE *fcfg)
 				case KL_NONE: // Shouldn't happen
 					break;
 				case KL_ALEXKARNEW:
-					fprintf(fcfg, "alexkarnew");
+					fprintf(fcfg, ALEXKARNEW_KERNNAME);
 					break;
 				case KL_ALEXKAROLD:
-					fprintf(fcfg, "alexkarold");
+					fprintf(fcfg, ALEXKAROLD_KERNNAME);
 					break;
 				case KL_CKOLIVAS:
-					fprintf(fcfg, "ckolivas");
+					fprintf(fcfg, CKOLIVAS_KERNNAME);
 					break;
 				case KL_ZUIKKIS:
-					fprintf(fcfg, "zuikkis");
+					fprintf(fcfg, ZUIKKIS_KERNNAME);
 					break;
 			}
 		}
