@@ -1242,6 +1242,11 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--user|-u",
 		     set_user, NULL, NULL,
 		     "Username for bitcoin JSON-RPC server"),
+	OPT_WITH_ARG("--vectors|-v",
+		     set_vector, NULL, NULL,
+		     opt_hidden),
+		     /* All current kernels only support vectors=1 */
+		     /* "Override detected optimal vector (1, 2 or 4) - one value or comma separated list"), */
 	OPT_WITHOUT_ARG("--verbose|-v",
 			opt_set_bool, &opt_log_output,
 			"Log verbose output to stderr as well as status output"),
@@ -1254,8 +1259,6 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--worktime",
 			opt_set_bool, &opt_worktime,
 			"Display extra work time debug information"),
-	OPT_WITH_ARG("--pools",
-			opt_set_bool, NULL, NULL, opt_hidden),
 	OPT_ENDTABLE
 };
 
@@ -4111,19 +4114,31 @@ void write_config(FILE *fcfg)
 		}
 	fputs("\n]\n", fcfg);
 
+	/* Write only if there are usable GPUs */
 	if (nDevs) {
-		/* Write GPU device values */
 		fputs(",\n\"intensity\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, gpus[i].dynamic ? "%sd" : "%s%d", i > 0 ? "," : "", gpus[i].intensity);
-		fputs("\",\n\"vectors\" : \"", fcfg);
+
+		fputs(",\n\"xintensity\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
-			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
-				gpus[i].vwidth);
+			fprintf(fcfg, "%s%d", i > 0 ? "," : "", gpus[i].xintensity);
+
+		fputs(",\n\"rawintensity\" : \"", fcfg);
+		for(i = 0; i < nDevs; i++)
+			fprintf(fcfg, "%s%d", i > 0 ? "," : "", gpus[i].rawintensity);
+
+		/* All current kernels only support vector=1 */
+		/* fputs("\",\n\"vectors\" : \"", fcfg); */
+		/* for(i = 0; i < nDevs; i++) */
+		/* 	fprintf(fcfg, "%s%d", i > 0 ? "," : "", */
+		/* 		gpus[i].vwidth); */
+
 		fputs("\",\n\"worksize\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
 				(int)gpus[i].work_size);
+
 		fputs("\",\n\"kernel\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++) {
 			fprintf(fcfg, "%s", i > 0 ? "," : "");
@@ -4135,47 +4150,60 @@ void write_config(FILE *fcfg)
 					break;
 			}
 		}
+
 		fputs("\",\n\"lookup-gap\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
 				(int)gpus[i].opt_lg);
+
 		fputs("\",\n\"thread-concurrency\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
 				(int)gpus[i].opt_tc);
+
 		fputs("\",\n\"shaders\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
 				(int)gpus[i].shaders);
+
 #ifdef HAVE_ADL
 		fputs("\",\n\"gpu-engine\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d-%d", i > 0 ? "," : "", gpus[i].min_engine, gpus[i].gpu_engine);
+
 		fputs("\",\n\"gpu-fan\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d-%d", i > 0 ? "," : "", gpus[i].min_fan, gpus[i].gpu_fan);
+
 		fputs("\",\n\"gpu-memclock\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "", gpus[i].gpu_memclock);
+
 		fputs("\",\n\"gpu-memdiff\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "", gpus[i].gpu_memdiff);
+
 		fputs("\",\n\"gpu-powertune\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "", gpus[i].gpu_powertune);
+
 		fputs("\",\n\"gpu-vddc\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%1.3f", i > 0 ? "," : "", gpus[i].gpu_vddc);
+
 		fputs("\",\n\"temp-cutoff\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "", gpus[i].cutofftemp);
+
 		fputs("\",\n\"temp-overheat\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "", gpus[i].adl.overtemp);
+
 		fputs("\",\n\"temp-target\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "", gpus[i].adl.targettemp);
 #endif
+
 		fputs("\"", fcfg);
 	}
 #ifdef HAVE_ADL
