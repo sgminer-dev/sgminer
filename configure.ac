@@ -197,14 +197,16 @@ AC_ARG_ENABLE([adl_checks],
 
 if test "$found_opencl" = 1; then
 	if test "x$adl" != xno; then
-		dnl Check if include files are in $srcdir/ADL_SDK
-		ADL_CPPFLAGS=
-		AC_CHECK_FILE([$srcdir/ADL_SDK/adl_sdk.h], [have_adl=true; ADL_CPPFLAGS=-I$srcdir], have_adl=false,)
-
 		dnl FIXME: force ADL usage if disable-checks specified
 		if test "x$adl_checks" = xno; then
 			have_adl=true
 			ADL_CPPFLAGS=-I$srcdir
+		fi
+
+		dnl Check if include files are in $srcdir/ADL_SDK
+		if test "x$have_adl" != xtrue; then
+			ADL_CPPFLAGS=
+			AC_CHECK_FILE([$srcdir/ADL_SDK/adl_sdk.h], [have_adl=true; ADL_CPPFLAGS=-I$srcdir], have_adl=false,)
 		fi
 
 		dnl FIXME: Check if SGMINER_SDK present
@@ -212,7 +214,7 @@ if test "$found_opencl" = 1; then
 			AC_CHECK_FILE([$SGMINER_SDK/include/ADL_SDK/adl_sdk.h], [have_adl=true; ADL_CPPFLAGS=-I$SGMINER_SDK/include], have_adl=false,)
 		fi
 
-		if test x$have_adl = xtrue
+		if test "x$have_adl" = xtrue
 		then
 			AC_DEFINE([HAVE_ADL], [1], [Defined if ADL headers were found])
 		else
