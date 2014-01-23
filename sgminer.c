@@ -2039,8 +2039,8 @@ static void curses_print_status(void)
 		cg_mvwprintw(statuswin, 4, 0, "Connected to multiple pools with%s block change notify",
 			have_longpoll ? "": "out");
 	} else if (pool->has_stratum) {
-		cg_mvwprintw(statuswin, 4, 0, "Connected to %s diff %s with stratum as user %s",
-			pool->sockaddr_url, pool->diff, pool->rpc_user);
+		cg_mvwprintw(statuswin, 4, 0, "Connected to %s:%s diff %s with stratum as user %s",
+			pool->sockaddr_url, pool->stratum_port, pool->diff, pool->rpc_user);
 	} else {
 		cg_mvwprintw(statuswin, 4, 0, "Connected to %s diff %s with%s %s as user %s",
 			pool->sockaddr_url, pool->diff, have_longpoll ? "": "out",
