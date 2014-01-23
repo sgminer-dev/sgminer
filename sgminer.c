@@ -1242,7 +1242,7 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--user|-u",
 		     set_user, NULL, NULL,
 		     "Username for bitcoin JSON-RPC server"),
-	OPT_WITHOUT_ARG("--verbose",
+	OPT_WITHOUT_ARG("--verbose|-v",
 			opt_set_bool, &opt_log_output,
 			"Log verbose output to stderr as well as status output"),
 	OPT_WITH_ARG("--worksize|-w",
