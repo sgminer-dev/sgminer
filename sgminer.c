@@ -8101,6 +8101,8 @@ begin_bench:
 			applog(LOG_WARNING, "%s not providing work fast enough", cp->poolname);
 			cp->getfail_occasions++;
 			total_go++;
+			if (!pool_localgen(cp))
+				applog(LOG_INFO, "Increasing queue to %d", ++opt_queue);
 		}
 		pool = select_pool(lagging);
 retry:
