@@ -1,6 +1,6 @@
 ######################################################################################
 #                                                                                    #
-#          SGMINER WIN32 setup and build instructions (on mingw32/Windows):           #
+#          Native WIN32 setup and build instructions (on mingw32/Windows):           #
 #                                                                                    #
 ######################################################################################
 
@@ -38,8 +38,8 @@ what you copied.
 **************************************************************************************
 Download and install the following Mingw32 version by doing a google search for:
 "mingw-get-inst-20120426"
-*This is currently a known working version as of SGMINER 4.0.0, but this could be a 
-different version later.
+This is currently a known working version, but this could be a different version
+later.
 
 During installation, select all the check boxes (excluding "Fortran Compiler") so that
 everything is installed.
