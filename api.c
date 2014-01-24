@@ -1632,8 +1632,11 @@ static void gpustatus(struct io_data *io_data, int gpu, bool isjson, bool precom
 
 	if (gpu >= 0 && gpu < nDevs) {
 		struct cgpu_info *cgpu = &gpus[gpu];
+		double dev_runtime;
 
-		cgpu->utility = cgpu->accepted / ( total_secs ? total_secs : 1 ) * 60;
+		dev_runtime = cgpu_runtime(cgpu);
+
+		cgpu->utility = cgpu->accepted / dev_runtime * 60;
 
 #ifdef HAVE_ADL
 		if (!gpu_stats(gpu, &gt, &gc, &gm, &gv, &ga, &gf, &gp, &pt))
