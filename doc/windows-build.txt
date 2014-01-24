@@ -234,15 +234,15 @@ libraries we depend on. We could put these in
 /usr/i586-mingw32msvc/lib or anywhere else, instead (though keeping it
 outside /usr means we can set it up without root privileges.)
 
-IMPORTANT: If you put this directory inside your cgminer directory,
+IMPORTANT: If you put this directory inside your sgminer directory,
 remember 'make distclean' may delete it!
 
-mkdir -p ../cgminer-win32-deps/lib
-cd ../cgminer-win32-deps
+mkdir -p ../win32/lib
+cd ../win32
 mkdir include
 mkdir bin
 
-NB: All following steps assume you are in the "cgminer-win32-deps" directory. Adjust as necessary.
+NB: All following steps assume you are in the "win32" directory. Adjust as necessary.
 
 ** pdcurses
 
@@ -254,7 +254,8 @@ mv pdcurses.dll bin/
 
 ** pthreads-w32
 
-(NB: I found pthreads-w32 2.9.1 doesn't seem to work properly, transfers time out early due to sem_timedwait exiting immediately(?))
+(NB: I found pthreads-w32 2.9.1 doesn't seem to work properly, transfers time out
+early due to sem_timedwait exiting immediately(?))
 
 wget -O lib/libpthread.a ftp://sourceware.org/pub/pthreads-win32/prebuilt-dll-2-8-0-release/lib/libpthreadGC2.a
 wget -O include/pthread.h ftp://sourceware.org/pub/pthreads-win32/prebuilt-dll-2-8-0-release/include/pthread.h
@@ -278,24 +279,23 @@ rm -rf curl-7.33.0-devel-mingw32
 rm *.zip
 
 
-** Building cgminer
+** Building
 
 Below assumes you're building in a "build-win32" or similar directory
-inside the cgminer directory. Fix up the -I and -L paths appropriately
+inside the sgminer directory. Fix up the -I and -L paths appropriately
 if you're building in-tree or someplace else.
 
 Configure command:
 
-CPPFLAGS="-I`pwd`/../../cgminer-win32-deps/include" LDFLAGS="-L`pwd`/../../cgminer-win32-deps/lib -lcurldll" ../autogen.sh --prefix=/usr/local/i586-mingw32 --host=i586-mingw32msvc --build=i686-linux 
+CPPFLAGS="-I`pwd`/../../win32/include" LDFLAGS="-L`pwd`/../../win32/lib -lcurldll" ../autogen.sh --prefix=/usr/local/i586-mingw32 --host=i586-mingw32msvc --build=i686-linux 
 
 ^^^ Plus whatever configure arguments you want to add. Note the paths
-    to cgminer-win32-deps that you may need to change.
+    to win32 that you may need to change.
 
 And make:
 
 make
 
-After cgminer builds, the next steps are the same as for native
+After building, the next steps are the same as for native
 building as given under "Copy files to a build directory/folder"
-(DLLs can all be found in the cgminer-win32-deps/bin directory.)
-
+(DLLs can all be found in the win32/bin directory.)
