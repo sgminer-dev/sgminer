@@ -1177,6 +1177,7 @@ struct pool {
 	bool idle;
 	bool lagging;
 	bool probed;
+	bool start_disabled;
 	enum pool_enable enabled;
 	bool submit_old;
 	bool removed;

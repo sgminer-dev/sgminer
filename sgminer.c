@@ -211,6 +211,7 @@ int total_pools, enabled_pools;
 enum pool_strategy pool_strategy = POOL_FAILOVER;
 int opt_rotate_period;
 static int total_urls, total_users, total_passes, total_userpasses, total_poolnames;
+static int json_array_index;
 
 static
 #ifndef HAVE_CURSES
@@ -741,6 +742,29 @@ static char *set_poolname(char *arg)
 	return NULL;
 }
 
+static char *set_disable_pool(char *arg)
+{
+	struct pool *pool;
+	int len, disabled;
+
+	while ((json_array_index + 1) > total_pools)
+		add_pool();
+	pool = pools[json_array_index];
+
+	len = strlen(arg);
+	if (len < 0)
+	{
+		disabled = 1;
+	}
+	else
+	{
+		disabled = atoi(arg);
+	}
+	pool->start_disabled = (disabled > 0);
+
+	return NULL;
+}
+
 static char *set_quota(char *arg)
 {
 	char *semicolon = strchr(arg, ';'), *url;
@@ -1024,6 +1048,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--device|-d",
 		     set_devices, NULL, NULL,
 	             "Select device to use, one value, range and/or comma separated (e.g. 0-2,4) default: all"),
+	OPT_WITH_ARG("--disable-pool",
+			 set_disable_pool, NULL, NULL,
+				 "Start the pool in a disabled state, so that it is not automatically chosen for mining"),
 	OPT_WITHOUT_ARG("--disable-rejecting",
 			opt_set_bool, &opt_disable_pool,
 			"Automatically disable pools that continually reject shares"),
@@ -1254,11 +1281,13 @@ static char *load_config(const char *arg, void __maybe_unused *unused);
 
 static int fileconf_load;
 
-static char *parse_config(json_t *config, bool fileconf)
+static char *parse_config(json_t *config, bool fileconf, int parent_iteration)
 {
 	static char err_buf[200];
 	struct opt_table *opt;
 	json_t *val;
+
+	json_array_index = parent_iteration;
 
 	if (fileconf && !fileconf_load)
 		fileconf_load = 1;
@@ -1295,7 +1324,10 @@ static char *parse_config(json_t *config, bool fileconf)
 					if (json_is_string(json_array_get(val, n)))
 						err = opt->cb_arg(json_string_value(json_array_get(val, n)), opt->u.arg);
 					else if (json_is_object(json_array_get(val, n)))
-						err = parse_config(json_array_get(val, n), false);
+					{
+						err = parse_config(json_array_get(val, n), false, n);
+						json_array_index = parent_iteration;
+					}
 				}
 			} else if ((opt->type & OPT_NOARG) && json_is_true(val))
 				err = opt->cb(opt->u.arg);
@@ -1360,7 +1392,7 @@ static char *load_config(const char *arg, void __maybe_unused *unused)
 
 	/* Parse the config now, so we can override it.  That can keep pointers
 	 * so don't free config object. */
-	return parse_config(config, true);
+	return parse_config(config, true, 0);
 }
 
 static char *set_default_config(const char *arg)
@@ -7843,7 +7875,14 @@ int main(int argc, char *argv[])
 	for (i = 0; i < total_pools; i++) {
 		struct pool *pool  = pools[i];
 
-		enable_pool(pool);
+		if (pool->start_disabled)
+		{
+			disable_pool(pool);
+		}
+		else
+		{
+			enable_pool(pool);
+		}
 		pool->idle = true;
 	}
 
