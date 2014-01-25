@@ -1259,6 +1259,8 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--worktime",
 			opt_set_bool, &opt_worktime,
 			"Display extra work time debug information"),
+	OPT_WITH_ARG("--pools",
+			opt_set_bool, NULL, NULL, opt_hidden),
 	OPT_ENDTABLE
 };
 
@@ -4120,11 +4122,11 @@ void write_config(FILE *fcfg)
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, gpus[i].dynamic ? "%sd" : "%s%d", i > 0 ? "," : "", gpus[i].intensity);
 
-		fputs(",\n\"xintensity\" : \"", fcfg);
+		fputs("\",\n\"xintensity\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "", gpus[i].xintensity);
 
-		fputs(",\n\"rawintensity\" : \"", fcfg);
+		fputs("\",\n\"rawintensity\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "", gpus[i].rawintensity);
 
