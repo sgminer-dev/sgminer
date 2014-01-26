@@ -1135,7 +1135,7 @@ struct curl_ent {
 
 /* Disabled needs to be the lowest enum as a freshly calloced value will then
  * equal disabled */
-enum pool_enable {
+enum pool_state {
 	POOL_DISABLED,
 	POOL_ENABLED,
 	POOL_REJECTING,
@@ -1183,7 +1183,7 @@ struct pool {
 	bool lagging;
 	bool probed;
 	bool start_disabled;
-	enum pool_enable enabled;
+	enum pool_state state;
 	bool submit_old;
 	bool remove_at_start;
 	bool removed;
@@ -1261,7 +1261,7 @@ struct pool {
 	struct thread_q *stratum_q;
 	int sshares; /* stratum shares submitted waiting on response */
 
-	/* GBT  variables */
+	/* GBT variables */
 	bool has_gbt;
 	cglock_t gbt_lock;
 	unsigned char previousblockhash[32];

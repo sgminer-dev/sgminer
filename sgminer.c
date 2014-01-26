@@ -2349,26 +2349,26 @@ void logwin_update(void)
 
 static void enable_pool(struct pool *pool)
 {
-	if (pool->enabled != POOL_ENABLED) {
+	if (pool->state != POOL_ENABLED) {
 		enabled_pools++;
-		pool->enabled = POOL_ENABLED;
+		pool->state = POOL_ENABLED;
 	}
 }
 
 #ifdef HAVE_CURSES
 static void disable_pool(struct pool *pool)
 {
-	if (pool->enabled == POOL_ENABLED)
+	if (pool->state == POOL_ENABLED)
 		enabled_pools--;
-	pool->enabled = POOL_DISABLED;
+	pool->state = POOL_DISABLED;
 }
 #endif
 
 static void reject_pool(struct pool *pool)
 {
-	if (pool->enabled == POOL_ENABLED)
+	if (pool->state == POOL_ENABLED)
 		enabled_pools--;
-	pool->enabled = POOL_REJECTING;
+	pool->state = POOL_REJECTING;
 }
 
 static void restart_threads(void);
@@ -2421,7 +2421,7 @@ share_result(json_t *val, json_t *res, json_t *err, const struct work *work,
 		 * continually rejecting shares has started accepting shares.
 		 * This will only happen with the work returned from a
 		 * longpoll */
-		if (unlikely(pool->enabled == POOL_REJECTING)) {
+		if (unlikely(pool->state == POOL_REJECTING)) {
 			applog(LOG_WARNING, "Rejecting %s now accepting shares, re-enabling!", pool->poolname);
 			enable_pool(pool);
 			switch_pools(NULL);
@@ -2774,7 +2774,7 @@ static bool pool_unworkable(struct pool *pool)
 {
 	if (pool->idle)
 		return true;
-	if (pool->enabled != POOL_ENABLED)
+	if (pool->state != POOL_ENABLED)
 		return true;
 	if (pool->has_stratum && !pool->stratum_active)
 		return true;
@@ -3601,7 +3601,7 @@ static bool pool_unusable(struct pool *pool)
 {
 	if (pool->idle)
 		return true;
-	if (pool->enabled != POOL_ENABLED)
+	if (pool->state != POOL_ENABLED)
 		return true;
 	return false;
 }
@@ -4477,10 +4477,10 @@ updated:
 
 		if (pool == current_pool())
 			wattron(logwin, A_BOLD);
-		if (pool->enabled != POOL_ENABLED)
+		if (pool->state != POOL_ENABLED)
 			wattron(logwin, A_DIM);
 		wlogprint("%d: ", pool->pool_no);
-		switch (pool->enabled) {
+		switch (pool->state) {
 			case POOL_ENABLED:
 				wlogprint("Enabled ");
 				break;
@@ -5174,7 +5174,7 @@ static bool cnx_needed(struct pool *pool)
 {
 	struct pool *cp;
 
-	if (pool->enabled != POOL_ENABLED)
+	if (pool->state != POOL_ENABLED)
 		return false;
 
 	/* Balance strategies need all pools online */
@@ -6596,7 +6596,7 @@ static void convert_to_work(json_t *val, int rolltime, struct pool *pool, struct
 	copy_time(&work->tv_getwork_reply, tv_lp_reply);
 	calc_diff(work, 0);
 
-	if (pool->enabled == POOL_REJECTING)
+	if (pool->state == POOL_REJECTING)
 		work->mandatory = true;
 
 	if (pool->has_gbt)
@@ -6614,7 +6614,7 @@ static void convert_to_work(json_t *val, int rolltime, struct pool *pool, struct
 	 * the longpoll work from a pool that has been rejecting shares as a
 	 * way to detect when the pool has recovered.
 	 */
-	if (pool != current_pool() && opt_fail_only && pool->enabled != POOL_REJECTING) {
+	if (pool != current_pool() && opt_fail_only && pool->state != POOL_REJECTING) {
 		free_work(work);
 		return;
 	}
@@ -6651,7 +6651,7 @@ static struct pool *select_longpoll_pool(struct pool *cp)
  */
 static void wait_lpcurrent(struct pool *pool)
 {
-	while (!cnx_needed(pool) && (pool->enabled == POOL_DISABLED ||
+	while (!cnx_needed(pool) && (pool->state == POOL_DISABLED ||
 	       (pool != current_pool() && pool_strategy != POOL_LOADBALANCE &&
 	       pool_strategy != POOL_BALANCE))) {
 		mutex_lock(&lp_lock);
@@ -6863,7 +6863,7 @@ static void *watchpool_thread(void __maybe_unused *userdata)
 				pool->shares = pool->utility;
 			}
 
-			if (pool->enabled == POOL_DISABLED)
+			if (pool->state == POOL_DISABLED)
 				continue;
 
 			/* Don't start testing any pools if the test threads
