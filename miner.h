@@ -1234,6 +1234,7 @@ struct pool {
 	char prev_block[32];
 
 	/* Stratum variables */
+	bool has_stratum;
 	char *stratum_url;
 	char *stratum_port;
 	struct addrinfo stratum_hints;
@@ -1250,7 +1251,6 @@ struct pool {
 	uint64_t nonce2;
 	int n2size;
 	char *sessionid;
-	bool has_stratum;
 	bool stratum_active;
 	bool stratum_init;
 	bool stratum_notify;

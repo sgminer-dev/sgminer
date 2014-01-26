@@ -509,9 +509,15 @@ struct pool *add_pool(void)
 	if (!pool)
 		quit(1, "Failed to malloc pool in add_pool");
 	pool->pool_no = pool->prio = total_pools;
+
+	/* Default pool name */
 	char buf[32];
-	sprintf(buf, "Pool %d", pool->pool_no);
+	sprintf(buf, "%s%s%s",
+		pool->sockaddr_url,
+		pool->has_stratum ? ":" : "",
+		pool->has_stratum ? pool->stratum_port : "");
 	pool->poolname = strdup(buf);
+
 	pools = realloc(pools, sizeof(struct pool *) * (total_pools + 2));
 	pools[total_pools++] = pool;
 	mutex_init(&pool->pool_lock);
@@ -2108,15 +2114,13 @@ static void curses_print_status(void)
 		local_work, total_go, total_ro);
 	wclrtoeol(statuswin);
 	if (shared_strategy() && total_pools > 1) {
-		cg_mvwprintw(statuswin, 4, 0, "Connected to multiple pools with%s block change notify",
-			have_longpoll ? "": "out");
-	} else if (pool->has_stratum) {
-		cg_mvwprintw(statuswin, 4, 0, "Connected to %s:%s diff %s with stratum as user %s",
-			pool->sockaddr_url, pool->stratum_port, pool->diff, pool->rpc_user);
+		cg_mvwprintw(statuswin, 4, 0, "Connected to multiple pools %s block change notify",
+			have_longpoll ? "with": "without");
 	} else {
-		cg_mvwprintw(statuswin, 4, 0, "Connected to %s diff %s with%s %s as user %s",
-			pool->sockaddr_url, pool->diff, have_longpoll ? "": "out",
-			pool->has_gbt ? "GBT" : "LP", pool->rpc_user);
+		cg_mvwprintw(statuswin, 4, 0, "Connected to %s (%s) diff %s as user %s",
+			     pool->poolname,
+			     pool->has_stratum ? "stratum" : (pool->has_gbt ? "GBT" : "longpoll"),
+			     pool->diff, pool->rpc_user);
 	}
 	wclrtoeol(statuswin);
 	cg_mvwprintw(statuswin, 5, 0, "Block: %s...  Diff:%s  Started: %s  Best share: %s   ",
