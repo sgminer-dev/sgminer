@@ -317,8 +317,10 @@ fi
 
 AC_DEFINE_UNQUOTED([SGMINER_PREFIX], ["$prefix/bin"], [Path to sgminer install])
 
-AC_DEFINE_UNQUOTED([SCRYPT_KERNNAME], ["scrypt130511"], [Filename for scrypt kernel])
-
+AC_DEFINE_UNQUOTED([ALEXKARNEW_KERNNAME], ["alexkarnew"], [Filename for Alexey Karimov's optimised kernel for Catalyst >=13.4])
+AC_DEFINE_UNQUOTED([ALEXKAROLD_KERNNAME], ["alexkarold"], [Filename for Alexey Karimov's optimised kernel for Catalyst <13.4])
+AC_DEFINE_UNQUOTED([CKOLIVAS_KERNNAME], ["ckolivas"], [Filename for original scrypt kernel])
+AC_DEFINE_UNQUOTED([ZUIKKIS_KERNNAME], ["zuikkis"], [Filename for Zuikkis' optimised kernel])
 
 AC_SUBST(OPENCL_LIBS)
 AC_SUBST(OPENCL_FLAGS)

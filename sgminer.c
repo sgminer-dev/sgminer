@@ -4205,8 +4205,17 @@ void write_config(FILE *fcfg)
 			switch (gpus[i].kernel) {
 				case KL_NONE: // Shouldn't happen
 					break;
-				case KL_SCRYPT:
-					fprintf(fcfg, "scrypt");
+				case KL_ALEXKARNEW:
+					fprintf(fcfg, ALEXKARNEW_KERNNAME);
+					break;
+				case KL_ALEXKAROLD:
+					fprintf(fcfg, ALEXKAROLD_KERNNAME);
+					break;
+				case KL_CKOLIVAS:
+					fprintf(fcfg, CKOLIVAS_KERNNAME);
+					break;
+				case KL_ZUIKKIS:
+					fprintf(fcfg, ZUIKKIS_KERNNAME);
 					break;
 			}
 		}
