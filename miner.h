@@ -1180,6 +1180,7 @@ struct pool {
 	bool start_disabled;
 	enum pool_enable enabled;
 	bool submit_old;
+	bool remove_at_start;
 	bool removed;
 	bool lp_started;
 

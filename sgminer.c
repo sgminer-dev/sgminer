@@ -765,6 +765,29 @@ static char *set_disable_pool(char *arg)
 	return NULL;
 }
 
+static char *set_remove_pool(char *arg)
+{
+	struct pool *pool;
+	int len, remove;
+
+	while ((json_array_index + 1) > total_pools)
+		add_pool();
+	pool = pools[json_array_index];
+
+	len = strlen(arg);
+	if (len < 1)
+	{
+		remove = 1;
+	}
+	else
+	{
+		remove = atoi(arg);
+	}
+	pool->remove_at_start = (remove > 0);
+
+	return NULL;
+}
+
 static char *set_quota(char *arg)
 {
 	char *semicolon = strchr(arg, ';'), *url;
@@ -1051,6 +1074,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--disable-pool",
 			 set_disable_pool, NULL, NULL,
 				 "Start the pool in a disabled state, so that it is not automatically chosen for mining"),
+	OPT_WITH_ARG("--remove-pool",
+			 set_remove_pool, NULL, NULL,
+				 "Allow the pool configuration to remain in the config file, but exclude it from the pools available at runtime"),
 	OPT_WITHOUT_ARG("--disable-rejecting",
 			opt_set_bool, &opt_disable_pool,
 			"Automatically disable pools that continually reject shares"),
@@ -7878,6 +7904,18 @@ int main(int argc, char *argv[])
 	if (opt_benchmark)
 		goto begin_bench;
 
+	/* Remove any pools that are in the configuration, but have been marked to be 
+	 * removed at miner startup in order to reduce clutter in the pool management */
+	for (i = 0; i < total_pools; i++) {
+		struct pool *pool = pools[i];
+
+		if (pool->remove_at_start)
+		{
+			remove_pool(pool);
+		}
+	}
+
+	/* Enable or disable all the 'remaining' pools */
 	for (i = 0; i < total_pools; i++) {
 		struct pool *pool  = pools[i];
 
