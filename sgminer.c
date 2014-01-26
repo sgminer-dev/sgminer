@@ -212,6 +212,7 @@ int total_pools, enabled_pools;
 enum pool_strategy pool_strategy = POOL_FAILOVER;
 int opt_rotate_period;
 static int total_urls, total_users, total_passes, total_userpasses, total_poolnames;
+static int json_array_index;
 
 static
 #ifndef HAVE_CURSES
@@ -742,6 +743,52 @@ static char *set_poolname(char *arg)
 	return NULL;
 }
 
+static char *set_disable_pool(char *arg)
+{
+	struct pool *pool;
+	int len, disabled;
+
+	while ((json_array_index + 1) > total_pools)
+		add_pool();
+	pool = pools[json_array_index];
+
+	len = strlen(arg);
+	if (len < 1)
+	{
+		disabled = 1;
+	}
+	else
+	{
+		disabled = atoi(arg);
+	}
+	pool->start_disabled = (disabled > 0);
+
+	return NULL;
+}
+
+static char *set_remove_pool(char *arg)
+{
+	struct pool *pool;
+	int len, remove;
+
+	while ((json_array_index + 1) > total_pools)
+		add_pool();
+	pool = pools[json_array_index];
+
+	len = strlen(arg);
+	if (len < 1)
+	{
+		remove = 1;
+	}
+	else
+	{
+		remove = atoi(arg);
+	}
+	pool->remove_at_start = (remove > 0);
+
+	return NULL;
+}
+
 static char *set_quota(char *arg)
 {
 	char *semicolon = strchr(arg, ';'), *url;
@@ -1025,6 +1072,12 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--device|-d",
 		     set_devices, NULL, NULL,
 	             "Select device to use, one value, range and/or comma separated (e.g. 0-2,4) default: all"),
+	OPT_WITH_ARG("--disable-pool",
+			 set_disable_pool, NULL, NULL,
+				 "Start the pool in a disabled state, so that it is not automatically chosen for mining"),
+	OPT_WITH_ARG("--remove-pool",
+			 set_remove_pool, NULL, NULL,
+				 "Allow the pool configuration to remain in the config file, but exclude it from the pools available at runtime"),
 	OPT_WITHOUT_ARG("--disable-rejecting",
 			opt_set_bool, &opt_disable_pool,
 			"Automatically disable pools that continually reject shares"),
@@ -1268,11 +1321,13 @@ static char *load_config(const char *arg, void __maybe_unused *unused);
 
 static int fileconf_load;
 
-static char *parse_config(json_t *config, bool fileconf)
+static char *parse_config(json_t *config, bool fileconf, int parent_iteration)
 {
 	static char err_buf[200];
 	struct opt_table *opt;
 	json_t *val;
+
+	json_array_index = parent_iteration;
 
 	if (fileconf && !fileconf_load)
 		fileconf_load = 1;
@@ -1309,7 +1364,10 @@ static char *parse_config(json_t *config, bool fileconf)
 					if (json_is_string(json_array_get(val, n)))
 						err = opt->cb_arg(json_string_value(json_array_get(val, n)), opt->u.arg);
 					else if (json_is_object(json_array_get(val, n)))
-						err = parse_config(json_array_get(val, n), false);
+					{
+						err = parse_config(json_array_get(val, n), false, n);
+						json_array_index = parent_iteration;
+					}
 				}
 			} else if ((opt->type & OPT_NOARG) && json_is_true(val))
 				err = opt->cb(opt->u.arg);
@@ -1374,7 +1432,7 @@ static char *load_config(const char *arg, void __maybe_unused *unused)
 
 	/* Parse the config now, so we can override it.  That can keep pointers
 	 * so don't free config object. */
-	return parse_config(config, true);
+	return parse_config(config, true, 0);
 }
 
 static char *set_default_config(const char *arg)
@@ -2053,8 +2111,8 @@ static void curses_print_status(void)
 		cg_mvwprintw(statuswin, 4, 0, "Connected to multiple pools with%s block change notify",
 			have_longpoll ? "": "out");
 	} else if (pool->has_stratum) {
-		cg_mvwprintw(statuswin, 4, 0, "Connected to %s diff %s with stratum as user %s",
-			pool->sockaddr_url, pool->diff, pool->rpc_user);
+		cg_mvwprintw(statuswin, 4, 0, "Connected to %s:%s diff %s with stratum as user %s",
+			pool->sockaddr_url, pool->stratum_port, pool->diff, pool->rpc_user);
 	} else {
 		cg_mvwprintw(statuswin, 4, 0, "Connected to %s diff %s with%s %s as user %s",
 			pool->sockaddr_url, pool->diff, have_longpoll ? "": "out",
@@ -4404,6 +4462,7 @@ static void display_pools(void)
 	struct pool *pool;
 	int selected, i;
 	char input;
+	char *disp_name;
 
 	opt_loginput = true;
 	immedok(logwin, true);
@@ -4428,11 +4487,16 @@ updated:
 				wlogprint("Rejecting ");
 				break;
 		}
-		wlogprint("%s Quota %d Prio %d: %s  User:%s\n",
+		disp_name = pool->poolname;
+		if (strlen(disp_name) < 1)
+		{
+			disp_name = pool->rpc_url;
+		}
+		wlogprint("%s Quota %d Prio %d: '%s'  User:%s\n",
 			pool->idle? "Dead" : "Alive",
 			pool->quota,
 			pool->prio,
-			pool->rpc_url, pool->rpc_user);
+			disp_name, pool->rpc_user);
 		wattroff(logwin, A_BOLD | A_DIM);
 	}
 retry:
@@ -7879,10 +7943,29 @@ int main(int argc, char *argv[])
 	if (opt_benchmark)
 		goto begin_bench;
 
+	/* Remove any pools that are in the configuration, but have been marked to be 
+	 * removed at miner startup in order to reduce clutter in the pool management */
+	for (i = 0; i < total_pools; i++) {
+		struct pool *pool = pools[i];
+
+		if (pool->remove_at_start)
+		{
+			remove_pool(pool);
+		}
+	}
+
+	/* Enable or disable all the 'remaining' pools */
 	for (i = 0; i < total_pools; i++) {
 		struct pool *pool  = pools[i];
 
-		enable_pool(pool);
+		if (pool->start_disabled)
+		{
+			disable_pool(pool);
+		}
+		else
+		{
+			enable_pool(pool);
+		}
 		pool->idle = true;
 	}
 

@@ -333,6 +333,55 @@ the above quotas in a configuration file they would be specified thus:
         }
     ]
 
+### Extra File Configuration
+
+If you want to store a number of pools in your configuration file, but don't always
+want them automatically enabled at start up (or restart), then the new "disable-pool"
+option can be used:
+
+    "pools" : [
+        {
+                "url" : "poola:porta",
+                "user" : "usernamea",
+                "pass" : "passa"
+        },
+        {
+                "quota" : "2;poolb:portb",
+                "user" : "usernameb",
+                "pass" : "passb",
+				"disable-pool" : "1"
+        }
+    ]
+
+It is then trivial to change the "disable-pool" setting to "0" in the configuration file
+at anytime and then restart the miner ('s' followed by 'c'). Or, you can enable the pool
+whilst the miner is still running ('p' followed by 'e' followed by pool number) - but the
+pool be still be disabled on restart if the config file is not changed. This option is 
+NOT created when the 'Write config file' option is used ('s' followed by 'w').
+
+In a similar manner, a 'remove-pool' option is also available. This can be mix and matched
+with the 'disable-pool' option. Using 'remove-pool' enables the json file to contain a
+large number of pools, of which some could be automatically culled at start up.
+This makes it easy to swap pools in and out of the runtime selection, without having a
+large list of pools cluttering up the disaply. A 'restart' of the miner ('s' followed by 'c')
+will reload the config file and any changes the may have been made.
+
+    "pools" : [
+        {
+				"poolname" : "Main Pool",
+                "url" : "poola:porta",
+                "user" : "usernamea",
+                "pass" : "passa",
+				"disable-pool" : "0"
+        },
+        {
+				"poolname" : "Joe's Weekend Pool"
+                "quota" : "2;poolb:portb",
+                "user" : "usernameb",
+                "pass" : "passb",
+				"remove-pool" : "1"
+        }
+    ]
 
 ## Logging
 
