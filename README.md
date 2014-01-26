@@ -331,6 +331,31 @@ the above quotas in a configuration file they would be specified thus:
         }
     ]
 
+### Extra File Configuration
+
+If you want to store a number of pools in your configuration file, but don't always
+want them automatically enabled at start up (or restart), then the new "disable-pool"
+option can be used:
+
+    "pools" : [
+        {
+                "url" : "poola:porta",
+                "user" : "usernamea",
+                "pass" : "passa"
+        },
+        {
+                "quota" : "2;poolb:portb",
+                "user" : "usernameb",
+                "pass" : "passb",
+				"disable-pool" : "1"
+        }
+    ]
+
+It is then trivial to change the "disable-pool" setting to "0" in the configuration file
+at anytime and then restart the miner ('s' followed by 'c'). Or, you can enable the pool
+whilst the miner is still running ('p' followed by 'e' followed by pool number) - but the
+pool be still be disabled on restart if the config file is not changed. This option is 
+NOT created when the 'Write config file' option is used ('s' followed by 'w').
 
 ## Logging
 
