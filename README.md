@@ -357,6 +357,30 @@ whilst the miner is still running ('p' followed by 'e' followed by pool number) 
 pool be still be disabled on restart if the config file is not changed. This option is 
 NOT created when the 'Write config file' option is used ('s' followed by 'w').
 
+In a similar manner, a 'remove-pool' option is also available. This can be mix and matched
+with the 'disable-pool' option. Using 'remove-pool' enables the json file to contain a
+large number of pools, of which some could be automatically culled at start up.
+This makes it easy to swap pools in and out of the runtime selection, without having a
+large list of pools cluttering up the disaply. A 'restart' of the miner ('s' followed by 'c')
+will reload the config file and any changes the may have been made.
+
+    "pools" : [
+        {
+				"poolname" : "Main Pool",
+                "url" : "poola:porta",
+                "user" : "usernamea",
+                "pass" : "passa",
+				"disable-pool" : "0"
+        },
+        {
+				"poolname" : "Joe's Weekend Pool"
+                "quota" : "2;poolb:portb",
+                "user" : "usernameb",
+                "pass" : "passb",
+				"remove-pool" : "1"
+        }
+    ]
+
 ## Logging
 
 sgminer will log to stderr if it detects stderr is being redirected to a
