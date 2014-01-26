@@ -400,8 +400,8 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	char numbuf[16];
 
 	if (cgpu->kernel == KL_NONE) {
-		applog(LOG_INFO, "Selecting scrypt kernel");
-		clState->chosen_kernel = KL_SCRYPT;
+		applog(LOG_INFO, "Selecting kernel ckolivas");
+		clState->chosen_kernel = KL_CKOLIVAS;
 		cgpu->kernel = clState->chosen_kernel;
 	} else {
 		clState->chosen_kernel = cgpu->kernel;
@@ -415,12 +415,32 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	else if (preferred_vwidth > 2)
 		preferred_vwidth = 2;
 
+	/* All available kernels only support vector 1 */
+	cgpu->vwidth = 1;
+
 	switch (clState->chosen_kernel) {
-		case KL_SCRYPT:
-			strcpy(filename, SCRYPT_KERNNAME".cl");
-			strcpy(binaryfilename, SCRYPT_KERNNAME);
-			/* Scrypt only supports vector 1 */
-			cgpu->vwidth = 1;
+		case KL_ALEXKARNEW:
+			applog(LOG_WARNING, "Kernel alexkarnew is experimental.");
+			strcpy(filename, ALEXKARNEW_KERNNAME".cl");
+			strcpy(binaryfilename, ALEXKARNEW_KERNNAME);
+			break;
+		case KL_ALEXKAROLD:
+			applog(LOG_WARNING, "Kernel alexkarold is experimental.");
+			strcpy(filename, ALEXKAROLD_KERNNAME".cl");
+			strcpy(binaryfilename, ALEXKAROLD_KERNNAME);
+			break;
+		case KL_CKOLIVAS:
+			strcpy(filename, CKOLIVAS_KERNNAME".cl");
+			strcpy(binaryfilename, CKOLIVAS_KERNNAME);
+			break;
+		case KL_ZUIKKIS:
+			applog(LOG_WARNING, "Kernel zuikkis is experimental.");
+			strcpy(filename, ZUIKKIS_KERNNAME".cl");
+			strcpy(binaryfilename, ZUIKKIS_KERNNAME);
+			/* Kernel only supports lookup-gap 2 */
+			cgpu->lookup_gap = 2;
+			/* Kernel only supports worksize 256 */
+			cgpu->work_size = 256;
 			break;
 		case KL_NONE: /* Shouldn't happen */
 			break;

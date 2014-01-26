@@ -196,8 +196,14 @@ char *set_thread_concurrency(char *arg)
 
 static enum cl_kernels select_kernel(char *arg)
 {
-	if (!strcmp(arg, "scrypt"))
-		return KL_SCRYPT;
+	if (!strcmp(arg, ALEXKARNEW_KERNNAME))
+		return KL_ALEXKARNEW;
+	if (!strcmp(arg, ALEXKAROLD_KERNNAME))
+		return KL_ALEXKAROLD;
+	if (!strcmp(arg, CKOLIVAS_KERNNAME))
+		return KL_CKOLIVAS;
+	if (!strcmp(arg, ZUIKKIS_KERNNAME))
+		return KL_ZUIKKIS;
 
 	return KL_NONE;
 }
@@ -1291,8 +1297,17 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 	if (!cgpu->kname)
 	{
 		switch (clStates[i]->chosen_kernel) {
-			case KL_SCRYPT:
-				cgpu->kname = "scrypt";
+			case KL_ALEXKARNEW:
+				cgpu->kname = ALEXKARNEW_KERNNAME;
+				break;
+			case KL_ALEXKAROLD:
+				cgpu->kname = ALEXKAROLD_KERNNAME;
+				break;
+			case KL_CKOLIVAS:
+				cgpu->kname = CKOLIVAS_KERNNAME;
+				break;
+			case KL_ZUIKKIS:
+				cgpu->kname = ZUIKKIS_KERNNAME;
 				break;
 			default:
 				break;
@@ -1322,11 +1337,15 @@ static bool opencl_thread_init(struct thr_info *thr)
 	}
 
 	switch (clState->chosen_kernel) {
-		case KL_SCRYPT:
-			thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
-			break;
-		default:
-			break;
+	case KL_ALEXKARNEW:
+	case KL_ALEXKAROLD:
+	case KL_CKOLIVAS:
+	case KL_ZUIKKIS:
+		thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
+		break;
+	default:
+		applog(LOG_ERR, "Failed to choose kernel in opencl_thread_init");
+		break;
 	}
 
 	thrdata->res = calloc(buffersize, 1);
