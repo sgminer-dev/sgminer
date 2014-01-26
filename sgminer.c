@@ -752,7 +752,7 @@ static char *set_disable_pool(char *arg)
 	pool = pools[json_array_index];
 
 	len = strlen(arg);
-	if (len < 0)
+	if (len < 1)
 	{
 		disabled = 1;
 	}
@@ -4397,6 +4397,7 @@ static void display_pools(void)
 	struct pool *pool;
 	int selected, i;
 	char input;
+	char *disp_name;
 
 	opt_loginput = true;
 	immedok(logwin, true);
@@ -4421,11 +4422,16 @@ updated:
 				wlogprint("Rejecting ");
 				break;
 		}
-		wlogprint("%s Quota %d Prio %d: %s  User:%s\n",
+		disp_name = pool->poolname;
+		if (strlen(disp_name) < 1)
+		{
+			disp_name = pool->rpc_url;
+		}
+		wlogprint("%s Quota %d Prio %d: '%s'  User:%s\n",
 			pool->idle? "Dead" : "Alive",
 			pool->quota,
 			pool->prio,
-			pool->rpc_url, pool->rpc_user);
+			disp_name, pool->rpc_user);
 		wattroff(logwin, A_BOLD | A_DIM);
 	}
 retry:
