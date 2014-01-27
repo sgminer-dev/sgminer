@@ -1,8 +1,10 @@
 ######################################################################################
 #                                                                                    #
-#          SGMINER WIN32 setup and build instructions (on mingw32/Windows):           #
+#          Native WIN32 setup and build instructions (on mingw32/Windows):           #
 #                                                                                    #
 ######################################################################################
+
+(See bottom of file for steps to cross-build for Win32 from Linux.)
 
 **************************************************************************************
 * Introduction                                                                       *
@@ -36,8 +38,8 @@ what you copied.
 **************************************************************************************
 Download and install the following Mingw32 version by doing a google search for:
 "mingw-get-inst-20120426"
-*This is currently a known working version as of SGMINER 4.0.0, but this could be a 
-different version later.
+This is currently a known working version, but this could be a different version
+later.
 
 During installation, select all the check boxes (excluding "Fortran Compiler") so that
 everything is installed.
@@ -202,12 +204,99 @@ For you. Make sure you never remove the ADL_SDK folder from your home folder.
 * Some ./configure options                                                           *
 **************************************************************************************
 --enable-opencl         Enable support for GPU mining with opencl
---disable-adl           Override detection and disable building with adl
+--disable-adl           Override detection and disable building with ADL
+--disable-adl-checks    Override detection and assume ADL is present
 --disable-libcurl       Disable building with libcurl for getwork and GBT support
 --without-curses        Compile support for curses TUI (default enabled)
 
+
+
 ######################################################################################
 #                                                                                    #
-#       Native WIN32 setup and build instructions (on mingw32/Windows) complete      #
+#       Cross-compiling for Windows from Linux                                       #
 #                                                                                    #
 ######################################################################################
+
+It is possible to cross-compile Windows binaries from Linux. The
+process is a bit different to the native steps shown above (it is also
+possible to use wine and the native steps, but this is more messing
+around, very slow, and not advisable.)
+
+** Install mingw cross compiler
+
+On Ubuntu/Debian:
+
+sudo apt-get install mingw32
+
+** create a directory to hold our cross-library dependencies
+
+We'll create a directory outside the source tree to hold non-system
+libraries we depend on. We could put these in
+/usr/i586-mingw32msvc/lib or anywhere else, instead (though keeping it
+outside /usr means we can set it up without root privileges.)
+
+IMPORTANT: If you put this directory inside your sgminer directory,
+remember 'make distclean' may delete it!
+
+mkdir -p ../win32/lib
+cd ../win32
+mkdir include
+mkdir bin
+
+NB: All following steps assume you are in the "win32" directory. Adjust as necessary.
+
+** pdcurses
+
+wget http://internode.dl.sourceforge.net/project/pdcurses/pdcurses/3.4/pdc34dllw.zip
+unzip /home/gus/Downloads/pdc34dllw.zip
+mv *.h include/
+mv pdcurses.lib lib/
+mv pdcurses.dll bin/
+
+** pthreads-w32
+
+(NB: I found pthreads-w32 2.9.1 doesn't seem to work properly, transfers time out
+early due to sem_timedwait exiting immediately(?))
+
+wget -O lib/libpthread.a ftp://sourceware.org/pub/pthreads-win32/prebuilt-dll-2-8-0-release/lib/libpthreadGC2.a
+wget -O include/pthread.h ftp://sourceware.org/pub/pthreads-win32/prebuilt-dll-2-8-0-release/include/pthread.h
+wget -O include/sched.h ftp://sourceware.org/pub/pthreads-win32/prebuilt-dll-2-8-0-release/include/sched.h
+wget -O include/semaphore.h ftp://sourceware.org/pub/pthreads-win32/prebuilt-dll-2-8-0-release/include/semaphore.h
+wget -O lib/libpthread.a ftp://sourceware.org/pub/pthreads-win32/prebuilt-dll-2-8-0-release/lib/libpthreadGC2.a
+wget -O bin/pthreadGC2.dll ftp://sourceware.org/pub/pthreads-win32/prebuilt-dll-2-8-0-release/lib/pthreadGC2.dll
+
+** libcurl
+
+wget http://curl.haxx.se/gknw.net/7.33.0/dist-w32/curl-7.33.0-devel-mingw32.zip
+unzip curl-7.33.0-devel-mingw32.zip
+mv curl-7.33.0-devel-mingw32/include/* include/
+mv curl-7.33.0-devel-mingw32/lib/* lib/
+mv curl-7.33.0-devel-mingw32/bin/* bin/
+rm -rf curl-7.33.0-devel-mingw32
+
+
+** clean up
+
+rm *.zip
+
+
+** Building
+
+Below assumes you're building in a "build-win32" or similar directory
+inside the sgminer directory. Fix up the -I and -L paths appropriately
+if you're building in-tree or someplace else.
+
+Configure command:
+
+CPPFLAGS="-I`pwd`/../../win32/include" LDFLAGS="-L`pwd`/../../win32/lib -lcurldll" ../autogen.sh --prefix=/usr/local/i586-mingw32 --host=i586-mingw32msvc --build=i686-linux 
+
+^^^ Plus whatever configure arguments you want to add. Note the paths
+    to win32 that you may need to change.
+
+And make:
+
+make
+
+After building, the next steps are the same as for native
+building as given under "Copy files to a build directory/folder"
+(DLLs can all be found in the win32/bin directory.)

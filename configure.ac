@@ -186,18 +186,35 @@ if test "x$has_winpthread" != xtrue; then
 fi
 
 AC_ARG_ENABLE([adl],
-	[AC_HELP_STRING([--disable-adl],[Override detection and disable building with adl])],
+	[AC_HELP_STRING([--disable-adl],[Override detection and disable building with ADL])],
 	[adl=$enableval]
+	)
+
+AC_ARG_ENABLE([adl_checks],
+	[AC_HELP_STRING([--disable-adl-checks],[Override detection and assume ADL is available])],
+	[adl_checks=$enableval]
 	)
 
 if test "$found_opencl" = 1; then
 	if test "x$adl" != xno; then
-		ADL_CPPFLAGS=
-		AC_CHECK_FILE([$srcdir/ADL_SDK/adl_sdk.h], [have_adl=true; ADL_CPPFLAGS=-I$srcdir], have_adl=false,)
+		dnl FIXME: force ADL usage if disable-checks specified
+		if test "x$adl_checks" = xno; then
+			have_adl=true
+			ADL_CPPFLAGS=-I$srcdir
+		fi
+
+		dnl Check if include files are in $srcdir/ADL_SDK
+		if test "x$have_adl" != xtrue; then
+			ADL_CPPFLAGS=
+			AC_CHECK_FILE([$srcdir/ADL_SDK/adl_sdk.h], [have_adl=true; ADL_CPPFLAGS=-I$srcdir], have_adl=false,)
+		fi
+
+		dnl FIXME: Check if SGMINER_SDK present
 		if test x$have_adl+$have_sgminer_sdk = xfalse+true; then
 			AC_CHECK_FILE([$SGMINER_SDK/include/ADL_SDK/adl_sdk.h], [have_adl=true; ADL_CPPFLAGS=-I$SGMINER_SDK/include], have_adl=false,)
 		fi
-		if test x$have_adl = xtrue
+
+		if test "x$have_adl" = xtrue
 		then
 			AC_DEFINE([HAVE_ADL], [1], [Defined if ADL headers were found])
 		else
@@ -379,7 +396,11 @@ fi
 
 if test "x$adl" != xno; then
 	if test x$have_adl = xtrue; then
-		echo "  ADL..................: SDK found, GPU monitoring support enabled"
+		if test "x$adl_checks" = xno; then
+			echo "  ADL..................: SDK use FORCED"
+		else
+			echo "  ADL..................: SDK found, GPU monitoring support enabled"
+		fi
 	else
 		echo "  ADL..................: SDK NOT found, GPU monitoring support DISABLED"
 	fi
