@@ -414,7 +414,7 @@ void scrypt_regenhash(struct work *work)
 
 	be32enc_vect(data, (const uint32_t *)work->data, 19);
 	data[19] = htobe32(*nonce);
-	scratchbuf = alloca(SCRATCHBUF_SIZE);
+	scratchbuf = (char *)alloca(SCRATCHBUF_SIZE);
 	scrypt_1024_1_1_256_sp(data, scratchbuf, ohash);
 	flip32(ohash, ohash);
 }
@@ -430,7 +430,7 @@ int scrypt_test(unsigned char *pdata, const unsigned char *ptarget, uint32_t non
 
 	be32enc_vect(data, (const uint32_t *)pdata, 19);
 	data[19] = htobe32(nonce);
-	scratchbuf = alloca(SCRATCHBUF_SIZE);
+	scratchbuf = (char *)alloca(SCRATCHBUF_SIZE);
 	scrypt_1024_1_1_256_sp(data, scratchbuf, ohash);
 	tmp_hash7 = be32toh(ohash[7]);
 
@@ -459,7 +459,7 @@ bool scanhash_scrypt(struct thr_info *thr, const unsigned char __maybe_unused *p
 
 	be32enc_vect(data, (const uint32_t *)pdata, 19);
 
-	scratchbuf = malloc(SCRATCHBUF_SIZE);
+	scratchbuf = (char *)malloc(SCRATCHBUF_SIZE);
 	if (unlikely(!scratchbuf)) {
 		applog(LOG_ERR, "Failed to malloc scratchbuf in scanhash_scrypt");
 		return ret;
