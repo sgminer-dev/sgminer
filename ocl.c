@@ -37,7 +37,7 @@ int opt_platform_id = -1;
 
 char *file_contents(const char *filename, int *length)
 {
-	char *fullpath = alloca(PATH_MAX);
+	char *fullpath = (char *)alloca(PATH_MAX);
 	void *buffer;
 	FILE *f;
 
@@ -150,7 +150,7 @@ int clDevicesNum(void) {
 
 static int advance(char **area, unsigned *remaining, const char *marker)
 {
-	char *find = memmem(*area, *remaining, marker, strlen(marker));
+	char *find = (char *)memmem(*area, *remaining, (void *)marker, strlen(marker));
 
 	if (!find) {
 		applog(LOG_DEBUG, "Marker \"%s\" not found", marker);
@@ -207,7 +207,7 @@ void patch_opcodes(char *w, unsigned remaining)
 
 _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 {
-	_clState *clState = calloc(1, sizeof(_clState));
+	_clState *clState = (_clState *)calloc(1, sizeof(_clState));
 	bool patchbfi = false, prog_built = false;
 	struct cgpu_info *cgpu = &gpus[gpu];
 	cl_platform_id platform = NULL;
@@ -325,7 +325,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 
 	/* Check for BFI INT support. Hopefully people don't mix devices with
 	 * and without it! */
-	char * extensions = malloc(1024);
+	char * extensions = (char *)malloc(1024);
 	const char * camo = "cl_amd_media_ops";
 	char *find;
 
@@ -339,7 +339,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 		clState->hasBitAlign = true;
 		
 	/* Check for OpenCL >= 1.0 support, needed for global offset parameter usage. */
-	char * devoclver = malloc(1024);
+	char * devoclver = (char *)malloc(1024);
 	const char * ocl10 = "OpenCL 1.0";
 	const char * ocl11 = "OpenCL 1.1";
 
@@ -494,12 +494,12 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	if (!source)
 		return NULL;
 
-	binary_sizes = calloc(sizeof(size_t) * MAX_GPUDEVICES * 4, 1);
+	binary_sizes = (size_t *)calloc(sizeof(size_t) * MAX_GPUDEVICES * 4, 1);
 	if (unlikely(!binary_sizes)) {
 		applog(LOG_ERR, "Unable to calloc binary_sizes");
 		return NULL;
 	}
-	binaries = calloc(sizeof(char *) * MAX_GPUDEVICES * 4, 1);
+	binaries = (char **)calloc(sizeof(char *) * MAX_GPUDEVICES * 4, 1);
 	if (unlikely(!binaries)) {
 		applog(LOG_ERR, "Unable to calloc binaries");
 		return NULL;
@@ -573,7 +573,7 @@ build:
 	}
 
 	/* create a cl program executable for all the devices specified */
-	char *CompilerOptions = calloc(1, 256);
+	char *CompilerOptions = (char *)calloc(1, 256);
 
 	sprintf(CompilerOptions, "-D LOOKUP_GAP=%d -D CONCURRENT_THREADS=%d -D WORKSIZE=%d",
 			cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, (int)clState->wsize);
@@ -624,7 +624,7 @@ build:
 		size_t logSize;
 		status = clGetProgramBuildInfo(clState->program, devices[gpu], CL_PROGRAM_BUILD_LOG, 0, NULL, &logSize);
 
-		char *log = malloc(logSize);
+		char *log = (char *)malloc(logSize);
 		status = clGetProgramBuildInfo(clState->program, devices[gpu], CL_PROGRAM_BUILD_LOG, logSize, log, NULL);
 		applog(LOG_ERR, "%s", log);
 		return NULL;
@@ -663,7 +663,7 @@ build:
 		applog(LOG_ERR, "OpenCL compiler generated a zero sized binary, FAIL!");
 		return NULL;
 	}
-	binaries[slot] = calloc(sizeof(char) * binary_sizes[slot], 1);
+	binaries[slot] = (char *)calloc(sizeof(char)* binary_sizes[slot], 1);
 	status = clGetProgramInfo(clState->program, CL_PROGRAM_BINARIES, sizeof(char *) * cpnd, binaries, NULL );
 	if (unlikely(status != CL_SUCCESS)) {
 		applog(LOG_ERR, "Error %d: Getting program info. CL_PROGRAM_BINARIES (clGetProgramInfo)", status);
@@ -751,7 +751,7 @@ built:
 			size_t logSize;
 			status = clGetProgramBuildInfo(clState->program, devices[gpu], CL_PROGRAM_BUILD_LOG, 0, NULL, &logSize);
 
-			char *log = malloc(logSize);
+			char *log = (char *)malloc(logSize);
 			status = clGetProgramBuildInfo(clState->program, devices[gpu], CL_PROGRAM_BUILD_LOG, logSize, log, NULL);
 			applog(LOG_ERR, "%s", log);
 			return NULL;
