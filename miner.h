@@ -1136,12 +1136,12 @@ struct curl_ent {
 	struct timeval tv;
 };
 
-/* Disabled needs to be the lowest enum as a freshly calloced value will then
- * equal disabled */
+/* The lowest enum of a freshly calloced value is the default */
 enum pool_state {
-	POOL_DISABLED,
 	POOL_ENABLED,
+	POOL_DISABLED,
 	POOL_REJECTING,
+	POOL_HIDDEN,
 };
 
 struct stratum_work {
@@ -1185,7 +1185,6 @@ struct pool {
 	bool idle;
 	bool lagging;
 	bool probed;
-	bool start_disabled;
 	enum pool_state state;
 	bool submit_old;
 	bool remove_at_start;

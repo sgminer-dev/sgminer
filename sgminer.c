@@ -749,48 +749,74 @@ static char *set_poolname(char *arg)
 	return NULL;
 }
 
-static char *set_disable_pool(char *arg)
+static void enable_pool(struct pool *pool)
 {
-	struct pool *pool;
-	int len, disabled;
-
-	while ((json_array_index + 1) > total_pools)
-		add_pool();
-	pool = pools[json_array_index];
-
-	len = strlen(arg);
-	if (len < 1)
-	{
-		disabled = 1;
-	}
-	else
-	{
-		disabled = atoi(arg);
-	}
-	pool->start_disabled = (disabled > 0);
-
-	return NULL;
+	if (pool->state != POOL_ENABLED)
+		enabled_pools++;
+	pool->state = POOL_ENABLED;
 }
 
-static char *set_remove_pool(char *arg)
+static void disable_pool(struct pool *pool)
+{
+	if (pool->state == POOL_ENABLED)
+		enabled_pools--;
+	pool->state = POOL_DISABLED;
+}
+
+static void reject_pool(struct pool *pool)
+{
+	if (pool->state == POOL_ENABLED)
+		enabled_pools--;
+	pool->state = POOL_REJECTING;
+}
+
+/* We can't remove the memory used for this struct pool because there may
+ * still be work referencing it. We just remove it from the pools list */
+void remove_pool(struct pool *pool)
+{
+	int i, last_pool = total_pools - 1;
+	struct pool *other;
+
+	/* Boost priority of any lower prio than this one */
+	for (i = 0; i < total_pools; i++) {
+		other = pools[i];
+		if (other->prio > pool->prio)
+			other->prio--;
+	}
+
+	if (pool->pool_no < last_pool) {
+		/* Swap the last pool for this one */
+		(pools[last_pool])->pool_no = pool->pool_no;
+		pools[pool->pool_no] = pools[last_pool];
+	}
+	/* Give it an invalid number */
+	pool->pool_no = total_pools;
+	pool->removed = true;
+	total_pools--;
+}
+
+static char *set_pool_state(char *arg)
 {
 	struct pool *pool;
-	int len, remove;
 
+	/* TODO: consider using j_a_i everywhere */
 	while ((json_array_index + 1) > total_pools)
 		add_pool();
 	pool = pools[json_array_index];
 
-	len = strlen(arg);
-	if (len < 1)
-	{
-		remove = 1;
+	applog(LOG_INFO, "Setting pool %s state to %s", pool->poolname, arg);
+
+	if (strcmp(arg, "disabled") == 0) {
+		pool->state = POOL_DISABLED;
+	} else if (strcmp(arg, "enabled") == 0) {
+		pool->state = POOL_ENABLED;
+	} else if (strcmp(arg, "hidden") == 0) {
+		pool->state = POOL_HIDDEN;
+	} else if (strcmp(arg, "rejecting") == 0) {
+		pool->state = POOL_REJECTING;
+	} else {
+		pool->state = POOL_ENABLED;
 	}
-	else
-	{
-		remove = atoi(arg);
-	}
-	pool->remove_at_start = (remove > 0);
 
 	return NULL;
 }
@@ -1078,12 +1104,6 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--device|-d",
 		     set_devices, NULL, NULL,
 	             "Select device to use, one value, range and/or comma separated (e.g. 0-2,4) default: all"),
-	OPT_WITH_ARG("--disable-pool",
-			 set_disable_pool, NULL, NULL,
-				 "Start the pool in a disabled state, so that it is not automatically chosen for mining"),
-	OPT_WITH_ARG("--remove-pool",
-			 set_remove_pool, NULL, NULL,
-				 "Allow the pool configuration to remain in the config file, but exclude it from the pools available at runtime"),
 	OPT_WITHOUT_ARG("--disable-rejecting",
 			opt_set_bool, &opt_disable_pool,
 			"Automatically disable pools that continually reject shares"),
@@ -1257,6 +1277,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--socks-proxy",
 		     opt_set_charp, NULL, &opt_socks_proxy,
 		     "Set socks4 proxy (host:port)"),
+	OPT_WITH_ARG("--state",
+		     set_pool_state, NULL, NULL,
+		     "Specify pool state at startup (default: enabled)"),
 #ifdef HAVE_SYSLOG_H
 	OPT_WITHOUT_ARG("--syslog",
 			opt_set_bool, &use_syslog,
@@ -1301,7 +1324,7 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--user|-u",
 		     set_user, NULL, NULL,
 		     "Username for bitcoin JSON-RPC server"),
-	OPT_WITH_ARG("--vectors|-v",
+	OPT_WITH_ARG("--vectors",
 		     set_vector, NULL, NULL,
 		     opt_hidden),
 		     /* All current kernels only support vectors=1 */
@@ -2346,30 +2369,6 @@ void logwin_update(void)
 	}
 }
 #endif
-
-static void enable_pool(struct pool *pool)
-{
-	if (pool->state != POOL_ENABLED) {
-		enabled_pools++;
-		pool->state = POOL_ENABLED;
-	}
-}
-
-#ifdef HAVE_CURSES
-static void disable_pool(struct pool *pool)
-{
-	if (pool->state == POOL_ENABLED)
-		enabled_pools--;
-	pool->state = POOL_DISABLED;
-}
-#endif
-
-static void reject_pool(struct pool *pool)
-{
-	if (pool->state == POOL_ENABLED)
-		enabled_pools--;
-	pool->state = POOL_REJECTING;
-}
 
 static void restart_threads(void);
 
@@ -4078,31 +4077,6 @@ static void display_pool_summary(struct pool *pool)
 }
 #endif
 
-/* We can't remove the memory used for this struct pool because there may
- * still be work referencing it. We just remove it from the pools list */
-void remove_pool(struct pool *pool)
-{
-	int i, last_pool = total_pools - 1;
-	struct pool *other;
-
-	/* Boost priority of any lower prio than this one */
-	for (i = 0; i < total_pools; i++) {
-		other = pools[i];
-		if (other->prio > pool->prio)
-			other->prio--;
-	}
-
-	if (pool->pool_no < last_pool) {
-		/* Swap the last pool for this one */
-		(pools[last_pool])->pool_no = pool->pool_no;
-		pools[pool->pool_no] = pools[last_pool];
-	}
-	/* Give it an invalid number */
-	pool->pool_no = total_pools;
-	pool->removed = true;
-	total_pools--;
-}
-
 /* add a mutex if this needs to be thread safe in the future */
 static struct JE {
 	char *buf;
@@ -4489,17 +4463,22 @@ updated:
 		if (pool->state != POOL_ENABLED)
 			wattron(logwin, A_DIM);
 		wlogprint("%d: ", pool->pool_no);
+
 		switch (pool->state) {
-			case POOL_ENABLED:
-				wlogprint("Enabled ");
-				break;
-			case POOL_DISABLED:
-				wlogprint("Disabled ");
-				break;
-			case POOL_REJECTING:
-				wlogprint("Rejecting ");
-				break;
+		case POOL_ENABLED:
+			wlogprint("Enabled   ");
+			break;
+		case POOL_DISABLED:
+			wlogprint("Disabled  ");
+			break;
+		case POOL_REJECTING:
+			wlogprint("Rejecting ");
+			break;
+		case POOL_HIDDEN:
+		default:
+			break;
 		}
+
 		disp_name = pool->poolname;
 		if (strlen(disp_name) < 1)
 		{
@@ -7758,7 +7737,7 @@ int main(int argc, char *argv[])
 	if (opt_benchmark) {
 		struct pool *pool;
 
-		// FIXME: executes always (leftover from SHA256d days
+		// FIXME: executes always (leftover from SHA256d days)
 		quit(1, "Cannot use benchmark mode with scrypt");
 		pool = add_pool();
 		pool->rpc_url = malloc(255);
@@ -7956,29 +7935,28 @@ int main(int argc, char *argv[])
 	if (opt_benchmark)
 		goto begin_bench;
 
-	/* Remove any pools that are in the configuration, but have been marked to be 
-	 * removed at miner startup in order to reduce clutter in the pool management */
+	/* Set pool state */
 	for (i = 0; i < total_pools; i++) {
 		struct pool *pool = pools[i];
 
-		if (pool->remove_at_start)
-		{
-			remove_pool(pool);
-		}
-	}
-
-	/* Enable or disable all the 'remaining' pools */
-	for (i = 0; i < total_pools; i++) {
-		struct pool *pool  = pools[i];
-
-		if (pool->start_disabled)
-		{
+		switch (pool->state) {
+		case POOL_DISABLED:
 			disable_pool(pool);
-		}
-		else
-		{
+			break;
+		case POOL_ENABLED:
 			enable_pool(pool);
+			break;
+		case POOL_HIDDEN:
+			remove_pool(pool);
+			break;
+		case POOL_REJECTING:
+			reject_pool(pool);
+			break;
+		default:
+			enable_pool(pool);
+			break;
 		}
+
 		pool->idle = true;
 	}
 
