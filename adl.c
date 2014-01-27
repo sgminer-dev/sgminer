@@ -41,8 +41,8 @@ bool adl_active;
 bool opt_reorder = false;
 
 int opt_hysteresis = 3;
-const int opt_targettemp = 75;
-const int opt_overheattemp = 85;
+int opt_targettemp = 75;
+int opt_overheattemp = 85;
 static pthread_mutex_t adl_lock;
 
 struct gpu_adapters {
@@ -292,7 +292,7 @@ void init_adl(int nDevs)
 	}
 
 	if (iNumberAdapters > 0) {
-		lpInfo = malloc ( sizeof (AdapterInfo) * iNumberAdapters );
+		lpInfo = (LPAdapterInfo)malloc ( sizeof (AdapterInfo) * iNumberAdapters );
 		memset ( lpInfo,'\0', sizeof (AdapterInfo) * iNumberAdapters );
 
 		lpInfo->iSize = sizeof(lpInfo);
@@ -500,7 +500,7 @@ void init_adl(int nDevs)
 		lev = ga->lpOdParameters.iNumberOfPerformanceLevels - 1;
 		/* We're only interested in the top performance level */
 		plsize = sizeof(ADLODPerformanceLevels) + lev * sizeof(ADLODPerformanceLevel);
-		lpOdPerformanceLevels = malloc(plsize);
+		lpOdPerformanceLevels = (ADLODPerformanceLevels *)malloc(plsize);
 		lpOdPerformanceLevels->iSize = plsize;
 
 		/* Get default performance levels first */
@@ -520,7 +520,7 @@ void init_adl(int nDevs)
 			applog(LOG_INFO, "Failed to ADL_Overdrive5_ODPerformanceLevels_Get");
 		else {
 			/* Save these values as the defaults in case we wish to reset to defaults */
-			ga->DefPerfLev = malloc(plsize);
+			ga->DefPerfLev = (ADLODPerformanceLevels *)malloc(plsize);
 			memcpy(ga->DefPerfLev, lpOdPerformanceLevels, plsize);
 		}
 
@@ -946,7 +946,7 @@ int set_engineclock(int gpu, int iEngineClock)
 	ga->lastengine = iEngineClock;
 
 	lev = ga->lpOdParameters.iNumberOfPerformanceLevels - 1;
-	lpOdPerformanceLevels = alloca(sizeof(ADLODPerformanceLevels) + (lev * sizeof(ADLODPerformanceLevel)));
+	lpOdPerformanceLevels = (ADLODPerformanceLevels *)alloca(sizeof(ADLODPerformanceLevels)+(lev * sizeof(ADLODPerformanceLevel)));
 	lpOdPerformanceLevels->iSize = sizeof(ADLODPerformanceLevels) + sizeof(ADLODPerformanceLevel) * lev;
 
 	lock_adl();
@@ -1009,7 +1009,7 @@ int set_memoryclock(int gpu, int iMemoryClock)
 	ga = &gpus[gpu].adl;
 
 	lev = ga->lpOdParameters.iNumberOfPerformanceLevels - 1;
-	lpOdPerformanceLevels = alloca(sizeof(ADLODPerformanceLevels) + (lev * sizeof(ADLODPerformanceLevel)));
+	lpOdPerformanceLevels = (ADLODPerformanceLevels *)alloca(sizeof(ADLODPerformanceLevels)+(lev * sizeof(ADLODPerformanceLevel)));
 	lpOdPerformanceLevels->iSize = sizeof(ADLODPerformanceLevels) + sizeof(ADLODPerformanceLevel) * lev;
 
 	lock_adl();
@@ -1074,7 +1074,7 @@ int set_vddc(int gpu, float fVddc)
 	ga = &gpus[gpu].adl;
 
 	lev = ga->lpOdParameters.iNumberOfPerformanceLevels - 1;
-	lpOdPerformanceLevels = alloca(sizeof(ADLODPerformanceLevels) + (lev * sizeof(ADLODPerformanceLevel)));
+	lpOdPerformanceLevels = (ADLODPerformanceLevels *)alloca(sizeof(ADLODPerformanceLevels)+(lev * sizeof(ADLODPerformanceLevel)));
 	lpOdPerformanceLevels->iSize = sizeof(ADLODPerformanceLevels) + sizeof(ADLODPerformanceLevel) * lev;
 
 	lock_adl();
@@ -1185,7 +1185,7 @@ static int set_powertune(int gpu, int iPercentage)
 static bool fan_autotune(int gpu, int temp, int fanpercent, int lasttemp, bool *fan_window)
 {
 	struct cgpu_info *cgpu = &gpus[gpu];
-	int tdiff = round(temp - lasttemp);
+	int tdiff = round((double)(temp - lasttemp));
 	struct gpu_adl *ga = &cgpu->adl;
 	int top = gpus[gpu].gpu_fan;
 	int bot = gpus[gpu].min_fan;
