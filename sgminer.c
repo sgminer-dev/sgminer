@@ -84,8 +84,8 @@ bool opt_compact;
 const int opt_cutofftemp = 95;
 int opt_log_interval = 5;
 int opt_queue = 1;
-int opt_scantime = -1;
-int opt_expiry = 120;
+int opt_scantime = 10;
+int opt_expiry = 30;
 static const bool opt_time = true;
 unsigned long long global_hashrate;
 unsigned long global_quota_gcd = 1;
@@ -7781,10 +7781,6 @@ int main(int argc, char *argv[])
 
 	if (want_per_device_stats)
 		opt_log_output = true;
-
-	/* Use a shorter scantime for scrypt (SHA256d had 60) */
-	if (opt_scantime < 0)
-		opt_scantime = 30;
 
 	total_control_threads = 8;
 	control_thr = calloc(total_control_threads, sizeof(*thr));
