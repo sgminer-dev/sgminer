@@ -45,3 +45,5 @@ lib/warn-on-use.h
 mkinstalldirs
 
 *.swp
+
+!winbuild/dist/include/config.h
