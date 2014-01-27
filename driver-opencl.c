@@ -1057,7 +1057,7 @@ static void set_threads_hashes(unsigned int vectors, unsigned int compute_shader
  * GPU */
 void *reinit_gpu(void *userdata)
 {
-	struct thr_info *mythr = userdata;
+	struct thr_info *mythr = (struct thr_info *)userdata;
 	struct cgpu_info *cgpu;
 	struct thr_info *thr;
 	struct timeval now;
@@ -1068,7 +1068,7 @@ void *reinit_gpu(void *userdata)
 	pthread_detach(pthread_self());
 
 select_cgpu:
-	cgpu = tq_pop(mythr->q, NULL);
+	cgpu = (struct cgpu_info *)tq_pop(mythr->q, NULL);
 	if (!cgpu)
 		goto out;
 
@@ -1257,7 +1257,7 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 	int buffersize = BUFFERSIZE;
 
 	if (!blank_res)
-		blank_res = calloc(buffersize, 1);
+		blank_res = (uint32_t *)calloc(buffersize, 1);
 	if (!blank_res) {
 		applog(LOG_ERR, "Failed to calloc in opencl_thread_init");
 		return false;
@@ -1327,7 +1327,7 @@ static bool opencl_thread_init(struct thr_info *thr)
 	struct opencl_thread_data *thrdata;
 	_clState *clState = clStates[thr_id];
 	cl_int status = 0;
-	thrdata = calloc(1, sizeof(*thrdata));
+	thrdata = (struct opencl_thread_data *)calloc(1, sizeof(*thrdata));
 	thr->cgpu_data = thrdata;
 	int buffersize = BUFFERSIZE;
 
@@ -1348,7 +1348,7 @@ static bool opencl_thread_init(struct thr_info *thr)
 		break;
 	}
 
-	thrdata->res = calloc(buffersize, 1);
+	thrdata->res = (uint32_t *)calloc(buffersize, 1);
 
 	if (!thrdata->res) {
 		free(thrdata);
@@ -1383,7 +1383,7 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 				int64_t __maybe_unused max_nonce)
 {
 	const int thr_id = thr->id;
-	struct opencl_thread_data *thrdata = thr->cgpu_data;
+	struct opencl_thread_data *thrdata = (struct opencl_thread_data *)thr->cgpu_data;
 	struct cgpu_info *gpu = thr->cgpu;
 	_clState *clState = clStates[thr_id];
 	const cl_kernel *kernel = &clState->kernel;
@@ -1485,18 +1485,36 @@ static void opencl_thread_shutdown(struct thr_info *thr)
 }
 
 struct device_drv opencl_drv = {
-	.drv_id = DRIVER_opencl,
-	.dname = "opencl",
-	.name = "GPU",
-	.drv_detect = opencl_detect,
-	.reinit_device = reinit_opencl_device,
+	/*.drv_id = */			DRIVER_opencl,
+	/*.dname = */			"opencl",
+	/*.name = */			"GPU",
+	/*.drv_detect = */		opencl_detect,
+	/*.reinit_device = */		reinit_opencl_device,
 #ifdef HAVE_ADL
-	.get_statline_before = get_opencl_statline_before,
+	/*.get_statline_before = */	get_opencl_statline_before,
+#else
+					NULL,
 #endif
-	.get_statline = get_opencl_statline,
-	.thread_prepare = opencl_thread_prepare,
-	.thread_init = opencl_thread_init,
-	.prepare_work = opencl_prepare_work,
-	.scanhash = opencl_scanhash,
-	.thread_shutdown = opencl_thread_shutdown,
+	/*.get_statline = */		get_opencl_statline,
+	/*.api_data = */		NULL,
+	/*.get_stats = */		NULL,
+	/*.identify_device = */		NULL,
+	/*.set_device = */		NULL,
+
+	/*.thread_prepare = */		opencl_thread_prepare,
+	/*.can_limit_work = */		NULL,
+	/*.thread_init = */		opencl_thread_init,
+	/*.prepare_work = */		opencl_prepare_work,
+	/*.hash_work = */		NULL,
+	/*.scanhash = */		opencl_scanhash,
+	/*.scanwork = */		NULL,
+	/*.queue_full = */		NULL,
+	/*.flush_work = */		NULL,
+	/*.update_work = */		NULL,
+	/*.hw_error = */		NULL,
+	/*.thread_shutdown = */		opencl_thread_shutdown,
+	/*.thread_enable =*/		NULL,
+					false,
+					0,
+					0
 };
