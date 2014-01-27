@@ -69,3 +69,7 @@ packages/
 
 #Config
 !dist/include/config.h
+
+#Library archives
+*.zip
+*.rar
