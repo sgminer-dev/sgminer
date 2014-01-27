@@ -18,7 +18,7 @@ A description of how to do this is available in `doc/MINING`.
 
 ### alexkarnew
 
-Alaxey Karimov's optimised kernel, based on `ckolivas`. For Catalyst >=13.4.
+Alexey Karimov's optimised kernel, based on `ckolivas`. For Catalyst >=13.4.
 
 Only supports `vectors=1`.
 
@@ -27,7 +27,7 @@ Only supports `vectors=1`.
 
 ### alexkarold
 
-Alaxey Karimov's optimised kernel, based on `ckolivas`. For Catalyst <13.4.
+Alexey Karimov's optimised kernel, based on `ckolivas`. For Catalyst <13.4.
 
 Only supports `vectors=1`.
 
