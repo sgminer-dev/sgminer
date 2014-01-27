@@ -11,15 +11,20 @@
 
 ## OpenCL kernels
 
-* scrypt: Colin Percival
+All current kernels are based on `scrypt`, originally by Colin Percival,
+updated by many others.
+
+* ckolivas: Con Kolivas <kernel@kolivas.org> 15qSxP1SQcUX3o4nhkfdbgyoWEFMomJ4rZ
 * zuikkis: Zuikkis LeXck7EYgxyjw13zNDxZFmmgmWffFvhmSh
 * alexkarnew/alexkarold: Alexey Karimov LMqRcHdwnZtTMH6c2kWoxSoKM5KySfaP5C
 
 
-## Bug fixes
+## Testing and bug fixes
 
-* Gabriel Devenyi
-* ADL R9 crash: Benjamin Herrenschmidt
+* Gabriel Devenyi <gdevenyi>
+* Benjamin Herrenschmidt <ozbenh>
+* Joe4782
+* gacheson
 
 ...and many others. See:
 
