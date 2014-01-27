@@ -804,7 +804,7 @@ void *tq_pop(struct thread_q *tq, const struct timespec *abstime)
 	if (list_empty(&tq->q))
 		goto out;
 pop:
-	ent = list_entry(tq->q.next, struct tq_ent, q_node);
+	ent = list_entry(tq->q.next, struct tq_ent*, q_node);
 	rval = ent->data;
 
 	list_del(&ent->q_node);
