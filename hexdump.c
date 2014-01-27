@@ -18,7 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#include "miner.h"
 #define hex_print(p) applog(LOG_DEBUG, "%s", p)
 
 static char nibble[] = {
