@@ -343,7 +343,9 @@ void init_adl(int nDevs)
 		       "strUDID:%s "
 		       "iBusNumber:%d "
 		       "iDeviceNumber:%d "
+#if defined(__linux)
 		       "iDrvIndex:%d "
+#endif
 		       "iFunctionNumber:%d "
 		       "iVendorID:%d "
 		       "name:%s",
@@ -353,7 +355,9 @@ void init_adl(int nDevs)
 		       lpInfo[i].strUDID,
 		       lpInfo[i].iBusNumber,
 		       lpInfo[i].iDeviceNumber,
+#if defined(__linux)
 		       lpInfo[i].iDrvIndex,
+#endif
 		       lpInfo[i].iFunctionNumber,
 		       lpInfo[i].iVendorID,
 		       lpInfo[i].strAdapterName);
