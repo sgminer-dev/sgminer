@@ -334,11 +334,12 @@ the above quotas in a configuration file they would be specified thus:
         }
     ]
 
+
 ### Extra File Configuration
 
-If you want to store a number of pools in your configuration file, but don't always
-want them automatically enabled at start up (or restart), then the new "disable-pool"
-option can be used:
+If you want to store a number of pools in your configuration file, but
+don't always want them automatically enabled at start up (or restart),
+then the "state" option with a value of "disabled" can be used:
 
     "pools" : [
         {
@@ -350,39 +351,46 @@ option can be used:
                 "quota" : "2;poolb:portb",
                 "user" : "usernameb",
                 "pass" : "passb",
-				"disable-pool" : "1"
+                "state" : "disabled"
         }
     ]
 
-It is then trivial to change the "disable-pool" setting to "0" in the configuration file
-at anytime and then restart the miner ('s' followed by 'c'). Or, you can enable the pool
-whilst the miner is still running ('p' followed by 'e' followed by pool number) - but the
-pool be still be disabled on restart if the config file is not changed. This option is 
-NOT created when the 'Write config file' option is used ('s' followed by 'w').
+It is then trivial to change the "state" setting to "enabled" in the
+configuration file at anytime and then restart the miner (see below).
+You can enable the pool whilst the miner is still running ('p' followed
+by 'e' followed by pool number) - but the pool will still be disabled on
+restart if the config file is not changed.
 
-In a similar manner, a 'remove-pool' option is also available. This can be mix and matched
-with the 'disable-pool' option. Using 'remove-pool' enables the json file to contain a
-large number of pools, of which some could be automatically culled at start up.
-This makes it easy to swap pools in and out of the runtime selection, without having a
-large list of pools cluttering up the disaply. A 'restart' of the miner ('s' followed by 'c')
-will reload the config file and any changes the may have been made.
+"state" can also be set to "hidden". This allows the json file to
+contain a large number of pools, of which some could be automatically
+culled at start up. This makes it easy to swap pools in and out of the
+runtime selection, without having a large list of pools cluttering up
+the display.
 
     "pools" : [
         {
-				"poolname" : "Main Pool",
+                "poolname" : "Main Pool",
                 "url" : "poola:porta",
                 "user" : "usernamea",
                 "pass" : "passa",
-				"disable-pool" : "0"
+                "state" : "disabled"
         },
         {
-				"poolname" : "Joe's Weekend Pool"
+                "poolname" : "Joe's Weekend Pool",
                 "quota" : "2;poolb:portb",
                 "user" : "usernameb",
                 "pass" : "passb",
-				"remove-pool" : "1"
+                "state" : "hidden"
         }
     ]
+
+These options are considered experimental and therefore will NOT be
+created when the 'Write config file' option is used ('s' followed by
+'w').
+
+A restart of the miner ('s' followed by 'c') will reload the config
+file and any changes that may have been made.
+
 
 ## Logging
 
