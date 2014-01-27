@@ -204,7 +204,8 @@ For you. Make sure you never remove the ADL_SDK folder from your home folder.
 * Some ./configure options                                                           *
 **************************************************************************************
 --enable-opencl         Enable support for GPU mining with opencl
---disable-adl           Override detection and disable building with adl
+--disable-adl           Override detection and disable building with ADL
+--disable-adl-checks    Override detection and assume ADL is present
 --disable-libcurl       Disable building with libcurl for getwork and GBT support
 --without-curses        Compile support for curses TUI (default enabled)
 
