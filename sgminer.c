@@ -7843,12 +7843,10 @@ int main(int argc, char *argv[])
 #endif
 	}
 
-#ifdef USE_SCRYPT // I don't really know if this is relevant for other mining platforms
 	if (!getenv("GPU_MAX_ALLOC_PERCENT"))
 		applog(LOG_WARNING, "WARNING: GPU_MAX_ALLOC_PERCENT is not specified!");
 	if (!getenv("GPU_USE_SYNC_OBJECTS"))
 		applog(LOG_WARNING, "WARNING: GPU_USE_SYNC_OBJECTS is not specified!");
-#endif
 
 	if (!total_pools) {
 		applog(LOG_WARNING, "Need to specify at least one pool server.");
