@@ -7695,8 +7695,11 @@ int main(int argc, char *argv[])
 #else
 	timeBeginPeriod(1);
 #endif
+	/* opt_kernel_path defaults to SGMINER_PREFIX */
 	opt_kernel_path = alloca(PATH_MAX);
 	strcpy(opt_kernel_path, SGMINER_PREFIX);
+
+	/* sgminer_path is current dir */
 	sgminer_path = alloca(PATH_MAX);
 	s = strdup(argv[0]);
 	strcpy(sgminer_path, dirname(s));
