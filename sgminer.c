@@ -518,7 +518,7 @@ struct pool *add_pool(void)
 	sprintf(buf, "Pool %d", pool->pool_no);
 	pool->poolname = strdup(buf);
 
-	pools = realloc(pools, sizeof(struct pool *) * (total_pools + 2));
+	pools = (struct pool **)realloc(pools, sizeof(struct pool *) * (total_pools + 2));
 	pools[total_pools++] = pool;
 	mutex_init(&pool->pool_lock);
 	if (unlikely(pthread_cond_init(&pool->cr_cond, NULL)))
