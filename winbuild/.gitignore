@@ -66,3 +66,6 @@ packages/
 
 #Test files
 *.testsettings
+
+#Config
+!dist/include/config.h
