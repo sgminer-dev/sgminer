@@ -4744,7 +4744,7 @@ static void set_options(void)
 	clear_logwin();
 retry:
 	wlogprint("[Q]ueue: %d\n[S]cantime: %d\n[E]xpiry: %d\n"
-		  "[W]rite config file\n[C]gminer restart\n",
+		  "[W]rite config file\n[R]estart\n",
 		opt_queue, opt_scantime, opt_expiry);
 	wlogprint("Select an option or any other key to return\n");
 	logwin_update();
@@ -4804,7 +4804,7 @@ retry:
 		fclose(fcfg);
 		goto retry;
 
-	} else if (!strncasecmp(&input, "c", 1)) {
+	} else if (!strncasecmp(&input, "r", 1)) {
 		wlogprint("Are you sure?\n");
 		input = getch();
 		if (!strncasecmp(&input, "y", 1))
