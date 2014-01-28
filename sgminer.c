@@ -2521,7 +2521,7 @@ static void show_hash(struct work *work, char *hashshow)
 	intdiff = round(work->work_difficulty);
 	suffix_string(work->share_diff, diffdisp, sizeof (diffdisp), 0);
 	snprintf(hashshow, 64, "%08lx Diff %s/%d%s", h32, diffdisp, intdiff,
-		 work->block? " BLOCK!" : "");
+		 work->block ? " BLOCK!" : "");
 }
 
 #ifdef HAVE_LIBCURL
@@ -2901,16 +2901,16 @@ static double le256todouble(const void *target)
 	uint64_t *data64;
 	double dcut64;
 
-	data64 = &(*(((uint64_t *)target) + 24));
+	data64 = (uint64_t *)(target + 24);
 	dcut64 = le64toh(*data64) * bits192;
 
-	data64 = &(*(((uint64_t *)target) + 16));
+	data64 = (uint64_t *)(target + 16);
 	dcut64 += le64toh(*data64) * bits128;
 
-	data64 = &(*(((uint64_t *)target) + 8));
+	data64 = (uint64_t *)(target + 8);
 	dcut64 += le64toh(*data64) * bits64;
 
-	data64 = (uint64_t *)(target);
+	data64 = (uint64_t *)target;
 	dcut64 += le64toh(*data64);
 
 	return dcut64;
@@ -3557,6 +3557,7 @@ static uint64_t share_diff(const struct work *work)
 		s64 = 0;
 
 	ret = round(d64 / s64);
+	applog(LOG_DEBUG, "Found share with difficulty %lu", ret);
 
 	cg_wlock(&control_lock);
 	if (unlikely(ret > best_diff)) {
