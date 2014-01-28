@@ -2898,13 +2898,13 @@ static double le256todouble(const void *target)
 	uint64_t *data64;
 	double dcut64;
 
-	data64 = (uint64_t *)(target + 24);
+	data64 = (uint64_t *)((unsigned char *)target + 24);
 	dcut64 = le64toh(*data64) * bits192;
 
-	data64 = (uint64_t *)(target + 16);
+	data64 = (uint64_t *)((unsigned char *)target + 16);
 	dcut64 += le64toh(*data64) * bits128;
 
-	data64 = (uint64_t *)(target + 8);
+	data64 = (uint64_t *)((unsigned char *)target + 8);
 	dcut64 += le64toh(*data64) * bits64;
 
 	data64 = (uint64_t *)target;
