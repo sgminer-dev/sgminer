@@ -520,6 +520,7 @@ struct pool *add_pool(void)
 		pool->has_stratum ? pool->stratum_port : "");
 	pool->poolname = strdup(buf);
 
+	pools = realloc(pools, sizeof(struct pool *) * (total_pools + 2));
 	pools[total_pools++] = pool;
 	mutex_init(&pool->pool_lock);
 	if (unlikely(pthread_cond_init(&pool->cr_cond, NULL)))
