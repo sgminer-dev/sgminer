@@ -35,6 +35,7 @@
 #ifndef WIN32
 #include <sys/resource.h>
 #else
+#include <winsock2.h> //before windows.h to resolve ws2tcpip.h conflict https://github.com/veox/sgminer/issues/12
 #include <windows.h>
 #endif
 #include <ccan/opt/opt.h>
