@@ -25,6 +25,7 @@ updated by many others.
 * Benjamin Herrenschmidt <ozbenh>
 * Joe4782
 * gacheson
+* tonobitc
 
 ...and many others. See:
 

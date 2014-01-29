@@ -35,7 +35,7 @@
 #ifndef WIN32
 #include <sys/resource.h>
 #else
-#include <winsock2.h> //before windows.h to resolve ws2tcpip.h conflict https://github.com/veox/sgminer/issues/12
+#include <winsock2.h>
 #include <windows.h>
 #endif
 #include <ccan/opt/opt.h>
@@ -3044,7 +3044,7 @@ static void kill_mining(void)
 		if (thr && PTH(thr) != 0L)
 			pth = &thr->pth;
 		thr_info_cancel(thr);
-#if !defined WIN32 || defined __MINGW64_VERSION_MAJOR
+#if !defined(WIN32) || defined(__MINGW64_VERSION_MAJOR)
 		if (pth && *pth)
 			pthread_join(*pth, NULL);
 #else
