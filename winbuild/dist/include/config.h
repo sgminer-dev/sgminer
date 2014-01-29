@@ -223,16 +223,14 @@ inline void* memmem (void* buf, size_t buflen, void* pat, size_t patlen)
 #define __attribute__(x)
 #endif
 
-
 // Libraries to include
 #pragma comment(lib, "wsock32.lib")
 #pragma comment(lib, "pthreadVC2.lib")
-#pragma comment(lib, "jansson.lib")
 #pragma comment(lib, "OpenCL.lib")
 
 #ifdef HAVE_LIBCURL
 #define CURL_STATICLIB 1
-#pragma comment(lib, "libcurl.lib")
+#pragma comment(lib, "libcurl_a.lib")
 #endif
 
 #ifdef HAVE_CURSES

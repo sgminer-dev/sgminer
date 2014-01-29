@@ -65,7 +65,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)output\x86\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)output\x86\$(Configuration)\obj\</IntDir>
+    <IntDir>$(SolutionDir)output\x86\obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -75,12 +75,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)output\x86\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)output\x86\$(Configuration)\obj\</IntDir>
+    <IntDir>$(SolutionDir)output\x86\obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)output\x64\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)output\x64\$(Configuration)\obj\</IntDir>
+    <IntDir>$(SolutionDir)output\x64\obj\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -105,6 +105,13 @@
       <OptimizeReferences>false</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y $(ProjectDir)\dist\dll\x86\pthreadsVC2.dll $(OutDir)</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>del /f "$(OutDir)*.exe"
+del /f "$(OutDir)*.dll"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -129,6 +136,13 @@
       <OptimizeReferences>false</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y $(ProjectDir)\dist\dll\x64\pthreadsVC2.dll $(OutDir)</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>del /f "$(OutDir)*.exe"
+del /f "$(OutDir)*.dll"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -155,6 +169,15 @@
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /Y "$(ProjectDir)\dist\dll\x86\pthreadVC2.dll" "$(OutDir)"
+xcopy /Y /E /I "$(ProjectDir)..\kernel" "$(OutDir)\kernel"
+</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>del /f "$(OutDir)*.exe"
+del /f "$(OutDir)*.dll"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -184,6 +207,15 @@
       <LinkTimeCodeGeneration>
       </LinkTimeCodeGeneration>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /Y "$(ProjectDir)\dist\dll\x64\pthreadVC2.dll" "$(OutDir)"
+xcopy /Y /E /I "$(ProjectDir)..\kernel" "$(OutDir)\kernel"
+</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>del /f "$(OutDir)*.exe"
+del /f "$(OutDir)*.dll"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\adl.c">
@@ -237,6 +269,9 @@
     <ClInclude Include="..\util.h" />
     <ClInclude Include="..\warn-on-use.h" />
     <ClInclude Include="dist\include\config.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

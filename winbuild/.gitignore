@@ -73,3 +73,8 @@ packages/
 #Library archives
 *.zip
 *.rar
+
+#Library binaries
+*.dll
+*.a
+

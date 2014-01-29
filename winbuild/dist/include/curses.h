@@ -1,10 +1,3 @@
-#ifndef PDC_DLL_BUILD
-# define PDC_DLL_BUILD
-#endif
-#ifndef PDC_WIDE
-# define PDC_WIDE
-#endif
-
 /* Public Domain Curses */
 
 /* $Id: curses.h,v 1.295 2008/07/15 17:13:25 wmcbrine Exp $ */
