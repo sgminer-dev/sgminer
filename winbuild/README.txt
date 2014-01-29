@@ -3,9 +3,17 @@ Installing dependencies
 
 1. PThreads
 -----------
-- download ftp://sourceware.org/pub/pthreads-win32/pthreads-w32-2-9-1-release.zip
-- extract dll, include and lib folders from Pre-built.2 to winbuild/dist
-
+- go to ftp://sourceware.org/pub/pthreads-win32 and download latest source code release
+- extract to some folder
+x86 version:
+	- open Visual Studio Command Prompt (x86)
+	- go to pthreads.2 folder and execute:
+		nmake clean VC-static
+	- copy newly created pthreadVC2.lib to winbuild\dist\lib\x86\ folder
+x64 version:
+	- go to pthreads.2 folder and execute:
+		nmake clean VC-static
+	- copy newly created pthreadVC2.lib to winbuild\dist\lib\x64\ folder
 
 2. Install AMD APP SDK (OpenCL), latest version
 -----------------------------------------------

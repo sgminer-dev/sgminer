@@ -170,8 +170,7 @@ del /f "$(OutDir)*.dll"</Command>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y "$(ProjectDir)\dist\dll\x86\pthreadVC2.dll" "$(OutDir)"
-xcopy /Y /E /I "$(ProjectDir)..\kernel" "$(OutDir)\kernel"
+      <Command>xcopy /Y /E /I "$(ProjectDir)..\kernel" "$(OutDir)\kernel"
 </Command>
     </PostBuildEvent>
     <PreBuildEvent>
@@ -208,8 +207,7 @@ del /f "$(OutDir)*.dll"</Command>
       </LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y "$(ProjectDir)\dist\dll\x64\pthreadVC2.dll" "$(OutDir)"
-xcopy /Y /E /I "$(ProjectDir)..\kernel" "$(OutDir)\kernel"
+      <Command>xcopy /Y /E /I "$(ProjectDir)..\kernel" "$(OutDir)\kernel"
 </Command>
     </PostBuildEvent>
     <PreBuildEvent>
