@@ -3044,7 +3044,7 @@ static void kill_mining(void)
 		if (thr && PTH(thr) != 0L)
 			pth = &thr->pth;
 		thr_info_cancel(thr);
-#ifndef WIN32
+#if !defined WIN32 || defined __MINGW64_VERSION_MAJOR
 		if (pth && *pth)
 			pthread_join(*pth, NULL);
 #else
