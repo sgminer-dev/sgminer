@@ -90,7 +90,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_M_AMD64;USE_SSE2;_AMD64_;WIN32;_WIN64;NDEBUG;_CONSOLE</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\compat\jansson-2.5\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -114,7 +114,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_M_AMD64;_AMD64_;WIN32;_WIN64;NDEBUG;_CONSOLE</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\compat\jansson-2.5\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -140,7 +140,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CONSOLE;PTW32_STATIC_LIB</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\compat\jansson-2.5\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
@@ -166,7 +166,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_M_AMD64;_AMD64_;WIN32;_WIN64;PTW32_STATIC_LIB</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\compat\jansson-2.5\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
@@ -194,6 +194,16 @@
     <ClCompile Include="..\ccan\opt\opt.c" />
     <ClCompile Include="..\ccan\opt\parse.c" />
     <ClCompile Include="..\ccan\opt\usage.c" />
+    <ClCompile Include="..\compat\jansson-2.5\src\dump.c" />
+    <ClCompile Include="..\compat\jansson-2.5\src\error.c" />
+    <ClCompile Include="..\compat\jansson-2.5\src\hashtable.c" />
+    <ClCompile Include="..\compat\jansson-2.5\src\load.c" />
+    <ClCompile Include="..\compat\jansson-2.5\src\memory.c" />
+    <ClCompile Include="..\compat\jansson-2.5\src\pack_unpack.c" />
+    <ClCompile Include="..\compat\jansson-2.5\src\strbuffer.c" />
+    <ClCompile Include="..\compat\jansson-2.5\src\strconv.c" />
+    <ClCompile Include="..\compat\jansson-2.5\src\utf.c" />
+    <ClCompile Include="..\compat\jansson-2.5\src\value.c" />
     <ClCompile Include="..\driver-opencl.c" />
     <ClCompile Include="..\findnonce.c" />
     <ClCompile Include="..\hexdump.c" />
@@ -210,6 +220,11 @@
     <ClInclude Include="..\bench_block.h" />
     <ClInclude Include="..\c++defs.h" />
     <ClInclude Include="..\compat.h" />
+    <ClInclude Include="..\compat\jansson-2.5\src\hashtable.h" />
+    <ClInclude Include="..\compat\jansson-2.5\src\jansson.h" />
+    <ClInclude Include="..\compat\jansson-2.5\src\jansson_private.h" />
+    <ClInclude Include="..\compat\jansson-2.5\src\strbuffer.h" />
+    <ClInclude Include="..\compat\jansson-2.5\src\utf.h" />
     <ClInclude Include="..\driver-opencl.h" />
     <ClInclude Include="..\elist.h" />
     <ClInclude Include="..\findnonce.h" />

@@ -933,7 +933,7 @@ typedef struct
 static int buffer_get(void *data)
 {
     char c;
-    buffer_data_t *stream = data;
+    buffer_data_t *stream = (buffer_data_t *)data;
     if(stream->pos >= stream->len)
       return EOF;
 
@@ -1035,7 +1035,7 @@ typedef struct
 static int callback_get(void *data)
 {
     char c;
-    callback_data_t *stream = data;
+    callback_data_t *stream = (callback_data_t *)data;
 
     if(stream->pos >= stream->len) {
         stream->pos = 0;

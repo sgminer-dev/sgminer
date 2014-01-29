@@ -9,6 +9,12 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
+    <Filter Include="Libraries">
+      <UniqueIdentifier>{f88c4590-fe1f-4c7e-ac04-b7ee56ff742c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\jansson">
+      <UniqueIdentifier>{d18d03ff-8391-466a-9992-6701c4dbf0f3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\adl.c">
@@ -55,6 +61,36 @@
     </ClCompile>
     <ClCompile Include="..\ccan\opt\helpers.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\dump.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\error.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\hashtable.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\load.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\memory.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\pack_unpack.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\strbuffer.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\strconv.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\utf.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\value.c">
+      <Filter>Libraries\jansson</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -108,6 +144,21 @@
     </ClInclude>
     <ClInclude Include="dist\include\config.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\compat\jansson-2.5\src\hashtable.h">
+      <Filter>Libraries\jansson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\compat\jansson-2.5\src\jansson.h">
+      <Filter>Libraries\jansson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\compat\jansson-2.5\src\jansson_private.h">
+      <Filter>Libraries\jansson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\compat\jansson-2.5\src\strbuffer.h">
+      <Filter>Libraries\jansson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\compat\jansson-2.5\src\utf.h">
+      <Filter>Libraries\jansson</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
