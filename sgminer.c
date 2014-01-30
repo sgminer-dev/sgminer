@@ -212,7 +212,7 @@ static struct pool *currentpool = NULL;
 int total_pools, enabled_pools;
 enum pool_strategy pool_strategy = POOL_FAILOVER;
 int opt_rotate_period;
-static int total_urls, total_users, total_passes, total_userpasses, total_poolnames;
+static int total_urls, total_users, total_passes, total_userpasses;
 static int json_array_index;
 
 static
@@ -508,15 +508,12 @@ struct pool *add_pool(void)
 
 	pool = calloc(sizeof(struct pool), 1);
 	if (!pool)
-		quit(1, "Failed to malloc pool in add_pool");
+		quit(1, "Failed to calloc pool in add_pool");
 	pool->pool_no = pool->prio = total_pools;
 
 	/* Default pool name */
 	char buf[32];
-	sprintf(buf, "%s%s%s",
-		pool->sockaddr_url,
-		pool->has_stratum ? ":" : "",
-		pool->has_stratum ? pool->stratum_port : "");
+	sprintf(buf, "Pool %d", pool->pool_no);
 	pool->poolname = strdup(buf);
 
 	pools = realloc(pools, sizeof(struct pool *) * (total_pools + 2));
@@ -740,11 +737,11 @@ static char *set_poolname(char *arg)
 {
 	struct pool *pool;
 
-	total_poolnames++;
-	if (total_poolnames > total_pools)
+	while ((json_array_index + 1) > total_pools)
 		add_pool();
+	pool = pools[json_array_index];
 
-	pool = pools[total_poolnames - 1];
+	applog(LOG_DEBUG, "Setting pool %i name to %s", pool->pool_no, arg);
 	opt_set_charp(arg, &pool->poolname);
 
 	return NULL;
@@ -806,7 +803,6 @@ static char *set_pool_state(char *arg)
 	pool = pools[json_array_index];
 
 	applog(LOG_INFO, "Setting pool %s state to %s", pool->poolname, arg);
-
 	if (strcmp(arg, "disabled") == 0) {
 		pool->state = POOL_DISABLED;
 	} else if (strcmp(arg, "enabled") == 0) {
@@ -7725,7 +7721,7 @@ int main(int argc, char *argv[])
 	for (i = 0; i < MAX_GPUDEVICES; i++)
 		gpus[i].dynamic = true;
 
-	/* parse command line */
+	/* parse config and command line */
 	opt_register_table(opt_config_table,
 			   "Options for both config file and command line");
 	opt_register_table(opt_cmdline_table,
