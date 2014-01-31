@@ -16,7 +16,8 @@ Information that is most often relevant:
 * AMD APP SDK version;
 * AMD ADL version;
 * GPUs used (`sgminer --ndevs`);
-* `sgminer` version (`sgminer --version` or `git describe`);
+* whether you're using a pre-compiled binary or bult from source;
+* `sgminer` version (`sgminer --version` and/or `git describe`);
 * contents of the configuration file;
 * launch procedure (manual or via script);
 * steps to repeat;
