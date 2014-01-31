@@ -4706,7 +4706,7 @@ retry:
 	immedok(logwin, false);
 	opt_loginput = false;
 }
-#endif
+#endif /* HAVE_CURSES */
 
 void default_save_file(char *filename)
 {
@@ -4847,7 +4847,7 @@ static void *input_thread(void __maybe_unused *userdata)
 
 	return NULL;
 }
-#endif
+#endif /* HAVE_CURSES */
 
 static void *api_thread(void *userdata)
 {
@@ -7941,6 +7941,7 @@ int main(int argc, char *argv[])
 			enable_pool(pool);
 			break;
 		case POOL_HIDDEN:
+			i--; /* Reiterate over this index. */
 			remove_pool(pool);
 			break;
 		case POOL_REJECTING:
@@ -8157,7 +8158,7 @@ retry:
 		applog(LOG_DEBUG, "Generated getwork work");
 		stage_work(work);
 		push_curl_entry(ce, pool);
-#endif
+#endif /* HAVE_LIBCURL */
 	}
 
 	return 0;
