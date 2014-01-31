@@ -756,6 +756,7 @@ static struct api_data *api_add_data_full(struct api_data *root, char *name, enu
 			case API_DOUBLE:
 			case API_ELAPSED:
 			case API_MHS:
+			case API_KHS:
 			case API_MHTOTAL:
 			case API_UTILITY:
 			case API_FREQ:
@@ -866,6 +867,11 @@ struct api_data *api_add_time(struct api_data *root, char *name, time_t *data, b
 struct api_data *api_add_mhs(struct api_data *root, char *name, double *data, bool copy_data)
 {
 	return api_add_data_full(root, name, API_MHS, (void *)data, copy_data);
+}
+
+struct api_data *api_add_khs(struct api_data *root, char *name, double *data, bool copy_data)
+{
+	return api_add_data_full(root, name, API_KHS, (void *)data, copy_data);
 }
 
 struct api_data *api_add_mhtotal(struct api_data *root, char *name, double *data, bool copy_data)
@@ -982,6 +988,9 @@ static struct api_data *print_data(struct api_data *root, char *buf, bool isjson
 			case API_FREQ:
 			case API_MHS:
 				sprintf(buf, "%.4f", *((double *)(root->data)));
+				break;
+			case API_KHS:
+				sprintf(buf, "%.0f", *((double *)(root->data)));
 				break;
 			case API_VOLTS:
 				sprintf(buf, "%.3f", *((float *)(root->data)));
@@ -1672,6 +1681,12 @@ static void gpustatus(struct io_data *io_data, int gpu, bool isjson, bool precom
 		char mhsname[27];
 		sprintf(mhsname, "MHS %ds", opt_log_interval);
 		root = api_add_mhs(root, mhsname, &(cgpu->rolling), false);
+		double khs_avg = mhs * 1000.0;
+		double khs_rolling = cgpu->rolling * 1000.0;
+		root = api_add_khs(root, "KHS av", &khs_avg, false);
+		char khsname[27];
+		sprintf(khsname, "KHS %ds", opt_log_interval);
+		root = api_add_khs(root, khsname, &khs_rolling, false);
 		root = api_add_int(root, "Accepted", &(cgpu->accepted), false);
 		root = api_add_int(root, "Rejected", &(cgpu->rejected), false);
 		root = api_add_int(root, "Hardware Errors", &(cgpu->hw_errors), false);
@@ -1879,6 +1894,12 @@ static void summary(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __mayb
 	char mhsname[27];
 	sprintf(mhsname, "MHS %ds", opt_log_interval);
 	root = api_add_mhs(root, mhsname, &(total_rolling), false);
+	double khs_avg = mhs * 1000.0;
+	double khs_rolling = total_rolling * 1000.0;
+	root = api_add_khs(root, "KHS av", &khs_avg, false);
+	char khsname[27];
+	sprintf(khsname, "KHS %ds", opt_log_interval);
+	root = api_add_khs(root, khsname, &khs_rolling, false);
 	root = api_add_uint(root, "Found Blocks", &(found_blocks), true);
 	root = api_add_int(root, "Getworks", &(total_getworks), true);
 	root = api_add_int(root, "Accepted", &(total_accepted), true);
