@@ -41,14 +41,20 @@ char *file_contents(const char *filename, int *length)
 	void *buffer;
 	FILE *f;
 
+	/* Try in the optional kernel path first, defaults to PREFIX */
 	strcpy(fullpath, opt_kernel_path);
 	strcat(fullpath, filename);
-
-	/* Try in the optional kernel path or installed prefix first */
 	f = fopen(fullpath, "rb");
 	if (!f) {
 		/* Then try from the path sgminer was called */
 		strcpy(fullpath, sgminer_path);
+		strcat(fullpath, filename);
+		f = fopen(fullpath, "rb");
+	}
+	if (!f) {
+		/* Then from `pwd`/kernel/ */
+		strcpy(fullpath, sgminer_path);
+		strcat(fullpath, "kernel/");
 		strcat(fullpath, filename);
 		f = fopen(fullpath, "rb");
 	}
@@ -57,7 +63,8 @@ char *file_contents(const char *filename, int *length)
 		f = fopen(filename, "rb");
 
 	if (!f) {
-		applog(LOG_ERR, "Unable to open %s or %s for reading", filename, fullpath);
+		applog(LOG_ERR, "Unable to open %s or %s for reading",
+		       filename, fullpath);
 		return NULL;
 	}
 

@@ -35,6 +35,7 @@
 #ifndef WIN32
 #include <sys/resource.h>
 #else
+#include <winsock2.h>
 #include <windows.h>
 #endif
 #include <ccan/opt/opt.h>
@@ -211,7 +212,7 @@ static struct pool *currentpool = NULL;
 int total_pools, enabled_pools;
 enum pool_strategy pool_strategy = POOL_FAILOVER;
 int opt_rotate_period;
-static int total_urls, total_users, total_passes, total_userpasses, total_poolnames;
+static int total_urls, total_users, total_passes, total_userpasses;
 static int json_array_index;
 
 static
@@ -509,15 +510,12 @@ struct pool *add_pool(void)
 
 	pool = (struct pool *)calloc(sizeof(struct pool), 1);
 	if (!pool)
-		quit(1, "Failed to malloc pool in add_pool");
+		quit(1, "Failed to calloc pool in add_pool");
 	pool->pool_no = pool->prio = total_pools;
 
 	/* Default pool name */
 	char buf[32];
-	sprintf(buf, "%s%s%s",
-		pool->sockaddr_url,
-		pool->has_stratum ? ":" : "",
-		pool->has_stratum ? pool->stratum_port : "");
+	sprintf(buf, "Pool %d", pool->pool_no);
 	pool->poolname = strdup(buf);
 
 	pools = realloc(pools, sizeof(struct pool *) * (total_pools + 2));
@@ -741,11 +739,11 @@ static char *set_poolname(char *arg)
 {
 	struct pool *pool;
 
-	total_poolnames++;
-	if (total_poolnames > total_pools)
+	while ((json_array_index + 1) > total_pools)
 		add_pool();
+	pool = pools[json_array_index];
 
-	pool = pools[total_poolnames - 1];
+	applog(LOG_DEBUG, "Setting pool %i name to %s", pool->pool_no, arg);
 	opt_set_charp(arg, &pool->poolname);
 
 	return NULL;
@@ -807,7 +805,6 @@ static char *set_pool_state(char *arg)
 	pool = pools[json_array_index];
 
 	applog(LOG_INFO, "Setting pool %s state to %s", pool->poolname, arg);
-
 	if (strcmp(arg, "disabled") == 0) {
 		pool->state = POOL_DISABLED;
 	} else if (strcmp(arg, "enabled") == 0) {
@@ -3045,7 +3042,7 @@ static void kill_mining(void)
 		if (thr && PTH(thr) != 0L)
 			pth = &thr->pth;
 		thr_info_cancel(thr);
-#ifndef WIN32
+#if !defined(WIN32) || defined(__MINGW64_VERSION_MAJOR)
 		if (pth && *pth)
 			pthread_join(*pth, NULL);
 #else
@@ -4715,7 +4712,7 @@ retry:
 	immedok(logwin, false);
 	opt_loginput = false;
 }
-#endif
+#endif /* HAVE_CURSES */
 
 void default_save_file(char *filename)
 {
@@ -4750,7 +4747,7 @@ static void set_options(void)
 	clear_logwin();
 retry:
 	wlogprint("[Q]ueue: %d\n[S]cantime: %d\n[E]xpiry: %d\n"
-		  "[W]rite config file\n[C]gminer restart\n",
+		  "[W]rite config file\n[R]estart\n",
 		opt_queue, opt_scantime, opt_expiry);
 	wlogprint("Select an option or any other key to return\n");
 	logwin_update();
@@ -4810,7 +4807,7 @@ retry:
 		fclose(fcfg);
 		goto retry;
 
-	} else if (!strncasecmp(&input, "c", 1)) {
+	} else if (!strncasecmp(&input, "r", 1)) {
 		wlogprint("Are you sure?\n");
 		input = getch();
 		if (!strncasecmp(&input, "y", 1))
@@ -4856,7 +4853,7 @@ static void *input_thread(void __maybe_unused *userdata)
 
 	return NULL;
 }
-#endif
+#endif /* HAVE_CURSES */
 
 static void *api_thread(void *userdata)
 {
@@ -7705,19 +7702,22 @@ int main(int argc, char *argv[])
 	sigemptyset(&handler.sa_mask);
 	sigaction(SIGTERM, &handler, &termhandler);
 	sigaction(SIGINT, &handler, &inthandler);
+#endif
 
+	/* opt_kernel_path defaults to SGMINER_PREFIX */
 	opt_kernel_path = (char *)alloca(PATH_MAX);
 	strcpy(opt_kernel_path, SGMINER_PREFIX);
+
+	/* sgminer_path is current dir */
 	sgminer_path = (char *)alloca(PATH_MAX);
+#ifndef _MSC_VER
 	s = strdup(argv[0]);
 	strcpy(sgminer_path, dirname(s));
 	free(s);
 	strcat(sgminer_path, "/");
 #else
-	opt_kernel_path = (char*)alloca(PATH_MAX);
-	strcpy(opt_kernel_path, SGMINER_PREFIX);
-	sgminer_path = (char*)alloca(PATH_MAX);
 	GetCurrentDirectory(PATH_MAX - 1, sgminer_path);
+	strcat(sgminer_path, "\\");
 #endif
 
 	devcursor = 8;
@@ -7738,7 +7738,7 @@ int main(int argc, char *argv[])
 	for (i = 0; i < MAX_GPUDEVICES; i++)
 		gpus[i].dynamic = true;
 
-	/* parse command line */
+	/* parse config and command line */
 	opt_register_table(opt_config_table,
 			   "Options for both config file and command line");
 	opt_register_table(opt_cmdline_table,
@@ -7860,12 +7860,10 @@ int main(int argc, char *argv[])
 #endif
 	}
 
-#ifdef USE_SCRYPT // I don't really know if this is relevant for other mining platforms
 	if (!getenv("GPU_MAX_ALLOC_PERCENT"))
 		applog(LOG_WARNING, "WARNING: GPU_MAX_ALLOC_PERCENT is not specified!");
 	if (!getenv("GPU_USE_SYNC_OBJECTS"))
 		applog(LOG_WARNING, "WARNING: GPU_USE_SYNC_OBJECTS is not specified!");
-#endif
 
 	if (!total_pools) {
 		applog(LOG_WARNING, "Need to specify at least one pool server.");
@@ -7960,6 +7958,7 @@ int main(int argc, char *argv[])
 			enable_pool(pool);
 			break;
 		case POOL_HIDDEN:
+			i--; /* Reiterate over this index. */
 			remove_pool(pool);
 			break;
 		case POOL_REJECTING:
@@ -8176,7 +8175,7 @@ retry:
 		applog(LOG_DEBUG, "Generated getwork work");
 		stage_work(work);
 		push_curl_entry(ce, pool);
-#endif
+#endif /* HAVE_LIBCURL */
 	}
 
 	return 0;

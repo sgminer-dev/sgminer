@@ -47,16 +47,18 @@ static inline int nanosleep(const struct timespec *req, struct timespec *rem)
 }
 #endif
 
-/* Reported unneded in https://github.com/veox/sgminer/issues/37 */
-/* static inline int sleep(unsigned int secs) */
-/* { */
-/* 	struct timespec req, rem; */
-/* 	req.tv_sec = secs; */
-/* 	req.tv_nsec = 0; */
-/* 	if (!nanosleep(&req, &rem)) */
-/* 		return 0; */
-/* 	return rem.tv_sec + (rem.tv_nsec ? 1 : 0); */
-/* } */
+#if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
+// Reported unneded in https://github.com/veox/sgminer/issues/37 */
+static inline int sleep(unsigned int secs)
+{
+	struct timespec req, rem;
+	req.tv_sec = secs;
+	req.tv_nsec = 0;
+	if (!nanosleep(&req, &rem))
+		return 0;
+	return rem.tv_sec + (rem.tv_nsec ? 1 : 0);
+}
+#endif
 
 enum {
 	PRIO_PROCESS		= 0,

@@ -1439,6 +1439,7 @@ enum api_data_type {
 	API_TIMEVAL,
 	API_TIME,
 	API_MHS,
+	API_KHS,
 	API_MHTOTAL,
 	API_TEMP,
 	API_UTILITY,

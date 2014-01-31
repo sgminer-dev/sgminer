@@ -8,7 +8,13 @@ This is a multi-threaded multi-pool GPU miner with ATI GPU monitoring,
 cgminer by Con Kolivas (ckolivas), which is in turn based on cpuminer by
 Jeff Garzik (jgarzik).
 
-GIT TREE: https://github.com/veox/sgminer
+**releases**: https://github.com/veox/sgminer/releases
+
+**git tree**: https://github.com/veox/sgminer
+
+**issues**: https://github.com/veox/sgminer/issues
+
+**irc**: `#sgminer` on freenode
 
 License: GPLv3.  See `COPYING` for details.
 
