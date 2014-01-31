@@ -19,18 +19,18 @@ updated by many others.
 * alexkarnew/alexkarold: Alexey Karimov LMqRcHdwnZtTMH6c2kWoxSoKM5KySfaP5C
 
 
-## Testing and bug fixes
+## Testing, bug fixes, improvements
 
 * Gabriel Devenyi <gdevenyi>
 * Benjamin Herrenschmidt <ozbenh>
-* Joe4782
-* gacheson
-* tonobitc
+* Joe4782 <Joe4782>
+* gacheson <gacheson>
+* tonobitc <tonobitc>
+* Perry Huang <perryh>
 
 ...and many others. See:
 
 * [veox/sgminer](https://github.com/veox/sgminer/graphs/contributors)
-* [ckolivas/cgminer](https://github.com/ckolivas/cgminer/graphs/contributors)
 
 
 ## Legacy
