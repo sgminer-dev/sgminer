@@ -1345,8 +1345,8 @@ static bool opencl_thread_init(struct thr_info *thr)
 	case KL_ALEXKARNEW:
 	case KL_ALEXKAROLD:
 	case KL_CKOLIVAS:
-	case KL_ZUIKKIS:
 	case KL_PSW:
+	case KL_ZUIKKIS:
 		thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
 		break;
 	default:

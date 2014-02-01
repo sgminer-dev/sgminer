@@ -14,10 +14,10 @@
 All current kernels are based on `scrypt`, originally by Colin Percival,
 updated by many others.
 
-* ckolivas: Con Kolivas <kernel@kolivas.org> 15qSxP1SQcUX3o4nhkfdbgyoWEFMomJ4rZ
-* zuikkis: Zuikkis LeXck7EYgxyjw13zNDxZFmmgmWffFvhmSh
 * alexkarnew/alexkarold: Alexey Karimov LMqRcHdwnZtTMH6c2kWoxSoKM5KySfaP5C
+* ckolivas: Con Kolivas <kernel@kolivas.org> 15qSxP1SQcUX3o4nhkfdbgyoWEFMomJ4rZ
 * psw: Pavel Semjanov LP6GRFvgoMxKA6AW4TVF668cNezEGZvEtr
+* zuikkis: Zuikkis LeXck7EYgxyjw13zNDxZFmmgmWffFvhmSh
 
 
 ## Testing, bug fixes, improvements
