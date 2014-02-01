@@ -4189,6 +4189,9 @@ void write_config(FILE *fcfg)
 				case KL_CKOLIVAS:
 					fprintf(fcfg, CKOLIVAS_KERNNAME);
 					break;
+				case KL_PSW:
+					fprintf(fcfg, PSW_KERNNAME);
+					break;
 				case KL_ZUIKKIS:
 					fprintf(fcfg, ZUIKKIS_KERNNAME);
 					break;

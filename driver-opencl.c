@@ -204,6 +204,8 @@ static enum cl_kernels select_kernel(char *arg)
 		return KL_CKOLIVAS;
 	if (!strcmp(arg, ZUIKKIS_KERNNAME))
 		return KL_ZUIKKIS;
+	if (!strcmp(arg, PSW_KERNNAME))
+		return KL_PSW;
 
 	return KL_NONE;
 }
@@ -1309,6 +1311,9 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 			case KL_ZUIKKIS:
 				cgpu->kname = ZUIKKIS_KERNNAME;
 				break;
+			case KL_PSW:
+				cgpu->kname = PSW_KERNNAME;
+				break;
 			default:
 				break;
 		}
@@ -1341,6 +1346,7 @@ static bool opencl_thread_init(struct thr_info *thr)
 	case KL_ALEXKAROLD:
 	case KL_CKOLIVAS:
 	case KL_ZUIKKIS:
+	case KL_PSW:
 		thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
 		break;
 	default:

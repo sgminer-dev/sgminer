@@ -17,6 +17,7 @@ updated by many others.
 * ckolivas: Con Kolivas <kernel@kolivas.org> 15qSxP1SQcUX3o4nhkfdbgyoWEFMomJ4rZ
 * zuikkis: Zuikkis LeXck7EYgxyjw13zNDxZFmmgmWffFvhmSh
 * alexkarnew/alexkarold: Alexey Karimov LMqRcHdwnZtTMH6c2kWoxSoKM5KySfaP5C
+* psw: Pavel Semjanov LP6GRFvgoMxKA6AW4TVF668cNezEGZvEtr
 
 
 ## Testing, bug fixes, improvements

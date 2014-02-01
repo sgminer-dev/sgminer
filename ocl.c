@@ -440,6 +440,11 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 			strcpy(filename, CKOLIVAS_KERNNAME".cl");
 			strcpy(binaryfilename, CKOLIVAS_KERNNAME);
 			break;
+		case KL_PSW:
+			applog(LOG_WARNING, "Kernel psw is experimental.");
+			strcpy(filename, PSW_KERNNAME".cl");
+			strcpy(binaryfilename, PSW_KERNNAME);
+			break;
 		case KL_ZUIKKIS:
 			applog(LOG_WARNING, "Kernel zuikkis is experimental.");
 			strcpy(filename, ZUIKKIS_KERNNAME".cl");

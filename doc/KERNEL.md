@@ -50,6 +50,12 @@ Only supports `vectors=1`, `lookup-gap=2` and `worksize=256`.
 
 [Announcement](https://litecointalk.org/index.php?topic=6058.msg90873#msg90873).
 
+### psw
+
+Pavel Semjanov optimised kernel, SHA256 speedups.
+
+[Announcement](https://bitcointalk.org/index.php?topic=369858.0).
+
 
 ## Submitting new kernels
 
