@@ -69,7 +69,8 @@ Only supports `vectors=1`, `lookup-gap=2` and `worksize=256`.
 
 ### Procedure
 
-1. Copy the kernel you wish to modify and commit it verbatim.
+1. Copy the kernel you wish to modify, change the file encoding to UTF-8
+and commit it without any further modifications.
 
 This way, it is easy to verify that there are no hidden changes. Note in
 the commit message which kernel is used as a base.
@@ -85,9 +86,11 @@ the new kernel.
 Now it can be selected when starting via the `--kernel` argument or
 `kernel` configuration option.
 
-4. Add yourself to the "kernels" section in `AUTHORS.md`. Keep it short.
+4. Recompile and test that the kernel actually works.
 
-5. Submit a pull request on GitHub, or file it at the issue tracker,
+5. Add yourself to the "kernels" section in `AUTHORS.md`. Keep it short.
+
+6. Submit a pull request on GitHub, or file it at the issue tracker,
 outlining the changes made, known limitations, and tested GPUs. List
 your git repository and branch name. The current repository and issue
 tracker links should be in `README.md`.
