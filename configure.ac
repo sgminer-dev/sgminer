@@ -11,7 +11,7 @@ m4_define([lt_age], v_min)
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 
-AC_INIT([sgminer], [v_ver], [https://github.com/veox/sgminer/issues])
+AC_INIT([sgminer], [v_ver], [veox@wemakethings.net], [sgminer], [https://github.com/veox/sgminer])
 
 AC_PREREQ(2.59)
 AC_CANONICAL_SYSTEM
