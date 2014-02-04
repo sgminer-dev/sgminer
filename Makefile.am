@@ -26,6 +26,11 @@ endif
 
 sgminer_CPPFLAGS += $(ADL_CPPFLAGS)
 
+if USE_GIT_VERSION
+GIT_VERSION      := $(shell sh -c 'git describe --abbrev=4 --dirty')
+sgminer_CPPFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
+endif
+
 sgminer_SOURCES := sgminer.c
 sgminer_SOURCES	+= api.c
 sgminer_SOURCES	+= elist.h miner.h compat.h bench_block.h

@@ -225,6 +225,11 @@ else
 	DLOPEN_FLAGS=""
 fi
 
+AC_ARG_ENABLE([git-version],
+	AS_HELP_STRING([--disable-git-version],
+		[Disable use of git version in version string even if available]),
+		[wantgitver=$enableval], [wantgitver=yes])
+
 curses="auto"
 
 AC_ARG_WITH([curses],
@@ -287,6 +292,20 @@ else
 fi
 AC_SUBST(LIBCURL_LIBS)
 
+# Enable or disable use of git version in version string
+AC_MSG_CHECKING(whether to use git version if available)
+if test "x$wantgitver" = "xyes" ; then
+	AC_CHECK_PROGS([GIT], [git])
+	AC_CHECK_FILE([.git/], hasgitdir=yes)
+	usegitver=$ac_cv_file__git_
+	if test $GIT -a "x$hasgitdir" = "xyes"; then
+		AC_DEFINE([USE_GIT_VERSION], [1], [Use GIT version in version string])
+	fi
+else
+	AC_MSG_RESULT([no, disabled by configure])
+	usegitver=no
+fi
+AM_CONDITIONAL(USE_GIT_VERSION, [test x$usegitver = xyes])
 
 #check execv signature
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
@@ -374,6 +393,8 @@ echo
 echo "Configuration Options Summary:"
 echo
 
+echo "  Use git version......: $usegitver"
+
 if test "x$libcurl" != xno; then
 	echo "  libcurl(GBT+getwork).: Enabled: $LIBCURL_LIBS"
 else
@@ -381,7 +402,6 @@ else
 fi
 
 echo "  curses.TUI...........: $cursesmsg"
-
 
 if test "x$opencl" != xno; then
 	if test $found_opencl = 1; then
