@@ -126,6 +126,60 @@ static LPADLDisplayInfo lpAdlDisplayInfo = NULL;
 int set_fanspeed(int gpu, int iFanSpeed);
 static float __gpu_temp(struct gpu_adl *ga);
 
+char *adl_errors(int error)
+{
+	char *result;
+	switch(error)
+	{
+		case ADL_ERR:
+			result = "Generic Error. Most likely one or more of the Escape calls to the driver failed!";
+			break;
+		case ADL_ERR_NOT_INIT:
+			result = "ADL not initialized";
+			break;
+		case ADL_ERR_INVALID_PARAM:
+			result = "One of the parameter passed is invalid";
+			break;
+		case ADL_ERR_INVALID_PARAM_SIZE:
+			result = "One of the parameter size is invalid";
+			break;
+		case ADL_ERR_INVALID_ADL_IDX:
+			result = "Invalid ADL index passed";
+			break;
+		case ADL_ERR_INVALID_CONTROLLER_IDX:
+			result = "Invalid controller index passed";
+			break;
+		case ADL_ERR_INVALID_DIPLAY_IDX:
+			result = "Invalid display index passed";
+			break;
+		case ADL_ERR_NOT_SUPPORTED:
+			result = "Function  not supported by the driver";
+			break;
+		case ADL_ERR_NULL_POINTER:
+			result = "Null Pointer error";
+			break;
+		case ADL_ERR_DISABLED_ADAPTER:
+			result = "Call can't be made due to disabled adapter";
+			break;
+		case ADL_ERR_INVALID_CALLBACK:
+			result = "Invalid Callback";
+			break;
+		case ADL_ERR_RESOURCE_CONFLICT:
+			result = "Display Resource conflict";
+			break;
+		case ADL_ERR_SET_INCOMPLETE:
+			result = "Failed to update some of the values. Can be returned by set request that include multiple values if not all values were successfully committed.";
+			break;
+		case ADL_ERR_NO_XDISPLAY:
+			result = "There's no Linux XDisplay in Linux Console environment";
+			break;
+		default:
+			break;
+
+	}
+	return result;
+}
+
 static inline void lock_adl(void)
 {
 	mutex_lock(&adl_lock);
@@ -250,13 +304,13 @@ static bool prepare_adl(void)
 	// retrieve adapter information only for adapters that are physically present and enabled in the system
 	result = ADL_Main_Control_Create(ADL_Main_Memory_Alloc, 1);
 	if (result != ADL_OK) {
-		applog(LOG_INFO, "ADL initialisation error: %d!", result);
+		applog(LOG_INFO, "ADL initialisation error: %d! %s", result, adl_errors(result));
 		return false;
 	}
 
 	result = ADL_Main_Control_Refresh();
 	if (result != ADL_OK) {
-		applog(LOG_INFO, "ADL refresh error: %d!", result);
+		applog(LOG_INFO, "ADL refresh error: %d! %s", result, adl_errors(result));
 		return false;
 	}
 
