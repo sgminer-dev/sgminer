@@ -135,20 +135,13 @@ if test -n "$SGMINER_SDK"; then
 	LDFLAGS="-L$SGMINER_SDK/lib/$target $LDFLAGS"
 fi
 
-opencl="yes"
-
-AC_ARG_ENABLE([opencl],
-	[AC_HELP_STRING([--enable-opencl],[Enable support for GPU mining with opencl])],
-	[opencl=$enableval]
-	)
-if test "x$opencl" != xno; then
-	# Check for OpenCL (the long way needed on mingw32 due to calling conventions)
-	AC_MSG_CHECKING([for OpenCL])
-	SAVED_LIBS=$LIBS
-	SAVED_CFLAGS=$CFLAGS
-	LIBS="$LIBS $OPENCL_LIBS"
-	CFLAGS="$CFLAGS $OPENCL_FLAGS"
-	AC_LINK_IFELSE(
+# Check for OpenCL (the long way needed on mingw32 due to calling conventions)
+AC_MSG_CHECKING([for OpenCL])
+SAVED_LIBS=$LIBS
+SAVED_CFLAGS=$CFLAGS
+LIBS="$LIBS $OPENCL_LIBS"
+CFLAGS="$CFLAGS $OPENCL_FLAGS"
+AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM([[
 		#ifdef __APPLE_CC__
 		#include <OpenCL/opencl.h>
@@ -158,19 +151,13 @@ if test "x$opencl" != xno; then
 	]],
 	[[return clSetKernelArg(0, 0, 0, 0); ]])],
 	[AC_MSG_RESULT(yes)
-	found_opencl=1
-	],
+		found_opencl=1],
 	[AC_MSG_RESULT(no)
-	OPENCL_FLAGS=
-	OPENCL_LIBS=
-	found_opencl=0])
-	LIBS=$SAVED_LIBS
-	CFLAGS=$SAVED_CFLAGS
-else
-	OPENCL_FLAGS=""
-	OPENCL_LIBS=""
-fi
-AM_CONDITIONAL([HAS_OPENCL], [test x$opencl = xyes])
+		OPENCL_FLAGS=
+		OPENCL_LIBS=
+		found_opencl=0])
+LIBS=$SAVED_LIBS
+CFLAGS=$SAVED_CFLAGS
 
 has_winpthread=false
 if test "x$have_win32" = xtrue; then
@@ -403,16 +390,11 @@ fi
 
 echo "  curses.TUI...........: $cursesmsg"
 
-if test "x$opencl" != xno; then
-	if test $found_opencl = 1; then
-		echo "  OpenCL...............: FOUND. GPU mining support enabled"
-	else
-		echo "  OpenCL...............: NOT FOUND. GPU mining support DISABLED"
-		AC_MSG_ERROR([No mining configured in])
-	fi
+if test $found_opencl = 1; then
+	echo "  OpenCL...............: FOUND. GPU mining support enabled"
 else
-	echo "  OpenCL...............: Detection overrided. GPU mining support DISABLED"
-	AC_MSG_ERROR([No mining configured in])
+	echo "  OpenCL...............: NOT FOUND. GPU mining support DISABLED"
+	AC_MSG_ERROR([OpenCL not found])
 fi
 
 if test "x$adl" != xno; then
