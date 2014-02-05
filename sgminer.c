@@ -4542,10 +4542,6 @@ retry:
 		switch_pools(pool);
 		goto updated;
 	} else if (!strncasecmp(&input, "d", 1)) {
-		if (enabled_pools <= 1) {
-			wlogprint("Cannot disable last pool");
-			goto retry;
-		}
 		selected = curses_int("Select pool number");
 		if (selected < 0 || selected >= total_pools) {
 			wlogprint("Invalid selection\n");
