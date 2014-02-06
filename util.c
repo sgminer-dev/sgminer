@@ -1657,7 +1657,7 @@ static bool parse_diff(struct pool *pool, json_t *val)
 		if ((double)idiff == diff)
 			applog(LOG_NOTICE, "%s difficulty changed to %d", pool->poolname ,idiff);
 		else
-			applog(LOG_NOTICE, "%s difficulty changed to %f", pool->poolname, diff);
+			applog(LOG_NOTICE, "%s difficulty changed to %.1f", pool->poolname, diff);
 	} else
 		applog(LOG_DEBUG, "%s difficulty set to %f", pool->poolname, diff);
 
