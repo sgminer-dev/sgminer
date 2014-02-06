@@ -26,5 +26,6 @@ Information that may be relevant, depending on the nature of your issue:
 * actual result;
 * debug output (`sgminer --text-only --debug --verbose`).
 
-If there is a need to provide more than a screenfull of log data, it is
-preferred that a link is given instead. Try [gist][gist.github.com].
+If there is a need to provide more than a screenfull of log
+data, it is preferred that a link is given instead. Try
+[gist](https://gist.github.com).
