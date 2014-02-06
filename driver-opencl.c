@@ -731,8 +731,10 @@ void manage_gpu(void)
 	char checkin[40];
 	char input;
 
-	if (!opt_g_threads)
+	if (!opt_g_threads) {
+		applog(LOG_ERR, "opt_g_threads not set in manage_gpu()");
 		return;
+	}
 
 	opt_loginput = true;
 	immedok(logwin, true);

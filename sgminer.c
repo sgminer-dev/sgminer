@@ -1128,7 +1128,7 @@ static struct opt_table opt_config_table[] = {
 		     set_int_0_to_9999, opt_show_intval, &opt_platform_id,
 		     "Select OpenCL platform ID to use for GPU mining"),
 #ifndef HAVE_ADL
-	OPT_WITH_ARG("--gpu-threads|-g",
+	OPT_WITH_ARG("--gpu-threads|-g", // FIXME: why is this in a conditional?
 		     set_int_1_to_10, opt_show_intval, &opt_g_threads,
 		     "Number of threads per GPU (1 - 10)"),
 #else
@@ -4219,6 +4219,11 @@ void write_config(FILE *fcfg)
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
 				(int)gpus[i].shaders);
+
+		fputs("\",\n\"gpu-threads\" : \"", fcfg);
+		for(i = 0; i < nDevs; i++)
+			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
+				(int)gpus[i].threads);
 
 #ifdef HAVE_ADL
 		fputs("\",\n\"gpu-engine\" : \"", fcfg);
