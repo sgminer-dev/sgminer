@@ -1,8 +1,17 @@
 # FAQ
 
+Q: Why is the network difficulty wrong?
+A: It is not wrong. Sharediff of 1 (historically) corresponds to a
+network difficulty of 1/65536. Throughout the inteface, share difficulty
+is displayed as whole numbers, not fractionals. Pools use the same
+convention (with the notable exception of P2Pool). Until pools start
+using true network difficulty to display share difficulty, there is no
+reason to display difficulty differently. This is a vicious cycle and a
+remnant of Bitcoin mining on GPUs.
+
 Q: Can I mine on servers from different networks (eg litecoin and
 dogecoin) at the same time?
-A: No, sgminer keeps a database of the block it's working on to ensure
+A: No. `sgminer` keeps a database of the block it's working on to ensure
 it does not work on stale blocks, and having different blocks from two
 networks would make it invalidate the work from each other.
 
