@@ -567,6 +567,7 @@ char *set_intensity(char *arg)
 	else {
 		gpus[device].dynamic = false;
 		val = atoi(nextptr);
+		if (val == 0) return "disabled";
 		if (val < MIN_INTENSITY || val > MAX_INTENSITY)
 			return "Invalid value passed to set intensity";
 		tt = &gpus[device].intensity;
@@ -583,6 +584,7 @@ char *set_intensity(char *arg)
 		else {
 			gpus[device].dynamic = false;
 			val = atoi(nextptr);
+			if (val == 0) return "disabled";
 			if (val < MIN_INTENSITY || val > MAX_INTENSITY)
 				return "Invalid value passed to set intensity";
 
@@ -614,6 +616,7 @@ char *set_xintensity(char *arg)
 	if (nextptr == NULL)
 		return "Invalid parameters for shader based intensity";
 	val = atoi(nextptr);
+	if (val == 0) return "disabled";
 	if (val < MIN_XINTENSITY || val > MAX_XINTENSITY)
 		return "Invalid value passed to set shader-based intensity";
 
@@ -625,6 +628,7 @@ char *set_xintensity(char *arg)
 
 	while ((nextptr = strtok(NULL, ",")) != NULL) {
 		val = atoi(nextptr);
+		if (val == 0) return "disabled";
 		if (val < MIN_XINTENSITY || val > MAX_XINTENSITY)
 			return "Invalid value passed to set shader based intensity";
 		gpus[device].dynamic = false; // Disable dynamic intensity
@@ -653,6 +657,7 @@ char *set_rawintensity(char *arg)
 	if (nextptr == NULL)
 		return "Invalid parameters for raw intensity";
 	val = atoi(nextptr);
+	if (val == 0) return "disabled";
 	if (val < MIN_RAWINTENSITY || val > MAX_RAWINTENSITY)
 		return "Invalid value passed to set raw intensity";
 
@@ -664,6 +669,7 @@ char *set_rawintensity(char *arg)
 
 	while ((nextptr = strtok(NULL, ",")) != NULL) {
 		val = atoi(nextptr);
+		if (val == 0) return "disabled";
 		if (val < MIN_RAWINTENSITY || val > MAX_RAWINTENSITY)
 			return "Invalid value passed to set raw intensity";
 		gpus[device].dynamic = false; // Disable dynamic intensity

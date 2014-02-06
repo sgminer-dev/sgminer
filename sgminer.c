@@ -1412,10 +1412,10 @@ static char *parse_config(json_t *config, bool fileconf, int parent_iteration)
 				 * file, just skipping over them provided the
 				 * JSON is still valid after that. */
 				if (fileconf) {
-					applog(LOG_ERR, "Invalid config option %s: %s", p, err);
+					applog(LOG_WARNING, "Skipping config option %s: %s", p, err);
 					fileconf_load = -1;
 				} else {
-					snprintf(err_buf, sizeof(err_buf), "Parsing JSON option %s: %s",
+					snprintf(err_buf, sizeof(err_buf), "Error parsing JSON option %s: %s",
 						p, err);
 					return err_buf;
 				}
