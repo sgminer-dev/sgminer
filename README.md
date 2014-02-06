@@ -24,7 +24,7 @@ License: GPLv3.  See `COPYING` for details.
 Documentation is available in directory `doc`. For details on several topics, see:
 
 * `API` for the RPC API specification;
-* `FAQ` for frequently asked questions;
+* `FAQ.md` for frequently asked questions;
 * `GPU` for semi-obsolete information on GPU configuration options and mining SHA256d-based coins;
 * `KERNEL.md` for OpenCL kernel-related information;
 * `MINING.md` for how to find the right balance in GPU configuration to mine Scrypt-based coins effectively;
