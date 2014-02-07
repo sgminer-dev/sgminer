@@ -204,6 +204,8 @@ static enum cl_kernels select_kernel(char *arg)
 		return KL_CKOLIVAS;
 	if (!strcmp(arg, ZUIKKIS_KERNNAME))
 		return KL_ZUIKKIS;
+	if (!strcmp(arg, PSW_KERNNAME))
+		return KL_PSW;
 
 	return KL_NONE;
 }
@@ -565,6 +567,7 @@ char *set_intensity(char *arg)
 	else {
 		gpus[device].dynamic = false;
 		val = atoi(nextptr);
+		if (val == 0) return "disabled";
 		if (val < MIN_INTENSITY || val > MAX_INTENSITY)
 			return "Invalid value passed to set intensity";
 		tt = &gpus[device].intensity;
@@ -581,6 +584,7 @@ char *set_intensity(char *arg)
 		else {
 			gpus[device].dynamic = false;
 			val = atoi(nextptr);
+			if (val == 0) return "disabled";
 			if (val < MIN_INTENSITY || val > MAX_INTENSITY)
 				return "Invalid value passed to set intensity";
 
@@ -612,6 +616,7 @@ char *set_xintensity(char *arg)
 	if (nextptr == NULL)
 		return "Invalid parameters for shader based intensity";
 	val = atoi(nextptr);
+	if (val == 0) return "disabled";
 	if (val < MIN_XINTENSITY || val > MAX_XINTENSITY)
 		return "Invalid value passed to set shader-based intensity";
 
@@ -623,6 +628,7 @@ char *set_xintensity(char *arg)
 
 	while ((nextptr = strtok(NULL, ",")) != NULL) {
 		val = atoi(nextptr);
+		if (val == 0) return "disabled";
 		if (val < MIN_XINTENSITY || val > MAX_XINTENSITY)
 			return "Invalid value passed to set shader based intensity";
 		gpus[device].dynamic = false; // Disable dynamic intensity
@@ -651,6 +657,7 @@ char *set_rawintensity(char *arg)
 	if (nextptr == NULL)
 		return "Invalid parameters for raw intensity";
 	val = atoi(nextptr);
+	if (val == 0) return "disabled";
 	if (val < MIN_RAWINTENSITY || val > MAX_RAWINTENSITY)
 		return "Invalid value passed to set raw intensity";
 
@@ -662,6 +669,7 @@ char *set_rawintensity(char *arg)
 
 	while ((nextptr = strtok(NULL, ",")) != NULL) {
 		val = atoi(nextptr);
+		if (val == 0) return "disabled";
 		if (val < MIN_RAWINTENSITY || val > MAX_RAWINTENSITY)
 			return "Invalid value passed to set raw intensity";
 		gpus[device].dynamic = false; // Disable dynamic intensity
@@ -723,8 +731,10 @@ void manage_gpu(void)
 	char checkin[40];
 	char input;
 
-	if (!opt_g_threads)
+	if (!opt_g_threads) {
+		applog(LOG_ERR, "opt_g_threads not set in manage_gpu()");
 		return;
+	}
 
 	opt_loginput = true;
 	immedok(logwin, true);
@@ -1309,6 +1319,9 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 			case KL_ZUIKKIS:
 				cgpu->kname = ZUIKKIS_KERNNAME;
 				break;
+			case KL_PSW:
+				cgpu->kname = PSW_KERNNAME;
+				break;
 			default:
 				break;
 		}
@@ -1340,6 +1353,7 @@ static bool opencl_thread_init(struct thr_info *thr)
 	case KL_ALEXKARNEW:
 	case KL_ALEXKAROLD:
 	case KL_CKOLIVAS:
+	case KL_PSW:
 	case KL_ZUIKKIS:
 		thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
 		break;

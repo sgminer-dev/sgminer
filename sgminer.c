@@ -62,6 +62,11 @@ char *curly = ":D";
 	#include <sys/wait.h>
 #endif
 
+#ifdef GIT_VERSION
+#undef VERSION
+#define VERSION GIT_VERSION
+#endif
+
 struct strategies strategies[] = {
 	{ "Failover" },
 	{ "Round Robin" },
@@ -85,8 +90,8 @@ bool opt_compact;
 const int opt_cutofftemp = 95;
 int opt_log_interval = 5;
 int opt_queue = 1;
-int opt_scantime = 10;
-int opt_expiry = 30;
+int opt_scantime = 7;
+int opt_expiry = 28;
 static const bool opt_time = true;
 unsigned long long global_hashrate;
 unsigned long global_quota_gcd = 1;
@@ -1125,7 +1130,7 @@ static struct opt_table opt_config_table[] = {
 		     set_int_0_to_9999, opt_show_intval, &opt_platform_id,
 		     "Select OpenCL platform ID to use for GPU mining"),
 #ifndef HAVE_ADL
-	OPT_WITH_ARG("--gpu-threads|-g",
+	OPT_WITH_ARG("--gpu-threads|-g", // FIXME: why is this in a conditional?
 		     set_int_1_to_10, opt_show_intval, &opt_g_threads,
 		     "Number of threads per GPU (1 - 10)"),
 #else
@@ -1295,16 +1300,16 @@ static struct opt_table opt_config_table[] = {
 #ifdef HAVE_ADL
 	OPT_WITH_ARG("--temp-cutoff",
 		     set_temp_cutoff, opt_show_intval, &opt_cutofftemp,
-		     "Temperature where a device will be automatically disabled, one value or comma separated list"),
+		     "Temperature which a device will be automatically disabled at, one value or comma separated list"),
 	OPT_WITH_ARG("--temp-hysteresis",
 		     set_int_1_to_10, opt_show_intval, &opt_hysteresis,
 		     "Set how much the temperature can fluctuate outside limits when automanaging speeds"),
 	OPT_WITH_ARG("--temp-overheat",
 		     set_temp_overheat, opt_show_intval, &opt_overheattemp,
-		     "Overheat temperature when automatically managing fan and GPU speeds, one value or comma separated list"),
+		     "Temperature which a device will be throttled at while automanaging fan and/or GPU, one value or comma separated list"),
 	OPT_WITH_ARG("--temp-target",
 		     set_temp_target, opt_show_intval, &opt_targettemp,
-		     "Target temperature when automatically managing fan and GPU speeds, one value or comma separated list"),
+		     "Temperature which a device should stay at while automanaging fan and/or GPU, one value or comma separated list"),
 #endif
 	OPT_WITHOUT_ARG("--text-only|-T",
 			opt_set_invbool, &use_curses,
@@ -1389,28 +1394,30 @@ static char *parse_config(json_t *config, bool fileconf, int parent_iteration)
 				int n, size = json_array_size(val);
 
 				for (n = 0; n < size && !err; n++) {
-					if (json_is_string(json_array_get(val, n)))
+					if (json_is_string(json_array_get(val, n))) {
 						err = opt->cb_arg(json_string_value(json_array_get(val, n)), opt->u.arg);
+					}
 					else if (json_is_object(json_array_get(val, n)))
 					{
 						err = parse_config(json_array_get(val, n), false, n);
 						json_array_index = parent_iteration;
 					}
 				}
-			} else if ((opt->type & OPT_NOARG) && json_is_true(val))
+			} else if ((opt->type & OPT_NOARG) && json_is_boolean(val)) {
 				err = opt->cb(opt->u.arg);
-			else
+			} else {
 				err = "Invalid value";
+			}
 
 			if (err) {
 				/* Allow invalid values to be in configuration
 				 * file, just skipping over them provided the
 				 * JSON is still valid after that. */
 				if (fileconf) {
-					applog(LOG_ERR, "Invalid config option %s: %s", p, err);
+					applog(LOG_WARNING, "Skipping config option %s: %s", p, err);
 					fileconf_load = -1;
 				} else {
-					snprintf(err_buf, sizeof(err_buf), "Parsing JSON option %s: %s",
+					snprintf(err_buf, sizeof(err_buf), "Error parsing JSON option %s: %s",
 						p, err);
 					return err_buf;
 				}
@@ -2126,7 +2133,7 @@ static void curses_print_status(void)
 	struct pool *pool = current_pool();
 
 	wattron(statuswin, A_BOLD);
-	cg_mvwprintw(statuswin, 0, 0, PACKAGE " version " VERSION " - Started: %s", datestamp);
+	cg_mvwprintw(statuswin, 0, 0, PACKAGE " " VERSION " - Started: %s", datestamp);
 	wattroff(statuswin, A_BOLD);
 	mvwhline(statuswin, 1, 0, '-', 80);
 	cg_mvwprintw(statuswin, 2, 0, "%s", statusline);
@@ -4195,6 +4202,9 @@ void write_config(FILE *fcfg)
 				case KL_CKOLIVAS:
 					fprintf(fcfg, CKOLIVAS_KERNNAME);
 					break;
+				case KL_PSW:
+					fprintf(fcfg, PSW_KERNNAME);
+					break;
 				case KL_ZUIKKIS:
 					fprintf(fcfg, ZUIKKIS_KERNNAME);
 					break;
@@ -4215,6 +4225,11 @@ void write_config(FILE *fcfg)
 		for(i = 0; i < nDevs; i++)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
 				(int)gpus[i].shaders);
+
+		fputs("\",\n\"gpu-threads\" : \"", fcfg);
+		for(i = 0; i < nDevs; i++)
+			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
+				(int)gpus[i].threads);
 
 #ifdef HAVE_ADL
 		fputs("\",\n\"gpu-engine\" : \"", fcfg);
@@ -4540,10 +4555,6 @@ retry:
 		switch_pools(pool);
 		goto updated;
 	} else if (!strncasecmp(&input, "d", 1)) {
-		if (enabled_pools <= 1) {
-			wlogprint("Cannot disable last pool");
-			goto retry;
-		}
 		selected = curses_int("Select pool number");
 		if (selected < 0 || selected >= total_pools) {
 			wlogprint("Invalid selection\n");

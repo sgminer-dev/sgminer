@@ -1,7 +1,7 @@
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 m4_define([v_maj], [4])
-m4_define([v_min], [0])
+m4_define([v_min], [1])
 m4_define([v_mic], [0])
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 m4_define([v_ver], [v_maj.v_min.v_mic])
@@ -11,7 +11,7 @@ m4_define([lt_age], v_min)
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 ##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##--##
 
-AC_INIT([sgminer], [v_ver], [https://github.com/veox/sgminer/issues])
+AC_INIT([sgminer], [v_ver], [veox@wemakethings.net], [sgminer], [https://github.com/veox/sgminer])
 
 AC_PREREQ(2.59)
 AC_CANONICAL_SYSTEM
@@ -135,20 +135,13 @@ if test -n "$SGMINER_SDK"; then
 	LDFLAGS="-L$SGMINER_SDK/lib/$target $LDFLAGS"
 fi
 
-opencl="yes"
-
-AC_ARG_ENABLE([opencl],
-	[AC_HELP_STRING([--enable-opencl],[Enable support for GPU mining with opencl])],
-	[opencl=$enableval]
-	)
-if test "x$opencl" != xno; then
-	# Check for OpenCL (the long way needed on mingw32 due to calling conventions)
-	AC_MSG_CHECKING([for OpenCL])
-	SAVED_LIBS=$LIBS
-	SAVED_CFLAGS=$CFLAGS
-	LIBS="$LIBS $OPENCL_LIBS"
-	CFLAGS="$CFLAGS $OPENCL_FLAGS"
-	AC_LINK_IFELSE(
+# Check for OpenCL (the long way needed on mingw32 due to calling conventions)
+AC_MSG_CHECKING([for OpenCL])
+SAVED_LIBS=$LIBS
+SAVED_CFLAGS=$CFLAGS
+LIBS="$LIBS $OPENCL_LIBS"
+CFLAGS="$CFLAGS $OPENCL_FLAGS"
+AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM([[
 		#ifdef __APPLE_CC__
 		#include <OpenCL/opencl.h>
@@ -158,19 +151,13 @@ if test "x$opencl" != xno; then
 	]],
 	[[return clSetKernelArg(0, 0, 0, 0); ]])],
 	[AC_MSG_RESULT(yes)
-	found_opencl=1
-	],
+		found_opencl=1],
 	[AC_MSG_RESULT(no)
-	OPENCL_FLAGS=
-	OPENCL_LIBS=
-	found_opencl=0])
-	LIBS=$SAVED_LIBS
-	CFLAGS=$SAVED_CFLAGS
-else
-	OPENCL_FLAGS=""
-	OPENCL_LIBS=""
-fi
-AM_CONDITIONAL([HAS_OPENCL], [test x$opencl = xyes])
+		OPENCL_FLAGS=
+		OPENCL_LIBS=
+		found_opencl=0])
+LIBS=$SAVED_LIBS
+CFLAGS=$SAVED_CFLAGS
 
 has_winpthread=false
 if test "x$have_win32" = xtrue; then
@@ -224,6 +211,11 @@ if test "$found_opencl" = 1; then
 else
 	DLOPEN_FLAGS=""
 fi
+
+AC_ARG_ENABLE([git-version],
+	AS_HELP_STRING([--disable-git-version],
+		[Disable use of git version in version string even if available]),
+		[wantgitver=$enableval], [wantgitver=yes])
 
 curses="auto"
 
@@ -287,6 +279,20 @@ else
 fi
 AC_SUBST(LIBCURL_LIBS)
 
+# Enable or disable use of git version in version string
+AC_MSG_CHECKING(whether to use git version if available)
+if test "x$wantgitver" = "xyes" ; then
+	AC_CHECK_PROGS([GIT], [git])
+	AC_CHECK_FILE([.git/], hasgitdir=yes)
+	usegitver=$ac_cv_file__git_
+	if test $GIT -a "x$hasgitdir" = "xyes"; then
+		AC_DEFINE([USE_GIT_VERSION], [1], [Use GIT version in version string])
+	fi
+else
+	AC_MSG_RESULT([no, disabled by configure])
+	usegitver=no
+fi
+AM_CONDITIONAL(USE_GIT_VERSION, [test x$usegitver = xyes])
 
 #check execv signature
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
@@ -338,6 +344,7 @@ AC_DEFINE_UNQUOTED([ALEXKARNEW_KERNNAME], ["alexkarnew"], [Filename for Alexey K
 AC_DEFINE_UNQUOTED([ALEXKAROLD_KERNNAME], ["alexkarold"], [Filename for Alexey Karimov's optimised kernel for Catalyst <13.4])
 AC_DEFINE_UNQUOTED([CKOLIVAS_KERNNAME], ["ckolivas"], [Filename for original scrypt kernel])
 AC_DEFINE_UNQUOTED([ZUIKKIS_KERNNAME], ["zuikkis"], [Filename for Zuikkis' optimised kernel])
+AC_DEFINE_UNQUOTED([PSW_KERNNAME], ["psw"], [Filename for psw's experimental kernel])
 
 AC_SUBST(OPENCL_LIBS)
 AC_SUBST(OPENCL_FLAGS)
@@ -373,6 +380,8 @@ echo
 echo "Configuration Options Summary:"
 echo
 
+echo "  Use git version......: $usegitver"
+
 if test "x$libcurl" != xno; then
 	echo "  libcurl(GBT+getwork).: Enabled: $LIBCURL_LIBS"
 else
@@ -381,17 +390,11 @@ fi
 
 echo "  curses.TUI...........: $cursesmsg"
 
-
-if test "x$opencl" != xno; then
-	if test $found_opencl = 1; then
-		echo "  OpenCL...............: FOUND. GPU mining support enabled"
-	else
-		echo "  OpenCL...............: NOT FOUND. GPU mining support DISABLED"
-		AC_MSG_ERROR([No mining configured in])
-	fi
+if test $found_opencl = 1; then
+	echo "  OpenCL...............: FOUND. GPU mining support enabled"
 else
-	echo "  OpenCL...............: Detection overrided. GPU mining support DISABLED"
-	AC_MSG_ERROR([No mining configured in])
+	echo "  OpenCL...............: NOT FOUND. GPU mining support DISABLED"
+	AC_MSG_ERROR([OpenCL not found])
 fi
 
 if test "x$adl" != xno; then

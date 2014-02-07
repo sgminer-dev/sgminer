@@ -274,7 +274,6 @@ static const char *JSON_PARAMETER = "parameter";
 #define MSG_DISPOOL 48
 #define MSG_ALRENAP 49
 #define MSG_ALRDISP 50
-#define MSG_DISLASTP 51
 #define MSG_MISPDP 52
 #define MSG_INVPDP 53
 #define MSG_TOOMANYP 54
@@ -399,7 +398,6 @@ struct CODES {
  { SEVERITY_SUCC,  MSG_DISPOOL,	PARAM_POOL,	"Disabling pool %d:'%s'" },
  { SEVERITY_INFO,  MSG_ALRENAP,	PARAM_POOL,	"Pool %d:'%s' already enabled" },
  { SEVERITY_INFO,  MSG_ALRDISP,	PARAM_POOL,	"Pool %d:'%s' already disabled" },
- { SEVERITY_ERR,   MSG_DISLASTP,PARAM_POOL,	"Cannot disable last active pool %d:'%s'" },
  { SEVERITY_ERR,   MSG_MISPDP,	PARAM_NONE,	"Missing addpool details" },
  { SEVERITY_ERR,   MSG_INVPDP,	PARAM_STR,	"Invalid addpool details '%s'" },
  { SEVERITY_ERR,   MSG_TOOMANYP,PARAM_NONE,	"Reached maximum number of pools (%d)" },
@@ -2348,11 +2346,6 @@ static void disablepool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, ch
 	pool = pools[id];
 	if (pool->state == POOL_DISABLED) {
 		message(io_data, MSG_ALRDISP, id, NULL, isjson);
-		return;
-	}
-
-	if (enabled_pools <= 1) {
-		message(io_data, MSG_DISLASTP, id, NULL, isjson);
 		return;
 	}
 

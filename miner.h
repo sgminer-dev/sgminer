@@ -377,6 +377,7 @@ enum cl_kernels {
 	KL_ALEXKARNEW,
 	KL_ALEXKAROLD,
 	KL_CKOLIVAS,
+	KL_PSW,
 	KL_ZUIKKIS,
 };
 

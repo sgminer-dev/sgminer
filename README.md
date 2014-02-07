@@ -24,10 +24,10 @@ License: GPLv3.  See `COPYING` for details.
 Documentation is available in directory `doc`. For details on several topics, see:
 
 * `API` for the RPC API specification;
-* `FAQ` for frequently asked questions;
+* `FAQ.md` for frequently asked questions;
 * `GPU` for semi-obsolete information on GPU configuration options and mining SHA256d-based coins;
 * `KERNEL.md` for OpenCL kernel-related information;
-* `MINING` for how to find the right balance in GPU configuration to mine Scrypt-based coins effectively;
+* `MINING.md` for how to find the right balance in GPU configuration to mine Scrypt-based coins effectively;
 * `windows-build.txt` for information on how to build on Windows.
 
 Note that **most of the documentation is outdated**. If you want to contribute, fork this repository, update as needed, and submit a pull request.
@@ -39,30 +39,25 @@ Note that **most of the documentation is outdated**. If you want to contribute, 
 
 Mandatory:
 
-    curl dev library    http://curl.haxx.se/libcurl/
-    (libcurl4-openssl-dev)
-
-    pkg-config          http://www.freedesktop.org/wiki/Software/pkg-config
-    libtool             hhttp://www.gnu.org/software/libtool/
-
-    AMD APP SDK         http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/downloads/
+* [curl dev library](http://curl.haxx.se/libcurl/) - `libcurl4-openssl-dev` on Debian
+* [pkg-config](http://www.freedesktop.org/wiki/Software/pkg-config)
+* [libtool](http://www.gnu.org/software/libtool/)
+* [AMD APP SDK](http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/downloads/)	- available under various names as a package on different GNU/Linux distributions
 
 Optional:
 
-    curses dev library
-    (libncurses5-dev or libpdcurses on WIN32 for text user interface)
-
-    AMD ADL SDK         http://developer.amd.com/tools-and-sdks/graphics-development/display-library-adl-sdk/
-    (Version 5 or 6, required for ATI GPU monitoring & clocking)
+* curses dev library - `libncurses5-dev` on Debian or `libpdcurses` on WIN32, for text user interface
+* [AMD ADL SDK](http://developer.amd.com/tools-and-sdks/graphics-development/display-library-adl-sdk/) - version 6, required for ATI GPU monitoring & clocking
 
 If building from git:
 
-    autoconf
-    automake
+* autoconf
+* automake
 
 sgminer-specific configuration options:
 
     --disable-adl           Override detection and disable building with adl
+	--disable-adl-checks
     --without-curses        Do not compile support for curses TUI
 
 ### *nix build instructions
@@ -74,6 +69,9 @@ Then:
     autoreconf -i
     CFLAGS="-O2 -Wall -march=native" ./configure <options>
     make
+
+To compile a version that can be used accross machines, remove
+`-march=native`.
 
 To compile a debug version, replace `-O2` with `-ggdb`.
 
