@@ -47,7 +47,7 @@ Mandatory:
 Optional:
 
 * curses dev library - `libncurses5-dev` on Debian or `libpdcurses` on WIN32, for text user interface
-* [AMD ADL SDK](http://developer.amd.com/tools-and-sdks/graphics-development/display-library-adl-sdk/) - version 5 or 6, required for ATI GPU monitoring & clocking
+* [AMD ADL SDK](http://developer.amd.com/tools-and-sdks/graphics-development/display-library-adl-sdk/) - version 6, required for ATI GPU monitoring & clocking
 
 If building from git:
 
