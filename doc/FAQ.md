@@ -1,5 +1,12 @@
 # FAQ
 
+Q: Why don't you provide binaries?
+A: Binaries are a hassle to maintain. On Linux, they should be provided
+by your distribution's package manager anyway. Runnning an unoptimised
+binary gives a minor performance penalty. Running binaries from
+untrusted providers is a security risk. There has not been sufficient
+community interest to provide distributed determininstic builds.
+
 Q: Why is the network difficulty wrong?
 A: It is not wrong. Sharediff of 1 (historically) corresponds to a
 network difficulty of 1/65536. Throughout the inteface, share difficulty
@@ -9,6 +16,14 @@ using true network difficulty to display share difficulty, there is no
 reason to display difficulty differently. This is a vicious cycle and a
 remnant of Bitcoin mining on GPUs.
 
+Q: Can you modify the display to include more of one thing in the output
+and less of another, or can you change the quiet mode or can you add
+yet another output mode?
+A: Everyone will always have their own view of what's important to
+monitor. The shipped NCurses TUI is intentionally ascetic, and is only
+provided as a fallback. It is recomended to use an API client if you
+want to customise the display.
+
 Q: Can I mine on servers from different networks (eg litecoin and
 dogecoin) at the same time?
 A: No. `sgminer` keeps a database of the block it's working on to ensure
@@ -17,7 +32,7 @@ networks would make it invalidate the work from each other.
 
 Q: Can I configure sgminer to mine with different login credentials or
 pools for each separate device?
-A: No.
+A: No. Run separate instances with `-d`.
 
 Q: Can I put multiple pools in the config file?
 A: Yes, check the `example.conf` file. Alternatively, set up everything
@@ -47,14 +62,6 @@ being the actual virus, rather than whatever it is being packaged with.
 If you had built sgminer yourself, then you do not have a virus on your
 computer. Complain to your antivirus software company..
 
-Q: Can you modify the display to include more of one thing in the output
-and less of another, or can you change the quiet mode or can you add
-yet another output mode?
-A: Everyone will always have their own view of what's important to
-monitor. The shipped NCurses TUI is intentionally ascetic, and is only
-provided as a fallback. It is recomended to use an API client if you
-want to customise the display.
-
 Q: GUI version?
 A: No. The API makes it possible for someone else to write one though.
 
@@ -71,15 +78,8 @@ A: No. Consider using [cpuminer](https://github.com/pooler/cpuminer).
 Q: I'm having an issue. What debugging information should I provide in
 the bug report?
 A: See `doc/BUGS.md` in your source distribution directory, or
-[doc/BUGS.md](https://github.com/veox/sgminer/blob/master/doc/BUGS.md]
+[doc/BUGS.md](https://github.com/veox/sgminer/blob/master/doc/BUGS.md)
 for an online version.
-
-Q: Why don't you provide binaries?
-A: Binaries are a hassle to maintain. On Linux, they should be provided
-by your distribution's package manager anyway. Runnning an unoptimised
-binary gives a minor performance penalty. Running binaries from
-untrusted providers is a security risk. There has not been sufficient
-community interest to provide distributed determininstic builds.
 
 Q: Is it better to mine on Linux or Windows?
 A: It comes down to choice of operating system for their various
@@ -115,13 +115,13 @@ A: Most often no.
 
 Q: How do I add my own kernel?
 A: See `doc/KERNEL.md` in your source distribution directory, or
-[doc/KERNEL.md](https://github.com/veox/sgminer/blob/master/doc/KERNEL.md]
+[doc/KERNEL.md](https://github.com/veox/sgminer/blob/master/doc/KERNEL.md)
 for an online version.
 
 Q: I run PHP on Windows to access the API with the example
 `miner.php`. Why does it fail when PHP is installed properly but
 I only get errors about Sockets not working in the logs?
-A: http://us.php.net/manual/en/sockets.installation.php
+A: See [this](http://us.php.net/manual/en/sockets.installation.php).
 
 Q: Will sgminer support FPGAs or ASICs?
 A: No. sgminer will only support GPUs. It is bad software design
