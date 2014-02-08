@@ -7,6 +7,15 @@ binary gives a minor performance penalty. Running binaries from
 untrusted providers is a security risk. There has not been sufficient
 community interest to provide distributed determininstic builds.
 
+Q: It would be nice to have step-by-step installation instructions for
+Linux.
+A: These instructions cannot be specific enough, since it depends a lot
+on the GNU/Linux distribution you're using. It should be handled by the
+package manager anyway. Otherwise, such instructions will constantly
+be out-of-date. AMD does not allow redistribution of their SDKs'
+source code, so providing packages can be difficult for some GNU/Linux
+distributions.
+
 Q: Why is the network difficulty wrong?
 A: It is not wrong. Sharediff of 1 (historically) corresponds to a
 network difficulty of 1/65536. Throughout the inteface, share difficulty
