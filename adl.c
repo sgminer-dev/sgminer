@@ -9,32 +9,32 @@
 
 #include "config.h"
 
-#if defined(HAVE_ADL) && (defined(__linux) || defined (WIN32))
+#if defined(HAVE_ADL) && (defined(__unix__) || defined (WIN32))
 
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 
 #ifdef HAVE_CURSES
-#include <curses.h>
+#	include <curses.h>
 #endif
 
 #include "miner.h"
 #include "ADL_SDK/adl_sdk.h"
 #include "compat.h"
 
-#if defined (__linux)
-#include <dlfcn.h>
-#include <stdlib.h>
-#include <unistd.h>
+#if defined (__unix__)
+#	include <dlfcn.h>
+#	include <stdlib.h>
+#	include <unistd.h>
 #else /* WIN32 */
-#include <windows.h>
-#include <tchar.h>
+#	include <windows.h>
+#	include <tchar.h>
 #endif
 #include "adl_functions.h"
 
 #ifndef HAVE_CURSES
-#define wlogprint(...)  applog(LOG_WARNING, __VA_ARGS__)
+#	define wlogprint(...)  applog(LOG_WARNING, __VA_ARGS__)
 #endif
 
 bool adl_active;
@@ -69,7 +69,7 @@ static void __stdcall ADL_Main_Memory_Free (void **lpBuffer)
 	}
 }
 
-#if defined (LINUX)
+#if defined (UNIX)
 // equivalent functions in linux
 static void *GetProcAddress(void *pLibrary, const char *name)
 {
@@ -114,7 +114,7 @@ static	ADL_OVERDRIVE6_FANSPEED_SET		ADL_Overdrive6_FanSpeed_Set;
 static	ADL_OVERDRIVE6_STATE_SET		ADL_Overdrive6_State_Set;
 static	ADL_OVERDRIVE6_POWERCONTROL_SET		ADL_Overdrive6_PowerControl_Set;
 
-#if defined (LINUX)
+#if defined (UNIX)
 	static void *hDLL;	// Handle to .so library
 #else
 	HINSTANCE hDLL;		// Handle to DLL
@@ -266,7 +266,7 @@ static bool prepare_adl(void)
 {
 	int result;
 
-#if defined (LINUX)
+#if defined (UNIX)
 	hDLL = dlopen( "libatiadlxx.so", RTLD_LAZY|RTLD_GLOBAL);
 #else
 	hDLL = LoadLibrary("atiadlxx.dll");
@@ -397,7 +397,7 @@ void init_adl(int nDevs)
 		       "strUDID:%s "
 		       "iBusNumber:%d "
 		       "iDeviceNumber:%d "
-#if defined(__linux)
+#if defined(__linux__)
 		       "iDrvIndex:%d "
 #endif
 		       "iFunctionNumber:%d "
@@ -409,7 +409,7 @@ void init_adl(int nDevs)
 		       lpInfo[i].strUDID,
 		       lpInfo[i].iBusNumber,
 		       lpInfo[i].iDeviceNumber,
-#if defined(__linux)
+#if defined(__linux__)
 		       lpInfo[i].iDrvIndex,
 #endif
 		       lpInfo[i].iFunctionNumber,
@@ -1584,7 +1584,7 @@ static void free_adl(void)
 {
 	ADL_Main_Memory_Free ((void **)&lpInfo);
 	ADL_Main_Control_Destroy ();
-#if defined (LINUX)
+#if defined (UNIX)
 	dlclose(hDLL);
 #else
 	FreeLibrary(hDLL);

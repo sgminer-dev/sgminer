@@ -152,22 +152,18 @@ static const char *SCRYPTSTR = "scrypt";
 static const char *DEVICECODE = "GPU ";
 
 static const char *OSINFO =
-#if defined(__linux)
+#if defined(__linux__)
 			"Linux";
-#else
-#if defined(__APPLE__)
+#elif defined(__APPLE__)
 			"Apple";
-#else
-#if defined (WIN32)
+#elif defined(WIN32)
 			"Windows";
-#else
-#if defined(unix)
+#elif defined(__CYGWIN__)
+			"Cygwin";
+#elif defined(__unix__)
 			"Unix";
 #else
 			"Unknown";
-#endif
-#endif
-#endif
 #endif
 
 #define _DEVS		"DEVS"

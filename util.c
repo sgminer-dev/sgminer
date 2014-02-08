@@ -25,7 +25,7 @@
 #include <sys/types.h>
 #ifndef WIN32
 #include <fcntl.h>
-# ifdef __linux
+# ifdef __linux__
 #  include <sys/prctl.h>
 # endif
 # include <sys/socket.h>
@@ -63,15 +63,16 @@ static void keep_sockalive(SOCKETTYPE fd)
 #endif
 
 	setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (const void *)&tcp_one, sizeof(tcp_one));
+#ifndef __linux__
 	if (!opt_delaynet)
-#ifndef __linux
 		setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (const void *)&tcp_one, sizeof(tcp_one));
-#else /* __linux */
+#else /* __linux__ */
+	if (!opt_delaynet)
 		setsockopt(fd, SOL_TCP, TCP_NODELAY, (const void *)&tcp_one, sizeof(tcp_one));
 	setsockopt(fd, SOL_TCP, TCP_KEEPCNT, &tcp_one, sizeof(tcp_one));
 	setsockopt(fd, SOL_TCP, TCP_KEEPIDLE, &tcp_keepidle, sizeof(tcp_keepidle));
 	setsockopt(fd, SOL_TCP, TCP_KEEPINTVL, &tcp_keepintvl, sizeof(tcp_keepintvl));
-#endif /* __linux */
+#endif /* __linux__ */
 
 #ifdef __APPLE_CC__
 	setsockopt(fd, IPPROTO_TCP, TCP_KEEPALIVE, &tcp_keepintvl, sizeof(tcp_keepintvl));

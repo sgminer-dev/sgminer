@@ -297,10 +297,10 @@ AM_CONDITIONAL(USE_GIT_VERSION, [test x$usegitver = xyes])
 #check execv signature
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 		   #include <process.h>
-		   int execv(const char*, const char*const*);
+		   int execv(const char*, char *const*);
 		   ])],
-		   AC_DEFINE([EXECV_2ND_ARG_TYPE], [const char* const*], [int execv(const char*, const char*const*);]),
-		   AC_DEFINE([EXECV_2ND_ARG_TYPE], [char* const*], [int execv(const char*, char*const*);]))
+		   AC_DEFINE([EXECV_2ND_ARG_TYPE], [char* const*], [int execv(const char*, char*const*);]),
+		   AC_DEFINE([EXECV_2ND_ARG_TYPE], [const char* const*], [int execv(const char*, const char*const*);]))
 
 dnl CCAN wants to know a lot of vars.
 # All the configuration checks.  Regrettably, the __attribute__ checks will

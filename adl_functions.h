@@ -29,13 +29,13 @@
 // AMD ADL function types from Version 3.0
 // ------------------------------------------------------------------------------------------------------------
 
-#if defined (linux)
- #include <dlfcn.h>	//dyopen, dlsym, dlclose
- #include <stdlib.h>
- #include <string.h>	//memeset
+#if defined (__unix__)
+#	include <dlfcn.h>	//dyopen, dlsym, dlclose
+#	include <stdlib.h>
+#	include <string.h>	//memeset
 #else
- #include <windows.h>
- #include <tchar.h>
+#	include <windows.h>
+#	include <tchar.h>
 #endif
 
 #include "ADL_SDK/adl_sdk.h"
@@ -267,7 +267,7 @@ typedef int ( *ADL_WORKSTATION_LOADBALANCING_CAPS ) (int iAdapterIndex, int *lpR
 
 // ------------------------------------------------------------------------------------------------------------
 
-#ifdef LINUX
+#ifdef __linux__
 // ADL Linux
 typedef int ( *ADL_ADAPTER_MEMORYINFO_GET ) (int iAdapterIndex, ADLMemoryInfo *lpMemoryInfo);
 typedef int ( *ADL_CONTROLLER_COLOR_SET ) (int iAdapterIndex, int iControllerIndex, ADLGamma adlGamma);

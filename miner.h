@@ -84,10 +84,11 @@ static inline int fsync (int fd)
 #endif
 #endif /* __MINGW32__ */
 
-#if defined (__linux)
- #ifndef LINUX
-  #define LINUX
- #endif
+#if defined (__unix__) && !defined(UNIX)
+# define UNIX
+#endif
+#if defined (__linux__) && !defined(LINUX)
+# define LINUX
 #endif
 
 #ifdef WIN32
