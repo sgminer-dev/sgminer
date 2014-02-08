@@ -3618,7 +3618,7 @@ void switch_pools(struct pool *selected)
 	last_pool = currentpool;
 	pool_no = currentpool->pool_no;
 
-	/* Switch selected to pool number 0 and move the rest down */
+	/* If a specific pool was selected, prioritise it over others */
 	if (selected) {
 		if (selected->prio != 0) {
 			for (i = 0; i < total_pools; i++) {
@@ -6877,8 +6877,9 @@ static void *watchpool_thread(void __maybe_unused *userdata)
 			}
 
 			/* Only switch pools if the failback pool has been
-			 * alive for more than 60 seconds (default) to prevent
-			 * intermittently failing pools from being used. */
+			 * alive for more than fail_switch_delay seconds to
+			 * prevent intermittently failing pools from being
+			 * used. */
 			if (!pool->idle && pool_strategy == POOL_FAILOVER && pool->prio < cp_prio() &&
 			    now.tv_sec - pool->tv_idle.tv_sec > opt_fail_switch_delay) {
 				applog(LOG_WARNING, "%s stable for %d seconds", pool->poolname, opt_fail_switch_delay);
@@ -6895,7 +6896,6 @@ static void *watchpool_thread(void __maybe_unused *userdata)
 		}
 
 		cgsleep_ms(30000);
-			
 	}
 	return NULL;
 }
