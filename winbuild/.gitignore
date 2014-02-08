@@ -78,3 +78,6 @@ packages/
 *.dll
 *.a
 
+#Git version file
+gitversion.h
+
