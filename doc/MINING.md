@@ -77,10 +77,9 @@ SUMMARY: Setting this for reasonable hashrates is mandatory.
 is an option where you tell sgminer how many shaders your GPU has. This
 helps sgminer try to choose some meaningful baseline parameters. Use
 this table below to determine how many shaders your GPU has, and note
-that there are some variants of these cards, and nvidia shaders are
-much much lower and virtually pointless trying to mine on. If this is
-not set, sgminer will query the device for how much memory it supports
-and will try to set a value based on that.
+that there are some variants of these cards. If this is not set, sgminer
+will query the device for how much memory it supports and will try to
+set a value based on that.
 
 SUMMARY: This will get you started but fine tuning for optimal
 performance is required. Using --thread-concurrency is recommended

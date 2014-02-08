@@ -47,7 +47,7 @@ BUILDING FOR GPU SUPPORT:
 	Install AMD APP sdk, ideal version (see FAQ!) - no official place to
 	install it so just keep track of where it is if you're not installing
 	the include files and library files into the system directory.
-	(Do NOT install the ati amd sdk if you are on nvidia.)
+
 	To build with GPU monitoring & clocking support:
 	Extract the AMD ADL SDK, latest version - there is also no official
 	place for these files. Copy all the *.h files in the "include"
@@ -416,12 +416,11 @@ A: If you can install both drivers successfully (easier on windows) then
 yes, using the --gpu-platform option.
 
 Q: Can I mine with Nvidia or Intel GPUs?
-A: Yes but their hashrate is very poor and likely you'll be using much more
-energy than you'll be earning in coins.
+A: No. Those have separate dedicated software.
 
 Q: Can I mine on both Nvidia and AMD GPUs at the same time?
-A: No, you must run one instance of sgminer with the --gpu-platform option for
-each.
+A: You must run one instance of sgminer with the --gpu-platform option for
+AMD cards, and other software with similar flags for non-AMD cards.
 
 Q: Can I mine on Linux without running Xorg?
 A: With Nvidia you can, but with AMD you cannot.
@@ -500,9 +499,8 @@ A: It only disables GPUs if you enable the --auto-gpu option. If you don't give
 it parameters for engine clock it will not adjust engine clocks with this
 option.
 
-Q: Can I use the open source radeon driver for AMD GPUs or the nouveau driver
-for NVIDIA GPUs?
-A: None of them currently support OpenCL, so no you cannot.
+Q: Can I use the open source radeon driver for AMD GPUs?
+A: It is not yet supported.
 
 ---
 

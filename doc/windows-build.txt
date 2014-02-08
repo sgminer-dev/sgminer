@@ -72,7 +72,6 @@ when unzipped.
 **************************************************************************************
 * Install AMD APP SDK, latest version (only if you want GPU mining)                  *
 **************************************************************************************
-Note: You do not need to install the AMD APP SDK if you are only using Nvidia GPU's
 Go to this url for the latest AMD APP SDK:
  http://developer.amd.com/tools/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/downloads/
 Go to this url for legacy AMD APP SDK's:
@@ -87,7 +86,6 @@ Note2: If you update your APP SDK later you might want to recopy the above files
 **************************************************************************************
 * Install AMD ADL SDK, latest version (only if you want GPU monitoring)              *
 **************************************************************************************
-Note: You do not need to install the AMD ADL SDK if you are only using Nvidia GPU's
 Go to this url ==> http://developer.amd.com/tools/graphics-development/display-library-adl-sdk/
 Download and unzip the file you downloaded.
 Pull adl_defines.h, adl_sdk.h, and adl_structures.h out of the include folder
