@@ -7,6 +7,7 @@
 #define ALEXKAROLD_KERNNAME "alexkarold"
 #define CKOLIVAS_KERNNAME "ckolivas"
 #define ZUIKKIS_KERNNAME "zuikkis"
+#define PSW_KERNNAME "psw"
 
 #if defined(_MSC_VER)
 
@@ -208,12 +209,12 @@ inline void* memmem (void* buf, size_t buflen, void* pat, size_t patlen)
 
 #endif
 
-#define VERSION "v4.0.0"
+#define VERSION "v4.1.0"
 
 #define PACKAGE_NAME "sgminer"
 #define PACKAGE_TARNAME "sgminer"
-#define PACKAGE_VERSION "4.0.0"
-#define PACKAGE_STRING "sgminer 4.0.0"
+#define PACKAGE_VERSION "4.1.0"
+#define PACKAGE_STRING "sgminer 4.1.0"
 #define PACKAGE "sgminer"
 #define SGMINER_PREFIX ""
 

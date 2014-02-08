@@ -1204,14 +1204,14 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--net-delay",
 			opt_set_bool, &opt_delaynet,
 			"Impose small delays in networking to not overload slow routers"),
+#ifdef HAVE_ADL
 	OPT_WITHOUT_ARG("--no-adl",
 			opt_set_bool, &opt_noadl,
-#ifdef HAVE_ADL
-			"Disable the ATI display library used for monitoring and setting GPU parameters"
+			"Disable the ATI display library used for monitoring and setting GPU parameters"),
 #else
-			opt_hidden
+	OPT_WITHOUT_ARG("--no-adl",
+			opt_set_bool, &opt_noadl,opt_hidden),
 #endif
-			),
 	OPT_WITHOUT_ARG("--no-pool-disable",
 			opt_set_invbool, &opt_disable_pool,
 			opt_hidden),
@@ -1289,14 +1289,15 @@ static struct opt_table opt_config_table[] = {
 			opt_set_bool, &use_syslog,
 			"Use system log for output messages (default: standard error)"),
 #endif
+#if defined(HAVE_LIBCURL) && defined(CURL_HAS_KEEPALIVE)
 	OPT_WITH_ARG("--tcp-keepalive",
 		     set_int_0_to_9999, opt_show_intval, &opt_tcp_keepalive,
-#if defined(HAVE_LIBCURL) && defined(CURL_HAS_KEEPALIVE)
-		     "TCP keepalive packet idle time"
+		     "TCP keepalive packet idle time"),
 #else
-		     opt_hidden
+	OPT_WITH_ARG("--tcp-keepalive",
+		     set_int_0_to_9999, opt_show_intval, &opt_tcp_keepalive,
+			 opt_hidden),
 #endif
-	),
 #ifdef HAVE_ADL
 	OPT_WITH_ARG("--temp-cutoff",
 		     set_temp_cutoff, opt_show_intval, &opt_cutofftemp,
@@ -1311,14 +1312,15 @@ static struct opt_table opt_config_table[] = {
 		     set_temp_target, opt_show_intval, &opt_targettemp,
 		     "Temperature which a device should stay at while automanaging fan and/or GPU, one value or comma separated list"),
 #endif
+#ifdef HAVE_CURSES
 	OPT_WITHOUT_ARG("--text-only|-T",
 			opt_set_invbool, &use_curses,
-#ifdef HAVE_CURSES
-			"Disable ncurses formatted screen output"
+			"Disable ncurses formatted screen output"),
 #else
-			opt_hidden
+	OPT_WITHOUT_ARG("--text-only|-T",
+			opt_set_invbool, &use_curses,
+			opt_hidden),
 #endif
-	),
 	OPT_WITH_ARG("--thread-concurrency",
 		     set_thread_concurrency, NULL, NULL,
 		     "Set GPU thread concurrency for scrypt mining, comma separated"),
