@@ -110,7 +110,11 @@
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>del /f "$(OutDir)*.exe"
-del /f "$(OutDir)*.dll"</Command>
+del /f "$(OutDir)*.dll"
+
+type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
+FOR /F "tokens=*" %%i IN ('call git describe --abbrev=4 --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+exit 0</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -141,7 +145,11 @@ del /f "$(OutDir)*.dll"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>del /f "$(OutDir)*.exe"
-del /f "$(OutDir)*.dll"</Command>
+del /f "$(OutDir)*.dll"
+
+type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
+FOR /F "tokens=*" %%i IN ('call git describe --abbrev=4 --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+exit 0</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -175,7 +183,11 @@ del /f "$(OutDir)*.dll"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>del /f "$(OutDir)*.exe"
-del /f "$(OutDir)*.dll"</Command>
+del /f "$(OutDir)*.dll"
+
+type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
+FOR /F "tokens=*" %%i IN ('call git describe --abbrev=4 --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+exit 0</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -212,7 +224,11 @@ del /f "$(OutDir)*.dll"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>del /f "$(OutDir)*.exe"
-del /f "$(OutDir)*.dll"</Command>
+del /f "$(OutDir)*.dll"
+
+type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
+FOR /F "tokens=*" %%i IN ('call git describe --abbrev=4 --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+exit 0</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -267,6 +283,7 @@ del /f "$(OutDir)*.dll"</Command>
     <ClInclude Include="..\util.h" />
     <ClInclude Include="..\warn-on-use.h" />
     <ClInclude Include="dist\include\config.h" />
+    <ClInclude Include="dist\include\winbuild.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.txt" />
