@@ -26,10 +26,10 @@ may be incomplete).
 - Devel/make
 - Devel/pkg-config
 - Libs/libcurl-devel
-- Libs/libcurl4
+- Libs/libcurl4 (or whatever the latest is)
 - Libs/libncurses-devel
-- Libs/libncurses10
-Make sure to install the shortcut(s).
+- Libs/libncurses10 (or whatever the latest is)
+Make sure to install the shortcut(s) at the very end of the install.
 
 After installing, you'll want to run 'Cygwin Terminal' in the Start Menu.
 
