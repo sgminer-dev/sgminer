@@ -113,7 +113,7 @@
 del /f "$(OutDir)*.dll"
 
 type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
-FOR /F "tokens=*" %%i IN ('call git describe --abbrev=4 --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
 exit 0</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
@@ -148,7 +148,7 @@ exit 0</Command>
 del /f "$(OutDir)*.dll"
 
 type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
-FOR /F "tokens=*" %%i IN ('call git describe --abbrev=4 --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
 exit 0</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
@@ -186,7 +186,7 @@ exit 0</Command>
 del /f "$(OutDir)*.dll"
 
 type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
-FOR /F "tokens=*" %%i IN ('call git describe --abbrev=4 --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
 exit 0</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
@@ -227,7 +227,7 @@ exit 0</Command>
 del /f "$(OutDir)*.dll"
 
 type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
-FOR /F "tokens=*" %%i IN ('call git describe --abbrev=4 --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
 exit 0</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
