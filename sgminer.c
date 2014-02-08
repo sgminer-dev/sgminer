@@ -112,12 +112,13 @@ int zombie_devs;
 static int most_devices;
 struct cgpu_info **devices;
 int mining_threads;
-int num_processors;
+
 #ifdef HAVE_CURSES
 bool use_curses = true;
 #else
 bool use_curses;
 #endif
+
 static bool opt_submit_stale = true;
 static int opt_shares;
 bool opt_fail_only;

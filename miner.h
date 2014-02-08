@@ -1069,7 +1069,6 @@ extern bool hotplug_mode;
 extern int hotplug_time;
 extern struct list_head scan_devices;
 extern int nDevs;
-extern int num_processors;
 extern int hw_errors;
 extern bool use_syslog;
 extern bool opt_quiet;
