@@ -7,7 +7,15 @@
 * Core: Con Kolivas <kernel [at] kolivas {dot} org> 15qSxP1SQcUX3o4nhkfdbgyoWEFMomJ4rZ
 * Core: Luke Dashjr <luke-jr+cgminer @at@ utopios .dot. org> 1QATWksNFGeUJCWBrN4g6hGM178Lovm7Wh
 * API: Andrew Smith <kan0i {at} kano-kun [dot] net> 1Jjk2LmktEQKnv8r2cZ9MvLiZwZ9gxabKm
-* MSVS2010 build: troky <troky2001 at yahoo dot com> Letoqz4yEnJxjWw9B7Ysn8h9VDQTMDnT29
+
+
+## Cross-platform support
+
+* MinGW (Windows native): Drogean <Drogean>
+* MinGW (Linux cross-compilation): Wolf` <wolf9466>
+* MinGW (Linux cross-compilation): tonobitc <tonobitc>
+* MSVS2010: troky <troky2001 at yahoo dot com> Letoqz4yEnJxjWw9B7Ysn8h9VDQTMDnT29
+* Cygwin: Markus Peloquin <markuspeloquin>
 
 
 ## OpenCL kernels
@@ -25,10 +33,10 @@ updated by many others.
 
 * Gabriel Devenyi <gdevenyi>
 * Benjamin Herrenschmidt <ozbenh>
-* Drogean <Drogean>
-* Wolf` <wolf9466>
 * Joe4782 <Joe4782>
 * gacheson <gacheson>
+* Drogean <Drogean>
+* Wolf` <wolf9466>
 * tonobitc <tonobitc>
 * Perry Huang <perryh>
 * Joseph Bruggeman <jbruggeman>
