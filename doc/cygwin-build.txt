@@ -1,0 +1,131 @@
+################################################################################
+#                                                                              #
+#              Cygwin setup and build instructions (on Windows):               #
+#                                                                              #
+################################################################################
+
+********************************************************************************
+* Introduction                                                                 *
+********************************************************************************
+The following instructions have been tested on Windows 7.
+
+********************************************************************************
+* Install Cygwin                                                               *
+********************************************************************************
+Download the Cygwin installer from http://cygwin.com/ . You should download the
+x86 installer (I am unsure if the amd64 installer will work for you).
+
+Run the installer as administrator, and select at least these packages (this
+may be incomplete).
+- Archive/unzip
+- Devel/autoconf* (all of them)
+- Devel/automake* (all of them)
+- Devel/gcc-core
+- Devel/git (if fetching source directly from the repository)
+- Devel/libtool
+- Devel/make
+- Devel/pkg-config
+- Libs/libcurl-devel
+- Libs/libcurl4 (or whatever the latest is)
+- Libs/libncurses-devel
+- Libs/libncurses10 (or whatever the latest is)
+Make sure to install the shortcut(s) at the very end of the install.
+
+After installing, you'll want to run 'Cygwin Terminal' in the Start Menu.
+
+********************************************************************************
+* Install AMD APP SDK, latest version (only if you want GPU mining)            *
+********************************************************************************
+Note: You do not need to install the AMD APP SDK if you are only using Nvidia
+GPUs. Go to this URL for the latest x86 AMD APP SDK:
+http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/downloads/
+Go to this URL for legacy AMD APP SDK's:
+http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/downloads/download-archive/
+
+Only the x86 version includes the OpenCL implementation for some reason. Then
+copy the headers and libraries into the Cygwin directory tree:
+    $ cp -R '/cygdrive/c/Program Files (x86)/AMD APP SDK'/*/include/CL /usr/include
+    $ cp '/cygdrive/c/Program Files (x86)/AMD APP SDK'/*/lib/x86/*.a /usr/lib
+
+Note: If you are on an x86 version of Windows, 'Program Files (x86)' will be
+'Program Files'.
+Note2: If you update your APP SDK later, you will want to re-copy the above
+files.
+
+********************************************************************************
+* Fetch the sgminer source                                                     *
+********************************************************************************
+You've probably already done this, but this can be done with git or with a zip
+file. With git:
+    $ cd
+    $ git clone git@github.com:veox/sgminer.git
+
+With a zip file:
+    $ cd
+    $ unzip /cygdrive/c/Users/'YOURNAME'/Downloads/sgminer-master.zip
+    $ mv sgminer-master sgminer
+(I only rename it to make the directions below uniform.)
+
+********************************************************************************
+* Install AMD ADL SDK, latest version (only if you want GPU monitoring)        *
+********************************************************************************
+Note: You do not need to install the AMD ADL SDK if you are only using Nvidia
+GPUs. Go to this URL:
+http://developer.amd.com/tools-and-sdks/graphics-development/display-library-adl-sdk/
+Download and unzip the file you downloaded:
+    $ cd ~/sgminer
+    $ unzip /cygdrive/c/Users/'YOURNAME'/Downloads/ADL_SDK*.zip 'include/*'
+
+********************************************************************************
+* Build sgminer.exe                                                            *
+********************************************************************************
+There's no reason to use -O3 in your CFLAGS as sgminer isn't CPU-intensive.
+    $ cd ~/sgminer
+    $ ./autogen.sh
+    $ AMDAPPSDKROOT= CFLAGS='-O2 -march=native' \
+        CPPFLAGS=-I/usr/include/ncurses ./configure
+    $ make -j8
+See below for options to send to configure, but you won't want any of them if
+you've been following the directions so far.
+
+You may strip the binary if you are not compiling for debugging. It only makes
+the file smaller by removing symbols not needed for running.
+
+********************************************************************************
+* Installing                                                                   *
+********************************************************************************
+Don't use `make install` as it copies a lot of things you don't want, and it's
+harder to run. First:
+    $ cp sgminer.exe /usr/bin/__sgminer.exe
+    $ cp -R kernel /usr/share/sgminer
+
+And create the wrapper /usr/bin/sgminer:
+    #!/bin/sh
+    export GPU_MAX_ALLOC_PERCENT=100
+    export GPU_USE_SYNC_OBJECTS=1
+    if [[ -f $HOME/.sgminer.json ]]; then
+        exec __sgminer --config "$HOME"/.sgminer.json \
+                --kernel-path /usr/share/sgminer "$@"
+    fi
+    exec __sgminer --kernel-path /usr/share/sgminer "$@"
+
+Use the .json extension above if you want syntax highlighting when you edit it.
+Make the wrapper executable:
+    $ chmod +x /usr/bin/sgminer
+
+And write your config based on sgminer/example.conf. Remember not to overwrite
+/usr/bin/sgminer if/when you update sgminer!
+
+********************************************************************************
+* Running                                                                      *
+********************************************************************************
+If you've configured it with ~/.sgminer.json, you don't need any options!
+    $ sgminer [OPTIONS]
+
+********************************************************************************
+* Some ./configure options                                                     *
+********************************************************************************
+--disable-adl           Override detection and disable building with ADL
+--disable-adl-checks    Override detection and assume ADL is present
+--disable-libcurl       Disable building with libcurl for getwork and GBT support
+--without-curses        Compile support for curses TUI (default enabled)
