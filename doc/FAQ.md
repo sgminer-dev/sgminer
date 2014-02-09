@@ -25,6 +25,19 @@ using true network difficulty to display share difficulty, there is no
 reason to display difficulty differently. This is a vicious cycle and a
 remnant of Bitcoin mining on GPUs.
 
+Q: Will sgminer support FPGAs or ASICs?
+A: No. sgminer will only support GPUs. It is bad software design
+practice to try and support every gadget out there. Developers
+for dedicated hardware products are better off creating standalone
+software.
+
+Q: Will there be Keccak/SHA-3 support?
+A: No, for the same reason as above. There is also no reason why this
+particular piece of software should support all possible algorithms.
+SHA-3 cryptocurrency developers are better off writing independent
+implementations. This also has the side-benefits of eliminating codebase
+monopoly, and lower maintanance for everybody.
+
 Q: Can you modify the display to include more of one thing in the output
 and less of another, or can you change the quiet mode or can you add
 yet another output mode?
@@ -131,12 +144,6 @@ Q: I run PHP on Windows to access the API with the example
 `miner.php`. Why does it fail when PHP is installed properly but
 I only get errors about Sockets not working in the logs?
 A: See [this](http://us.php.net/manual/en/sockets.installation.php).
-
-Q: Will sgminer support FPGAs or ASICs?
-A: No. sgminer will only support GPUs. It is bad software design
-practice to try and support every gadget out there. Developers
-for dedicated hardware products are better off creating standalone
-software.
 
 Q: What is stratum and how do I use it?
 A: Stratum is a protocol designed for pooled mining in such a way as to
