@@ -65,7 +65,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)output\x86\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)output\x86\obj\</IntDir>
+    <IntDir>$(SolutionDir)output\x86\$(Configuration)\obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -75,12 +75,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)output\x86\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)output\x86\obj\</IntDir>
+    <IntDir>$(SolutionDir)output\x86\$(Configuration)\obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)output\x64\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)output\x64\obj\</IntDir>
+    <IntDir>$(SolutionDir)output\x64\$(Configuration)\obj\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -88,7 +88,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_M_AMD64;USE_SSE2;_AMD64_;WIN32;_WIN64;NDEBUG;_CONSOLE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_SSE2;WIN32;NDEBUG;_CONSOLE;PTW32_STATIC_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;WIN32_LEAN_AND_MEAN</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
       <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\compat\jansson-2.5\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -106,7 +106,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)\dist\dll\x86\pthreadsVC2.dll $(OutDir)</Command>
+      <Command>
+        xcopy /Y /E /I "$(ProjectDir)..\kernel" "$(OutDir)\kernel"
+      </Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>del /f "$(OutDir)*.exe"
@@ -123,7 +125,7 @@ exit 0</Command>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_M_AMD64;_AMD64_;WIN32;_WIN64;NDEBUG;_CONSOLE</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_M_AMD64;_AMD64_;WIN32;_WIN64;NDEBUG;_CONSOLE;PTW32_STATIC_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;WIN32_LEAN_AND_MEAN</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
       <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\compat\jansson-2.5\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -141,7 +143,9 @@ exit 0</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)\dist\dll\x64\pthreadsVC2.dll $(OutDir)</Command>
+      <Command>
+        xcopy /Y /E /I "$(ProjectDir)..\kernel" "$(OutDir)\kernel"
+      </Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>del /f "$(OutDir)*.exe"
@@ -160,7 +164,7 @@ exit 0</Command>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_CONSOLE;PTW32_STATIC_LIB</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CONSOLE;WIN32;PTW32_STATIC_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;WIN32_LEAN_AND_MEAN</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
       <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\compat\jansson-2.5\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
@@ -178,8 +182,9 @@ exit 0</Command>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y /E /I "$(ProjectDir)..\kernel" "$(OutDir)\kernel"
-</Command>
+      <Command>
+        xcopy /Y /E /I "$(ProjectDir)..\kernel" "$(OutDir)\kernel"
+      </Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>del /f "$(OutDir)*.exe"
@@ -198,7 +203,7 @@ exit 0</Command>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_M_AMD64;_AMD64_;WIN32;_WIN64;PTW32_STATIC_LIB</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_M_AMD64;_AMD64_;WIN32;_WIN64;PTW32_STATIC_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;WIN32_LEAN_AND_MEAN</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
       <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\compat\jansson-2.5\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
@@ -219,8 +224,9 @@ exit 0</Command>
       </LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y /E /I "$(ProjectDir)..\kernel" "$(OutDir)\kernel"
-</Command>
+      <Command>
+        xcopy /Y /E /I "$(ProjectDir)..\kernel" "$(OutDir)\kernel"
+      </Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>del /f "$(OutDir)*.exe"

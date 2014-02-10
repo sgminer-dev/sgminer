@@ -16,13 +16,6 @@
 #define HAVE_CURSES 1
 #define HAVE_ADL 1
 
-
-#define WIN32 1
-#define _CRT_SECURE_NO_WARNINGS
-#define WIN32_LEAN_AND_MEAN
-
-#define WANT_X8664_SSE4
-
 #define STDC_HEADERS 1
 #define EXECV_2ND_ARG_TYPE char* const*
 
