@@ -14,8 +14,6 @@
 #define HAVE_LIBCURL 1
 #define CURL_HAS_KEEPALIVE 1
 #define HAVE_CURSES 1
-#define USE_SCRYPT 1
-#define HAVE_OPENCL 1
 #define HAVE_ADL 1
 
 
