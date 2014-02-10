@@ -31,12 +31,8 @@ practice to try and support every gadget out there. Developers
 for dedicated hardware products are better off creating standalone
 software.
 
-Q: Will there be Keccak/SHA-3 support?
-A: No, for the same reason as above. There is also no reason why this
-particular piece of software should support all possible algorithms.
-SHA-3 cryptocurrency developers are better off writing independent
-implementations. This also has the side-benefits of eliminating codebase
-monopoly, and lower maintanance for everybody.
+Q: Will there be scrypt-jane/Keccak/SHA-3 support?
+A: Perhaps eventually, if it can be implemented without code bloat.
 
 Q: Can you modify the display to include more of one thing in the output
 and less of another, or can you change the quiet mode or can you add
