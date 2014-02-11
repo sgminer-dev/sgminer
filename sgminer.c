@@ -4498,7 +4498,7 @@ updated:
 			disp_name = pool->rpc_url;
 		}
 		wlogprint("%s Quota %d Prio %d: '%s'  User:%s\n",
-			pool->idle? "Dead" : "Alive",
+			pool->idle ? "Dead" : "Alive",
 			pool->quota,
 			pool->prio,
 			disp_name, pool->rpc_user);
@@ -5260,6 +5260,8 @@ static void *stratum_rthread(void *userdata)
 		 * indefinitely or just bring it up when we switch to this
 		 * pool */
 		if (!sock_full(pool) && !cnx_needed(pool)) {
+			applog(LOG_INFO, "Suspending stratum on %s",
+			       pool->poolname);
 			suspend_stratum(pool);
 			clear_stratum_shares(pool);
 			clear_pool_work(pool);
