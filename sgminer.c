@@ -5596,6 +5596,7 @@ retry_stratum:
 		goto retry_stratum;
 	}
 
+	/* json_rpc_call() above succeeded */
 	if (val) {
 		struct work *work = make_work();
 		bool rc;

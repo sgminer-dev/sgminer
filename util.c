@@ -2095,8 +2095,11 @@ static bool setup_stratum_socket(struct pool *pool)
 
 	mutex_lock(&pool->stratum_lock);
 	pool->stratum_active = false;
-	if (pool->sock)
+	if (pool->sock) {
+		/* FIXME: change to LOG_DEBUG if issue #88 resolved */
+		applog(LOG_INFO, "Closing %s socket", pool->poolname);
 		CLOSESOCKET(pool->sock);
+	}
 	pool->sock = 0;
 	mutex_unlock(&pool->stratum_lock);
 
@@ -2119,9 +2122,10 @@ static bool setup_stratum_socket(struct pool *pool)
 		sockaddr_url = pool->sockaddr_url;
 		sockaddr_port = pool->stratum_port;
 	}
+
 	if (getaddrinfo(sockaddr_url, sockaddr_port, hints, &servinfo) != 0) {
 		if (!pool->probed) {
-			applog(LOG_WARNING, "Failed to resolve (?wrong URL) %s:%s",
+			applog(LOG_WARNING, "Failed to resolve (wrong URL?) %s:%s",
 			       sockaddr_url, sockaddr_port);
 			pool->probed = true;
 		} else {
@@ -2278,6 +2282,8 @@ bool initiate_stratum(struct pool *pool)
 
 resend:
 	if (!setup_stratum_socket(pool)) {
+		/* FIXME: change to LOG_DEBUG when issue #88 resolved */
+		applog(LOG_INFO, "setup_stratum_socket() on %s failed", pool->poolname);
 		sockd = false;
 		goto out;
 	}
