@@ -74,10 +74,10 @@ char *opt_set_floatval(const char *arg, float *f)
 	char *endp;
 
 	errno = 0;
-#if (_MSC_VER >= 1800)
-	*f = strtof(arg, &endp);
-#else
+#if defined (_MSC_VER) && (_MSC_VER < 1800)
 	*f = strtod(arg, &endp);
+#else
+	*f = strtof(arg, &endp);
 #endif
 	if (*endp || !arg[0])
 		return arg_bad("'%s' is not a number", arg);
