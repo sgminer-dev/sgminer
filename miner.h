@@ -1473,6 +1473,7 @@ extern struct api_data *api_add_bool(struct api_data *root, char *name, bool *da
 extern struct api_data *api_add_timeval(struct api_data *root, char *name, struct timeval *data, bool copy_data);
 extern struct api_data *api_add_time(struct api_data *root, char *name, time_t *data, bool copy_data);
 extern struct api_data *api_add_mhs(struct api_data *root, char *name, double *data, bool copy_data);
+extern struct api_data *api_add_khs(struct api_data *root, char *name, double *data, bool copy_data);
 extern struct api_data *api_add_mhstotal(struct api_data *root, char *name, double *data, bool copy_data);
 extern struct api_data *api_add_temp(struct api_data *root, char *name, float *data, bool copy_data);
 extern struct api_data *api_add_utility(struct api_data *root, char *name, double *data, bool copy_data);
