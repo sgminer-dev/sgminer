@@ -65,22 +65,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)output\x86\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)output\x86\$(Configuration)\obj\</IntDir>
+    <IntDir>$(SolutionDir)output\x86\obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)output\x64\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)output\x64\$(Configuration)\obj\</IntDir>
+    <IntDir>$(SolutionDir)output\x64\obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)output\x86\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)output\x86\$(Configuration)\obj\</IntDir>
+    <IntDir>$(SolutionDir)output\x86\obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)output\x64\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)output\x64\$(Configuration)\obj\</IntDir>
+    <IntDir>$(SolutionDir)output\x64\obj\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
