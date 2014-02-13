@@ -2402,9 +2402,11 @@ out:
 			json_decref(val);
 			goto resend;
 		}
-		applog(LOG_DEBUG, "Initiate stratum failed");
-		if (sockd)
+		applog(LOG_DEBUG, "Initiating stratum failed on %s", pool->poolname);
+		if (sockd) {
+		  applog(LOG_DEBUG, "Suspending stratum on %s", pool->poolname);
 			suspend_stratum(pool);
+		}
 	}
 
 	json_decref(val);
