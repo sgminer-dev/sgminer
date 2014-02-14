@@ -2008,7 +2008,7 @@ static bool socks4_negotiate(struct pool *pool, int sockd, bool socks4a)
 		hints.ai_family = AF_INET; /* IPV4 only */
 		ret = getaddrinfo(pool->sockaddr_url, NULL, &hints, &servinfo);
 		if (!ret) {
-			applog(LOG_DEBUG, "getaddrinfo() in socks4_negotiate() returned %i", ret);
+			applog(LOG_ERR, "getaddrinfo() in socks4_negotiate() returned %i: %s", ret, gai_strerror(ret));
 
 			struct sockaddr_in *saddr_in = (struct sockaddr_in *)servinfo->ai_addr;
 
@@ -2130,7 +2130,7 @@ static bool setup_stratum_socket(struct pool *pool)
 
 	ret = getaddrinfo(sockaddr_url, sockaddr_port, hints, &servinfo);
 	if (ret) {
-		applog(LOG_DEBUG, "getaddrinfo() in setup_stratum_socket() returned %i", ret);
+	  applog(LOG_ERR, "getaddrinfo() in setup_stratum_socket() returned %i: %s", ret, gai_strerror(ret));
 		if (!pool->probed) {
 			applog(LOG_WARNING, "Failed to resolve (wrong URL?) %s:%s",
 			       sockaddr_url, sockaddr_port);
