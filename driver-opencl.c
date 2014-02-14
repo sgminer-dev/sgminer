@@ -1056,8 +1056,6 @@ static void set_threads_hashes(unsigned int vectors, unsigned int compute_shader
 
 	*globalThreads = threads;
 	*hashes = threads * vectors;
-
-	applog(LOG_DEBUG, "Set globalThreads to %d, hashes to %d", *globalThreads, *hashes);
 }
 
 /* We have only one thread that ever re-initialises GPUs, thus if any GPU
