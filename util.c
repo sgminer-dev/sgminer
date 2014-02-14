@@ -2130,7 +2130,7 @@ static bool setup_stratum_socket(struct pool *pool)
 
 	ret = getaddrinfo(sockaddr_url, sockaddr_port, hints, &servinfo);
 	if (ret) {
-	  applog(LOG_ERR, "getaddrinfo() in setup_stratum_socket() returned %i: %s", ret, gai_strerror(ret));
+		applog(LOG_ERR, "getaddrinfo() in setup_stratum_socket() returned %i: %s", ret, gai_strerror(ret));
 		if (!pool->probed) {
 			applog(LOG_WARNING, "Failed to resolve (wrong URL?) %s:%s",
 			       sockaddr_url, sockaddr_port);
