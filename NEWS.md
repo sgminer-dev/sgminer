@@ -1,5 +1,10 @@
 # Release news
 
+## Version 4.2.0 - TBA
+
+* Forward-port changes from `ckolivas/cgminer` up to 3.11.0.
+
+
 ## Version 4.1.0 - 7th February 2014
 
 * Writing configuration file from NCurses interface is broken!
