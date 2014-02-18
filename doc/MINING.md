@@ -34,14 +34,18 @@ terminal / screen.
 
 On Linux:
 
+```
 export DISPLAY=:0
 export GPU_MAX_ALLOC_PERCENT=100
 export GPU_USE_SYNC_OBJECTS=1
+```
 
 On Windows:
 
+```
 setx GPU_MAX_ALLOC_PERCENT 100
 setx GPU_USE_SYNC_OBJECTS 1
+```
 
 
 ## Tuning
@@ -56,7 +60,7 @@ All parameters are optional for fine tuning.
 **WARNING**: documentation below has not been reviewed to be up-to-date.
 
 
---intensity XX (-I XX)
+### --intensity XX (-I XX)
 
 The scale goes from 0 to 31. The reason this is crucial is that too
 high an intensity can actually be disastrous with scrypt because it CAN
@@ -72,7 +76,7 @@ prevent it going too low.
 SUMMARY: Setting this for reasonable hashrates is mandatory.
 
 
---shaders XXX
+### --shaders XXX
 
 is an option where you tell sgminer how many shaders your GPU has. This
 helps sgminer try to choose some meaningful baseline parameters. Use
@@ -85,39 +89,37 @@ SUMMARY: This will get you started but fine tuning for optimal
 performance is required. Using --thread-concurrency is recommended
 instead.
 
-GPU  Shaders
-7750 512
-7770 640
-7850 1024
-7870 1280
-7950 1792
-7970 2048
 
-6850 960
-6870 1120
-6950 1408
-6970 1536
-6990 (6970x2)
-
-6570 480
-6670 480
-6790 800
-
-6450 160
-
-5670 400
-5750 720
-5770 800
-5830 1120
-5850 1440
-5870 1600
-5970 (5870x2)
+ GPU  | Shaders
+ ---  | ---
+ 7750 | 512
+ 7770 | 640
+ 7850 | 1024
+ 7870 | 1280
+ 7950 | 1792
+ 7970 | 2048
+ 6850 | 960
+ 6870 | 1120
+ 6950 | 1408
+ 6970 | 1536
+ 6990 | (6970x2)
+ 6570 | 480
+ 6670 | 480
+ 6790 | 800
+ 6450 | 160
+ 5670 | 400
+ 5750 | 720
+ 5770 | 800
+ 5830 | 1120
+ 5850 | 1440
+ 5870 | 1600
+ 5970 | (5870x2)
 
 These are only used as a rough guide for sgminer, and it is rare that
 this is all you will need to set.
 
 
---thread-concurrency
+### --thread-concurrency
 
 This tunes the optimal size of work that scrypt can do. It is internally
 tuned by sgminer to be the highest reasonable multiple of shaders that
@@ -131,7 +133,7 @@ SUMMARY: Spend lots of time finding the highest value that your device
 likes and increases hashrate.
 
 
--g
+### -g
 
 Once you have found the optimal shaders and intensity, you can start
 increasing the -g value till sgminer fails to start. This is really only
@@ -141,7 +143,7 @@ more than 1.
 SUMMARY: Don't touch this.
 
 
---lookup-gap
+### --lookup-gap
 
 This tunes a compromise between ram usage and performance. Performance
 peaks at a gap of 2, but increasing the gap can save you some GPU
@@ -153,7 +155,8 @@ one.
 SUMMARY: Don't touch this.
 
 
-Related parameters:
+### Related parameters
+
 --worksize XX (-w XX)
 Has a minor effect, should be a multiple of 64 up to 256 maximum.
 SUMMARY: Worth playing with once everything else has been tried but will
