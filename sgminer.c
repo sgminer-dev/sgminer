@@ -260,6 +260,7 @@ struct stratum_share {
 	struct work *work;
 	int id;
 	time_t sshare_time;
+	time_t sshare_sent;
 };
 
 static struct stratum_share *stratum_shares = NULL;
@@ -2935,7 +2936,7 @@ static void calc_diff(struct work *work, double known)
 {
 	struct sgminer_pool_stats *pool_stats = &(work->pool->sgminer_pool_stats);
 	double difficulty;
-	int intdiff;
+	uint64_t uintdiff;
 
 	if (known)
 		work->work_difficulty = known;
@@ -2952,8 +2953,8 @@ static void calc_diff(struct work *work, double known)
 	difficulty = work->work_difficulty;
 
 	pool_stats->last_diff = difficulty;
-	intdiff = round(difficulty);
-	suffix_string(intdiff, work->pool->diff, sizeof(work->pool->diff), 0);
+	uintdiff = round(difficulty);
+	suffix_string(uintdiff, work->pool->diff, sizeof(work->pool->diff), 0);
 
 	if (difficulty == pool_stats->min_diff)
 		pool_stats->min_diff_count++;
@@ -3766,8 +3767,6 @@ int restart_wait(struct thr_info *thr, unsigned int mstime)
 
 	return rc;
 }
-	
-static void flush_queue(struct cgpu_info *cgpu);
 
 static void *restart_thread(void __maybe_unused *arg)
 {
@@ -4436,6 +4435,11 @@ void zero_stats(void)
 		cgpu->diff_rejected = 0;
 		cgpu->last_share_diff = 0;
 		mutex_unlock(&hash_lock);
+
+		/* Don't take any locks in the driver zero stats function, as
+		 * it's called async from everything else and we don't want to
+		 * deadlock. */
+		cgpu->drv->zero_stats(cgpu);
 	}
 }
 
@@ -5022,8 +5026,15 @@ static void stratum_share_result(json_t *val, json_t *res_val, json_t *err_val,
 				 struct stratum_share *sshare)
 {
 	struct work *work = sshare->work;
+	time_t now_t = time(NULL);
 	char hashshow[64];
+	int srdiff;
 
+	srdiff = now_t - sshare->sshare_sent;
+	if (opt_debug || srdiff > 0) {
+		applog(LOG_INFO, "Pool %d stratum share result lag time %d seconds",
+		       work->pool->pool_no, srdiff);
+	}
 	show_hash(work, hashshow);
 	share_result(val, res_val, err_val, work, hashshow, false, "");
 }
@@ -5468,6 +5479,15 @@ static void *stratum_sthread(void *userdata)
 			free(sshare);
 			pool->stale_shares++;
 			total_stale++;
+		} else {
+			int ssdiff;
+
+			sshare->sshare_sent = time(NULL);
+			ssdiff = sshare->sshare_sent - sshare->sshare_time;
+			if (opt_debug || ssdiff > 0) {
+				applog(LOG_INFO, "Pool %d stratum share submission lag time %d seconds",
+				       pool->pool_no, ssdiff);
+			}
 		}
 	}
 
@@ -5693,29 +5713,35 @@ static void pool_resus(struct pool *pool)
 		applog(LOG_INFO, "%s alive", pool->poolname);
 }
 
-static struct work *hash_pop(void)
+/* If this is called non_blocking, it will return NULL for work so that must
+ * be handled. */
+static struct work *hash_pop(bool blocking)
 {
 	struct work *work = NULL, *tmp;
 	int hc;
 
 	mutex_lock(stgd_lock);
-	while (!HASH_COUNT(staged_work)) {
-		struct timespec then;
-		struct timeval now;
-		int rc;
+	if (!HASH_COUNT(staged_work)) {
+		if (!blocking)
+			goto out_unlock;
+		do {
+			struct timespec then;
+			struct timeval now;
+			int rc;
 
-		cgtime(&now);
-		then.tv_sec = now.tv_sec + 10;
-		then.tv_nsec = now.tv_usec * 1000;
-		pthread_cond_signal(&gws_cond);
-		rc = pthread_cond_timedwait(&getq->cond, stgd_lock, &then);
-		/* Check again for !no_work as multiple threads may be
-			* waiting on this condition and another may set the
-			* bool separately. */
-		if (rc && !no_work) {
-			no_work = true;
-			applog(LOG_WARNING, "Waiting for work to be available from pools.");
-		}
+			cgtime(&now);
+			then.tv_sec = now.tv_sec + 10;
+			then.tv_nsec = now.tv_usec * 1000;
+			pthread_cond_signal(&gws_cond);
+			rc = pthread_cond_timedwait(&getq->cond, stgd_lock, &then);
+			/* Check again for !no_work as multiple threads may be
+				* waiting on this condition and another may set the
+				* bool separately. */
+			if (rc && !no_work) {
+				no_work = true;
+				applog(LOG_WARNING, "Waiting for work to be available from pools.");
+			}
+		} while (!HASH_COUNT(staged_work));
 	}
 
 	if (no_work) {
@@ -5741,6 +5767,10 @@ static struct work *hash_pop(void)
 
 	/* Signal hash_pop again in case there are mutliple hash_pop waiters */
 	pthread_cond_signal(&getq->cond);
+
+	/* Keep track of last getwork grabbed */
+	last_getwork = time(NULL);
+out_unlock:
 	mutex_unlock(stgd_lock);
 
 	return work;
@@ -5889,18 +5919,27 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
 struct work *get_work(struct thr_info *thr, const int thr_id)
 {
 	struct work *work = NULL;
+	time_t diff_t;
 
 	thread_reportout(thr);
 	applog(LOG_DEBUG, "Popping work from get queue to get work");
+	diff_t = time(NULL);
 	while (!work) {
-		work = hash_pop();
+		work = hash_pop(true);
 		if (stale_work(work, false)) {
 			discard_work(work);
 			work = NULL;
 			wake_gws();
 		}
 	}
-	last_getwork = time(NULL);
+	diff_t = time(NULL) - diff_t;
+	/* Since this is a blocking function, we need to add grace time to
+	 * the device's last valid work to not make outages appear to be
+	 * device failures. */
+	if (diff_t > 0) {
+		applog(LOG_DEBUG, "Get work blocked for %d seconds", (int)diff_t);
+		thr->cgpu->last_device_valid_work += diff_t;
+	}
 	applog(LOG_DEBUG, "Got work from get queue to get work for thread %d", thr_id);
 
 	work->thr_id = thr_id;
@@ -6033,7 +6072,8 @@ bool submit_tested_work(struct thr_info *thr, struct work *work)
 	update_work_stats(thr, work);
 
 	if (!fulltest(work->hash, work->target)) {
-		applog(LOG_INFO, "Share above target");
+		applog(LOG_INFO, "%s %d: Share above target", thr->cgpu->drv->name,
+		       thr->cgpu->device_id);
 		return false;
 	}
 	work_out = copy_work(work);
@@ -6072,7 +6112,8 @@ bool submit_noffset_nonce(struct thr_info *thr, struct work *work_in, uint32_t n
 	ret = true;
 	update_work_stats(thr, work);
 	if (!fulltest(work->hash, work->target)) {
-		applog(LOG_INFO, "Share above target");
+		applog(LOG_INFO, "%s %d: Share above target", thr->cgpu->drv->name,
+		       thr->cgpu->device_id);
 		goto  out;
 	}
 	submit_work_async(work);
@@ -6305,6 +6346,13 @@ static void fill_queue(struct thr_info *mythr, struct cgpu_info *cgpu, struct de
 	} while (!drv->queue_full(cgpu));
 }
 
+/* Add a work item to a cgpu's queued hashlist */
+void __add_queued(struct cgpu_info *cgpu, struct work *work)
+{
+	cgpu->queued_count++;
+	HASH_ADD_INT(cgpu->queued_work, id, work);
+}
+
 /* This function is for retrieving one work item from the unqueued pointer and
  * adding it to the hashtable of queued work. Code using this function must be
  * able to handle NULL as a return which implies there is no work available. */
@@ -6315,11 +6363,32 @@ struct work *get_queued(struct cgpu_info *cgpu)
 	wr_lock(&cgpu->qlock);
 	if (cgpu->unqueued_work) {
 		work = cgpu->unqueued_work;
-		HASH_ADD_INT(cgpu->queued_work, id, work);
+		if (unlikely(stale_work(work, false))) {
+			discard_work(work);
+			work = NULL;
+			wake_gws();
+		} else
+			__add_queued(cgpu, work);
 		cgpu->unqueued_work = NULL;
 	}
 	wr_unlock(&cgpu->qlock);
 
+	return work;
+}
+
+void add_queued(struct cgpu_info *cgpu, struct work *work)
+{
+	wr_lock(&cgpu->qlock);
+	__add_queued(cgpu, work);
+	wr_unlock(&cgpu->qlock);
+}
+
+/* Get fresh work and add it to cgpu's queued hashlist */
+struct work *get_queue_work(struct thr_info *thr, struct cgpu_info *cgpu, int thr_id)
+{
+	struct work *work = get_work(thr, thr_id);
+
+	add_queued(cgpu, work);
 	return work;
 }
 
@@ -6426,7 +6495,7 @@ struct work *take_queued_work_bymidstate(struct cgpu_info *cgpu, char *midstate,
 	return work;
 }
 
-static void flush_queue(struct cgpu_info *cgpu)
+void flush_queue(struct cgpu_info *cgpu)
 {
 	struct work *work = NULL;
 
@@ -7512,6 +7581,7 @@ static void noop_detect(bool __maybe_unused hotplug)
 #define noop_flush_work noop_reinit_device
 #define noop_update_work noop_reinit_device
 #define noop_queue_full noop_get_stats
+#define noop_zero_stats noop_reinit_device
 
 /* Fill missing driver drv functions with noops */
 void fill_device_drv(struct device_drv *drv)
@@ -7548,6 +7618,8 @@ void fill_device_drv(struct device_drv *drv)
 		drv->update_work = &noop_update_work;
 	if (!drv->queue_full)
 		drv->queue_full = &noop_queue_full;
+	if (!drv->zero_stats)
+		drv->zero_stats = &noop_zero_stats;
 	if (!drv->max_diff)
 		drv->max_diff = 1;
 	if (!drv->working_diff)
@@ -8078,6 +8150,8 @@ begin_bench:
 		int ts, max_staged = opt_queue;
 		struct pool *pool, *cp;
 		bool lagging = false;
+		struct timespec then;
+		struct timeval now;
 		struct work *work;
 
 		if (opt_work_update)
@@ -8090,6 +8164,10 @@ begin_bench:
 		if (!pool_localgen(cp) && !staged_rollable)
 			max_staged += mining_threads;
 
+		cgtime(&now);
+		then.tv_sec = now.tv_sec + 2;
+		then.tv_nsec = now.tv_usec * 1000;
+
 		mutex_lock(stgd_lock);
 		ts = __total_staged();
 
@@ -8098,13 +8176,20 @@ begin_bench:
 
 		/* Wait until hash_pop tells us we need to create more work */
 		if (ts > max_staged) {
-			pthread_cond_wait(&gws_cond, stgd_lock);
+			pthread_cond_timedwait(&gws_cond, stgd_lock, &then);
 			ts = __total_staged();
 		}
 		mutex_unlock(stgd_lock);
 
-		if (ts > max_staged)
+		if (ts > max_staged) {
+			/* Keeps slowly generating work even if it's not being
+			 * used to keep last_getwork incrementing and to see
+			 * if pools are still alive. */
+			work = hash_pop(false);
+			if (work)
+				discard_work(work);
 			continue;
+		}
 
 		work = make_work();
 
