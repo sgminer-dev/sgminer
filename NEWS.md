@@ -2,7 +2,8 @@
 
 ## Version 4.2.0 - TBA
 
-* Forward-port changes from `ckolivas/cgminer` up to 3.12.1.
+* Forward-port changes from `ckolivas/cgminer` up to 3.12.3, and then some
+  (up to 133252175b90159d18151b004bf767d5a43812ea).
 
 
 ## Version 4.1.0 - 7th February 2014
