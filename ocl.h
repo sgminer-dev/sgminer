@@ -21,7 +21,7 @@ typedef struct {
 	cl_mem CLbuffer0;
 	cl_mem padbuffer8;
 	size_t padbufsize;
-	void * cldata;
+	unsigned char cldata[80];
 	bool hasBitAlign;
 	bool hasOpenCL11plus;
 	bool hasOpenCL12plus;

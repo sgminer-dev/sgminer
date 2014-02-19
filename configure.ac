@@ -345,6 +345,7 @@ AC_DEFINE_UNQUOTED([ALEXKAROLD_KERNNAME], ["alexkarold"], [Filename for Alexey K
 AC_DEFINE_UNQUOTED([CKOLIVAS_KERNNAME], ["ckolivas"], [Filename for original scrypt kernel])
 AC_DEFINE_UNQUOTED([ZUIKKIS_KERNNAME], ["zuikkis"], [Filename for Zuikkis' optimised kernel])
 AC_DEFINE_UNQUOTED([PSW_KERNNAME], ["psw"], [Filename for psw's experimental kernel])
+AC_DEFINE_UNQUOTED([DARKCOIN_KERNNAME], ["darkcoin"], [Filename for DarkCoin optimised kernel])
 
 AC_SUBST(OPENCL_LIBS)
 AC_SUBST(OPENCL_FLAGS)
@@ -365,6 +366,7 @@ AC_CONFIG_FILES([
 	compat/Makefile
 	ccan/Makefile
 	lib/Makefile
+	sph/Makefile
 	])
 AC_OUTPUT
 

@@ -1695,7 +1695,7 @@ static void gpustatus(struct io_data *io_data, int gpu, bool isjson, bool precom
 		root = api_add_int(root, "Last Share Pool", &last_share_pool, false);
 		root = api_add_time(root, "Last Share Time", &(cgpu->last_share_pool_time), false);
 		root = api_add_mhtotal(root, "Total MH", &(cgpu->total_mhashes), false);
-		root = api_add_int(root, "Diff1 Work", &(cgpu->diff1), false);
+		root = api_add_double(root, "Diff1 Work", &(cgpu->diff1), false);
 		root = api_add_diff(root, "Difficulty Accepted", &(cgpu->diff_accepted), false);
 		root = api_add_diff(root, "Difficulty Rejected", &(cgpu->diff_rejected), false);
 		root = api_add_diff(root, "Last Share Difficulty", &(cgpu->last_share_diff), false);
@@ -1835,7 +1835,7 @@ static void poolstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
 		root = api_add_uint(root, "Remote Failures", &(pool->remotefail_occasions), false);
 		root = api_add_escape(root, "User", pool->rpc_user, false);
 		root = api_add_time(root, "Last Share Time", &(pool->last_share_time), false);
-		root = api_add_int(root, "Diff1 Shares", &(pool->diff1), false);
+		root = api_add_double(root, "Diff1 Shares", &(pool->diff1), false);
 		if (pool->rpc_proxy) {
 			root = api_add_const(root, "Proxy Type", proxytype(pool->rpc_proxytype), false);
 			root = api_add_escape(root, "Proxy", pool->rpc_proxy, false);
@@ -1854,7 +1854,7 @@ static void poolstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
 		else
 			root = api_add_const(root, "Stratum URL", BLANK, false);
 		root = api_add_bool(root, "Has GBT", &(pool->has_gbt), false);
-		root = api_add_uint64(root, "Best Share", &(pool->best_diff), true);
+		root = api_add_double(root, "Best Share", &(pool->best_diff), true);
 		double rejp = (pool->diff_accepted + pool->diff_rejected + pool->diff_stale) ?
 				(double)(pool->diff_rejected) / (double)(pool->diff_accepted + pool->diff_rejected + pool->diff_stale) : 0;
 		root = api_add_percent(root, "Pool Rejected%", &rejp, false);
@@ -1915,7 +1915,7 @@ static void summary(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __mayb
 	root = api_add_diff(root, "Difficulty Accepted", &(total_diff_accepted), true);
 	root = api_add_diff(root, "Difficulty Rejected", &(total_diff_rejected), true);
 	root = api_add_diff(root, "Difficulty Stale", &(total_diff_stale), true);
-	root = api_add_uint64(root, "Best Share", &(best_diff), true);
+	root = api_add_double(root, "Best Share", &(best_diff), true);
 	double hwp = (hw_errors + total_diff1) ?
 			(double)(hw_errors) / (double)(hw_errors + total_diff1) : 0;
 	root = api_add_percent(root, "Device Hardware%", &hwp, false);

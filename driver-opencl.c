@@ -48,6 +48,7 @@ extern bool opt_loginput;
 extern char *opt_kernel_path;
 extern int gpur_thr_id;
 extern bool opt_noadl;
+extern bool is_scrypt;
 
 extern void *miner_thread(void *userdata);
 extern int dev_from_id(int thr_id);
@@ -206,6 +207,8 @@ static enum cl_kernels select_kernel(char *arg)
 		return KL_ZUIKKIS;
 	if (!strcmp(arg, PSW_KERNNAME))
 		return KL_PSW;
+	if (!strcmp(arg, DARKCOIN_KERNNAME))
+		return KL_DARKCOIN;
 
 	return KL_NONE;
 }
@@ -223,6 +226,8 @@ char *set_kernel(char *arg)
 	if (kern == KL_NONE)
 		return "Invalid parameter to set_kernel";
 	gpus[device++].kernel = kern;
+	if (kern >= KL_DARKCOIN)
+		is_scrypt = false;
 
 	while ((nextptr = strtok(NULL, ",")) != NULL) {
 		kern = select_kernel(nextptr);
@@ -1021,7 +1026,7 @@ static cl_int queue_scrypt_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_u
 	cl_int status = 0;
 
 	le_target = *(cl_uint *)(blk->work->device_target + 28);
-	clState->cldata = blk->work->data;
+	memcpy(clState->cldata, blk->work->data, 80);
 	status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
 
 	CL_SET_ARG(clState->CLbuffer0);
@@ -1033,6 +1038,26 @@ static cl_int queue_scrypt_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_u
 
 	return status;
 }
+
+static cl_int queue_sph_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_unused cl_uint threads)
+{
+	unsigned char *midstate = blk->work->midstate;
+	cl_kernel *kernel = &clState->kernel;
+	unsigned int num = 0;
+	cl_ulong le_target;
+	cl_int status = 0;
+
+	le_target = *(cl_ulong *)(blk->work->device_target + 24);
+	flip80(clState->cldata, blk->work->data);
+	status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+
+	CL_SET_ARG(clState->CLbuffer0);
+	CL_SET_ARG(clState->outputBuffer);
+	CL_SET_ARG(le_target);
+
+	return status;
+}
+
 
 static void set_threads_hashes(unsigned int vectors, unsigned int compute_shaders, int64_t *hashes, size_t *globalThreads,
 			       unsigned int minthreads, __maybe_unused int *intensity, __maybe_unused int *xintensity, __maybe_unused int *rawintensity)
@@ -1320,6 +1345,9 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 			case KL_PSW:
 				cgpu->kname = PSW_KERNNAME;
 				break;
+			case KL_DARKCOIN:
+				cgpu->kname = DARKCOIN_KERNNAME;
+				break;
 			default:
 				break;
 		}
@@ -1354,6 +1382,9 @@ static bool opencl_thread_init(struct thr_info *thr)
 	case KL_PSW:
 	case KL_ZUIKKIS:
 		thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
+		break;
+	case KL_DARKCOIN:
+		thrdata->queue_kernel_parameters = &queue_sph_kernel;
 		break;
 	default:
 		applog(LOG_ERR, "Failed to choose kernel in opencl_thread_init");
