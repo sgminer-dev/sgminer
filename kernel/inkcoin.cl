@@ -148,7 +148,7 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
     rk10 = DEC32LE(block + 16 * 4);;
     rk11 = DEC32LE(block + 17 * 4);;
     rk12 = DEC32LE(block + 18 * 4);;
-    rk13 = 72768; // gid;
+    rk13 = gid;
     rk14 = 0x80;
     rk15 = rk16 = rk17 = rk18 = rk19 = rk1A = 0;
     rk1B = 0x2800000;

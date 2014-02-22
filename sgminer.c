@@ -4232,6 +4232,7 @@ void write_config(FILE *fcfg)
 					break;
 				case KL_INKCOIN:
 					fprintf(fcfg, INKCOIN_KERNNAME);
+					break;
 				case KL_QUARKCOIN:
 					fprintf(fcfg, QUARKCOIN_KERNNAME);
 					break;
@@ -6044,6 +6045,7 @@ static void rebuild_nonce(struct work *work, uint32_t nonce)
 			break;
 		case KL_INKCOIN:
 			inkcoin_regenhash(work);
+			break;
 		case KL_QUARKCOIN:
 			quarkcoin_regenhash(work);
 			break;
@@ -6060,7 +6062,7 @@ bool test_nonce(struct work *work, uint32_t nonce)
 	uint32_t diff1targ;
 
 	rebuild_nonce(work, nonce);
-	diff1targ = 0x0000ffffUL;
+	diff1targ = 0x000000ffUL;
 
 	return (le32toh(*hash_32) <= diff1targ);
 }

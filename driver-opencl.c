@@ -1358,6 +1358,7 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 				break;
 			case KL_INKCOIN:
 				cgpu->kname = INKCOIN_KERNNAME;
+				break;
 			case KL_QUARKCOIN:
 				cgpu->kname = QUARKCOIN_KERNNAME;
 				break;

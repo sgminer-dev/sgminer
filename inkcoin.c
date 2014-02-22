@@ -51,7 +51,7 @@ inline void inkhash(void *state, const void *input)
 {
     uint32_t hash[16];
     sph_shavite512_context ctx_shavite;
-    
+
     sph_shavite512_init(&ctx_shavite);
     sph_shavite512 (&ctx_shavite, input, 80);
     sph_shavite512_close(&ctx_shavite, hash);
@@ -76,7 +76,7 @@ int inkcoin_test(unsigned char *pdata, const unsigned char *ptarget, uint32_t no
 	be32enc_vect(data, (const uint32_t *)pdata, 19);
 	data[19] = htobe32(nonce);
 	//scratchbuf = alloca(SCRATCHBUF_SIZE);
-	xhash(ohash, data);
+	inkhash(ohash, data);
 	tmp_hash7 = be32toh(ohash[7]);
 
 	applog(LOG_DEBUG, "htarget %08lx diff1 %08lx hash %08lx",
@@ -99,7 +99,7 @@ void inkcoin_regenhash(struct work *work)
 
         be32enc_vect(data, (const uint32_t *)work->data, 19);
         data[19] = htobe32(*nonce);
-        xhash(ohash, data);
+        inkhash(ohash, data);
 }
 
 bool scanhash_inkcoin(struct thr_info *thr, const unsigned char __maybe_unused *pmidstate,
