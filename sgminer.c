@@ -1131,7 +1131,8 @@ static struct opt_table opt_config_table[] = {
 		     set_int_0_to_9999, opt_show_intval, &opt_platform_id,
 		     "Select OpenCL platform ID to use for GPU mining"),
 #ifndef HAVE_ADL
-	OPT_WITH_ARG("--gpu-threads|-g", // FIXME: why is this in a conditional?
+	// gpu-threads can only be set per-card if ADL is available
+	OPT_WITH_ARG("--gpu-threads|-g",
 		     set_int_1_to_10, opt_show_intval, &opt_g_threads,
 		     "Number of threads per GPU (1 - 10)"),
 #else
