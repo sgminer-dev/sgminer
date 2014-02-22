@@ -209,6 +209,8 @@ static enum cl_kernels select_kernel(char *arg)
 		return KL_PSW;
 	if (!strcmp(arg, DARKCOIN_KERNNAME))
 		return KL_DARKCOIN;
+	if (!strcmp(arg, INKCOIN_KERNNAME))
+		return KL_INKCOIN;
 
 	return KL_NONE;
 }
@@ -1348,6 +1350,9 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 			case KL_DARKCOIN:
 				cgpu->kname = DARKCOIN_KERNNAME;
 				break;
+			case KL_INKCOIN:
+				cgpu->kname = INKCOIN_KERNNAME;
+				break;
 			default:
 				break;
 		}
@@ -1384,6 +1389,7 @@ static bool opencl_thread_init(struct thr_info *thr)
 		thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
 		break;
 	case KL_DARKCOIN:
+	case KL_INKCOIN:
 		thrdata->queue_kernel_parameters = &queue_sph_kernel;
 		break;
 	default:

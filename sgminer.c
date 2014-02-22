@@ -4227,6 +4227,9 @@ void write_config(FILE *fcfg)
 				case KL_DARKCOIN:
 					fprintf(fcfg, DARKCOIN_KERNNAME);
 					break;
+				case KL_INKCOIN:
+					fprintf(fcfg, INKCOIN_KERNNAME);
+					break;
 			}
 		}
 
@@ -6033,6 +6036,9 @@ static void rebuild_nonce(struct work *work, uint32_t nonce)
 	switch (gpus[0].kernel) {
 		case KL_DARKCOIN:
 			darkcoin_regenhash(work);
+			break;
+		case KL_INKCOIN:
+			inkcoin_regenhash(work);
 			break;
 		default:
 			scrypt_regenhash(work);

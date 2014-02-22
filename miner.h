@@ -382,6 +382,7 @@ enum cl_kernels {
 	KL_PSW,
 	KL_ZUIKKIS,
 	KL_DARKCOIN,
+	KL_INKCOIN,
 };
 
 enum dev_reason {
