@@ -463,6 +463,10 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 			applog(LOG_WARNING, "Kernel inkcoin is experimental.");
 			strcpy(filename, INKCOIN_KERNNAME".cl");
 			strcpy(binaryfilename, INKCOIN_KERNNAME);
+		case KL_QUARKCOIN:
+			applog(LOG_WARNING, "Kernel quarkcoin is experimental.");
+			strcpy(filename, QUARKCOIN_KERNNAME".cl");
+			strcpy(binaryfilename, QUARKCOIN_KERNNAME);
 			break;
 		case KL_NONE: /* Shouldn't happen */
 			break;

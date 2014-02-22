@@ -346,6 +346,7 @@ AC_DEFINE_UNQUOTED([CKOLIVAS_KERNNAME], ["ckolivas"], [Filename for original scr
 AC_DEFINE_UNQUOTED([ZUIKKIS_KERNNAME], ["zuikkis"], [Filename for Zuikkis' optimised kernel])
 AC_DEFINE_UNQUOTED([PSW_KERNNAME], ["psw"], [Filename for psw's experimental kernel])
 AC_DEFINE_UNQUOTED([DARKCOIN_KERNNAME], ["darkcoin"], [Filename for DarkCoin optimised kernel])
+AC_DEFINE_UNQUOTED([QUARKCOIN_KERNNAME], ["quarkcoin"], [Filename for QuarkCoin optimised kernel])
 AC_DEFINE_UNQUOTED([INKCOIN_KERNNAME], ["inkcoin"], [Filename for InkCoin optimised kernel])
 
 AC_SUBST(OPENCL_LIBS)
