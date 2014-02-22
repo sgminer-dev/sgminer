@@ -299,7 +299,10 @@ struct schedtime {
 struct schedtime schedstart;
 struct schedtime schedstop;
 bool sched_paused;
-bool is_scrypt = true;
+
+#define DM_SELECT(x, y, z) (dm_mode == DM_BITCOIN ? x : (dm_mode == DM_QUARKCOIN ? y : z))
+
+enum diff_calc_mode dm_mode = DM_LITECOIN;
 
 static bool time_before(struct tm *tm1, struct tm *tm2)
 {
@@ -2959,7 +2962,7 @@ static void calc_diff(struct work *work, double known)
 	else {
 		double d64, dcut64;
 
-		d64 = (is_scrypt ? (double)65536 * truediffone : truediffone);
+		d64 = (double) DM_SELECT(1, 256, 65536) * truediffone;
 
 		dcut64 = le256todouble(work->target);
 		if (unlikely(!dcut64))
@@ -3576,7 +3579,7 @@ static double share_diff(const struct work *work)
 	double d64, s64;
 	double ret;
 
-	d64 = (is_scrypt ? (double)65536 * truediffone : truediffone);
+	d64 = (double) DM_SELECT(1, 256, 65536) * truediffone;
 	s64 = le256todouble(work->hash);
 	if (unlikely(!s64))
 		s64 = 0;
@@ -3899,7 +3902,7 @@ static void set_blockdiff(const struct work *work)
 	uint8_t pow = work->data[72];
 	int powdiff = (8 * (0x1d - 3)) - (8 * (pow - 3));
 	uint32_t diff32 = be32toh(*((uint32_t *)(work->data + 72))) & 0x00FFFFFF;
-	double numerator = (is_scrypt ? 0xFFFFFFFFULL : 0xFFFFULL) << powdiff;
+	double numerator = DM_SELECT(0xFFFFULL, 0xFFFFFFULL, 0xFFFFFFFFULL) << powdiff;
 	double ddiff = numerator / (double)diff32;
 
 	if (unlikely(current_diff != ddiff)) {
@@ -5818,7 +5821,7 @@ void set_target(unsigned char *dest_target, double diff)
 	}
 
 	// FIXME: is target set right?
-	d64 = (is_scrypt ? (double)65536 * truediffone : truediffone);
+	d64 = (double) DM_SELECT(1, 256, 65536) * truediffone;
 	d64 /= diff;
 
 	dcut64 = d64 / bits192;
@@ -6064,7 +6067,7 @@ bool test_nonce_diff(struct work *work, uint32_t nonce, double diff)
 	uint64_t *hash64 = (uint64_t *)(work->hash + 24), diff64;
 
 	rebuild_nonce(work, nonce);
-	diff64 = (is_scrypt ? 0x0000ffff00000000ULL : 0x00000000ffff0000ULL);
+	diff64 = DM_SELECT(0x00000000ffff0000ULL, 0x000000ffff000000ULL, 0x0000ffff00000000ULL);
 	diff64 /= diff;
 
 	return (le64toh(*hash64) <= diff64);
@@ -6073,13 +6076,11 @@ bool test_nonce_diff(struct work *work, uint32_t nonce, double diff)
 static void update_work_stats(struct thr_info *thr, struct work *work)
 {
 	double test_diff = current_diff;
-	if (is_scrypt)
-		test_diff *= 65536;
+	test_diff *= DM_SELECT(1, 256, 65536);
 
 	work->share_diff = share_diff(work);
 
-	if (is_scrypt)
-		test_diff *= 65536;
+	test_diff *= DM_SELECT(1, 256, 65536);
 
 	if (unlikely(work->share_diff >= test_diff)) {
 		work->block = true;

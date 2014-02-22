@@ -48,7 +48,7 @@ extern bool opt_loginput;
 extern char *opt_kernel_path;
 extern int gpur_thr_id;
 extern bool opt_noadl;
-extern bool is_scrypt;
+extern enum diff_calc_mode dm_mode;
 
 extern void *miner_thread(void *userdata);
 extern int dev_from_id(int thr_id);
@@ -228,8 +228,12 @@ char *set_kernel(char *arg)
 	if (kern == KL_NONE)
 		return "Invalid parameter to set_kernel";
 	gpus[device++].kernel = kern;
-//	if (kern >= KL_DARKCOIN)
-//		is_scrypt = false;
+	if (kern >= KL_DARKCOIN)
+		dm_mode = DM_BITCOIN;
+	else if(kern >= KL_QUARKCOIN)
+		dm_mode = DM_QUARKCOIN;
+	else
+		dm_mode = DM_LITECOIN;
 
 	while ((nextptr = strtok(NULL, ",")) != NULL) {
 		kern = select_kernel(nextptr);
