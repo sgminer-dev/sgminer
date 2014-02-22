@@ -6,7 +6,7 @@
 #include "private.h"
 
 /* We only use this for pointer comparisons. */
-const char opt_hidden[1];
+const char opt_hidden[1] = { 0 };
 
 static unsigned write_short_options(char *str)
 {
@@ -33,7 +33,7 @@ char *opt_usage(const char *argv0, const char *extra)
 		for (i = 0; i < opt_count; i++) {
 			if (opt_table[i].cb == (void *)opt_usage_and_exit
 			    && opt_table[i].u.carg) {
-				extra = opt_table[i].u.carg;
+				extra = (const char *)opt_table[i].u.carg;
 				break;
 			}
 		}
@@ -61,7 +61,7 @@ char *opt_usage(const char *argv0, const char *extra)
 		}
 	}
 
-	p = ret = malloc(len);
+	p = ret = (char *)malloc(len);
 	if (!ret)
 		return NULL;
 

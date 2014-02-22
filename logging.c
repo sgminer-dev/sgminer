@@ -49,6 +49,19 @@ static void my_log_curses(int prio, const char *datetime, const char *str, bool 
 
 /* high-level logging function, based on global opt_log_level */
 
+void applog(int prio, const char* fmt, ...) {
+	va_list args;
+
+	if (opt_debug || prio != LOG_DEBUG) {
+		if (use_syslog || opt_log_output || prio <= opt_log_level) {
+			char tmp42[LOGBUFSIZ];
+			va_start(args, fmt);
+			vsnprintf(tmp42, sizeof(tmp42), fmt, args);
+			va_end(args);
+			_applog(prio, tmp42, false);
+		}
+	}
+}
 /*
  * log function
  */

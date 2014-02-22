@@ -237,7 +237,9 @@ enum drv_driver {
 };
 
 /* Use DRIVER_PARSE_COMMANDS to generate extern device_drv prototypes */
+#ifndef _MSC_VER
 DRIVER_PARSE_COMMANDS(DRIVER_PROTOTYPE)
+#endif 
 
 enum alive {
 	LIFE_WELL,
@@ -582,7 +584,7 @@ static inline void string_elist_add(const char *s, struct list_head *head)
 {
 	struct string_elist *n;
 
-	n = calloc(1, sizeof(*n));
+	n = (struct string_elist *)calloc(1, sizeof(*n));
 	n->string = strdup(s);
 	n->free_me = true;
 	list_add_tail(&n->list, head);
@@ -603,8 +605,8 @@ static inline uint32_t swab32(uint32_t v)
 
 static inline void swap256(void *dest_p, const void *src_p)
 {
-	uint32_t *dest = dest_p;
-	const uint32_t *src = src_p;
+	uint32_t *dest = (uint32_t *)dest_p;
+	const uint32_t *src = (uint32_t *)src_p;
 
 	dest[0] = src[7];
 	dest[1] = src[6];
@@ -618,8 +620,8 @@ static inline void swap256(void *dest_p, const void *src_p)
 
 static inline void swab256(void *dest_p, const void *src_p)
 {
-	uint32_t *dest = dest_p;
-	const uint32_t *src = src_p;
+	uint32_t *dest = (uint32_t *)dest_p;
+	const uint32_t *src = (uint32_t *)src_p;
 
 	dest[0] = swab32(src[7]);
 	dest[1] = swab32(src[6]);
@@ -633,8 +635,8 @@ static inline void swab256(void *dest_p, const void *src_p)
 
 static inline void flip32(void *dest_p, const void *src_p)
 {
-	uint32_t *dest = dest_p;
-	const uint32_t *src = src_p;
+	uint32_t *dest = (uint32_t *)dest_p;
+	const uint32_t *src = (uint32_t *)src_p;
 	int i;
 
 	for (i = 0; i < 8; i++)
@@ -643,8 +645,8 @@ static inline void flip32(void *dest_p, const void *src_p)
 
 static inline void flip64(void *dest_p, const void *src_p)
 {
-	uint32_t *dest = dest_p;
-	const uint32_t *src = src_p;
+	uint32_t *dest = (uint32_t *)dest_p;
+	const uint32_t *src = (uint32_t *)src_p;
 	int i;
 
 	for (i = 0; i < 16; i++)
@@ -653,8 +655,8 @@ static inline void flip64(void *dest_p, const void *src_p)
 
 static inline void flip80(void *dest_p, const void *src_p)
 {
-	uint32_t *dest = dest_p;
-	const uint32_t *src = src_p;
+	uint32_t *dest = (uint32_t *)dest_p;
+	const uint32_t *src = (uint32_t *)src_p;
 	int i;
 
 	for (i = 0; i < 20; i++)
@@ -663,8 +665,8 @@ static inline void flip80(void *dest_p, const void *src_p)
 
 static inline void flip128(void *dest_p, const void *src_p)
 {
-	uint32_t *dest = dest_p;
-	const uint32_t *src = src_p;
+	uint32_t *dest = (uint32_t *)dest_p;
+	const uint32_t *src = (uint32_t *)src_p;
 	int i;
 
 	for (i = 0; i < 32; i++)

@@ -282,7 +282,9 @@ static int include_count;
 	static int forkpid;
 #endif // defined(unix)
 
+#ifndef _MSC_VER
 struct sigaction termhandler, inthandler;
+#endif
 
 struct thread_q *getq;
 
@@ -514,7 +516,7 @@ struct pool *add_pool(void)
 {
 	struct pool *pool;
 
-	pool = calloc(sizeof(struct pool), 1);
+	pool = (struct pool *)calloc(sizeof(struct pool), 1);
 	if (!pool)
 		quit(1, "Failed to calloc pool in add_pool");
 	pool->pool_no = pool->prio = total_pools;
@@ -524,7 +526,7 @@ struct pool *add_pool(void)
 	sprintf(buf, "Pool %d", pool->pool_no);
 	pool->poolname = strdup(buf);
 
-	pools = realloc(pools, sizeof(struct pool *) * (total_pools + 2));
+	pools = (struct pool **)realloc(pools, sizeof(struct pool *) * (total_pools + 2));
 	pools[total_pools++] = pool;
 	mutex_init(&pool->pool_lock);
 	if (unlikely(pthread_cond_init(&pool->cr_cond, NULL)))
@@ -724,7 +726,7 @@ static void setup_url(struct pool *pool, char *arg)
 	    strncmp(arg, "https://", 8)) {
 		char *httpinput;
 
-		httpinput = malloc(255);
+		httpinput = (char *)malloc(255);
 		if (!httpinput)
 			quit(1, "Failed to malloc httpinput");
 		strcpy(httpinput, "http://");
@@ -1206,14 +1208,14 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--net-delay",
 			opt_set_bool, &opt_delaynet,
 			"Impose small delays in networking to not overload slow routers"),
+#ifdef HAVE_ADL
 	OPT_WITHOUT_ARG("--no-adl",
 			opt_set_bool, &opt_noadl,
-#ifdef HAVE_ADL
-			"Disable the ATI display library used for monitoring and setting GPU parameters"
+			"Disable the ATI display library used for monitoring and setting GPU parameters"),
 #else
-			opt_hidden
+	OPT_WITHOUT_ARG("--no-adl",
+			opt_set_bool, &opt_noadl,opt_hidden),
 #endif
-			),
 	OPT_WITHOUT_ARG("--no-pool-disable",
 			opt_set_invbool, &opt_disable_pool,
 			opt_hidden),
@@ -1291,14 +1293,15 @@ static struct opt_table opt_config_table[] = {
 			opt_set_bool, &use_syslog,
 			"Use system log for output messages (default: standard error)"),
 #endif
+#if defined(HAVE_LIBCURL) && defined(CURL_HAS_KEEPALIVE)
 	OPT_WITH_ARG("--tcp-keepalive",
 		     set_int_0_to_9999, opt_show_intval, &opt_tcp_keepalive,
-#if defined(HAVE_LIBCURL) && defined(CURL_HAS_KEEPALIVE)
-		     "TCP keepalive packet idle time"
+		     "TCP keepalive packet idle time"),
 #else
-		     opt_hidden
+	OPT_WITH_ARG("--tcp-keepalive",
+		     set_int_0_to_9999, opt_show_intval, &opt_tcp_keepalive,
+			 opt_hidden),
 #endif
-	),
 #ifdef HAVE_ADL
 	OPT_WITH_ARG("--temp-cutoff",
 		     set_temp_cutoff, opt_show_intval, &opt_cutofftemp,
@@ -1313,14 +1316,15 @@ static struct opt_table opt_config_table[] = {
 		     set_temp_target, opt_show_intval, &opt_targettemp,
 		     "Temperature which a device should stay at while automanaging fan and/or GPU, one value or comma separated list"),
 #endif
+#ifdef HAVE_CURSES
 	OPT_WITHOUT_ARG("--text-only|-T",
 			opt_set_invbool, &use_curses,
-#ifdef HAVE_CURSES
-			"Disable ncurses formatted screen output"
+			"Disable ncurses formatted screen output"),
 #else
-			opt_hidden
+	OPT_WITHOUT_ARG("--text-only|-T",
+			opt_set_invbool, &use_curses,
+			opt_hidden),
 #endif
-	),
 	OPT_WITH_ARG("--thread-concurrency",
 		     set_thread_concurrency, NULL, NULL,
 		     "Set GPU thread concurrency for scrypt mining, comma separated"),
@@ -1457,7 +1461,7 @@ static char *load_config(const char *arg, void __maybe_unused *unused)
 #endif
 	if (!json_is_object(config)) {
 		siz = JSON_LOAD_ERROR_LEN + strlen(arg) + strlen(err.text);
-		json_error = malloc(siz);
+		json_error = (char *)malloc(siz);
 		if (!json_error)
 			quit(1, "Malloc failure in json error");
 
@@ -1483,7 +1487,7 @@ void default_save_file(char *filename);
 
 static void load_default_config(void)
 {
-	cnfbuf = malloc(PATH_MAX);
+	cnfbuf = (char *)malloc(PATH_MAX);
 
 	default_save_file(cnfbuf);
 
@@ -1553,7 +1557,7 @@ static bool jobj_binary(const json_t *obj, const char *key,
 		applog(LOG_ERR, "JSON key '%s' is not a string", key);
 		return false;
 	}
-	if (!hex2bin(buf, hexstr, buflen))
+	if (!hex2bin((unsigned char *)buf, hexstr, buflen))
 		return false;
 
 	return true;
@@ -1575,35 +1579,35 @@ static void calc_midstate(struct work *work)
 
 static struct work *make_work(void)
 {
-	struct work *work = calloc(1, sizeof(struct work));
+	struct work *w = (struct work *)calloc(1, sizeof(struct work));
 
-	if (unlikely(!work))
+	if (unlikely(!w))
 		quit(1, "Failed to calloc work in make_work");
 
 	cg_wlock(&control_lock);
-	work->id = total_work++;
+	w->id = total_work++;
 	cg_wunlock(&control_lock);
 
-	return work;
+	return w;
 }
 
 /* This is the central place all work that is about to be retired should be
  * cleaned to remove any dynamically allocated arrays within the struct */
-void clean_work(struct work *work)
+void clean_work(struct work *w)
 {
-	free(work->job_id);
-	free(work->ntime);
-	free(work->coinbase);
-	free(work->nonce1);
-	memset(work, 0, sizeof(struct work));
+	free(w->job_id);
+	free(w->ntime);
+	free(w->coinbase);
+	free(w->nonce1);
+	memset(w, 0, sizeof(struct work));
 }
 
 /* All dynamically allocated work structs should be freed here to not leak any
  * ram from arrays allocated within the work struct */
-void free_work(struct work *work)
+void free_work(struct work *w)
 {
-	clean_work(work);
-	free(work);
+	clean_work(w);
+	free(w);
 }
 
 static void gen_hash(unsigned char *data, unsigned char *hash, int len);
@@ -1635,7 +1639,7 @@ static bool __build_gbt_txns(struct pool *pool, json_t *res_val)
 	if (!pool->gbt_txns)
 		goto out;
 
-	pool->txn_hashes = calloc(32 * (pool->gbt_txns + 1), 1);
+	pool->txn_hashes = (unsigned char *)calloc(32 * (pool->gbt_txns + 1), 1);
 	if (unlikely(!pool->txn_hashes))
 		quit(1, "Failed to calloc txn_hashes in __build_gbt_txns");
 
@@ -1647,7 +1651,7 @@ static bool __build_gbt_txns(struct pool *pool, json_t *res_val)
 
 		cal_len = txn_len;
 		align_len(&cal_len);
-		txn_bin = calloc(cal_len, 1);
+		txn_bin = (unsigned char *)calloc(cal_len, 1);
 		if (unlikely(!txn_bin))
 			quit(1, "Failed to calloc txn_bin in __build_gbt_txns");
 		if (unlikely(!hex2bin(txn_bin, txn, txn_len / 2)))
@@ -1665,7 +1669,7 @@ static unsigned char *__gbt_merkleroot(struct pool *pool)
 	unsigned char *merkle_hash;
 	int i, txns;
 
-	merkle_hash = calloc(32 * (pool->gbt_txns + 2), 1);
+	merkle_hash = (unsigned char *)calloc(32 * (pool->gbt_txns + 2), 1);
 	if (unlikely(!merkle_hash))
 		quit(1, "Failed to calloc merkle_hash in __gbt_merkleroot");
 
@@ -1845,7 +1849,7 @@ static bool gbt_decode(struct pool *pool, json_t *res_val)
 	cal_len = pool->coinbase_len + 1;
 	align_len(&cal_len);
 	free(pool->coinbase);
-	pool->coinbase = calloc(cal_len, 1);
+	pool->coinbase = (unsigned char *)calloc(cal_len, 1);
 	if (unlikely(!pool->coinbase))
 		quit(1, "Failed to calloc pool coinbase in gbt_decode");
 	hex2bin(pool->coinbase, pool->coinbasetxn, 42);
@@ -1992,7 +1996,7 @@ static int devcursor, logstart, logcursor;
 /* statusy is where the status window goes up to in cases where it won't fit at startup */
 static int statusy;
 #endif
-struct cgpu_info gpus[MAX_GPUDEVICES]; /* Maximum number apparently possible */
+extern struct cgpu_info gpus[MAX_GPUDEVICES]; /* Maximum number apparently possible */
 
 #ifdef HAVE_CURSES
 static inline void unlock_curses(void)
@@ -2171,7 +2175,7 @@ static void curses_print_status(void)
 
 static void adj_width(int var, int *length)
 {
-	if ((int)(log10(var) + 1) > *length)
+	if ((int)(log10((double)var) + 1) > *length)
 		(*length)++;
 }
 
@@ -2535,7 +2539,7 @@ static void show_hash(struct work *work, char *hashshow)
 	intdiff = round(work->work_difficulty);
 	suffix_string(work->share_diff, diffdisp, sizeof (diffdisp), 0);
 	snprintf(hashshow, 64, "%08lx Diff %s/%d%s", h32, diffdisp, intdiff,
-		 work->block? " BLOCK!" : "");
+		 work->block ? " BLOCK!" : "");
 }
 
 #ifdef HAVE_LIBCURL
@@ -2595,34 +2599,34 @@ static bool submit_upstream_work(struct work *work, CURL *curl, bool resubmit)
 		} else if (work->gbt_txns <= 0xffff) {
 			uint16_t val = htole16(work->gbt_txns);
 
-			gbt_block = realloc_strcat(gbt_block, "fd");
+			gbt_block = (char *)realloc_strcat(gbt_block, "fd");
 			varint = bin2hex((const unsigned char *)&val, 2);
 		} else {
 			uint32_t val = htole32(work->gbt_txns);
 
-			gbt_block = realloc_strcat(gbt_block, "fe");
+			gbt_block = (char *)realloc_strcat(gbt_block, "fe");
 			varint = bin2hex((const unsigned char *)&val, 4);
 		}
-		gbt_block = realloc_strcat(gbt_block, varint);
+		gbt_block = (char *)realloc_strcat(gbt_block, varint);
 		free(varint);
-		gbt_block = realloc_strcat(gbt_block, work->coinbase);
+		gbt_block = (char *)realloc_strcat(gbt_block, work->coinbase);
 
 		s = strdup("{\"id\": 0, \"method\": \"submitblock\", \"params\": [\"");
-		s = realloc_strcat(s, gbt_block);
+		s = (char *)realloc_strcat(s, gbt_block);
 		if (work->job_id) {
-			s = realloc_strcat(s, "\", {\"workid\": \"");
-			s = realloc_strcat(s, work->job_id);
-			s = realloc_strcat(s, "\"}]}");
+			s = (char *)realloc_strcat(s, "\", {\"workid\": \"");
+			s = (char *)realloc_strcat(s, work->job_id);
+			s = (char *)realloc_strcat(s, "\"}]}");
 		} else
-			s = realloc_strcat(s, "\", {}]}");
+			s = (char *)realloc_strcat(s, "\", {}]}");
 		free(gbt_block);
 	} else {
 		s = strdup("{\"method\": \"getwork\", \"params\": [ \"");
-		s = realloc_strcat(s, hexstr);
-		s = realloc_strcat(s, "\" ], \"id\":1}");
+		s = (char *)realloc_strcat(s, hexstr);
+		s = (char *)realloc_strcat(s, "\" ], \"id\":1}");
 	}
 	applog(LOG_DEBUG, "DBG: sending %s submit RPC call: %s", pool->rpc_url, s);
-	s = realloc_strcat(s, "\n");
+	s = (char *)realloc_strcat(s, "\n");
 
 	cgtime(&tv_submit);
 	/* issue JSON-RPC request */
@@ -2915,16 +2919,16 @@ static double le256todouble(const void *target)
 	uint64_t *data64;
 	double dcut64;
 
-	data64 = (uint64_t *)(target + 24);
+	data64 = (uint64_t *)((unsigned char *)target + 24);
 	dcut64 = le64toh(*data64) * bits192;
 
-	data64 = (uint64_t *)(target + 16);
+	data64 = (uint64_t *)((unsigned char *)target + 16);
 	dcut64 += le64toh(*data64) * bits128;
 
-	data64 = (uint64_t *)(target + 8);
+	data64 = (uint64_t *)((unsigned char *)target + 8);
 	dcut64 += le64toh(*data64) * bits64;
 
-	data64 = (uint64_t *)(target);
+	data64 = (uint64_t *)target;
 	dcut64 += le64toh(*data64);
 
 	return dcut64;
@@ -3149,9 +3153,11 @@ void app_restart(void)
 
 static void sighandler(int __maybe_unused sig)
 {
+#ifndef _MSC_VER
 	/* Restore signal handlers so we can still quit if kill_work fails */
 	sigaction(SIGTERM, &termhandler, NULL);
 	sigaction(SIGINT, &inthandler, NULL);
+#endif
 	kill_work();
 }
 
@@ -3160,7 +3166,7 @@ static void sighandler(int __maybe_unused sig)
  * this pool. */
 static void recruit_curl(struct pool *pool)
 {
-	struct curl_ent *ce = calloc(sizeof(struct curl_ent), 1);
+	struct curl_ent *ce = (struct curl_ent *)calloc(sizeof(struct curl_ent), 1);
 
 	if (unlikely(!ce))
 		quit(1, "Failed to calloc in recruit_curl");
@@ -3198,7 +3204,8 @@ retry:
 			recruited = true;
 		}
 	}
-	ce = list_entry(pool->curlring.next, struct curl_ent, node);
+	ce = list_entry(pool->curlring.next, struct curl_ent*, node);
+
 	list_del(&ce->node);
 	mutex_unlock(&pool->pool_lock);
 
@@ -3568,6 +3575,7 @@ static uint64_t share_diff(const struct work *work)
 		s64 = 0;
 
 	ret = round(d64 / s64);
+	applog(LOG_DEBUG, "Found share with difficulty %lu", ret);
 
 	cg_wlock(&control_lock);
 	if (unlikely(ret > best_diff)) {
@@ -3911,7 +3919,7 @@ static bool test_work_current(struct work *work)
 	/* Search to see if this block exists yet and if not, consider it a
 	 * new block and set the current block details to this one */
 	if (!block_exists(hexstr)) {
-		struct block *s = calloc(sizeof(struct block), 1);
+		struct block *s = (struct block *)calloc(sizeof(struct block), 1);
 		int deleted_block = 0;
 
 		if (unlikely(!s))
@@ -4116,9 +4124,9 @@ static char *json_escape(char *str)
 	char *buf, *ptr;
 
 	/* 2x is the max, may as well just allocate that */
-	ptr = buf = malloc(strlen(str) * 2 + 1);
+	ptr = buf = (char *)malloc(strlen(str) * 2 + 1);
 
-	jeptr = malloc(sizeof(*jeptr));
+	jeptr = (struct JE *)malloc(sizeof(*jeptr));
 
 	jeptr->buf = buf;
 	jeptr->next = jedata;
@@ -4600,7 +4608,7 @@ retry:
 				goto retry;
 			}
 		}
-		pool_strategy = selected;
+		pool_strategy = (enum pool_strategy)selected;
 		switch_pools(NULL);
 		goto updated;
 	} else if (!strncasecmp(&input, "i", 1)) {
@@ -4875,7 +4883,7 @@ static void *input_thread(void __maybe_unused *userdata)
 
 static void *api_thread(void *userdata)
 {
-	struct thr_info *mythr = userdata;
+	struct thr_info *mythr = (struct thr_info *)userdata;
 
 	pthread_detach(pthread_self());
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
@@ -5395,7 +5403,7 @@ static void *stratum_sthread(void *userdata)
 		if (unlikely(pool->removed))
 			break;
 
-		work = tq_pop(pool->stratum_q, NULL);
+		work = (struct work *)tq_pop(pool->stratum_q, NULL);
 		if (unlikely(!work))
 			quit(1, "Stratum q returned empty work");
 
@@ -5406,7 +5414,7 @@ static void *stratum_sthread(void *userdata)
 			continue;
 		}
 
-		sshare = calloc(sizeof(struct stratum_share), 1);
+		sshare = (struct stratum_share *)calloc(sizeof(struct stratum_share), 1);
 		hash32 = (uint32_t *)work->hash;
 		submitted = false;
 
@@ -5583,11 +5591,11 @@ retry_stratum:
 				json_t *arrval = json_array_get(mutables, i);
 
 				if (json_is_string(arrval)) {
-					const char *mutable = json_string_value(arrval);
+					const char *mut = json_string_value(arrval);
 
-					if (!strncasecmp(mutable, "coinbase/append", 15))
+					if (!strncasecmp(mut, "coinbase/append", 15))
 						append = true;
-					else if (!strncasecmp(mutable, "submit/coinbase", 15))
+					else if (!strncasecmp(mut, "submit/coinbase", 15))
 						submit = true;
 				}
 			}
@@ -5674,7 +5682,7 @@ retry_stratum:
 					need_slash = true;
 
 				siz = strlen(pool->rpc_url) + strlen(copy_start) + 2;
-				pool->lp_url = malloc(siz);
+				pool->lp_url = (char *)malloc(siz);
 				if (!pool->lp_url) {
 					applog(LOG_ERR, "Malloc failure in pool_active");
 					return false;
@@ -6158,7 +6166,7 @@ static void hash_sole_work(struct thr_info *mythr)
 	struct sgminer_stats *dev_stats = &(cgpu->sgminer_stats);
 	struct sgminer_stats *pool_stats;
 	/* Try to cycle approximately 5 times before each log update */
-	const long cycle = opt_log_interval / 5 ? : 1;
+	const long cycle = opt_log_interval / 5 ? 5 : 1;
 	const bool primary = (!mythr->device_thread) || mythr->primary_thread;
 	struct timeval diff, sdiff, wdiff = {0, 0};
 	uint32_t max_nonce = drv->can_limit_work(mythr);
@@ -6623,7 +6631,7 @@ void hash_driver_work(struct thr_info *mythr)
 
 void *miner_thread(void *userdata)
 {
-	struct thr_info *mythr = userdata;
+	struct thr_info *mythr = (struct thr_info *)userdata;
 	const int thr_id = mythr->id;
 	struct cgpu_info *cgpu = mythr->cgpu;
 	struct device_drv *drv = cgpu->drv;
@@ -7294,7 +7302,7 @@ char *curses_input(const char *query)
 	char *input;
 
 	echo();
-	input = malloc(255);
+	input = (char *)malloc(255);
 	if (!input)
 		quit(1, "Failed to malloc input");
 	leaveok(logwin, false);
@@ -7352,7 +7360,7 @@ bool add_pool_details(struct pool *pool, bool live, char *url, char *user, char 
 	pool->rpc_user = user;
 	pool->rpc_pass = pass;
 	siz = strlen(pool->rpc_user) + strlen(pool->rpc_pass) + 2;
-	pool->rpc_userpass = malloc(siz);
+	pool->rpc_userpass = (char *)malloc(siz);
 	if (!pool->rpc_userpass)
 		quit(1, "Failed to malloc userpass");
 	snprintf(pool->rpc_userpass, siz, "%s:%s", pool->rpc_user, pool->rpc_pass);
@@ -7398,7 +7406,7 @@ static bool input_pool(bool live)
 	    strncmp(url, "https://", 8)) {
 		char *httpinput;
 
-		httpinput = malloc(256);
+		httpinput = (char *)malloc(256);
 		if (!httpinput)
 			quit(1, "Failed to malloc httpinput");
 		strcpy(httpinput, "http://");
@@ -7674,14 +7682,14 @@ bool add_cgpu(struct cgpu_info *cgpu)
 	if (d)
 		cgpu->device_id = ++d->lastid;
 	else {
-		d = malloc(sizeof(*d));
+		d = (struct _cgpu_devid_counter *)malloc(sizeof(*d));
 		memcpy(d->name, cgpu->drv->name, sizeof(d->name));
 		cgpu->device_id = d->lastid = 0;
 		HASH_ADD_STR(devids, name, d);
 	}
 
 	wr_lock(&devices_lock);
-	devices = realloc(devices, sizeof(struct cgpu_info *) * (total_devices + new_devices + 2));
+	devices = (struct cgpu_info **)realloc(devices, sizeof(struct cgpu_info *) * (total_devices + new_devices + 2));
 	wr_unlock(&devices_lock);
 
 	mutex_lock(&stats_lock);
@@ -7701,7 +7709,7 @@ struct device_drv *copy_drv(struct device_drv *drv)
 {
 	struct device_drv *copy;
 
-	if (unlikely(!(copy = malloc(sizeof(*copy))))) {
+	if (unlikely(!(copy = (struct device_drv *)malloc(sizeof(*copy))))) {
 		quit(1, "Failed to allocate device_drv copy of %s (%s)",
 				drv->name, drv->copy ? "copy" : "original");
 	}
@@ -7727,7 +7735,9 @@ static void probe_pools(void)
 
 int main(int argc, char *argv[])
 {
+#ifndef _MSC_VER
 	struct sigaction handler;
+#endif
 	struct thr_info *thr;
 	struct block *block;
 	unsigned int k;
@@ -7745,7 +7755,7 @@ int main(int argc, char *argv[])
 		quithere(1, "Failed to pthread_mutex_init lockstat_lock errno=%d", errno);
 #endif
 
-	initial_args = malloc(sizeof(char *) * (argc + 1));
+	initial_args = (const char **)malloc(sizeof(char *)* (argc + 1));
 	for  (i = 0; i < argc; i++)
 		initial_args[i] = strdup(argv[i]);
 	initial_args[argc] = NULL;
@@ -7782,32 +7792,41 @@ int main(int argc, char *argv[])
 
 	snprintf(packagename, sizeof(packagename), "%s %s", PACKAGE, VERSION);
 
-	handler.sa_handler = &sighandler;
-	handler.sa_flags = 0;
-	sigemptyset(&handler.sa_mask);
-	sigaction(SIGTERM, &handler, &termhandler);
-	sigaction(SIGINT, &handler, &inthandler);
 #ifndef WIN32
 	signal(SIGPIPE, SIG_IGN);
 #else
 	timeBeginPeriod(1);
 #endif
+
+#ifndef _MSC_VER
+	handler.sa_handler = &sighandler;
+	handler.sa_flags = 0;
+	sigemptyset(&handler.sa_mask);
+	sigaction(SIGTERM, &handler, &termhandler);
+	sigaction(SIGINT, &handler, &inthandler);
+#endif
+
 	/* opt_kernel_path defaults to SGMINER_PREFIX */
-	opt_kernel_path = alloca(PATH_MAX);
+	opt_kernel_path = (char *)alloca(PATH_MAX);
 	strcpy(opt_kernel_path, SGMINER_PREFIX);
 
 	/* sgminer_path is current dir */
-	sgminer_path = alloca(PATH_MAX);
+	sgminer_path = (char *)alloca(PATH_MAX);
+#ifndef _MSC_VER
 	s = strdup(argv[0]);
 	strcpy(sgminer_path, dirname(s));
 	free(s);
 	strcat(sgminer_path, "/");
+#else
+	GetCurrentDirectory(PATH_MAX - 1, sgminer_path);
+	strcat(sgminer_path, "\\");
+#endif
 
 	devcursor = 8;
 	logstart = devcursor + 1;
 	logcursor = logstart + 1;
 
-	block = calloc(sizeof(struct block), 1);
+	block = (struct block *)calloc(sizeof(struct block), 1);
 	if (unlikely(!block))
 		quit (1, "main OOM");
 	for (i = 0; i < 36; i++)
@@ -7840,7 +7859,7 @@ int main(int argc, char *argv[])
 		// FIXME: executes always (leftover from SHA256d days)
 		quit(1, "Cannot use benchmark mode with scrypt");
 		pool = add_pool();
-		pool->rpc_url = malloc(255);
+		pool->rpc_url = (char *)malloc(255);
 		strcpy(pool->rpc_url, "Benchmark");
 		pool->rpc_user = pool->rpc_url;
 		pool->rpc_pass = pool->rpc_url;
@@ -7883,7 +7902,7 @@ int main(int argc, char *argv[])
 		opt_log_output = true;
 
 	total_control_threads = 8;
-	control_thr = calloc(total_control_threads, sizeof(*thr));
+	control_thr = (struct thr_info *)calloc(total_control_threads, sizeof(*thr));
 	if (!control_thr)
 		quit(1, "Failed to calloc control_thr");
 
@@ -7967,7 +7986,7 @@ int main(int argc, char *argv[])
 			if (!pool->rpc_user || !pool->rpc_pass)
 				quit(1, "No login credentials supplied for %s", pool->poolname);
 			siz = strlen(pool->rpc_user) + strlen(pool->rpc_pass) + 2;
-			pool->rpc_userpass = malloc(siz);
+			pool->rpc_userpass = (char *)malloc(siz);
 			if (!pool->rpc_userpass)
 				quit(1, "Failed to malloc userpass");
 			snprintf(pool->rpc_userpass, siz, "%s:%s", pool->rpc_user, pool->rpc_pass);
@@ -7986,11 +8005,11 @@ int main(int argc, char *argv[])
 			fork_monitor();
 	#endif // defined(unix)
 
-	mining_thr = calloc(mining_threads, sizeof(thr));
+		mining_thr = (struct thr_info **)calloc(mining_threads, sizeof(thr));
 	if (!mining_thr)
 		quit(1, "Failed to calloc mining_thr");
 	for (i = 0; i < mining_threads; i++) {
-		mining_thr[i] = calloc(1, sizeof(*thr));
+		mining_thr[i] = (struct thr_info *)calloc(1, sizeof(*thr));
 		if (!mining_thr[i])
 			quit(1, "Failed to calloc mining_thr[%d]", i);
 	}
@@ -7999,7 +8018,7 @@ int main(int argc, char *argv[])
 	k = 0;
 	for (i = 0; i < total_devices; ++i) {
 		struct cgpu_info *cgpu = devices[i];
-		cgpu->thr = malloc(sizeof(*cgpu->thr) * (cgpu->threads+1));
+		cgpu->thr = (struct thr_info **)malloc(sizeof(*cgpu->thr) * (cgpu->threads+1));
 		cgpu->thr[cgpu->threads] = NULL;
 		cgpu->status = LIFE_INIT;
 
