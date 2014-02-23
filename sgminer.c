@@ -6056,7 +6056,7 @@ bool test_nonce(struct work *work, uint32_t nonce)
 	uint32_t diff1targ;
 
 	rebuild_nonce(work, nonce);
-	diff1targ = 0x000000ffUL;
+	diff1targ = 0x0000ffffUL;
 
 	return (le32toh(*hash_32) <= diff1targ);
 }
