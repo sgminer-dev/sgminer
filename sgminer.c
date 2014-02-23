@@ -92,7 +92,7 @@ int opt_log_interval = 5;
 int opt_queue = 1;
 int opt_scantime = 7;
 int opt_expiry = 28;
-int opt_nfactor = 11;
+int opt_nfactor = 10;
 static const bool opt_time = true;
 unsigned long long global_hashrate;
 unsigned long global_quota_gcd = 1;
