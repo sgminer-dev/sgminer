@@ -356,7 +356,7 @@ salsa20_8(uint32_t B[16], const uint32_t Bx[16])
 /* cpu and memory intensive function to transform a 80 byte buffer into a 32 byte output
    scratchpad size needs to be at least 63 + (128 * r * p) + (256 * r + 64) + (128 * r * N) bytes
  */
-static void scrypt_1024_1_1_256_sp(const uint32_t* input, char* scratchpad, uint32_t *ostate)
+static void scrypt_1024_1_1_256_sp(const uint32_t* input, char* scratchpad, uint32_t *ostate, const cl_uint n)
 {
 	uint32_t * V;
 	uint32_t X[32];
@@ -370,7 +370,7 @@ static void scrypt_1024_1_1_256_sp(const uint32_t* input, char* scratchpad, uint
 
 	PBKDF2_SHA256_80_128(input, X);
 
-	for (i = 0; i < 1024; i += 2) {
+	for (i = 0; i < n; i += 2) {
 		memcpy(&V[i * 32], X, 128);
 
 		salsa20_8(&X[0], &X[16]);
@@ -381,8 +381,8 @@ static void scrypt_1024_1_1_256_sp(const uint32_t* input, char* scratchpad, uint
 		salsa20_8(&X[0], &X[16]);
 		salsa20_8(&X[16], &X[0]);
 	}
-	for (i = 0; i < 1024; i += 2) {
-		j = X[16] & 1023;
+	for (i = 0; i < n; i += 2) {
+		j = X[16] & (n-1);
 		p2 = (uint64_t *)(&V[j * 32]);
 		for(k = 0; k < 16; k++)
 			p1[k] ^= p2[k];
@@ -390,7 +390,7 @@ static void scrypt_1024_1_1_256_sp(const uint32_t* input, char* scratchpad, uint
 		salsa20_8(&X[0], &X[16]);
 		salsa20_8(&X[16], &X[0]);
 
-		j = X[16] & 1023;
+		j = X[16] & (n-1);
 		p2 = (uint64_t *)(&V[j * 32]);
 		for(k = 0; k < 16; k++)
 			p1[k] ^= p2[k];
@@ -403,7 +403,8 @@ static void scrypt_1024_1_1_256_sp(const uint32_t* input, char* scratchpad, uint
 }
 
 /* 131583 rounded up to 4 byte alignment */
-#define SCRATCHBUF_SIZE	(131584)
+//#define SCRATCHBUF_SIZE (131584)
+//#define SCRATCHBUF_SIZE (262207)
 
 void scrypt_regenhash(struct work *work)
 {
@@ -411,17 +412,19 @@ void scrypt_regenhash(struct work *work)
 	char *scratchbuf;
 	uint32_t *nonce = (uint32_t *)(work->data + 76);
 	uint32_t *ohash = (uint32_t *)(work->hash);
-
+ 	
 	be32enc_vect(data, (const uint32_t *)work->data, 19);
 	data[19] = htobe32(*nonce);
-	scratchbuf = (char *)alloca(SCRATCHBUF_SIZE);
-	scrypt_1024_1_1_256_sp(data, scratchbuf, ohash);
+	//scratchbuf = alloca(SCRATCHBUF_SIZE);
+	scratchbuf = (char *)alloca((1 << opt_nfactor) * 128 + 512);
+	scrypt_1024_1_1_256_sp(data, scratchbuf, ohash, (1 << opt_nfactor));
 	flip32(ohash, ohash);
 }
 
 static const uint32_t diff1targ = 0x0000ffff;
 
 /* Used externally as confirmation of correct OCL code */
+/*
 int scrypt_test(unsigned char *pdata, const unsigned char *ptarget, uint32_t nonce)
 {
 	uint32_t tmp_hash7, Htarg = le32toh(((const uint32_t *)ptarget)[7]);
@@ -489,3 +492,4 @@ bool scanhash_scrypt(struct thr_info *thr, const unsigned char __maybe_unused *p
 	free(scratchbuf);;
 	return ret;
 }
+*/
