@@ -211,6 +211,8 @@ static enum cl_kernels select_kernel(char *arg)
 		return KL_DARKCOIN;
 	if (!strcmp(arg, QUBITCOIN_KERNNAME))
 		return KL_QUBITCOIN;
+	if (!strcmp(arg, QUARKCOIN_KERNNAME))
+		return KL_QUARKCOIN;
 
 	return KL_NONE;
 }
@@ -230,7 +232,7 @@ char *set_kernel(char *arg)
 	gpus[device++].kernel = kern;
 	if (kern >= KL_DARKCOIN)
 		dm_mode = DM_BITCOIN;
-	else if(kern >= KL_QUBITCOIN)
+	else if(kern >= KL_QUARKCOIN)
 		dm_mode = DM_QUARKCOIN;
 	else
 		dm_mode = DM_LITECOIN;
@@ -1357,6 +1359,9 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 			case KL_QUBITCOIN:
 				cgpu->kname = QUBITCOIN_KERNNAME;
 				break;
+			case KL_QUARKCOIN:
+				cgpu->kname = QUARKCOIN_KERNNAME;
+				break;
 			default:
 				break;
 		}
@@ -1394,6 +1399,7 @@ static bool opencl_thread_init(struct thr_info *thr)
 		break;
 	case KL_DARKCOIN:
 	case KL_QUBITCOIN:
+	case KL_QUARKCOIN:
 		thrdata->queue_kernel_parameters = &queue_sph_kernel;
 		break;
 	default:

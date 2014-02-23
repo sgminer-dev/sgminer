@@ -44,6 +44,7 @@ sgminer_SOURCES += adl.c adl.h adl_functions.h
 sgminer_SOURCES += scrypt.c scrypt.h
 sgminer_SOURCES += darkcoin.c darkcoin.h
 sgminer_SOURCES += qubitcoin.c qubitcoin.h
+sgminer_SOURCES += quarkcoin.c quarkcoin.h
 sgminer_SOURCES += kernel/*.cl
 
 bin_SCRIPTS	= $(top_srcdir)/kernel/*.cl

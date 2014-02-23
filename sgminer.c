@@ -4233,6 +4233,9 @@ void write_config(FILE *fcfg)
 				case KL_QUBITCOIN:
 					fprintf(fcfg, QUBITCOIN_KERNNAME);
 					break;
+				case KL_QUARKCOIN:
+					fprintf(fcfg, QUARKCOIN_KERNNAME);
+					break;
 			}
 		}
 
@@ -6043,6 +6046,9 @@ static void rebuild_nonce(struct work *work, uint32_t nonce)
 		case KL_QUBITCOIN:
 			qubitcoin_regenhash(work);
 			break;
+		case KL_QUARKCOIN:
+			quarkcoin_regenhash(work);
+			break;
 		default:
 			scrypt_regenhash(work);
 			break;
@@ -6056,7 +6062,7 @@ bool test_nonce(struct work *work, uint32_t nonce)
 	uint32_t diff1targ;
 
 	rebuild_nonce(work, nonce);
-	diff1targ = 0x000000ffUL;
+	diff1targ = 0x0000ffffUL;
 
 	return (le32toh(*hash_32) <= diff1targ);
 }
