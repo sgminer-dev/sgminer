@@ -66,7 +66,7 @@ networks would make it invalidate the work from each other.
 
 ## Can I mine with different login credentials or pools for each separate device?
 
-No. Run separate instances with `-d`.
+No. Run per-device instances with `-d`.
 
 
 ## Can I put multiple pools in the config file?
@@ -78,7 +78,7 @@ either on the command line or via the menu after startup and choose
 
 ## The build fails with `gcc is unable to build a binary`.
 
-Remove the "-march=native" component of your `CFLAGS` as your version
+Remove the `-march=native` component of your `CFLAGS` as your version
 of gcc does not support it.
 
 
