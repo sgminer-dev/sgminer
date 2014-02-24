@@ -225,7 +225,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	cl_uint numPlatforms;
 	cl_uint numDevices;
 	cl_int status;
-	int nfactor = (1<<opt_nfactor);
+	cl_uint nfactor = (1<<opt_nfactor);
 
 	status = clGetPlatformIDs(0, NULL, &numPlatforms);
 	if (status != CL_SUCCESS) {
