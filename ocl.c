@@ -523,7 +523,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	if (clState->goffset)
 		strcat(binaryfilename, "g");
 
-	sprintf(numbuf, "lg%utc%un%u", cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency,opt_nfactor);
+	sprintf(numbuf, "lg%utc%unf%u", cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency,opt_nfactor);
 	strcat(binaryfilename, numbuf);
 
 	sprintf(numbuf, "w%d", (int)clState->wsize);
