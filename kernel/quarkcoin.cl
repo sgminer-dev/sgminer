@@ -204,7 +204,8 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
     hash.h8[6] = SWAP8(BMW_h1[14]);
     hash.h8[7] = SWAP8(BMW_h1[15]);
 
-    if((hash.h1[7] & 0x8) != 0) {
+    bool dec = ((hash.h1[7] & 0x8) != 0);
+    {
 
         // groestl
     
@@ -247,9 +248,10 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
         for (unsigned int u = 0; u < 16; u ++)
             H[u] ^= xH[u];
         for (unsigned int u = 0; u < 8; u ++)
-            hash.h8[u] = DEC64E(H[u + 8]);
+            hash.h8[u] = (dec ? DEC64E(H[u + 8]) : hash.h8[u]);
 
-    } else {
+    }
+    {
 
         // skein
     
@@ -269,15 +271,14 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
         bcount = 0;
         m0 = m1 = m2 = m3 = m4 = m5 = m6 = m7 = 0;
         UBI_BIG(510, 8);
-        hash.h8[0] = SWAP8(h0);
-        hash.h8[1] = SWAP8(h1);
-        hash.h8[2] = SWAP8(h2);
-        hash.h8[3] = SWAP8(h3);
-        hash.h8[4] = SWAP8(h4);
-        hash.h8[5] = SWAP8(h5);
-        hash.h8[6] = SWAP8(h6);
-        hash.h8[7] = SWAP8(h7);
-
+        hash.h8[0] = (!dec ? SWAP8(h0) : hash.h8[0]);
+        hash.h8[1] = (!dec ? SWAP8(h1) : hash.h8[1]);
+        hash.h8[2] = (!dec ? SWAP8(h2) : hash.h8[2]);
+        hash.h8[3] = (!dec ? SWAP8(h3) : hash.h8[3]);
+        hash.h8[4] = (!dec ? SWAP8(h4) : hash.h8[4]);
+        hash.h8[5] = (!dec ? SWAP8(h5) : hash.h8[5]);
+        hash.h8[6] = (!dec ? SWAP8(h6) : hash.h8[6]);
+        hash.h8[7] = (!dec ? SWAP8(h7) : hash.h8[7]);
     }
  
     // groestl
@@ -366,8 +367,9 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
     hash.h8[5] = DEC64E(h6l);
     hash.h8[6] = DEC64E(h7h);
     hash.h8[7] = DEC64E(h7l);
-    
-    if((hash.h1[7] & 0x8) != 0) {
+
+    dec = ((hash.h1[7] & 0x8) != 0);
+    {
 
         // blake
     
@@ -405,16 +407,17 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
     
         COMPRESS64;
     
-        hash.h8[0] = H0;
-        hash.h8[1] = H1;
-        hash.h8[2] = H2;
-        hash.h8[3] = H3;
-        hash.h8[4] = H4;
-        hash.h8[5] = H5;
-        hash.h8[6] = H6;
-        hash.h8[7] = H7;
+        hash.h8[0] = (dec ? H0 : hash.h8[0]);
+        hash.h8[1] = (dec ? H1 : hash.h8[1]);
+        hash.h8[2] = (dec ? H2 : hash.h8[2]);
+        hash.h8[3] = (dec ? H3 : hash.h8[3]);
+        hash.h8[4] = (dec ? H4 : hash.h8[4]);
+        hash.h8[5] = (dec ? H5 : hash.h8[5]);
+        hash.h8[6] = (dec ? H6 : hash.h8[6]);
+        hash.h8[7] = (dec ? H7 : hash.h8[7]);
 
-    } else {
+    }
+    {
  
         // bmw
         sph_u64 BMW_H[16];
@@ -460,14 +463,14 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
     #undef H
     #undef dH
     
-        hash.h8[0] = SWAP8(BMW_h1[8]);
-        hash.h8[1] = SWAP8(BMW_h1[9]);
-        hash.h8[2] = SWAP8(BMW_h1[10]);
-        hash.h8[3] = SWAP8(BMW_h1[11]);
-        hash.h8[4] = SWAP8(BMW_h1[12]);
-        hash.h8[5] = SWAP8(BMW_h1[13]);
-        hash.h8[6] = SWAP8(BMW_h1[14]);
-        hash.h8[7] = SWAP8(BMW_h1[15]);
+        hash.h8[0] = (!dec ? SWAP8(BMW_h1[8]) : hash.h8[0]);
+        hash.h8[1] = (!dec ? SWAP8(BMW_h1[9]) : hash.h8[1]);
+        hash.h8[2] = (!dec ? SWAP8(BMW_h1[10]) : hash.h8[2]);
+        hash.h8[3] = (!dec ? SWAP8(BMW_h1[11]) : hash.h8[3]);
+        hash.h8[4] = (!dec ? SWAP8(BMW_h1[12]) : hash.h8[4]);
+        hash.h8[5] = (!dec ? SWAP8(BMW_h1[13]) : hash.h8[5]);
+        hash.h8[6] = (!dec ? SWAP8(BMW_h1[14]) : hash.h8[6]);
+        hash.h8[7] = (!dec ? SWAP8(BMW_h1[15]) : hash.h8[7]);
 
     }
 
@@ -536,7 +539,8 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
     hash.h8[6] = SWAP8(h6);
     hash.h8[7] = SWAP8(h7);
 
-    if((hash.h1[7] & 0x8) != 0) {
+    dec = ((hash.h1[7] & 0x8) != 0);
+    {
 
         // keccak
     
@@ -567,16 +571,17 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
         a10 = ~a10;
         a20 = ~a20;
     
-        hash.h8[0] = SWAP8(a00);
-        hash.h8[1] = SWAP8(a10);
-        hash.h8[2] = SWAP8(a20);
-        hash.h8[3] = SWAP8(a30);
-        hash.h8[4] = SWAP8(a40);
-        hash.h8[5] = SWAP8(a01);
-        hash.h8[6] = SWAP8(a11);
-        hash.h8[7] = SWAP8(a21);
+        hash.h8[0] = (dec ? SWAP8(a00) : hash.h8[0]);
+        hash.h8[1] = (dec ? SWAP8(a10) : hash.h8[1]);
+        hash.h8[2] = (dec ? SWAP8(a20) : hash.h8[2]);
+        hash.h8[3] = (dec ? SWAP8(a30) : hash.h8[3]);
+        hash.h8[4] = (dec ? SWAP8(a40) : hash.h8[4]);
+        hash.h8[5] = (dec ? SWAP8(a01) : hash.h8[5]);
+        hash.h8[6] = (dec ? SWAP8(a11) : hash.h8[6]);
+        hash.h8[7] = (dec ? SWAP8(a21) : hash.h8[7]);
 
-    } else {
+    }
+    {
 
         // jh
     
@@ -613,14 +618,14 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
         h4h ^= 0x80;
         h7l ^= 0x2000000000000;
     
-        hash.h8[0] = DEC64E(h4h);
-        hash.h8[1] = DEC64E(h4l);
-        hash.h8[2] = DEC64E(h5h);
-        hash.h8[3] = DEC64E(h5l);
-        hash.h8[4] = DEC64E(h6h);
-        hash.h8[5] = DEC64E(h6l);
-        hash.h8[6] = DEC64E(h7h);
-        hash.h8[7] = DEC64E(h7l);
+        hash.h8[0] = (!dec ? DEC64E(h4h) : hash.h8[0]);
+        hash.h8[1] = (!dec ? DEC64E(h4l) : hash.h8[1]);
+        hash.h8[2] = (!dec ? DEC64E(h5h) : hash.h8[2]);
+        hash.h8[3] = (!dec ? DEC64E(h5l) : hash.h8[3]);
+        hash.h8[4] = (!dec ? DEC64E(h6h) : hash.h8[4]);
+        hash.h8[5] = (!dec ? DEC64E(h6l) : hash.h8[5]);
+        hash.h8[6] = (!dec ? DEC64E(h7h) : hash.h8[6]);
+        hash.h8[7] = (!dec ? DEC64E(h7l) : hash.h8[7]);
  
     }
 
