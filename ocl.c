@@ -459,7 +459,8 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 			break;
 	}
 
-	if (cgpu->vwidth)
+	/* Vectors are hard-set to 1 above. */
+	if (likely(cgpu->vwidth))
 		clState->vwidth = cgpu->vwidth;
 	else {
 		clState->vwidth = preferred_vwidth;
