@@ -3942,7 +3942,7 @@ void api(int api_thr_id)
 					if (strchr(cmd, CMDJOIN)) {
 						firstjoin = isjoin = true;
 						// cmd + leading '|' + '\0'
-						cmdsbuf = malloc(strlen(cmd) + 2);
+						cmdsbuf = (char *)malloc(strlen(cmd) + 2);
 						if (!cmdsbuf)
 							quithere(1, "OOM cmdsbuf");
 						strcpy(cmdsbuf, "|");
