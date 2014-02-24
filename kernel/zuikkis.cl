@@ -28,6 +28,11 @@
  * online backup system.
  */
 
+/* Backwards compatibility, if NFACTOR not defined, default to 1024 scrypt */
+#ifndef NFACTOR
+#define NFACTOR 1024
+#endif
+
 __constant uint ES[2] = { 0x00FF00FF, 0xFF00FF00 };
 __constant uint K[] = {
 	0x428a2f98U,
@@ -759,11 +764,11 @@ void scrypt_core(uint4 X[8], __global uint4*restrict lookup)
 {
 	shittify(X);
 	const uint zSIZE = 8;
-	const uint ySIZE = (1024/LOOKUP_GAP+(1024%LOOKUP_GAP>0));
+	const uint ySIZE = (NFACTOR/LOOKUP_GAP+(NFACTOR%LOOKUP_GAP>0));
 	const uint xSIZE = CONCURRENT_THREADS;
 	uint x = get_global_id(0)%xSIZE;
 
-	for(uint y=0; y<1024/LOOKUP_GAP; ++y)
+	for(uint y=0; y<(NFACTOR/LOOKUP_GAP); ++y)
 	{
 
 		for(uint z=0; z<zSIZE; ++z)
@@ -771,9 +776,9 @@ void scrypt_core(uint4 X[8], __global uint4*restrict lookup)
 		for(uint i=0; i<LOOKUP_GAP; ++i) 
 			salsa(X);
 	}
-	for (uint i=0; i<1024; ++i) 
+	for (uint i=0; i<NFACTOR; ++i) 
 	{
-		uint j = X[7].x & K[85];
+		uint j = X[7].x & (NFACTOR-1);
 		uint y = (j/LOOKUP_GAP);
 
 		if (j&1)
@@ -823,11 +828,11 @@ const uint4 midstate0, const uint4 midstate16, const uint target)
 	{
 		pad0 = tstate0;
 		pad1 = tstate1;
-		X[i<<1 ] = ostate0;
-		X[(i<<1)+1] = ostate1;
+		X[i*2 ] = ostate0;
+		X[i*2+1] = ostate1;
 
 		SHA256(&pad0,&pad1, data, (uint4)(i+1,K[84],0,0), (uint4)(0,0,0,0), (uint4)(0,0,0, K[87]));
-		SHA256(X+(i<<1),X+(i<<1)+1, pad0, pad1, (uint4)(K[84], 0U, 0U, 0U), (uint4)(0U, 0U, 0U, K[88]));
+		SHA256(X+i*2,X+i*2+1, pad0, pad1, (uint4)(K[84], 0U, 0U, 0U), (uint4)(0U, 0U, 0U, K[88]));
 	}
 	scrypt_core(X,padcache);
 	SHA256(&tmp0,&tmp1, X[0], X[1], X[2], X[3]);

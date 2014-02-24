@@ -225,6 +225,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	cl_uint numPlatforms;
 	cl_uint numDevices;
 	cl_int status;
+	int nfactor = (1<<opt_nfactor);
 
 	status = clGetPlatformIDs(0, NULL, &numPlatforms);
 	if (status != CL_SUCCESS) {
@@ -481,7 +482,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	if (!cgpu->opt_tc) {
 		unsigned int sixtyfours;
 
-		sixtyfours =  cgpu->max_alloc / 131072 / 64 - 1;
+		sixtyfours =  cgpu->max_alloc / 131072 / 64 / (nfactor/1024)- 1;
 		cgpu->thread_concurrency = sixtyfours * 64;
 		if (cgpu->shaders && cgpu->thread_concurrency > cgpu->shaders) {
 			cgpu->thread_concurrency -= cgpu->thread_concurrency % cgpu->shaders;
@@ -521,7 +522,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	if (clState->goffset)
 		strcat(binaryfilename, "g");
 
-	sprintf(numbuf, "lg%utc%u", cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency);
+	sprintf(numbuf, "lg%utc%un%u", cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency,opt_nfactor);
 	strcat(binaryfilename, numbuf);
 
 	sprintf(numbuf, "w%d", (int)clState->wsize);
@@ -587,8 +588,8 @@ build:
 	/* create a cl program executable for all the devices specified */
 	char *CompilerOptions = (char *)calloc(1, 256);
 
-	sprintf(CompilerOptions, "-D LOOKUP_GAP=%d -D CONCURRENT_THREADS=%d -D WORKSIZE=%d",
-			cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, (int)clState->wsize);
+	sprintf(CompilerOptions, "-D LOOKUP_GAP=%d -D CONCURRENT_THREADS=%d -D WORKSIZE=%d -D NFACTOR=%d",
+			cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, (int)clState->wsize,(unsigned int)nfactor);
 
 	applog(LOG_DEBUG, "Setting worksize to %d", (int)(clState->wsize));
 	if (clState->vwidth > 1)
@@ -777,7 +778,7 @@ built:
 		return NULL;
 	}
 
-	size_t ipt = (1024 / cgpu->lookup_gap + (1024 % cgpu->lookup_gap > 0));
+	size_t ipt = (nfactor / cgpu->lookup_gap + (nfactor % cgpu->lookup_gap > 0));
 	size_t bufsize = 128 * ipt * cgpu->thread_concurrency;
 
 	/* Use the max alloc value which has been rounded to a power of

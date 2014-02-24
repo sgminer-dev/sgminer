@@ -28,6 +28,11 @@
  * online backup system.
  */
 
+/* Backwards compatibility, if NFACTOR not defined, default to 1024 scrypt */
+#ifndef NFACTOR
+#define NFACTOR 1024
+#endif
+
 __constant uint ES[2] = { 0x00FF00FF, 0xFF00FF00 };
 __constant uint K[] = {
 	0x428a2f98U,
@@ -759,11 +764,11 @@ void scrypt_core(uint4 X[8], __global uint4*restrict lookup)
 {
 	shittify(X);
 	const uint zSIZE = 8;
-	const uint ySIZE = (1024/LOOKUP_GAP+(1024%LOOKUP_GAP>0));
+	const uint ySIZE = (NFACTOR/LOOKUP_GAP+(NFACTOR%LOOKUP_GAP>0));
 	const uint xSIZE = CONCURRENT_THREADS;
 	uint x = get_global_id(0)%xSIZE;
 
-	for(uint y=0; y<1024/LOOKUP_GAP; ++y)
+	for(uint y=0; y<NFACTOR/LOOKUP_GAP; ++y)
 	{
 #pragma unroll
 		for(uint z=0; z<zSIZE; ++z)
@@ -773,18 +778,18 @@ void scrypt_core(uint4 X[8], __global uint4*restrict lookup)
 	}
 #if (LOOKUP_GAP != 1) && (LOOKUP_GAP != 2) && (LOOKUP_GAP != 4) && (LOOKUP_GAP != 8)
 	{
-		uint y = (1024/LOOKUP_GAP);
+		uint y = (NFACTOR/LOOKUP_GAP);
 #pragma unroll
 		for(uint z=0; z<zSIZE; ++z)
 			lookup[CO] = X[z];
-		for(uint i=0; i<1024%LOOKUP_GAP; ++i)
+		for(uint i=0; i<NFACTOR%LOOKUP_GAP; ++i)
 			salsa(X); 
 	}
 #endif
-	for (uint i=0; i<1024; ++i) 
+	for (uint i=0; i<NFACTOR; ++i) 
 	{
 		uint4 V[8];
-		uint j = X[7].x & K[85];
+		uint j = X[7].x & (NFACTOR-1);
 		uint y = (j/LOOKUP_GAP);
 #pragma unroll
 		for(uint z=0; z<zSIZE; ++z)

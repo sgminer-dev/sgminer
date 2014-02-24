@@ -92,6 +92,7 @@ int opt_log_interval = 5;
 int opt_queue = 1;
 int opt_scantime = 7;
 int opt_expiry = 28;
+int opt_nfactor = 10;
 static const bool opt_time = true;
 unsigned long long global_hashrate;
 unsigned long global_quota_gcd = 1;
@@ -1105,6 +1106,9 @@ static struct opt_table opt_config_table[] = {
 			opt_set_bool, &opt_compact,
 			"Use compact display without per device statistics"),
 #endif
+	OPT_WITH_ARG("--nfactor",
+		     set_int_0_to_9999, opt_show_intval, &opt_nfactor,
+		     "Set scrypt nfactor, default: 10. Currently use 11 for vertcoin!"),
 	OPT_WITHOUT_ARG("--debug|-D",
 		     enable_debug, &opt_debug,
 		     "Enable debug output"),
