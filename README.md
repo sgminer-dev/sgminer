@@ -81,7 +81,9 @@ directory directly, or `make install` if you wish to install
 
 ### Windows build instructions
 
-See `doc/windows-build.txt` (might be outdated).
+See `doc/windows-build.txt` for MinGW compilation and cross-compiation,
+`doc/cygwin-build.txt` for building using Cygwin, or use the provided
+`winbuild` Microsoft Visual Studio project (tested on MSVS2010).
 
 
 ## Basic Usage
