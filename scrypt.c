@@ -402,10 +402,6 @@ static void scrypt_n_1_1_256_sp(const uint32_t* input, char* scratchpad, uint32_
 	PBKDF2_SHA256_80_128_32(input, X, ostate);
 }
 
-/* 131583 rounded up to 4 byte alignment */
-//#define SCRATCHBUF_SIZE (131584)
-//#define SCRATCHBUF_SIZE (262207)
-
 void scrypt_regenhash(struct work *work)
 {
 	uint32_t data[20];
@@ -415,7 +411,7 @@ void scrypt_regenhash(struct work *work)
  	
 	be32enc_vect(data, (const uint32_t *)work->data, 19);
 	data[19] = htobe32(*nonce);
-	//scratchbuf = alloca(SCRATCHBUF_SIZE);
+
 	scratchbuf = (char *)alloca((1 << opt_nfactor) * 128 + 512);
 	scrypt_n_1_1_256_sp(data, scratchbuf, ohash, (1 << opt_nfactor));
 	flip32(ohash, ohash);
