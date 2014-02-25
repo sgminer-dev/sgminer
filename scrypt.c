@@ -420,6 +420,7 @@ void scrypt_regenhash(struct work *work)
 static const uint32_t diff1targ = 0x0000ffff;
 
 /* Used externally as confirmation of correct OCL code */
+/* FIXME: find reference in git blame and see why it was present, remove if obsolete */
 /*
 int scrypt_test(unsigned char *pdata, const unsigned char *ptarget, uint32_t nonce)
 {
@@ -430,7 +431,7 @@ int scrypt_test(unsigned char *pdata, const unsigned char *ptarget, uint32_t non
 	be32enc_vect(data, (const uint32_t *)pdata, 19);
 	data[19] = htobe32(nonce);
 	scratchbuf = (char *)alloca(SCRATCHBUF_SIZE);
-	scrypt_1024_1_1_256_sp(data, scratchbuf, ohash);
+	scrypt_n_1_1_256_sp(data, scratchbuf, ohash, (1 << opt_nfactor));
 	tmp_hash7 = be32toh(ohash[7]);
 
 	applog(LOG_DEBUG, "htarget %08lx diff1 %08lx hash %08lx",
@@ -469,7 +470,7 @@ bool scanhash_scrypt(struct thr_info *thr, const unsigned char __maybe_unused *p
 
 		*nonce = ++n;
 		data[19] = htobe32(n);
-		scrypt_1024_1_1_256_sp(data, scratchbuf, ostate);
+		scrypt_n_1_1_256_sp(data, scratchbuf, ostate, (1 << opt_nfactor));
 		tmp_hash7 = be32toh(ostate[7]);
 
 		if (unlikely(tmp_hash7 <= Htarg)) {
