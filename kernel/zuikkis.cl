@@ -798,10 +798,10 @@ void scrypt_core(uint4 X[8], __global uint4*restrict lookup)
 
 		for(uint z=0; z<zSIZE; ++z)
 			lookup[CO] = X[z];
-		for(uint i=0; i<LOOKUP_GAP; ++i) 
+		for(uint i=0; i<LOOKUP_GAP; ++i)
 			salsa(X);
 	}
-	for (uint i=0; i<N[NFACTOR]; ++i) 
+	for (uint i=0; i<N[NFACTOR]; ++i)
 	{
 		uint j = X[7].x & (N[NFACTOR]-1);
 		uint y = (j/LOOKUP_GAP);
@@ -849,7 +849,7 @@ const uint4 midstate0, const uint4 midstate16, const uint target)
 	SHA256(&tstate0, &tstate1, input[0],input[1],input[2],input[3]);
 
 
-	for (uint i=0; i<4; i++) 
+	for (uint i=0; i<4; i++)
 	{
 		pad0 = tstate0;
 		pad1 = tstate1;
