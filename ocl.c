@@ -225,7 +225,9 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	cl_uint numPlatforms;
 	cl_uint numDevices;
 	cl_int status;
-	cl_uint nfactor = (1<<opt_nfactor);
+
+	/* Scrypt CPU/Memory cost parameter */
+	cl_uint N = (1 << opt_nfactor);
 
 	status = clGetPlatformIDs(0, NULL, &numPlatforms);
 	if (status != CL_SUCCESS) {
@@ -483,7 +485,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	if (!cgpu->opt_tc) {
 		unsigned int sixtyfours;
 
-		sixtyfours =  cgpu->max_alloc / 131072 / 64 / (nfactor/1024) - 1;
+		sixtyfours =  cgpu->max_alloc / 131072 / 64 / (N/1024) - 1;
 		cgpu->thread_concurrency = sixtyfours * 64;
 		if (cgpu->shaders && cgpu->thread_concurrency > cgpu->shaders) {
 			cgpu->thread_concurrency -= cgpu->thread_concurrency % cgpu->shaders;
@@ -779,7 +781,7 @@ built:
 		return NULL;
 	}
 
-	size_t ipt = (nfactor / cgpu->lookup_gap + (nfactor % cgpu->lookup_gap > 0));
+	size_t ipt = (N / cgpu->lookup_gap + (N % cgpu->lookup_gap > 0));
 	size_t bufsize = 128 * ipt * cgpu->thread_concurrency;
 
 	/* Use the max alloc value which has been rounded to a power of
