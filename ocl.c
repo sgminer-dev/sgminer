@@ -592,7 +592,7 @@ build:
 	char *CompilerOptions = (char *)calloc(1, 256);
 
 	sprintf(CompilerOptions, "-D LOOKUP_GAP=%d -D CONCURRENT_THREADS=%d -D WORKSIZE=%d -D NFACTOR=%d",
-			cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, (int)clState->wsize,(unsigned int)nfactor);
+			cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, (int)clState->wsize, (unsigned int) opt_nfactor);
 
 	applog(LOG_DEBUG, "Setting worksize to %d", (int)(clState->wsize));
 	if (clState->vwidth > 1)
