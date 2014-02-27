@@ -57,14 +57,17 @@ client if you want to customise the display.
 
 ## Can I mine on servers from different networks...
 
-...(e.g. litecoin and dogecoin) at the same time?
+...(e.g. Litecoin and Dogecoin) at the same time?
 
 No. `sgminer` keeps a database of the block it's working on to ensure
 it does not work on stale blocks, and having different blocks from two
 networks would make it invalidate the work from each other.
 
+A workaround is running separate instances (see next question).
 
-## Can I mine with different login credentials or pools for each separate device?
+
+## Can I mine with different login credentials or pools for each separate
+device?
 
 No. Run per-device instances with `-d`.
 
