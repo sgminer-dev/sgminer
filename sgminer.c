@@ -2176,7 +2176,7 @@ static void curses_print_status(void)
 		       have_longpoll ? "with": "without");
 	} else {
 		cg_mvwprintw(statuswin, ++line, 0, "Connected to %s (%s) diff %s as user %s",
-			     pool->poolname,
+			     opt_incognito ? "<incognito>" : pool->poolname,
 			     pool->has_stratum ? "stratum" : (pool->has_gbt ? "GBT" : "longpoll"),
 			     pool->diff,
 			     opt_incognito ? "<incognito>" : pool->rpc_user);
@@ -4499,7 +4499,6 @@ static void display_pools(void)
 	struct pool *pool;
 	int selected, i;
 	char input;
-	char *disp_name;
 
 	opt_loginput = true;
 	immedok(logwin, true);
@@ -4529,16 +4528,11 @@ updated:
 			break;
 		}
 
-		disp_name = pool->poolname;
-		if (strlen(disp_name) < 1)
-		{
-			disp_name = pool->rpc_url;
-		}
 		wlogprint("%s Quota %d  Prio %d '%s'  User:%s\n",
 			  pool->idle ? "Dead" : "Alive",
 			  pool->quota,
 			  pool->prio,
-			  disp_name,
+			  opt_incognito ? "<incognito>" : pool->poolname,
 			  opt_incognito ? "<incognito>" : pool->rpc_user);
 		wattroff(logwin, A_BOLD | A_DIM);
 	}
