@@ -4673,15 +4673,16 @@ static void display_options(void)
 	clear_logwin();
 retry:
 	wlogprint("[N]ormal [C]lear [S]ilent mode (disable all output)\n");
-	wlogprint("[D]ebug:%s\n[P]er-device:%s\n[Q]uiet:%s\n[V]erbose:%s\n"
-		  "[R]PC debug:%s\n[W]orkTime details:%s\nco[M]pact: %s\n"
-		  "[L]og interval:%d\n[Z]ero statistics\n",
+	wlogprint("[D]ebug: %s\n[P]er-device: %s\n[Q]uiet: %s\n[V]erbose: %s\n"
+		  "[R]PC debug: %s\n[W]orkTime details: %s\n[I]ncognito: %s\n"
+		  "co[M]pact: %s\n[L]og interval: %d\n[Z]ero statistics\n",
 		opt_debug ? "on" : "off",
 	        want_per_device_stats? "on" : "off",
 		opt_quiet ? "on" : "off",
 		opt_log_output ? "on" : "off",
 		opt_protocol ? "on" : "off",
 		opt_worktime ? "on" : "off",
+		opt_incognito ? "on" : "off",
 		opt_compact ? "on" : "off",
 		opt_log_interval);
 	wlogprint("Select an option or any other key to return\n");
@@ -4713,6 +4714,10 @@ retry:
 		if (opt_debug)
 			opt_quiet = false;
 		wlogprint("Debug mode %s\n", opt_debug ? "enabled" : "disabled");
+		goto retry;
+	} else if (!strncasecmp(&input, "i", 1)) {
+		opt_incognito ^= true;
+		wlogprint("Incognito mode %s\n", opt_compact ? "enabled" : "disabled");
 		goto retry;
 	} else if (!strncasecmp(&input, "m", 1)) {
 		opt_compact ^= true;
