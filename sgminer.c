@@ -755,8 +755,12 @@ static char *set_poolname(char *arg)
 		add_pool();
 	pool = pools[json_array_index];
 
-	applog(LOG_DEBUG, "Setting pool %i name to %s", pool->pool_no, arg);
-	opt_set_charp(arg, &pool->poolname);
+	if (opt_incognito) {
+		applog(LOG_DEBUG, "Incognito mode requested, not setting pool %i name", pool->pool_no);
+	} else {
+		applog(LOG_DEBUG, "Setting pool %i name to %s", pool->pool_no, arg);
+		opt_set_charp(arg, &pool->poolname);
+	}
 
 	return NULL;
 }
