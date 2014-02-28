@@ -36,12 +36,15 @@
 #include <string.h>
 
 char* get_pool_name(struct pool *pool) {
-    if (opt_incognito) return POOL_NAME_INCOGNITO;
+    if (opt_incognito) return "<pool>";
+
     if (strcmp(pool->poolname, "") == 0) return pool->sockaddr_url;
+
     return pool->poolname;
 }
 
 char* get_pool_user(struct pool *pool) {
-    if (opt_incognito) return POOL_USER_INCOGNITO;
+    if (opt_incognito) return "<user>";
+
     return pool->rpc_user;
 }
