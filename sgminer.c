@@ -55,6 +55,7 @@ char *curly = ":D";
 #include "driver-opencl.h"
 #include "bench_block.h"
 #include "scrypt.h"
+#include "pool.h"
 
 #if defined(unix) || defined(__APPLE__)
 	#include <errno.h>
@@ -816,7 +817,7 @@ static char *set_pool_state(char *arg)
 		add_pool();
 	pool = pools[json_array_index];
 
-	applog(LOG_INFO, "Setting pool %s state to %s", pool->poolname, arg);
+	applog(LOG_INFO, "Setting pool %s state to %s", get_pool_name(pool), arg);
 	if (strcmp(arg, "disabled") == 0) {
 		pool->state = POOL_DISABLED;
 	} else if (strcmp(arg, "enabled") == 0) {
@@ -2441,7 +2442,11 @@ share_result(json_t *val, json_t *res, json_t *err, const struct work *work,
 		if (!QUIET) {
 			if (total_pools > 1) {
 				applog(LOG_NOTICE, "Accepted %s %s %d at %s %s%s",
-				       hashshow, cgpu->drv->name, cgpu->device_id, pool->poolname, resubmit ? "(resubmit)" : "", worktime);
+				       hashshow,
+				       cgpu->drv->name,
+				       cgpu->device_id,
+				       get_pool_name(pool),
+				       resubmit ? "(resubmit)" : "", worktime);
 			} else
 				applog(LOG_NOTICE, "Accepted %s %s %d %s%s",
 				       hashshow, cgpu->drv->name, cgpu->device_id, resubmit ? "(resubmit)" : "", worktime);
