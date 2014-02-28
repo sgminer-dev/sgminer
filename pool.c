@@ -29,6 +29,7 @@
 
 #include "config.h"
 #include "miner.h"
+#include "pool.h"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -38,4 +39,9 @@ char* get_pool_name(struct pool *pool) {
     if (opt_incognito) return POOL_NAME_INCOGNITO;
     if (strcmp(pool->poolname, "") == 0) return pool->sockaddr_url;
     return pool->poolname;
+}
+
+char* get_pool_user(struct pool *pool) {
+    if (opt_incognito) return POOL_USER_INCOGNITO;
+    return pool->rpc_user;
 }
