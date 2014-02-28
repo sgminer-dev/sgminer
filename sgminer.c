@@ -755,12 +755,8 @@ static char *set_poolname(char *arg)
 		add_pool();
 	pool = pools[json_array_index];
 
-	if (opt_incognito) {
-		applog(LOG_DEBUG, "Incognito mode requested, not setting pool %i name", pool->pool_no);
-	} else {
-		applog(LOG_DEBUG, "Setting pool %i name to %s", pool->pool_no, arg);
-		opt_set_charp(arg, &pool->poolname);
-	}
+	applog(LOG_DEBUG, "Setting pool %i name to %s", pool->pool_no, arg);
+	opt_set_charp(arg, &pool->poolname);
 
 	return NULL;
 }
@@ -2175,19 +2171,18 @@ static void curses_print_status(void)
 		local_work, total_go, total_ro);
 	wclrtoeol(statuswin);
 
-	if (!opt_incognito) {
-		if (shared_strategy() && total_pools > 1) {
-			cg_mvwprintw(statuswin, ++line, 0, "Connected to multiple pools %s block change notify",
-				     have_longpoll ? "with": "without");
-		} else {
-			cg_mvwprintw(statuswin, ++line, 0, "Connected to %s (%s) diff %s as user %s",
-				     pool->poolname,
-				     pool->has_stratum ? "stratum" : (pool->has_gbt ? "GBT" : "longpoll"),
-				     pool->diff, pool->rpc_user);
-		}
-
-		wclrtoeol(statuswin);
+	if (shared_strategy() && total_pools > 1) {
+		cg_mvwprintw(statuswin, ++line, 0, "Connected to multiple pools %s block change notify",
+		       have_longpoll ? "with": "without");
+	} else {
+		cg_mvwprintw(statuswin, ++line, 0, "Connected to %s (%s) diff %s as user %s",
+			     pool->poolname,
+			     pool->has_stratum ? "stratum" : (pool->has_gbt ? "GBT" : "longpoll"),
+			     pool->diff,
+			     opt_incognito ? "<incognito>" : pool->rpc_user);
 	}
+
+	wclrtoeol(statuswin);
 
 	cg_mvwprintw(statuswin, ++line, 0, "Block: %s...  Diff:%s  Started: %s  Best share: %s   ",
 		     prev_block, block_diff, blocktime, best_share);
@@ -4539,11 +4534,12 @@ updated:
 		{
 			disp_name = pool->rpc_url;
 		}
-		wlogprint("%s Quota %d Prio %d: '%s'  User:%s\n",
-			pool->idle ? "Dead" : "Alive",
-			pool->quota,
-			pool->prio,
-			disp_name, pool->rpc_user);
+		wlogprint("%s Quota %d  Prio %d '%s'  User:%s\n",
+			  pool->idle ? "Dead" : "Alive",
+			  pool->quota,
+			  pool->prio,
+			  disp_name,
+			  opt_incognito ? "<incognito>" : pool->rpc_user);
 		wattroff(logwin, A_BOLD | A_DIM);
 	}
 retry:
@@ -7845,6 +7841,10 @@ int main(int argc, char *argv[])
 	strcat(sgminer_path, "\\");
 #endif
 
+	devcursor = 8;
+	logstart = devcursor + 1;
+	logcursor = logstart + 1;
+
 	block = (struct block *)calloc(sizeof(struct block), 1);
 	if (unlikely(!block))
 		quit (1, "main OOM");
@@ -7893,15 +7893,7 @@ int main(int argc, char *argv[])
 
 	if (use_curses)
 		enable_curses();
-
-	/* Print device stats from this line. */
-	devcursor = opt_incognito ? 7 : 8;
-#else
-	devcursor = 8;
 #endif
-
-	logstart = devcursor + 1;
-	logcursor = logstart + 1;
 
 	applog(LOG_WARNING, "Started %s", packagename);
 	if (cnfbuf) {
