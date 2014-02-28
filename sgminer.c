@@ -2180,7 +2180,7 @@ static void curses_print_status(void)
 			     opt_incognito ? "<incognito>" : pool->poolname,
 			     pool->has_stratum ? "stratum" : (pool->has_gbt ? "GBT" : "longpoll"),
 			     pool->diff,
-			     opt_incognito ? "<incognito>" : pool->rpc_user);
+			     get_pool_user(pool));
 	}
 
 	wclrtoeol(statuswin);
@@ -4540,7 +4540,7 @@ updated:
 			  pool->quota,
 			  pool->prio,
 			  opt_incognito ? "<incognito>" : pool->poolname,
-			  opt_incognito ? "<incognito>" : pool->rpc_user);
+			  get_pool_user(pool));
 		wattroff(logwin, A_BOLD | A_DIM);
 	}
 retry:
