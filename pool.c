@@ -35,7 +35,7 @@
 #include <string.h>
 
 char* get_pool_name(struct pool *pool) {
-    if (opt_incognito) return "<incognito>";
+    if (opt_incognito) return POOL_NAME_INCOGNITO;
     if (strcmp(pool->poolname, "") == 0) return pool->sockaddr_url;
     return pool->poolname;
 }
