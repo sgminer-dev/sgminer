@@ -2458,7 +2458,8 @@ share_result(json_t *val, json_t *res, json_t *err, const struct work *work,
 		 * This will only happen with the work returned from a
 		 * longpoll */
 		if (unlikely(pool->state == POOL_REJECTING)) {
-			applog(LOG_WARNING, "Rejecting %s now accepting shares, re-enabling!", pool->poolname);
+			applog(LOG_WARNING, "Rejecting %s now accepting shares, re-enabling!",
+			       opt_incognito ? "<incognito>" : pool->poolname);
 			enable_pool(pool);
 			switch_pools(NULL);
 		}
@@ -2485,7 +2486,7 @@ share_result(json_t *val, json_t *res, json_t *err, const struct work *work,
 
 			strcpy(reason, "");
 			if (total_pools > 1)
-				snprintf(where, sizeof(where), "%s", work->pool->poolname);
+				snprintf(where, sizeof(where), "%s", opt_incognito ? "<incognito>" : work->pool->poolname);
 			else
 				strcpy(where, "");
 
@@ -2528,7 +2529,8 @@ share_result(json_t *val, json_t *res, json_t *err, const struct work *work,
 
 			if (pool->seq_rejects > utility * 3) {
 				applog(LOG_WARNING, "%s rejected %d sequential shares, disabling!",
-				       pool->poolname, pool->seq_rejects);
+				       opt_incognito ? "<incognito>" : pool->poolname,
+				       pool->seq_rejects);
 				reject_pool(pool);
 				if (pool == current_pool())
 					switch_pools(NULL);
