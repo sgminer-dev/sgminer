@@ -1176,7 +1176,7 @@ static struct opt_table opt_config_table[] = {
 #ifdef HAVE_CURSES
 	OPT_WITHOUT_ARG("--incognito",
 			opt_set_bool, &opt_incognito,
-			"Do not display pool/user names in status window"),
+			"Do not display user name in status window"),
 #endif
 	OPT_WITH_ARG("--intensity|-I",
 		     set_intensity, NULL, NULL,
