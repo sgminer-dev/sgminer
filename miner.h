@@ -384,6 +384,7 @@ enum cl_kernels {
 	KL_QUARKCOIN,	// kernels starting from this will have difficulty calculated by using quarkcoin algorithm
 	KL_QUBITCOIN,
 	KL_DARKCOIN,	// kernels starting from this will have difficulty calculated by using bitcoin algorithm
+	KL_MYRIADCOIN_GROESTL,
 };
 
 enum dev_reason {

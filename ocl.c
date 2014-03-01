@@ -469,6 +469,11 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 			strcpy(filename, QUARKCOIN_KERNNAME".cl");
 			strcpy(binaryfilename, QUARKCOIN_KERNNAME);
 			break;
+		case KL_MYRIADCOIN_GROESTL:
+			applog(LOG_WARNING, "Kernel myriadcoin-groestl is experimental.");
+			strcpy(filename, MYRIADCOIN_GROESTL_KERNNAME".cl");
+			strcpy(binaryfilename, MYRIADCOIN_GROESTL_KERNNAME);
+			break;
 		case KL_NONE: /* Shouldn't happen */
 			break;
 	}
