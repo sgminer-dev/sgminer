@@ -261,6 +261,7 @@ exit 0</Command>
     <ClCompile Include="..\hexdump.c" />
     <ClCompile Include="..\logging.c" />
     <ClCompile Include="..\ocl.c" />
+    <ClCompile Include="..\pool.c" />
     <ClCompile Include="..\scrypt.c" />
     <ClCompile Include="..\sgminer.c" />
     <ClCompile Include="..\sha2.c" />
@@ -283,6 +284,7 @@ exit 0</Command>
     <ClInclude Include="..\logging.h" />
     <ClInclude Include="..\miner.h" />
     <ClInclude Include="..\ocl.h" />
+    <ClInclude Include="..\pool.h" />
     <ClInclude Include="..\scrypt.h" />
     <ClInclude Include="..\sha2.h" />
     <ClInclude Include="..\uthash.h" />
