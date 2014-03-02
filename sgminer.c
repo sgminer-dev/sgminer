@@ -4716,7 +4716,7 @@ retry:
 		goto retry;
 	} else if (!strncasecmp(&input, "i", 1)) {
 		opt_incognito ^= true;
-		wlogprint("Incognito mode %s\n", opt_compact ? "enabled" : "disabled");
+		wlogprint("Incognito mode %s\n", opt_incognito ? "enabled" : "disabled");
 		goto retry;
 	} else if (!strncasecmp(&input, "m", 1)) {
 		opt_compact ^= true;
