@@ -43,6 +43,7 @@
 #include "elist.h"
 #include "compat.h"
 #include "util.h"
+#include "pool.h"
 
 #define DEFAULT_SOCKWAIT 60
 
