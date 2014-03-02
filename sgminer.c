@@ -87,10 +87,8 @@ bool use_syslog;
 bool opt_quiet;
 bool opt_realquiet;
 bool opt_loginput;
-#ifdef HAVE_CURSES
 bool opt_compact;
 bool opt_incognito;
-#endif
 
 const int opt_cutofftemp = 95;
 int opt_log_interval = 5;
