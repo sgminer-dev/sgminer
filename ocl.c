@@ -451,8 +451,6 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 			strcpy(binaryfilename, ZUIKKIS_KERNNAME);
 			/* Kernel only supports lookup-gap 2 */
 			cgpu->lookup_gap = 2;
-			/* Kernel only supports worksize 256 */
-			cgpu->work_size = 256;
 			break;
 		case KL_NONE: /* Shouldn't happen */
 			break;
