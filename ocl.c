@@ -474,6 +474,11 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 			strcpy(filename, MYRIADCOIN_GROESTL_KERNNAME".cl");
 			strcpy(binaryfilename, MYRIADCOIN_GROESTL_KERNNAME);
 			break;
+		case KL_ANIMECOIN:
+			applog(LOG_WARNING, "Kernel animecoin is experimental.");
+			strcpy(filename, ANIMECOIN_KERNNAME".cl");
+			strcpy(binaryfilename, ANIMECOIN_KERNNAME);
+			break;
 		case KL_NONE: /* Shouldn't happen */
 			break;
 	}
