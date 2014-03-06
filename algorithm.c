@@ -10,8 +10,24 @@
 #include "algorithm.h"
 
 #include <inttypes.h>
+#include <string.h>
 
 typedef struct algorithm_t {
-    char    name[32]; /* Human-readable identifier */
+    char    name[20]; /* Human-readable identifier */
     uint8_t nfactor;  /* N factor (CPU/Memory tradeoff parameter) */
 } algorithm_t;
+
+void set_algorithm(algorithm_t* algo, char* newname) {
+    strncpy(algo->name, newname, sizeof(algo->name));
+    algo->name[sizeof(algo->name) - 1] = '\0';
+
+    if (strcmp(algo->name, "adaptive-nfactor") == 0) {
+	algo->nfactor = 11;
+    } else {
+	algo->nfactor = 10;
+    }
+}
+
+void set_algorithm_nfactor(algorithm_t* algo, uint8_t nfactor) {
+    algo->nfactor = nfactor;
+}
