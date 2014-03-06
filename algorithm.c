@@ -17,12 +17,17 @@ void set_algorithm(algorithm_t* algo, const char* newname) {
     algo->name[sizeof(algo->name) - 1] = '\0';
 
     if (strcmp(algo->name, "adaptive-nfactor") == 0) {
-	algo->nfactor = 11;
+	set_algorithm_nfactor(algo, 11);
     } else {
-	algo->nfactor = 10;
+	set_algorithm_nfactor(algo, 10);
     }
+
+    return;
 }
 
 void set_algorithm_nfactor(algorithm_t* algo, const uint8_t nfactor) {
     algo->nfactor = nfactor;
+    algo->n = (1 << nfactor);
+
+    return;
 }

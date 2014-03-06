@@ -7,8 +7,9 @@
  * a specific coin.
  */
 typedef struct _algorithm_t {
-    char    name[20]; /* Human-readable identifier */
-    uint8_t nfactor;  /* N factor (CPU/Memory tradeoff parameter) */
+    char     name[20]; /* Human-readable identifier */
+    uint32_t n;        /* N (CPU/Memory tradeoff parameter) */
+    uint8_t  nfactor;  /* Factor of N above (n = 2^nfactor) */
 } algorithm_t;
 
 /* Set default parameters based on name. */

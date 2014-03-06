@@ -97,7 +97,6 @@ int opt_expiry = 28;
 
 char *opt_algorithm;
 algorithm_t *algorithm;
-int opt_nfactor = 10;
 
 static const bool opt_time = true;
 unsigned long long global_hashrate;
@@ -1014,6 +1013,7 @@ static void load_temp_cutoffs()
 static char *set_algo(const char *arg)
 {
 	set_algorithm(algorithm, arg);
+	applog(LOG_INFO, "Set algorithm to %s", algorithm->name);
 
 	return NULL;
 }
@@ -1021,6 +1021,9 @@ static char *set_algo(const char *arg)
 static char *set_nfactor(const char *arg)
 {
 	set_algorithm_nfactor(algorithm, (uint8_t)atoi(arg));
+	applog(LOG_INFO, "Set algorithm N-factor to %d (N to %d)",
+	       algorithm->nfactor, algorithm->n);
+
 	return NULL;
 }
 
