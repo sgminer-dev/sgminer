@@ -12,11 +12,6 @@
 #include <inttypes.h>
 #include <string.h>
 
-typedef struct algorithm_t {
-    char    name[20]; /* Human-readable identifier */
-    uint8_t nfactor;  /* N factor (CPU/Memory tradeoff parameter) */
-} algorithm_t;
-
 void set_algorithm(algorithm_t* algo, const char* newname) {
     strncpy(algo->name, newname, sizeof(algo->name));
     algo->name[sizeof(algo->name) - 1] = '\0';

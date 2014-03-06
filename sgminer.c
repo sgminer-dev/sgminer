@@ -95,8 +95,8 @@ int opt_queue = 1;
 int opt_scantime = 7;
 int opt_expiry = 28;
 
-char* opt_algorithm;
-algorithm_t* algorithm;
+char *opt_algorithm;
+algorithm_t *algorithm;
 int opt_nfactor = 10;
 
 static const bool opt_time = true;
@@ -1018,6 +1018,12 @@ static char *set_algo(const char *arg)
 	return NULL;
 }
 
+static char *set_nfactor(const char *arg)
+{
+	set_algorithm_nfactor(algorithm, (uint8_t)atoi(arg));
+	return NULL;
+}
+
 static char *set_api_allow(const char *arg)
 {
 	opt_set_charp(arg, &opt_api_allow);
@@ -1069,7 +1075,7 @@ static char *set_null(const char __maybe_unused *arg)
 static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--algorithm",
 		     set_algo, NULL, NULL,
-		     "Set mining algorithm to most common defaults, default: static"),
+		     "Set mining algorithm and most common defaults, default: static"),
 	OPT_WITH_ARG("--api-allow",
 		     set_api_allow, NULL, NULL,
 		     "Allow API access only to the given list of [G:]IP[/Prefix] addresses[/subnets]"),
@@ -1122,9 +1128,6 @@ static struct opt_table opt_config_table[] = {
 			opt_set_bool, &opt_compact,
 			"Use compact display without per device statistics"),
 #endif
-	OPT_WITH_ARG("--nfactor",
-		     set_int_0_to_9999, opt_show_intval, &opt_nfactor,
-		     "Set scrypt N-factor parameter, default: 10. Currently use 11 for vertcoin!"),
 	OPT_WITHOUT_ARG("--debug|-D",
 		     enable_debug, &opt_debug,
 		     "Enable debug output"),
@@ -1228,13 +1231,16 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--net-delay",
 			opt_set_bool, &opt_delaynet,
 			"Impose small delays in networking to not overload slow routers"),
+	OPT_WITH_ARG("--nfactor",
+		     set_nfactor, NULL, NULL,
+		     "Override default scrypt N-factor parameter."),
 #ifdef HAVE_ADL
 	OPT_WITHOUT_ARG("--no-adl",
 			opt_set_bool, &opt_noadl,
 			"Disable the ATI display library used for monitoring and setting GPU parameters"),
 #else
 	OPT_WITHOUT_ARG("--no-adl",
-			opt_set_bool, &opt_noadl,opt_hidden),
+			opt_set_bool, &opt_noadl, opt_hidden),
 #endif
 	OPT_WITHOUT_ARG("--no-pool-disable",
 			opt_set_invbool, &opt_disable_pool,
@@ -7764,7 +7770,7 @@ int main(int argc, char *argv[])
 	int i, j;
 	char *s;
 
-	/* This dangerous functions tramples random dynamically allocated
+	/* This dangerous function tramples random dynamically allocated
 	 * variables so do it before anything at all */
 	if (unlikely(curl_global_init(CURL_GLOBAL_ALL)))
 		quit(1, "Failed to curl_global_init");
@@ -7841,6 +7847,8 @@ int main(int argc, char *argv[])
 	GetCurrentDirectory(PATH_MAX - 1, sgminer_path);
 	strcat(sgminer_path, "\\");
 #endif
+
+	algorithm = (algorithm_t *)alloca(sizeof(algorithm_t));
 
 	devcursor = 8;
 	logstart = devcursor + 1;
