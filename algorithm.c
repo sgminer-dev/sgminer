@@ -17,7 +17,7 @@ typedef struct algorithm_t {
     uint8_t nfactor;  /* N factor (CPU/Memory tradeoff parameter) */
 } algorithm_t;
 
-void set_algorithm(algorithm_t* algo, char* newname) {
+void set_algorithm(algorithm_t* algo, const char* newname) {
     strncpy(algo->name, newname, sizeof(algo->name));
     algo->name[sizeof(algo->name) - 1] = '\0';
 
@@ -28,6 +28,6 @@ void set_algorithm(algorithm_t* algo, char* newname) {
     }
 }
 
-void set_algorithm_nfactor(algorithm_t* algo, uint8_t nfactor) {
+void set_algorithm_nfactor(algorithm_t* algo, const uint8_t nfactor) {
     algo->nfactor = nfactor;
 }

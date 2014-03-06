@@ -9,9 +9,9 @@
 typedef struct algorithm_t algorithm_t;
 
 /* Set default parameters based on name. */
-void set_algorithm(algorithm_t* algo, char* name);
+void set_algorithm(algorithm_t* algo, const char* name);
 
 /* Set to specific N factor. */
-void set_algorithm_nfactor(algorithm_t* algo, uint8_t nfactor);
+void set_algorithm_nfactor(algorithm_t* algo, const uint8_t nfactor);
 
 #endif /* ALGORITHM_H */
