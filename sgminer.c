@@ -7851,7 +7851,9 @@ int main(int argc, char *argv[])
 	strcat(sgminer_path, "\\");
 #endif
 
+	/* Default algorithm specified in algorithm.c ATM */
 	algorithm = (algorithm_t *)alloca(sizeof(algorithm_t));
+	set_algorithm(algorithm, "default");
 
 	devcursor = 8;
 	logstart = devcursor + 1;
