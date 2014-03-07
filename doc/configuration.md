@@ -10,9 +10,11 @@
 Allows choosing between the few mining algorithms for incompatible
 cryptocurrencies.
 
-Requires a string.
+*Argument:* string
 
-Currently supported:
+*Default:* `default`
+
+*Supported:*
 
 * `adaptive-nfactor` - Vertcoin-style adaptive N-factor scrypt.
 N-factor defaults to 11.
@@ -21,6 +23,14 @@ N-factor defaults to 11.
 
 ### nfactor
 
-Overrides the default N-factor scrypt parameter.
+Overrides the default scrypt parameter N, specified as the factor of 2
+(`N = 2^nfactor`).
 
-Requires an unsigned integer.
+*Argument:* whole number (>1).
+
+*Default:* depends on `algorithm`; otherwise `10`.
+
+
+## CLI-only options
+
+*TODO*
