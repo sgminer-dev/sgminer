@@ -1,3 +1,9 @@
+Tools needed
+------------
+1. Visual Studio Express - found at http://www.visualstudio.com/en-US/products/visual-studio-express-vs
+2. Windows SDK - can be downloaded from microsoft.com
+
+
 Installing dependencies
 -----------------------
 
