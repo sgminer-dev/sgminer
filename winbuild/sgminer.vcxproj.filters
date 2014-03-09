@@ -92,6 +92,9 @@
     <ClCompile Include="..\compat\jansson-2.5\src\value.c">
       <Filter>Libraries\jansson</Filter>
     </ClCompile>
+    <ClCompile Include="..\algorithm.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\adl.h">
@@ -161,6 +164,9 @@
       <Filter>Libraries\jansson</Filter>
     </ClInclude>
     <ClInclude Include="dist\include\winbuild.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
