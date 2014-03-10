@@ -10,6 +10,7 @@ Windows SDK 7.1 Command Prompt and run "setenv /x64 /Release" before starting to
 Also, for x64, after you follow all the steps and you are ready to build. Go to "Project Properties -> VC++ Directories -> Library Directories" 
 and add this folder to the library list: C:\Program Files\Microsoft SDKs\Windows\v7.1\Lib\x64
 
+To run sgminer built using Visual Studios you will need to have Microsoft Visual C++ 2010 Redistributable Package (x86 or x64 depending on your sgminer version) installed. 
 
 Installing dependencies
 -----------------------
