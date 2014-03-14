@@ -1,8 +1,20 @@
 # Release news
 
-## Version 4.2.0 - TBA
+## Version 4.1.153 - 14th March 2014
 
+* Display pool URL instead of "Pool N" if no `poolname` specified.
+* Incognito mode to hide user name in NCurses interface - useful for
+  publishing screenshots. To enable, use `--incognito` on command line,
+  `incognito` in config or `[S][I]` in NCurses interface.
+* Support building in Microsoft Visual Studio 2010, perhaps other
+  versions as well (by _troky_). Documentation in `winbuild/README.txt`.
+* Support building in Cygwin (by _markuspeloquin_). Documentation in
+  `doc/cygwin-build.txt`.
 * Forward-port changes from `ckolivas/cgminer` up to 3.12.3.
+* Allow setting `worksize` for kernel `zuikkis`.
+* More log messages in pool handling.
+* Updated `doc/FAQ.md`.
+* Updated `example.conf`.
 
 
 ## Version 4.1.0 - 7th February 2014
