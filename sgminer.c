@@ -7853,7 +7853,7 @@ int main(int argc, char *argv[])
 
 	/* Default algorithm specified in algorithm.c ATM */
 	algorithm = (algorithm_t *)alloca(sizeof(algorithm_t));
-	set_algorithm(algorithm, "default");
+	set_algorithm(algorithm, "scrypt");
 
 	devcursor = 8;
 	logstart = devcursor + 1;
