@@ -5,7 +5,7 @@
 * Display pool URL instead of "Pool N" if no `poolname` specified.
 * Incognito mode to hide user name in NCurses interface - useful for
   publishing screenshots. To enable, use `--incognito` on command line,
-  `incognito` in config or `[S][I]` in NCurses interface.
+  `incognito` in config or `[D][I]` in NCurses interface.
 * Support building in Microsoft Visual Studio 2010, perhaps other
   versions as well (by _troky_). Documentation in `winbuild/README.txt`.
 * Support building in Cygwin (by _markuspeloquin_). Documentation in
