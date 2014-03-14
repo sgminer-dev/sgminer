@@ -241,6 +241,7 @@ exit 0</Command>
     <ClCompile Include="..\adl.c">
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</WholeProgramOptimization>
     </ClCompile>
+    <ClCompile Include="..\algorithm.c" />
     <ClCompile Include="..\api.c" />
     <ClCompile Include="..\ccan\opt\helpers.c" />
     <ClCompile Include="..\ccan\opt\opt.c" />
@@ -269,6 +270,7 @@ exit 0</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\adl.h" />
+    <ClInclude Include="..\algorithm.h" />
     <ClInclude Include="..\arg-nonnull.h" />
     <ClInclude Include="..\bench_block.h" />
     <ClInclude Include="..\c++defs.h" />

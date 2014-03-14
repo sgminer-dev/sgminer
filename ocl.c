@@ -33,6 +33,12 @@
 #include "findnonce.h"
 #include "ocl.h"
 
+/* FIXME: only here for global config vars, replace with configuration.h
+ * or similar as soon as config is in a struct instead of littered all
+ * over the global namespace.
+ */
+#include "miner.h"
+
 int opt_platform_id = -1;
 
 char *file_contents(const char *filename, int *length)
@@ -456,7 +462,8 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 			break;
 	}
 
-	if (cgpu->vwidth)
+	/* Vectors are hard-set to 1 above. */
+	if (likely(cgpu->vwidth))
 		clState->vwidth = cgpu->vwidth;
 	else {
 		clState->vwidth = preferred_vwidth;
@@ -479,7 +486,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	if (!cgpu->opt_tc) {
 		unsigned int sixtyfours;
 
-		sixtyfours =  cgpu->max_alloc / 131072 / 64 - 1;
+		sixtyfours =  cgpu->max_alloc / 131072 / 64 / (algorithm->n/1024) - 1;
 		cgpu->thread_concurrency = sixtyfours * 64;
 		if (cgpu->shaders && cgpu->thread_concurrency > cgpu->shaders) {
 			cgpu->thread_concurrency -= cgpu->thread_concurrency % cgpu->shaders;
@@ -519,7 +526,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	if (clState->goffset)
 		strcat(binaryfilename, "g");
 
-	sprintf(numbuf, "lg%utc%u", cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency);
+	sprintf(numbuf, "lg%utc%unf%u", cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, algorithm->nfactor);
 	strcat(binaryfilename, numbuf);
 
 	sprintf(numbuf, "w%d", (int)clState->wsize);
@@ -585,8 +592,8 @@ build:
 	/* create a cl program executable for all the devices specified */
 	char *CompilerOptions = (char *)calloc(1, 256);
 
-	sprintf(CompilerOptions, "-D LOOKUP_GAP=%d -D CONCURRENT_THREADS=%d -D WORKSIZE=%d",
-			cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, (int)clState->wsize);
+	sprintf(CompilerOptions, "-D LOOKUP_GAP=%d -D CONCURRENT_THREADS=%d -D WORKSIZE=%d -D NFACTOR=%d",
+			cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, (int)clState->wsize, (unsigned int)algorithm->nfactor);
 
 	applog(LOG_DEBUG, "Setting worksize to %d", (int)(clState->wsize));
 	if (clState->vwidth > 1)
@@ -775,7 +782,8 @@ built:
 		return NULL;
 	}
 
-	size_t ipt = (1024 / cgpu->lookup_gap + (1024 % cgpu->lookup_gap > 0));
+	size_t ipt = (algorithm->n / cgpu->lookup_gap +
+		      (algorithm->n % cgpu->lookup_gap > 0));
 	size_t bufsize = 128 * ipt * cgpu->thread_concurrency;
 
 	/* Use the max alloc value which has been rounded to a power of

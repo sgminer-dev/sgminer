@@ -2856,7 +2856,7 @@ static void minecoin(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __may
 	message(io_data, MSG_MINECOIN, 0, NULL, isjson);
 	io_open = io_add(io_data, isjson ? COMSTR JSON_MINECOIN : _MINECOIN COMSTR);
 
-	root = api_add_const(root, "Hash Method", SCRYPTSTR, false);
+	root = api_add_string(root, "Hash Method", algorithm->name, false);
 
 	cg_rlock(&ch_lock);
 	root = api_add_timeval(root, "Current Block Time", &block_timeval, true);

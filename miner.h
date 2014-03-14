@@ -3,6 +3,8 @@
 
 #include "config.h"
 
+#include "algorithm.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/time.h>
@@ -1019,6 +1021,9 @@ extern bool fulltest(const unsigned char *hash, const unsigned char *target);
 extern int opt_queue;
 extern int opt_scantime;
 extern int opt_expiry;
+
+extern char *opt_algorithm;
+extern algorithm_t *algorithm;
 
 extern cglock_t control_lock;
 extern pthread_mutex_t hash_lock;

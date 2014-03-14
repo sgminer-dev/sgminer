@@ -28,6 +28,36 @@
  * online backup system.
  */
 
+/* N (nfactor), CPU/Memory cost parameter */
+__constant uint N[] = {
+	0x00000001U,  /* never used, padding */
+	0x00000002U,
+	0x00000004U,
+	0x00000008U,
+	0x00000010U,
+	0x00000020U,
+	0x00000040U,
+	0x00000080U,
+	0x00000100U,
+	0x00000200U,
+	0x00000400U,  /* 2^10 == 1024, Litecoin scrypt default */
+	0x00000800U,
+	0x00001000U,
+	0x00002000U,
+	0x00004000U,
+	0x00008000U,
+	0x00010000U,
+	0x00020000U,
+	0x00040000U,
+	0x00080000U,
+	0x00100000U
+};
+
+/* Backwards compatibility, if NFACTOR not defined, default to 10 for scrypt */
+#ifndef NFACTOR
+#define NFACTOR 10
+#endif
+
 __constant uint ES[2] = { 0x00FF00FF, 0xFF00FF00 };
 __constant uint K[] = {
 	0x428a2f98U,
@@ -759,32 +789,32 @@ void scrypt_core(uint4 X[8], __global uint4*restrict lookup)
 {
 	shittify(X);
 	const uint zSIZE = 8;
-	const uint ySIZE = (1024/LOOKUP_GAP+(1024%LOOKUP_GAP>0));
+	const uint ySIZE = (N[NFACTOR]/LOOKUP_GAP+(N[NFACTOR]%LOOKUP_GAP>0));
 	const uint xSIZE = CONCURRENT_THREADS;
 	uint x = get_global_id(0)%xSIZE;
 
-	for(uint y=0; y<1024/LOOKUP_GAP; ++y)
+	for(uint y=0; y<N[NFACTOR]/LOOKUP_GAP; ++y)
 	{
 #pragma unroll
 		for(uint z=0; z<zSIZE; ++z)
 			lookup[CO] = X[z];
-		for(uint i=0; i<LOOKUP_GAP; ++i) 
+		for(uint i=0; i<LOOKUP_GAP; ++i)
 			salsa(X);
 	}
 #if (LOOKUP_GAP != 1) && (LOOKUP_GAP != 2) && (LOOKUP_GAP != 4) && (LOOKUP_GAP != 8)
 	{
-		uint y = (1024/LOOKUP_GAP);
+		uint y = (N[NFACTOR]/LOOKUP_GAP);
 #pragma unroll
 		for(uint z=0; z<zSIZE; ++z)
 			lookup[CO] = X[z];
-		for(uint i=0; i<1024%LOOKUP_GAP; ++i)
+		for(uint i=0; i<N[NFACTOR]%LOOKUP_GAP; ++i)
 			salsa(X); 
 	}
 #endif
-	for (uint i=0; i<1024; ++i) 
+	for (uint i=0; i<N[NFACTOR]; ++i)
 	{
 		uint4 V[8];
-		uint j = X[7].x & K[85];
+		uint j = X[7].x & (N[NFACTOR]-1);
 		uint y = (j/LOOKUP_GAP);
 #pragma unroll
 		for(uint z=0; z<zSIZE; ++z)
@@ -796,7 +826,7 @@ void scrypt_core(uint4 X[8], __global uint4*restrict lookup)
 			salsa(V);
 #else
 		uint val = j%LOOKUP_GAP;
-		for (uint z=0; z<val; ++z) 
+		for (uint z=0; z<val; ++z)
 			salsa(V);
 #endif
 
@@ -831,7 +861,7 @@ const uint4 midstate0, const uint4 midstate16, const uint target)
 	SHA256(&tstate0, &tstate1, input[0],input[1],input[2],input[3]);
 
 #pragma unroll
-	for (uint i=0; i<4; i++) 
+	for (uint i=0; i<4; i++)
 	{
 		pad0 = tstate0;
 		pad1 = tstate1;
