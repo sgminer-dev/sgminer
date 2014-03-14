@@ -12,13 +12,16 @@ cryptocurrencies.
 
 *Argument:* string
 
-*Default:* `default`
+*Default:* `scrypt`
 
 *Supported:*
 
-* `adaptive-nfactor` - Vertcoin-style adaptive N-factor scrypt.
-N-factor defaults to 11.
-* everything else - Litecoin-style static N-factor scrypt.
+* `adaptive-n-factor` - Vertcoin-style adaptive N-factor scrypt.
+  N-factor defaults to 11. Aliases: `adaptive-n-factor` (to be removed
+  in future versions) and `nscrypt`.
+* `scrypt` - Litecoin-style static N-factor scrypt.
+* everything else - currently defaults to `scrypt`, subject to change
+  without warning.
 
 
 ### nfactor
