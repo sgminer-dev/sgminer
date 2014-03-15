@@ -5588,7 +5588,7 @@ static bool pool_active(struct pool *pool, bool pinging)
 	bool ret = false;
 	json_t *val;
 	CURL *curl;
-	int uninitialised_var(rolltime);
+	int rolltime = 0;
 
 	if (pool->has_gbt)
 		applog(LOG_DEBUG, "Retrieving block template from %s", pool->poolname);
