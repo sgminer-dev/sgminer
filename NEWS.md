@@ -1,5 +1,12 @@
 # Release news
 
+## Version 4.2.0 - TBA
+
+* Adaptive-N-factor algorithm support (by _Bufius_, _Zuikkis_ and
+  _veox_). For details on choosing the algorithm, see
+  `doc/configuration.md`.
+
+
 ## Version 4.1.153 - 14th March 2014
 
 * Display pool URL instead of "Pool N" if no `poolname` specified.
