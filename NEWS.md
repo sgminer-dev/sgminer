@@ -5,6 +5,7 @@
 * Adaptive-N-factor algorithm support (by _Bufius_, _Zuikkis_ and
   _veox_). For details on choosing the algorithm, see
   `doc/configuration.md`.
+* Setting pool name with `poolname` is deprecated. Use `name` instead.
 
 
 ## Version 4.1.153 - 14th March 2014

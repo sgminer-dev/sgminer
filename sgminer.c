@@ -766,6 +766,14 @@ static char *set_poolname(char *arg)
 	return NULL;
 }
 
+static char *set_poolname_deprecated(char *arg)
+{
+	applog(LOG_ERR, "Specifying pool name by --poolname is deprecated. Use --name instead.");
+	set_poolname(arg);
+
+	return NULL;
+}
+
 static void enable_pool(struct pool *pool)
 {
 	if (pool->state != POOL_ENABLED)
@@ -1239,6 +1247,9 @@ static struct opt_table opt_config_table[] = {
 		     opt_set_charp, NULL, &opt_stderr_cmd,
 		     "Use custom pipe cmd for output messages"),
 #endif // defined(unix)
+	OPT_WITH_ARG("--name",
+		     set_poolname, NULL, NULL,
+		     "Name of pool"),
 	OPT_WITHOUT_ARG("--net-delay",
 			opt_set_bool, &opt_delaynet,
 			"Impose small delays in networking to not overload slow routers"),
@@ -1268,9 +1279,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--per-device-stats",
 			opt_set_bool, &want_per_device_stats,
 			"Force verbose mode and output per-device statistics"),
-	OPT_WITH_ARG("--name",
-		     set_poolname, NULL, NULL,
-		     "Name of pool."),
+	OPT_WITH_ARG("--poolname", /* Backward compatibility, to be removed. */
+		     set_poolname_deprecated, NULL, NULL,
+		     opt_hidden),
 	OPT_WITHOUT_ARG("--protocol-dump|-P",
 			opt_set_bool, &opt_protocol,
 			"Verbose dump of protocol-level activities"),
