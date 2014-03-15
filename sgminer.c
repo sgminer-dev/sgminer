@@ -533,7 +533,7 @@ struct pool *add_pool(void)
 	/* Default pool name */
 	char buf[32];
 	sprintf(buf, "", pool->pool_no);
-	pool->poolname = strdup(buf);
+	pool->name = strdup(buf);
 
 	pools = (struct pool **)realloc(pools, sizeof(struct pool *) * (total_pools + 2));
 	pools[total_pools++] = pool;
@@ -761,7 +761,7 @@ static char *set_poolname(char *arg)
 	pool = pools[json_array_index];
 
 	applog(LOG_DEBUG, "Setting pool %i name to %s", pool->pool_no, arg);
-	opt_set_charp(arg, &pool->poolname);
+	opt_set_charp(arg, &pool->name);
 
 	return NULL;
 }
@@ -1268,7 +1268,7 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--per-device-stats",
 			opt_set_bool, &want_per_device_stats,
 			"Force verbose mode and output per-device statistics"),
-	OPT_WITH_ARG("--poolname",
+	OPT_WITH_ARG("--name",
 		     set_poolname, NULL, NULL,
 		     "Name of pool."),
 	OPT_WITHOUT_ARG("--protocol-dump|-P",
@@ -1754,17 +1754,17 @@ static void update_gbt(struct pool *pool)
 		total_getworks++;
 		pool->getwork_requested++;
 		if (rc) {
-			applog(LOG_DEBUG, "Successfully retrieved and updated GBT from %s", pool->poolname);
+			applog(LOG_DEBUG, "Successfully retrieved and updated GBT from %s", pool->name);
 			cgtime(&pool->tv_idle);
 			if (pool == current_pool())
 				opt_work_update = true;
 		} else {
-			applog(LOG_DEBUG, "Successfully retrieved but FAILED to decipher GBT from %s", pool->poolname);
+			applog(LOG_DEBUG, "Successfully retrieved but FAILED to decipher GBT from %s", pool->name);
 		}
 		json_decref(val);
 		free_work(work);
 	} else {
-		applog(LOG_DEBUG, "FAILED to update GBT from %s", pool->poolname);
+		applog(LOG_DEBUG, "FAILED to update GBT from %s", pool->name);
 	}
 	curl_easy_cleanup(curl);
 }
@@ -2518,7 +2518,7 @@ share_result(json_t *val, json_t *res, json_t *err, const struct work *work,
 
 			strcpy(reason, "");
 			if (total_pools > 1)
-				snprintf(where, sizeof(where), "%s", work->pool->poolname);
+				snprintf(where, sizeof(where), "%s", work->pool->name);
 			else
 				strcpy(where, "");
 
@@ -2952,7 +2952,7 @@ static inline struct pool *select_pool(bool lagging)
 	if (!pool)
 		pool = cp;
 out:
-	applog(LOG_DEBUG, "Selecting %s for work", pool->poolname);
+	applog(LOG_DEBUG, "Selecting %s for work", pool->name);
 	return pool;
 }
 
@@ -3261,7 +3261,7 @@ retry:
 	mutex_unlock(&pool->pool_lock);
 
 	if (recruited)
-		applog(LOG_DEBUG, "Recruited curl for %s", pool->poolname);
+		applog(LOG_DEBUG, "Recruited curl for %s", pool->name);
 	return ce;
 }
 
@@ -4012,7 +4012,7 @@ static bool test_work_current(struct work *work)
 				applog(LOG_NOTICE, "Stratum from %s detected new block", get_pool_name(pool));
 			} else {
 				applog(LOG_NOTICE, "%sLONGPOLL from %s detected new block",
-				       work->gbt ? "GBT " : "", work->pool->poolname);
+				       work->gbt ? "GBT " : "", work->pool->name);
 			}
 		} else if (have_longpoll)
 			applog(LOG_NOTICE, "New block detected on network before pool notification");
@@ -4027,12 +4027,12 @@ static bool test_work_current(struct work *work)
 			 * block. */
 			if (memcmp(bedata, current_block, 32)) {
 				/* Doesn't match current block. It's stale */
-				applog(LOG_DEBUG, "Stale data from %s", pool->poolname);
+				applog(LOG_DEBUG, "Stale data from %s", pool->name);
 				ret = false;
 			} else {
 				/* Work is from new block and pool is up now
 				 * current. */
-				applog(LOG_INFO, "%s now up to date", pool->poolname);
+				applog(LOG_INFO, "%s now up to date", pool->name);
 				memcpy(pool->prev_block, bedata, 32);
 			}
 		}
@@ -4041,7 +4041,7 @@ static bool test_work_current(struct work *work)
 		 * accepting shares from it. To maintain fair work distribution
 		 * we work on it anyway. */
 		if (memcmp(bedata, current_block, 32))
-			applog(LOG_DEBUG, "%s still on old block", pool->poolname);
+			applog(LOG_DEBUG, "%s still on old block", pool->name);
 #endif
 		if (work->longpoll) {
 			work->work_block = ++work_block;
@@ -4049,7 +4049,7 @@ static bool test_work_current(struct work *work)
 				if (work->stratum) {
 					applog(LOG_NOTICE, "Stratum from %s requested work restart", get_pool_name(pool));
 				} else {
-					applog(LOG_NOTICE, "%sLONGPOLL from %s requested work restart", work->gbt ? "GBT " : "", work->pool->poolname);
+					applog(LOG_NOTICE, "%sLONGPOLL from %s requested work restart", work->gbt ? "GBT " : "", work->pool->name);
 				}
 				restart_threads();
 			}
@@ -4091,7 +4091,7 @@ static bool hash_push(struct work *work)
 
 static void stage_work(struct work *work)
 {
-	applog(LOG_DEBUG, "Pushing work from %s to hash queue", work->pool->poolname);
+	applog(LOG_DEBUG, "Pushing work from %s to hash queue", work->pool->name);
 	work->work_block = work_block;
 	test_work_current(work);
 	work->pool->works++;
@@ -5368,7 +5368,7 @@ static void *stratum_rthread(void *userdata)
 		 * assume the connection has been dropped and treat this pool
 		 * as dead */
 		if (!sock_full(pool) && (sel_ret = select(pool->sock + 1, &rd, NULL, NULL, &timeout)) < 1) {
-			applog(LOG_DEBUG, "Stratum select failed on %s with value %d", pool->poolname, sel_ret);
+			applog(LOG_DEBUG, "Stratum select failed on %s with value %d", pool->name, sel_ret);
 			s = NULL;
 		} else
 			s = recv_line(pool);
@@ -5591,9 +5591,9 @@ static bool pool_active(struct pool *pool, bool pinging)
 	int rolltime = 0;
 
 	if (pool->has_gbt)
-		applog(LOG_DEBUG, "Retrieving block template from %s", pool->poolname);
+		applog(LOG_DEBUG, "Retrieving block template from %s", pool->name);
 	else
-		applog(LOG_INFO, "Testing %s", pool->poolname);
+		applog(LOG_INFO, "Testing %s", pool->name);
 
 	/* This is the central point we activate stratum when we can */
 retry_stratum:
@@ -5693,7 +5693,7 @@ retry_stratum:
 
 		rc = work_decode(pool, work, val);
 		if (rc) {
-			applog(LOG_DEBUG, "Successfully retrieved and deciphered work from %s", pool->poolname);
+			applog(LOG_DEBUG, "Successfully retrieved and deciphered work from %s", pool->name);
 			work->pool = pool;
 			work->rolltime = rolltime;
 			copy_time(&work->tv_getwork, &tv_getwork);
@@ -5708,7 +5708,7 @@ retry_stratum:
 			ret = true;
 			cgtime(&pool->tv_idle);
 		} else {
-			applog(LOG_DEBUG, "Successfully retrieved but FAILED to decipher work from %s", pool->poolname);
+			applog(LOG_DEBUG, "Successfully retrieved but FAILED to decipher work from %s", pool->name);
 			free_work(work);
 		}
 		json_decref(val);
@@ -5756,7 +5756,7 @@ retry_stratum:
 			pool->has_stratum = true;
 			goto retry_stratum;
 		}
-		applog(LOG_DEBUG, "FAILED to retrieve work from %s", pool->poolname);
+		applog(LOG_DEBUG, "FAILED to retrieve work from %s", pool->name);
 		if (!pinging)
 			applog(LOG_WARNING, "%s slow/down or URL or credentials invalid", get_pool_name(pool));
 	}
@@ -6040,7 +6040,7 @@ static void submit_work_async(struct work *work)
 	}
 
 	if (work->stratum) {
-		applog(LOG_DEBUG, "Pushing %s work to stratum queue", pool->poolname);
+		applog(LOG_DEBUG, "Pushing %s work to stratum queue", pool->name);
 		if (unlikely(!tq_push(pool->stratum_q, work))) {
 			applog(LOG_DEBUG, "Discarding work from removed pool");
 			free_work(work);
@@ -6113,7 +6113,7 @@ static void update_work_stats(struct thr_info *thr, struct work *work)
 		work->pool->solved++;
 		found_blocks++;
 		work->mandatory = true;
-		applog(LOG_NOTICE, "Found block for %s!", work->pool->poolname);
+		applog(LOG_NOTICE, "Found block for %s!", work->pool->name);
 	}
 
 	mutex_lock(&stats_lock);
@@ -6968,7 +6968,7 @@ static void reap_curl(struct pool *pool)
 	mutex_unlock(&pool->pool_lock);
 
 	if (reaped)
-		applog(LOG_DEBUG, "Reaped %d curl%s from %s", reaped, reaped > 1 ? "s" : "", pool->poolname);
+		applog(LOG_DEBUG, "Reaped %d curl%s from %s", reaped, reaped > 1 ? "s" : "", pool->name);
 }
 
 static void *watchpool_thread(void __maybe_unused *userdata)
@@ -8270,7 +8270,7 @@ begin_bench:
 		work = make_work();
 
 		if (lagging && !pool_tset(cp, &cp->lagging)) {
-			applog(LOG_WARNING, "%s not providing work fast enough", cp->poolname);
+			applog(LOG_WARNING, "%s not providing work fast enough", cp->name);
 			cp->getfail_occasions++;
 			total_go++;
 			if (!pool_localgen(cp))
@@ -8330,7 +8330,7 @@ retry:
 		ce = pop_curl_entry(pool);
 		/* obtain new work from bitcoin via JSON-RPC */
 		if (!get_upstream_work(work, ce->curl)) {
-			applog(LOG_DEBUG, "%s json_rpc_call failed on get work, retrying in 5s", pool->poolname);
+			applog(LOG_DEBUG, "%s json_rpc_call failed on get work, retrying in 5s", pool->name);
 			/* Make sure the pool just hasn't stopped serving
 			 * requests but is up as we'll keep hammering it */
 			if (++pool->seq_getfails > mining_threads + opt_queue)

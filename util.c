@@ -1306,7 +1306,7 @@ bool stratum_send(struct pool *pool, char *s, ssize_t len)
 		case SEND_OK:
 			break;
 		case SEND_SELECTFAIL:
-			applog(LOG_DEBUG, "Write select failed on %s sock", pool->poolname);
+			applog(LOG_DEBUG, "Write select failed on %s sock", pool->name);
 			suspend_stratum(pool);
 			break;
 		case SEND_SENDFAIL:
@@ -1659,7 +1659,7 @@ static bool parse_diff(struct pool *pool, json_t *val)
 		else
 			applog(LOG_NOTICE, "%s difficulty changed to %.1f", get_pool_name(pool), diff);
 	} else
-		applog(LOG_DEBUG, "%s difficulty set to %f", pool->poolname, diff);
+		applog(LOG_DEBUG, "%s difficulty set to %f", pool->name, diff);
 
 	return true;
 }
@@ -1692,7 +1692,7 @@ static bool parse_reconnect(struct pool *pool, json_t *val)
 	if (!extract_sockaddr(address, &sockaddr_url, &stratum_port))
 		return false;
 
-	applog(LOG_NOTICE, "Reconnect requested from %s to %s", pool->poolname, address);
+	applog(LOG_NOTICE, "Reconnect requested from %s to %s", pool->name, address);
 
 	clear_pool_work(pool);
 
@@ -1737,7 +1737,7 @@ static bool show_message(struct pool *pool, json_t *val)
 	msg = (char *)json_string_value(json_array_get(val, 0));
 	if (!msg)
 		return false;
-	applog(LOG_NOTICE, "%s message: %s", pool->poolname, msg);
+	applog(LOG_NOTICE, "%s message: %s", pool->name, msg);
 	return true;
 }
 
@@ -1859,14 +1859,14 @@ bool auth_stratum(struct pool *pool)
 			ss = json_dumps(err_val, JSON_INDENT(3));
 		else
 			ss = strdup("(unknown reason)");
-		applog(LOG_INFO, "%s JSON stratum auth failed: %s", pool->poolname, ss);
+		applog(LOG_INFO, "%s JSON stratum auth failed: %s", pool->name, ss);
 		free(ss);
 
 		goto out;
 	}
 
 	ret = true;
-	applog(LOG_INFO, "Stratum authorisation success for %s", pool->poolname);
+	applog(LOG_INFO, "Stratum authorisation success for %s", pool->name);
 	pool->probed = true;
 	successful_connect = true;
 
@@ -2126,7 +2126,7 @@ static bool setup_stratum_socket(struct pool *pool)
 	pool->stratum_active = false;
 	if (pool->sock) {
 		/* FIXME: change to LOG_DEBUG if issue #88 resolved */
-		applog(LOG_INFO, "Closing %s socket", pool->poolname);
+		applog(LOG_INFO, "Closing %s socket", pool->name);
 		CLOSESOCKET(pool->sock);
 	}
 	pool->sock = 0;
@@ -2295,7 +2295,7 @@ out:
 
 void suspend_stratum(struct pool *pool)
 {
-	applog(LOG_INFO, "Closing socket for stratum %s", pool->poolname);
+	applog(LOG_INFO, "Closing socket for stratum %s", pool->name);
 
 	mutex_lock(&pool->stratum_lock);
 	__suspend_stratum(pool);
@@ -2313,7 +2313,7 @@ bool initiate_stratum(struct pool *pool)
 resend:
 	if (!setup_stratum_socket(pool)) {
 		/* FIXME: change to LOG_DEBUG when issue #88 resolved */
-		applog(LOG_INFO, "setup_stratum_socket() on %s failed", pool->poolname);
+		applog(LOG_INFO, "setup_stratum_socket() on %s failed", pool->name);
 		sockd = false;
 		goto out;
 	}
@@ -2403,7 +2403,7 @@ resend:
 	cg_wunlock(&pool->data_lock);
 
 	if (sessionid)
-		applog(LOG_DEBUG, "%s stratum session id: %s", pool->poolname, pool->sessionid);
+		applog(LOG_DEBUG, "%s stratum session id: %s", pool->name, pool->sessionid);
 
 	ret = true;
 out:
@@ -2414,7 +2414,7 @@ out:
 		pool->swork.diff = 1;
 		if (opt_protocol) {
 			applog(LOG_DEBUG, "%s confirmed mining.subscribe with extranonce1 %s extran2size %d",
-			       pool->poolname, pool->nonce1, pool->n2size);
+			       pool->name, pool->nonce1, pool->n2size);
 		}
 	} else {
 		if (recvd && !noresume) {
@@ -2432,9 +2432,9 @@ out:
 			json_decref(val);
 			goto resend;
 		}
-		applog(LOG_DEBUG, "Initiating stratum failed on %s", pool->poolname);
+		applog(LOG_DEBUG, "Initiating stratum failed on %s", pool->name);
 		if (sockd) {
-		  applog(LOG_DEBUG, "Suspending stratum on %s", pool->poolname);
+		  applog(LOG_DEBUG, "Suspending stratum on %s", pool->name);
 			suspend_stratum(pool);
 		}
 	}
@@ -2445,7 +2445,7 @@ out:
 
 bool restart_stratum(struct pool *pool)
 {
-	applog(LOG_DEBUG, "Restarting stratum on pool %s", pool->poolname);
+	applog(LOG_DEBUG, "Restarting stratum on pool %s", pool->name);
 
 	if (pool->stratum_active)
 		suspend_stratum(pool);
