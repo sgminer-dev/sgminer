@@ -411,13 +411,11 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	char binaryfilename[255];
 	char filename[255];
 	char numbuf[16];
+	char strbuf[255];
 
-	if (cgpu->kernel == KL_NONE) {
-		applog(LOG_INFO, "Selecting kernel ckolivas");
-		clState->chosen_kernel = KL_CKOLIVAS;
-		cgpu->kernel = clState->chosen_kernel;
-	} else {
-		clState->chosen_kernel = cgpu->kernel;
+	if (strcmp(cgpu->kname, "") == 0) {
+		applog(LOG_INFO, "No kernel specified, selecting kernel ckolivas");
+		strcpy(cgpu->kname, "ckolivas");
 	}
 
 	/* For some reason 2 vectors is still better even if the card says
@@ -431,36 +429,13 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	/* All available kernels only support vector 1 */
 	cgpu->vwidth = 1;
 
-	switch (clState->chosen_kernel) {
-		case KL_ALEXKARNEW:
-			applog(LOG_WARNING, "Kernel alexkarnew is experimental.");
-			strcpy(filename, ALEXKARNEW_KERNNAME".cl");
-			strcpy(binaryfilename, ALEXKARNEW_KERNNAME);
-			break;
-		case KL_ALEXKAROLD:
-			applog(LOG_WARNING, "Kernel alexkarold is experimental.");
-			strcpy(filename, ALEXKAROLD_KERNNAME".cl");
-			strcpy(binaryfilename, ALEXKAROLD_KERNNAME);
-			break;
-		case KL_CKOLIVAS:
-			strcpy(filename, CKOLIVAS_KERNNAME".cl");
-			strcpy(binaryfilename, CKOLIVAS_KERNNAME);
-			break;
-		case KL_PSW:
-			applog(LOG_WARNING, "Kernel psw is experimental.");
-			strcpy(filename, PSW_KERNNAME".cl");
-			strcpy(binaryfilename, PSW_KERNNAME);
-			break;
-		case KL_ZUIKKIS:
-			applog(LOG_WARNING, "Kernel zuikkis is experimental.");
-			strcpy(filename, ZUIKKIS_KERNNAME".cl");
-			strcpy(binaryfilename, ZUIKKIS_KERNNAME);
-			/* Kernel only supports lookup-gap 2 */
-			cgpu->lookup_gap = 2;
-			break;
-		case KL_NONE: /* Shouldn't happen */
-			break;
-	}
+	sprintf(strbuf, "%s.cl", cgpu->kname);
+	strcpy(filename, strbuf);
+	strcpy(binaryfilename, cgpu->kname);
+
+	/* Kernel zuikkis only supports lookup-gap 2 */
+	if (strcmp(cgpu->kname, "zuikkis") == 0)
+		cgpu->lookup_gap = 2;
 
 	/* Vectors are hard-set to 1 above. */
 	if (likely(cgpu->vwidth))

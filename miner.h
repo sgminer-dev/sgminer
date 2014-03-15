@@ -471,7 +471,7 @@ struct cgpu_info {
 
 	int64_t max_hashes;
 
-	const char *kname;
+	char *kname;
 	bool mapped;
 	int virtual_gpu;
 	int virtual_adl;
@@ -482,7 +482,6 @@ struct cgpu_info {
 
 	cl_uint vwidth;
 	size_t work_size;
-	enum cl_kernels kernel;
 	cl_ulong max_alloc;
 
 	int opt_lg, lookup_gap;

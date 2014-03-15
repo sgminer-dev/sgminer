@@ -194,46 +194,24 @@ char *set_thread_concurrency(char *arg)
 	return NULL;
 }
 
-static enum cl_kernels select_kernel(char *arg)
-{
-	if (!strcmp(arg, ALEXKARNEW_KERNNAME))
-		return KL_ALEXKARNEW;
-	if (!strcmp(arg, ALEXKAROLD_KERNNAME))
-		return KL_ALEXKAROLD;
-	if (!strcmp(arg, CKOLIVAS_KERNNAME))
-		return KL_CKOLIVAS;
-	if (!strcmp(arg, ZUIKKIS_KERNNAME))
-		return KL_ZUIKKIS;
-	if (!strcmp(arg, PSW_KERNNAME))
-		return KL_PSW;
-
-	return KL_NONE;
-}
-
 char *set_kernel(char *arg)
 {
-	enum cl_kernels kern;
-	int i, device = 0;
 	char *nextptr;
+	int i, device = 0;
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
 		return "Invalid parameters for set kernel";
-	kern = select_kernel(nextptr);
-	if (kern == KL_NONE)
-		return "Invalid parameter to set_kernel";
-	gpus[device++].kernel = kern;
 
-	while ((nextptr = strtok(NULL, ",")) != NULL) {
-		kern = select_kernel(nextptr);
-		if (kern == KL_NONE)
-			return "Invalid parameter to set_kernel";
+	gpus[device++].kname = strdup(nextptr);
 
-		gpus[device++].kernel = kern;
-	}
+	while ((nextptr = strtok(NULL, ",")) != NULL)
+		gpus[device++].kname = strdup(nextptr);
+
+	/* If only one kernel name provided, use same for all GPUs. */
 	if (device == 1) {
 		for (i = device; i < MAX_GPUDEVICES; i++)
-			gpus[i].kernel = gpus[0].kernel;
+			gpus[i].kname = strdup(gpus[0].kname);
 	}
 
 	return NULL;
@@ -1303,27 +1281,8 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 	if (!cgpu->name)
 		cgpu->name = strdup(name);
 	if (!cgpu->kname)
-	{
-		switch (clStates[i]->chosen_kernel) {
-			case KL_ALEXKARNEW:
-				cgpu->kname = ALEXKARNEW_KERNNAME;
-				break;
-			case KL_ALEXKAROLD:
-				cgpu->kname = ALEXKAROLD_KERNNAME;
-				break;
-			case KL_CKOLIVAS:
-				cgpu->kname = CKOLIVAS_KERNNAME;
-				break;
-			case KL_ZUIKKIS:
-				cgpu->kname = ZUIKKIS_KERNNAME;
-				break;
-			case KL_PSW:
-				cgpu->kname = PSW_KERNNAME;
-				break;
-			default:
-				break;
-		}
-	}
+		cgpu->kname = strdup("ckolivas");
+
 	applog(LOG_INFO, "initCl() finished. Found %s", name);
 	cgtime(&now);
 	get_datestamp(cgpu->init, sizeof(cgpu->init), &now);
@@ -1347,18 +1306,7 @@ static bool opencl_thread_init(struct thr_info *thr)
 		return false;
 	}
 
-	switch (clState->chosen_kernel) {
-	case KL_ALEXKARNEW:
-	case KL_ALEXKAROLD:
-	case KL_CKOLIVAS:
-	case KL_PSW:
-	case KL_ZUIKKIS:
-		thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
-		break;
-	default:
-		applog(LOG_ERR, "Failed to choose kernel in opencl_thread_init");
-		break;
-	}
+	thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
 
 	thrdata->res = (uint32_t *)calloc(buffersize, 1);
 
