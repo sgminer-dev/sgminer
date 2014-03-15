@@ -17,7 +17,7 @@ cryptocurrencies.
 *Supported:*
 
 * `adaptive-n-factor` - Vertcoin-style adaptive N-factor scrypt.
-  N-factor defaults to 11. Aliases: `adaptive-n-factor` (to be removed
+  N-factor defaults to 11. Aliases: `adaptive-nfactor` (to be removed
   in future versions) and `nscrypt`.
 * `scrypt` - Litecoin-style static N-factor scrypt.
 * everything else - currently defaults to `scrypt`, subject to change
