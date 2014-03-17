@@ -442,7 +442,7 @@ struct cgpu_info {
 	int sgminer_id;
 	struct device_drv *drv;
 	int device_id;
-	char *name;
+	char *name;  /* GPU family codename. */
 	char *device_path;
 	void *device_data;
 
@@ -462,10 +462,11 @@ struct cgpu_info {
 
 	int64_t max_hashes;
 
-	char *kname;
+	char *kname;  /* Human-readable kernel name. */
 	bool mapped;
 	int virtual_gpu;
 	int virtual_adl;
+
 	int intensity;
 	int xintensity;
 	int rawintensity;
