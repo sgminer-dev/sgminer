@@ -990,7 +990,7 @@ static _clState *clStates[MAX_GPUDEVICES];
 #define CL_SET_ARG(var) status |= clSetKernelArg(*kernel, num++, sizeof(var), (void *)&var)
 #define CL_SET_VARG(args, var) status |= clSetKernelArg(*kernel, num++, args * sizeof(uint), (void *)var)
 
-static cl_int queue_scrypt_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_unused cl_uint threads)
+static cl_int queue_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_unused cl_uint threads)
 {
 	unsigned char *midstate = blk->work->midstate;
 	cl_kernel *kernel = &clState->kernel;
@@ -1306,7 +1306,7 @@ static bool opencl_thread_init(struct thr_info *thr)
 		return false;
 	}
 
-	thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
+	thrdata->queue_kernel_parameters = &queue_kernel;
 
 	thrdata->res = (uint32_t *)calloc(buffersize, 1);
 
