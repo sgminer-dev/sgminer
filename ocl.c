@@ -474,6 +474,11 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 			strcpy(filename, MYRIADCOIN_GROESTL_KERNNAME".cl");
 			strcpy(binaryfilename, MYRIADCOIN_GROESTL_KERNNAME);
 			break;
+		case KL_FUGUECOIN:
+			applog(LOG_WARNING, "Kernel fuguecoin is experimental.");
+			strcpy(filename, FUGUECOIN_KERNNAME".cl");
+			strcpy(binaryfilename, FUGUECOIN_KERNNAME);
+			break;
 		case KL_NONE: /* Shouldn't happen */
 			break;
 	}
