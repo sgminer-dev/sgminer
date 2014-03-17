@@ -413,10 +413,18 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	char numbuf[16];
 	char strbuf[255];
 
-	if (strcmp(cgpu->kname, "") == 0) {
-		applog(LOG_INFO, "No kernel specified, selecting kernel ckolivas");
-		strcpy(cgpu->kname, "ckolivas");
+	if (strcmp(cgpu->kernelname, "") == 0) {
+		applog(LOG_INFO, "No kernel specified, defaulting to ckolivas");
+		strcpy(cgpu->kernelname, "ckolivas");
 	}
+
+	sprintf(strbuf, "%s.cl", cgpu->kernelname);
+	strcpy(filename, strbuf);
+	strcpy(binaryfilename, cgpu->kernelname);
+
+	/* Kernel zuikkis only supports lookup-gap 2 */
+	if (strcmp(cgpu->kernelname, "zuikkis") == 0)
+		cgpu->lookup_gap = 2;
 
 	/* For some reason 2 vectors is still better even if the card says
 	 * otherwise, and many cards lie about their max so use 256 as max
@@ -428,14 +436,6 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 
 	/* All available kernels only support vector 1 */
 	cgpu->vwidth = 1;
-
-	sprintf(strbuf, "%s.cl", cgpu->kname);
-	strcpy(filename, strbuf);
-	strcpy(binaryfilename, cgpu->kname);
-
-	/* Kernel zuikkis only supports lookup-gap 2 */
-	if (strcmp(cgpu->kname, "zuikkis") == 0)
-		cgpu->lookup_gap = 2;
 
 	/* Vectors are hard-set to 1 above. */
 	if (likely(cgpu->vwidth))

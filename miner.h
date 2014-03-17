@@ -462,7 +462,7 @@ struct cgpu_info {
 
 	int64_t max_hashes;
 
-	char *kname;  /* Human-readable kernel name. */
+	char *kernelname;  /* Human-readable kernel name. */
 	bool mapped;
 	int virtual_gpu;
 	int virtual_adl;

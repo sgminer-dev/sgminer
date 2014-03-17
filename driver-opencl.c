@@ -203,15 +203,15 @@ char *set_kernel(char *arg)
 	if (nextptr == NULL)
 		return "Invalid parameters for set kernel";
 
-	gpus[device++].kname = strdup(nextptr);
+	gpus[device++].kernelname = strdup(nextptr);
 
 	while ((nextptr = strtok(NULL, ",")) != NULL)
-		gpus[device++].kname = strdup(nextptr);
+		gpus[device++].kernelname = strdup(nextptr);
 
 	/* If only one kernel name provided, use same for all GPUs. */
 	if (device == 1) {
 		for (i = device; i < MAX_GPUDEVICES; i++)
-			gpus[i].kname = strdup(gpus[0].kname);
+			gpus[i].kernelname = strdup(gpus[0].kernelname);
 	}
 
 	return NULL;
@@ -1280,8 +1280,8 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 	}
 	if (!cgpu->name)
 		cgpu->name = strdup(name);
-	if (!cgpu->kname)
-		cgpu->kname = strdup("ckolivas");
+	if (!cgpu->kernelname)
+		cgpu->kernelname = strdup("ckolivas");
 
 	applog(LOG_INFO, "initCl() finished. Found %s", name);
 	cgtime(&now);

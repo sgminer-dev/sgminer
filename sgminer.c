@@ -4262,7 +4262,7 @@ void write_config(FILE *fcfg)
 		fputs("\",\n\"kernel\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++) {
 			fprintf(fcfg, "%s", i > 0 ? "," : "");
-			fprintf(fcfg, "%s", gpus[i].kname);
+			fprintf(fcfg, "%s", gpus[i].kernelname);
 		}
 
 		fputs("\",\n\"lookup-gap\" : \"", fcfg);
