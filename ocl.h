@@ -30,7 +30,6 @@ typedef struct {
 	size_t max_work_size;
 	size_t wsize;
 	size_t compute_shaders;
-	enum cl_kernels chosen_kernel;
 } _clState;
 
 extern char *file_contents(const char *filename, int *length);

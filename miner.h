@@ -378,15 +378,6 @@ enum dev_enable {
 	DEV_RECOVER,
 };
 
-enum cl_kernels {
-	KL_NONE,
-	KL_ALEXKARNEW,
-	KL_ALEXKAROLD,
-	KL_CKOLIVAS,
-	KL_PSW,
-	KL_ZUIKKIS,
-};
-
 enum dev_reason {
 	REASON_THREAD_FAIL_INIT,
 	REASON_THREAD_ZERO_HASH,
