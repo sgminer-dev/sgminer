@@ -7160,8 +7160,8 @@ static void *watchdog_thread(void __maybe_unused *userdata)
 			}
 #endif
 			
-			/* Thread is waiting on getwork or disabled */
-			if (thr->getwork || *denable == DEV_DISABLED)
+			/* Thread is disabled or waiting on getwork */
+			if (*denable == DEV_DISABLED || thr->getwork)
 				continue;
 
 			if (cgpu->status != LIFE_WELL && (now.tv_sec - thr->last.tv_sec < WATCHDOG_SICK_TIME)) {
