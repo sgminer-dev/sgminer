@@ -558,6 +558,8 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	/////////////////////////////////////////////////////////////////
 
 build:
+	applog(LOG_NOTICE, "Building binary %s", binaryfilename);
+
 	clState->program = clCreateProgramWithSource(clState->context, 1, (const char **)&source, sourceSize, &status);
 	if (status != CL_SUCCESS) {
 		applog(LOG_ERR, "Error %d: Loading Binary into cl_program (clCreateProgramWithSource)", status);
@@ -717,7 +719,7 @@ build:
 	/* Save the binary to be loaded next time */
 	binaryfile = fopen(binaryfilename, "wb");
 	if (!binaryfile) {
-		/* Not a fatal problem, just means we build it again next time */
+		/* Not fatal, just means we build it again next time */
 		applog(LOG_DEBUG, "Unable to create file %s", binaryfilename);
 	} else {
 		if (unlikely(fwrite(binaries[slot], 1, binary_sizes[slot], binaryfile) != binary_sizes[slot])) {
@@ -732,8 +734,8 @@ built:
 	free(binaries);
 	free(binary_sizes);
 
-	applog(LOG_INFO, "Initialising kernel %s with%s bitalign, %d vectors and worksize %d",
-	       filename, clState->hasBitAlign ? "" : "out", clState->vwidth, (int)(clState->wsize));
+	applog(LOG_NOTICE, "Initialising kernel %s with%s bitalign, worksize %d",
+	       filename, clState->hasBitAlign ? "" : "out", (int)(clState->wsize));
 
 	if (!prog_built) {
 		/* create a cl program executable for all the devices specified */
