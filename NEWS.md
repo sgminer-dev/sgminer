@@ -6,6 +6,8 @@
   _veox_). For details on choosing the algorithm, see
   `doc/configuration.md`.
 * Setting pool name with `poolname` is deprecated. Use `name` instead.
+* Allowed kernel names are no longer hard-coded. It is now possible to
+  use any `.cl` file.
 
 
 ## Version 4.1.153 - 14th March 2014
