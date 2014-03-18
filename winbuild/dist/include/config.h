@@ -3,12 +3,6 @@
 
 #define HAVE_STDINT_H
 
-#define ALEXKARNEW_KERNNAME "alexkarnew"
-#define ALEXKAROLD_KERNNAME "alexkarold"
-#define CKOLIVAS_KERNNAME "ckolivas"
-#define ZUIKKIS_KERNNAME "zuikkis"
-#define PSW_KERNNAME "psw"
-
 #if defined(_MSC_VER)
 
 #define HAVE_LIBCURL 1
