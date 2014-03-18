@@ -208,17 +208,6 @@ __kernel void search(__global unsigned char* input, volatile __global uint* outp
     S05 ^= S01;
     S16 ^= S01;
 
-/*
-    sph_enc32be(hash +  0, S02);
-    sph_enc32be(hash +  4, S03);
-    sph_enc32be(hash +  8, S04);
-    sph_enc32be(hash + 12, S05);
-    sph_enc32be(hash + 16, S16);
-    sph_enc32be(hash + 20, S17);
-    sph_enc32be(hash + 24, S18);
-    sph_enc32be(hash + 28, S19);
-*/
-
     bool result = ((((sph_u64) SWAP4(S19) << 32) | SWAP4(S18)) <= target);
     if (result)
         output[output[0xFF]++] = SWAP4(gid);
