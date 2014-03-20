@@ -48,6 +48,7 @@ sgminer_SOURCES += quarkcoin.c quarkcoin.h
 sgminer_SOURCES += myriadcoin-groestl.c myriadcoin-groestl.h
 sgminer_SOURCES += fuguecoin.c fuguecoin.h
 sgminer_SOURCES += inkcoin.c inkcoin.h
+sgminer_SOURCES += animecoin.c animecoin.h
 sgminer_SOURCES += kernel/*.cl
 
 bin_SCRIPTS	= $(top_srcdir)/kernel/*.cl
