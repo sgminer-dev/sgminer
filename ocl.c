@@ -479,6 +479,11 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 			strcpy(filename, FUGUECOIN_KERNNAME".cl");
 			strcpy(binaryfilename, FUGUECOIN_KERNNAME);
 			break;
+		case KL_INKCOIN:
+			applog(LOG_WARNING, "Kernel inkcoin is experimental.");
+			strcpy(filename, INKCOIN_KERNNAME".cl");
+			strcpy(binaryfilename, INKCOIN_KERNNAME);
+			break;
 		case KL_NONE: /* Shouldn't happen */
 			break;
 	}

@@ -4242,6 +4242,9 @@ void write_config(FILE *fcfg)
 				case KL_FUGUECOIN:
 					fprintf(fcfg, FUGUECOIN_KERNNAME);
 					break;
+				case KL_INKCOIN:
+					fprintf(fcfg, INKCOIN_KERNNAME);
+					break;
 			}
 		}
 
@@ -6060,6 +6063,9 @@ static void rebuild_nonce(struct work *work, uint32_t nonce)
 			break;
 		case KL_FUGUECOIN:
 			fuguecoin_regenhash(work);
+			break;
+		case KL_INKCOIN:
+			inkcoin_regenhash(work);
 			break;
 		default:
 			scrypt_regenhash(work);

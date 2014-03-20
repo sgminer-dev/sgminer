@@ -350,6 +350,7 @@ AC_DEFINE_UNQUOTED([QUBITCOIN_KERNNAME], ["qubitcoin"], [Filename for QubitCoin 
 AC_DEFINE_UNQUOTED([QUARKCOIN_KERNNAME], ["quarkcoin"], [Filename for QuarkCoin optimised kernel])
 AC_DEFINE_UNQUOTED([MYRIADCOIN_GROESTL_KERNNAME], ["myriadcoin-groestl"], [Filename for MyriadCoin-Groestl optimised kernel])
 AC_DEFINE_UNQUOTED([FUGUECOIN_KERNNAME], ["fuguecoin"], [Filename for FugueCoin optimised kernel])
+AC_DEFINE_UNQUOTED([INKCOIN_KERNNAME], ["inkcoin"], [Filename for InkCoin optimised kernel])
 
 AC_SUBST(OPENCL_LIBS)
 AC_SUBST(OPENCL_FLAGS)
