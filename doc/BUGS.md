@@ -10,6 +10,8 @@ communication channels are not necessarily monitored.
 
 Search the issue list to see if it has already been reported.
 
+Make the title of your report informative.
+
 Information that may be relevant, depending on the nature of your issue:
 
 * OS version;
