@@ -30,7 +30,8 @@ Information that may be relevant, depending on the nature of your issue:
 
 Be careful when posting the contents of your configuration file: although
 pool connection and protocol information is relevant in a certain sub-class
-of issues, login credentials (username and password) are most often not.
+of issues, login credentials (username and password) are most often not. Run
+with `--incognito` if possible.
 
 If there is a need to provide more than a screenfull of log
 data, it is preferred that a link is given instead. Try
