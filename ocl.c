@@ -489,6 +489,11 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 			strcpy(filename, ANIMECOIN_KERNNAME".cl");
 			strcpy(binaryfilename, ANIMECOIN_KERNNAME);
 			break;
+		case KL_GROESTLCOIN:
+			applog(LOG_WARNING, "Kernel groestlcoin is experimental.");
+			strcpy(filename, GROESTLCOIN_KERNNAME".cl");
+			strcpy(binaryfilename, GROESTLCOIN_KERNNAME);
+			break;
 		case KL_NONE: /* Shouldn't happen */
 			break;
 	}

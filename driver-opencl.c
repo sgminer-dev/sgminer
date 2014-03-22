@@ -221,6 +221,8 @@ static enum cl_kernels select_kernel(char *arg)
 		return KL_INKCOIN;
 	if (!strcmp(arg, ANIMECOIN_KERNNAME))
 		return KL_ANIMECOIN;
+	if (!strcmp(arg, GROESTLCOIN_KERNNAME))
+		return KL_GROESTLCOIN;
 
 	return KL_NONE;
 }
@@ -1382,6 +1384,9 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 			case KL_ANIMECOIN:
 				cgpu->kname = ANIMECOIN_KERNNAME;
 				break;
+			case KL_GROESTLCOIN:
+				cgpu->kname = GROESTLCOIN_KERNNAME;
+				break;
 			default:
 				break;
 		}
@@ -1424,6 +1429,7 @@ static bool opencl_thread_init(struct thr_info *thr)
 	case KL_FUGUECOIN:
 	case KL_INKCOIN:
 	case KL_ANIMECOIN:
+	case KL_GROESTLCOIN:
 		thrdata->queue_kernel_parameters = &queue_sph_kernel;
 		break;
 	default:
