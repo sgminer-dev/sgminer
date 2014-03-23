@@ -33,3 +33,8 @@ void set_algorithm_nfactor(algorithm_t* algo, const uint8_t nfactor) {
 
     return;
 }
+
+bool cmp_algorithm(algorithm_t* algo1, algorithm_t* algo2) {
+    return (strcmp(algo1->name, algo2->name) == 0) &&
+          (algo1->nfactor == algo2->nfactor);
+}

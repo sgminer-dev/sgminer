@@ -34,5 +34,5 @@ typedef struct {
 
 extern char *file_contents(const char *filename, int *length);
 extern int clDevicesNum(void);
-extern _clState *initCl(unsigned int gpu, char *name, size_t nameSize);
+extern _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *algorithm);
 #endif /* __OCL_H__ */

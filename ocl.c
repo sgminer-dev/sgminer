@@ -31,6 +31,7 @@
 #include <unistd.h>
 
 #include "findnonce.h"
+#include "algorithm.h"
 #include "ocl.h"
 
 /* FIXME: only here for global config vars, replace with configuration.h
@@ -218,7 +219,7 @@ void patch_opcodes(char *w, unsigned remaining)
 	applog(LOG_DEBUG, "Patched a total of %i BFI_INT instructions", patched);
 }
 
-_clState *initCl(unsigned int gpu, char *name, size_t nameSize)
+_clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *algorithm)
 {
 	_clState *clState = (_clState *)calloc(1, sizeof(_clState));
 	bool patchbfi = false, prog_built = false;
@@ -350,7 +351,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	find = strstr(extensions, camo);
 	if (find)
 		clState->hasBitAlign = true;
-		
+
 	/* Check for OpenCL >= 1.0 support, needed for global offset parameter usage. */
 	char * devoclver = (char *)malloc(1024);
 	const char * ocl10 = "OpenCL 1.0";
@@ -382,7 +383,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 		return NULL;
 	}
 	applog(LOG_DEBUG, "Max work group size reported %d", (int)(clState->max_work_size));
-	
+
 	size_t compute_units = 0;
 	status = clGetDeviceInfo(devices[gpu], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(size_t), (void *)&compute_units, NULL);
 	if (status != CL_SUCCESS) {
@@ -732,8 +733,9 @@ built:
 	free(binaries);
 	free(binary_sizes);
 
-	applog(LOG_NOTICE, "Initialising kernel %s with%s bitalign, %spatched BFI",
-	       filename, clState->hasBitAlign ? "" : "out", patchbfi ? "" : "un");
+	applog(LOG_NOTICE, "Initialising kernel %s with%s bitalign, %spatched BFI, nfactor %d, n %d",
+	       filename, clState->hasBitAlign ? "" : "out", patchbfi ? "" : "un",
+	       algorithm->nfactor, algorithm->n);
 
 	if (!prog_built) {
 		/* create a cl program executable for all the devices specified */
