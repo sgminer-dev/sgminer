@@ -410,8 +410,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	 */
 	char binaryfilename[255];
 	char filename[255];
-	char numbuf[16];
-	char strbuf[255];
+	char strbuf[32];
 
 	if (cgpu->kernelname == NULL) {
 		applog(LOG_INFO, "No kernel specified, defaulting to ckolivas");
@@ -502,13 +501,13 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	if (clState->goffset)
 		strcat(binaryfilename, "g");
 
-	sprintf(numbuf, "lg%utc%unf%u", cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, algorithm->nfactor);
-	strcat(binaryfilename, numbuf);
+	sprintf(strbuf, "lg%utc%unf%u", cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, algorithm->nfactor);
+	strcat(binaryfilename, strbuf);
 
-	sprintf(numbuf, "w%d", (int)clState->wsize);
-	strcat(binaryfilename, numbuf);
-	sprintf(numbuf, "l%d", (int)sizeof(long));
-	strcat(binaryfilename, numbuf);
+	sprintf(strbuf, "w%d", (int)clState->wsize);
+	strcat(binaryfilename, strbuf);
+	sprintf(strbuf, "l%d", (int)sizeof(long));
+	strcat(binaryfilename, strbuf);
 	strcat(binaryfilename, ".bin");
 
 	binaryfile = fopen(binaryfilename, "rb");
