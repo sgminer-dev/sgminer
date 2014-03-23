@@ -422,9 +422,10 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	strcpy(filename, strbuf);
 	strcpy(binaryfilename, cgpu->kernelname);
 
-	/* Kernel zuikkis only supports lookup-gap 2 */
-	if (strcmp(cgpu->kernelname, "zuikkis") == 0)
+	if ((strcmp(cgpu->kernelname, "zuikkis") == 0) && (cgpu->lookup_gap != 2)) {
+		applog(LOG_WARNING, "Kernel zuikkis only supports lookup-gap = 2, forcing.");
 		cgpu->lookup_gap = 2;
+	}
 
 	/* For some reason 2 vectors is still better even if the card says
 	 * otherwise, and many cards lie about their max so use 256 as max
