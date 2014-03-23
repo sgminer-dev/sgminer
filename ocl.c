@@ -413,9 +413,9 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	char numbuf[16];
 	char strbuf[255];
 
-	if (strcmp(cgpu->kernelname, "") == 0) {
+	if (cgpu->kernelname == NULL) {
 		applog(LOG_INFO, "No kernel specified, defaulting to ckolivas");
-		strcpy(cgpu->kernelname, "ckolivas");
+		cgpu->kernelname = strdup("ckolivas");
 	}
 
 	sprintf(strbuf, "%s.cl", cgpu->kernelname);
