@@ -734,8 +734,8 @@ built:
 	free(binaries);
 	free(binary_sizes);
 
-	applog(LOG_NOTICE, "Initialising kernel %s with%s bitalign, worksize %d",
-	       filename, clState->hasBitAlign ? "" : "out", (int)(clState->wsize));
+	applog(LOG_NOTICE, "Initialising kernel %s with%s bitalign, %spatched BFI",
+	       filename, clState->hasBitAlign ? "" : "out", patchbfi ? "" : "un");
 
 	if (!prog_built) {
 		/* create a cl program executable for all the devices specified */
