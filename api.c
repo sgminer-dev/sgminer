@@ -145,8 +145,6 @@ static const char *NULLSTR = "(null)";
 static const char *TRUESTR = "true";
 static const char *FALSESTR = "false";
 
-static const char *SCRYPTSTR = "scrypt";
-
 static const char *DEVICECODE = "GPU ";
 
 static const char *OSINFO =
