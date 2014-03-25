@@ -931,6 +931,19 @@ static char *set_userpass(const char *arg)
 	return NULL;
 }
 
+static char *set_pool_priority(char *arg)
+{
+	struct pool *pool;
+
+	while ((json_array_index + 1) > total_pools)
+		add_pool();
+	pool = pools[json_array_index];
+	applog(LOG_DEBUG, "Setting pool %i priority to %s", pool->pool_no, arg);
+	opt_set_intval(arg, &pool->prio);
+
+	return NULL;
+}
+
 static char *enable_debug(bool *flag)
 {
 	*flag = true;
@@ -1400,6 +1413,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--userpass|-O",
 		     set_userpass, NULL, NULL,
 		     "Username:Password pair for bitcoin JSON-RPC server"),
+	OPT_WITH_ARG("--pool-priority",
+			 set_pool_priority, NULL, NULL,
+			 "Pool priority"),
 	OPT_WITHOUT_ARG("--worktime",
 			opt_set_bool, &opt_worktime,
 			"Display extra work time debug information"),
