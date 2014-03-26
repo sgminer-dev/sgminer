@@ -554,6 +554,8 @@ struct pool *add_pool(void)
 	pool->quota = 1;
 	adjust_quota_gcd();
 
+	pool->coin = "";
+
 	return pool;
 }
 
@@ -921,6 +923,16 @@ static char *set_pool_priority(char *arg)
 
 	applog(LOG_DEBUG, "Setting pool %i priority to %s", pool->pool_no, arg);
 	opt_set_intval(arg, &pool->prio);
+
+	return NULL;
+}
+
+static char *set_pool_coin(char *arg)
+{
+	struct pool *pool = get_current_pool();
+
+	applog(LOG_DEBUG, "Setting pool %i coin to %s", pool->pool_no, arg);
+	opt_set_charp(arg, &pool->coin);
 
 	return NULL;
 }
@@ -1397,6 +1409,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--pool-priority",
 			 set_pool_priority, NULL, NULL,
 			 "Pool priority"),
+	OPT_WITH_ARG("--coin",
+		     set_pool_coin, NULL, NULL,
+		     "Pool coin"),
 	OPT_WITHOUT_ARG("--worktime",
 			opt_set_bool, &opt_worktime,
 			"Display extra work time debug information"),
