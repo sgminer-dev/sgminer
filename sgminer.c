@@ -1452,20 +1452,18 @@ static char *parse_config(json_t *config, bool fileconf, int parent_iteration)
 				int n, size = json_array_size(val);
 
 				for (n = 0; n < size && !err; n++) {
-					if (json_is_string(json_array_get(val, n))) {
+					if (json_is_string(json_array_get(val, n)))
 						err = opt->cb_arg(json_string_value(json_array_get(val, n)), opt->u.arg);
-					}
 					else if (json_is_object(json_array_get(val, n)))
 					{
 						err = parse_config(json_array_get(val, n), false, n);
 						json_array_index = parent_iteration;
 					}
 				}
-			} else if ((opt->type & OPT_NOARG) && json_is_boolean(val)) {
+			} else if ((opt->type & OPT_NOARG) && json_is_true(val))
 				err = opt->cb(opt->u.arg);
-			} else {
+			else
 				err = "Invalid value";
-			}
 
 			if (err) {
 				/* Allow invalid values to be in configuration
