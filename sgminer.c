@@ -533,7 +533,7 @@ struct pool *add_pool(void)
 
 	/* Default pool name */
 	char buf[32];
-	sprintf(buf, "", pool->pool_no);
+	sprintf(buf, "");
 	pool->name = strdup(buf);
 
 	pools = (struct pool **)realloc(pools, sizeof(struct pool *) * (total_pools + 2));
