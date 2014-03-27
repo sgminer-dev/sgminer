@@ -203,15 +203,25 @@ char *set_kernel(char *arg)
 	if (nextptr == NULL)
 		return "Invalid parameters for set kernel";
 
-	gpus[device++].kernelname = strdup(nextptr);
+	if (gpus[device].kernelname != NULL)
+		free(gpus[device].kernelname);
+	gpus[device].kernelname = strdup(nextptr);
+	device++;
 
-	while ((nextptr = strtok(NULL, ",")) != NULL)
-		gpus[device++].kernelname = strdup(nextptr);
+	while ((nextptr = strtok(NULL, ",")) != NULL) {
+		if (gpus[device].kernelname != NULL)
+			free(gpus[device].kernelname);
+		gpus[device].kernelname = strdup(nextptr);
+		device++;
+	}
 
 	/* If only one kernel name provided, use same for all GPUs. */
 	if (device == 1) {
-		for (i = device; i < MAX_GPUDEVICES; i++)
+		for (i = device; i < MAX_GPUDEVICES; i++) {
+			if (gpus[i].kernelname != NULL)
+				free(gpus[i].kernelname);
 			gpus[i].kernelname = strdup(gpus[0].kernelname);
+	    }
 	}
 
 	return NULL;
