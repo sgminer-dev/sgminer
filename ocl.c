@@ -419,11 +419,6 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	strcpy(filename, strbuf);
 	strcpy(binaryfilename, cgpu->kernelname);
 
-	if ((strcmp(cgpu->kernelname, "zuikkis") == 0) && (cgpu->lookup_gap != 2)) {
-		applog(LOG_WARNING, "Kernel zuikkis only supports lookup-gap = 2, forcing.");
-		cgpu->lookup_gap = 2;
-	}
-
 	/* For some reason 2 vectors is still better even if the card says
 	 * otherwise, and many cards lie about their max so use 256 as max
 	 * unless explicitly set on the command line. Tahiti prefers 1 */
@@ -455,6 +450,11 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 		cgpu->lookup_gap = 2;
 	} else
 		cgpu->lookup_gap = cgpu->opt_lg;
+
+	if ((strcmp(cgpu->kernelname, "zuikkis") == 0) && (cgpu->lookup_gap != 2)) {
+		applog(LOG_WARNING, "Kernel zuikkis only supports lookup-gap = 2 (currently %d), forcing.", cgpu->lookup_gap);
+		cgpu->lookup_gap = 2;
+	}
 
 	if (!cgpu->opt_tc) {
 		unsigned int sixtyfours;
