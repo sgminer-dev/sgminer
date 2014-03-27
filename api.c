@@ -1819,6 +1819,7 @@ static void poolstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
 
 		root = api_add_int(root, "POOL", &i, false);
 		root = api_add_string(root, "Name", pool->name, false);
+		root = api_add_string(root, "Coin", pool->coin, false);
 		root = api_add_escape(root, "URL", pool->rpc_url, false);
 		root = api_add_string(root, "Status", status, false);
 		root = api_add_int(root, "Priority", &(pool->prio), false);

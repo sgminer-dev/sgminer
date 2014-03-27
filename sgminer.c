@@ -230,7 +230,7 @@ int total_pools, enabled_pools;
 enum pool_strategy pool_strategy = POOL_FAILOVER;
 int opt_rotate_period;
 static int total_urls, total_users, total_passes, total_userpasses;
-static int json_array_index;
+static int json_array_index = -1;
 
 static
 #ifndef HAVE_CURSES
@@ -554,7 +554,23 @@ struct pool *add_pool(void)
 	pool->quota = 1;
 	adjust_quota_gcd();
 
+	pool->coin = "";
+
 	return pool;
+}
+
+static struct pool* get_current_pool() 
+{
+	while ((json_array_index + 1) > total_pools)
+		add_pool();
+
+	if (json_array_index < 0) {
+		if (!total_pools)
+			add_pool();
+		return pools[total_pools - 1];
+	}
+	
+	return pools[json_array_index];	
 }
 
 /* Pool variant of test and set */
@@ -755,12 +771,8 @@ static char *set_url(char *arg)
 
 static char *set_poolname(char *arg)
 {
-	struct pool *pool;
-
-	while ((json_array_index + 1) > total_pools)
-		add_pool();
-	pool = pools[json_array_index];
-
+	struct pool *pool = get_current_pool();
+	
 	applog(LOG_DEBUG, "Setting pool %i name to %s", pool->pool_no, arg);
 	opt_set_charp(arg, &pool->name);
 
@@ -823,12 +835,7 @@ void remove_pool(struct pool *pool)
 
 static char *set_pool_state(char *arg)
 {
-	struct pool *pool;
-
-	/* TODO: consider using j_a_i everywhere */
-	while ((json_array_index + 1) > total_pools)
-		add_pool();
-	pool = pools[json_array_index];
+	struct pool *pool = get_current_pool();
 
 	applog(LOG_INFO, "Setting pool %s state to %s", get_pool_name(pool), arg);
 	if (strcmp(arg, "disabled") == 0) {
@@ -877,15 +884,8 @@ static char *set_quota(char *arg)
 
 static char *set_user(const char *arg)
 {
-	struct pool *pool;
+	struct pool *pool = get_current_pool();
 
-	if (total_userpasses)
-		return "Use only user + pass or userpass, but not both";
-	total_users++;
-	if (total_users > total_pools)
-		add_pool();
-
-	pool = pools[total_users - 1];
 	opt_set_charp(arg, &pool->rpc_user);
 
 	return NULL;
@@ -893,15 +893,8 @@ static char *set_user(const char *arg)
 
 static char *set_pass(const char *arg)
 {
-	struct pool *pool;
+	struct pool *pool = get_current_pool();
 
-	if (total_userpasses)
-		return "Use only user + pass or userpass, but not both";
-	total_passes++;
-	if (total_passes > total_pools)
-		add_pool();
-
-	pool = pools[total_passes - 1];
 	opt_set_charp(arg, &pool->rpc_pass);
 
 	return NULL;
@@ -909,16 +902,9 @@ static char *set_pass(const char *arg)
 
 static char *set_userpass(const char *arg)
 {
-	struct pool *pool;
+	struct pool *pool = get_current_pool();
 	char *updup;
 
-	if (total_users || total_passes)
-		return "Use only user + pass or userpass, but not both";
-	total_userpasses++;
-	if (total_userpasses > total_pools)
-		add_pool();
-
-	pool = pools[total_userpasses - 1];
 	updup = strdup(arg);
 	opt_set_charp(arg, &pool->rpc_userpass);
 	pool->rpc_user = strtok(updup, ":");
@@ -926,7 +912,27 @@ static char *set_userpass(const char *arg)
 		return "Failed to find : delimited user info";
 	pool->rpc_pass = strtok(NULL, ":");
 	if (!pool->rpc_pass)
-		return "Failed to find : delimited pass info";
+		pool->rpc_pass = "";
+
+	return NULL;
+}
+
+static char *set_pool_priority(char *arg)
+{
+	struct pool *pool = get_current_pool();
+
+	applog(LOG_DEBUG, "Setting pool %i priority to %s", pool->pool_no, arg);
+	opt_set_intval(arg, &pool->prio);
+
+	return NULL;
+}
+
+static char *set_pool_coin(char *arg)
+{
+	struct pool *pool = get_current_pool();
+
+	applog(LOG_DEBUG, "Setting pool %i coin to %s", pool->pool_no, arg);
+	opt_set_charp(arg, &pool->coin);
 
 	return NULL;
 }
@@ -1400,6 +1406,12 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--userpass|-O",
 		     set_userpass, NULL, NULL,
 		     "Username:Password pair for bitcoin JSON-RPC server"),
+	OPT_WITH_ARG("--pool-priority",
+			 set_pool_priority, NULL, NULL,
+			 "Pool priority"),
+	OPT_WITH_ARG("--coin",
+		     set_pool_coin, NULL, NULL,
+		     "Pool coin"),
 	OPT_WITHOUT_ARG("--worktime",
 			opt_set_bool, &opt_worktime,
 			"Display extra work time debug information"),
@@ -1457,7 +1469,6 @@ static char *parse_config(json_t *config, bool fileconf, int parent_iteration)
 					else if (json_is_object(json_array_get(val, n)))
 					{
 						err = parse_config(json_array_get(val, n), false, n);
-						json_array_index = parent_iteration;
 					}
 				}
 			} else if ((opt->type & OPT_NOARG) && json_is_true(val))
@@ -1523,7 +1534,7 @@ static char *load_config(const char *arg, void __maybe_unused *unused)
 
 	/* Parse the config now, so we can override it.  That can keep pointers
 	 * so don't free config object. */
-	return parse_config(config, true, 0);
+	return parse_config(config, true, -1);
 }
 
 static char *set_default_config(const char *arg)
