@@ -402,11 +402,9 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	applog(LOG_DEBUG, "Max mem alloc size is %lu", (long unsigned int)(cgpu->max_alloc));
 
 	/* Create binary filename based on parameters passed to opencl
-	 * compiler to ensure we only load a binary that matches what would
-	 * have otherwise created. The filename is:
-	 * name + kernelname +/- g(offset) + v + vectors + w + work_size + l + sizeof(long) + .bin
-	 * For scrypt the filename is:
-	 * name + kernelname + g + lg + lookup_gap + tc + thread_concurrency + w + work_size + l + sizeof(long) + .bin
+	 * compiler to ensure we only load a binary that matches what
+	 * would have otherwise created. The filename is:
+	 * name + kernelname + g + lg + lookup_gap + tc + thread_concurrency + nf + nfactor + w + work_size + l + sizeof(long) + .bin
 	 */
 	char binaryfilename[255];
 	char filename[255];
