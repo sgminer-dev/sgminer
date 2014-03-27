@@ -8,6 +8,10 @@
 * Setting pool name with `poolname` is deprecated. Use `name` instead.
 * Allowed kernel names are no longer hard-coded. It is now possible to
   use any `.cl` file.
+* Configuration parameter `poolname` has been renamed to `name`.
+* Multiple `--name` parsing should now work as expected (by _troky_).
+* `--coin` configuration parameter to specify a freeform pool
+  description (by _troky_).
 
 
 ## Version 4.1.153 - 14th March 2014
