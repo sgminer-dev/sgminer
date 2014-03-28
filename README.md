@@ -4,9 +4,9 @@
 ## Introduction
 
 This is a multi-threaded multi-pool GPU miner with ATI GPU monitoring,
-(over)clocking and fanspeed support for scrypt-based coins. It is based on
-cgminer by Con Kolivas (ckolivas), which is in turn based on cpuminer by
-Jeff Garzik (jgarzik).
+(over)clocking and fanspeed support for scrypt-based cryptocurrency. It is
+based on cgminer by Con Kolivas (ckolivas), which is in turn based on
+cpuminer by Jeff Garzik (jgarzik).
 
 **releases**: https://github.com/veox/sgminer/releases
 
