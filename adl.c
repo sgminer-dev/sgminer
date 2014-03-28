@@ -121,7 +121,6 @@ static	ADL_OVERDRIVE6_POWERCONTROL_SET		ADL_Overdrive6_PowerControl_Set;
 #endif
 static int iNumberAdapters;
 static LPAdapterInfo lpInfo = NULL;
-static LPADLDisplayInfo lpAdlDisplayInfo = NULL;
 
 int set_fanspeed(int gpu, int iFanSpeed);
 static float __gpu_temp(struct gpu_adl *ga);
