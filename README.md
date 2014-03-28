@@ -12,9 +12,11 @@ cpuminer by Jeff Garzik (jgarzik).
 
 **git tree**: https://github.com/veox/sgminer
 
-**issues**: https://github.com/veox/sgminer/issues
+**bugtracker**: https://github.com/veox/sgminer/issues
 
-**irc**: `#sgminer` on freenode
+**irc**: `#sgminer` and `#sgminer-dev` on freenode
+
+**mailing lists**: https://sourceforge.net/p/sgminer/mailman/
 
 License: GPLv3.  See `COPYING` for details.
 
