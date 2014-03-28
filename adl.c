@@ -361,7 +361,7 @@ void init_adl(int nDevs)
 		return;
 	}
 
-	applog(LOG_INFO, "Found %d ADL adapters", iNumberAdapters);
+	applog(LOG_INFO, "Found %d logical ADL adapters", iNumberAdapters);
 
 	/* Iterate over iNumberAdapters and find the lpAdapterID of real devices */
 	for (i = 0; i < iNumberAdapters; i++) {
