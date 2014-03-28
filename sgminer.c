@@ -1096,7 +1096,7 @@ static char *set_null(const char __maybe_unused *arg)
 static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--algorithm",
 		     set_algo, NULL, NULL,
-		     "Set mining algorithm and most common defaults, default: static"),
+		     "Set mining algorithm and most common defaults, default: scrypt"),
 	OPT_WITH_ARG("--api-allow",
 		     set_api_allow, NULL, NULL,
 		     "Allow API access only to the given list of [G:]IP[/Prefix] addresses[/subnets]"),
@@ -4411,6 +4411,8 @@ void write_config(FILE *fcfg)
 	}
 	if (opt_removedisabled)
 		fprintf(fcfg, ",\n\"remove-disabled\" : true");
+	if (strcmp(algorithm->name, "scrypt") != 0)
+		fprintf(fcfg, ",\n\"algorithm\" : \"%s\"", json_escape(algorithm->name));
 	if (opt_api_allow)
 		fprintf(fcfg, ",\n\"api-allow\" : \"%s\"", json_escape(opt_api_allow));
 	if (strcmp(opt_api_mcast_addr, API_MCAST_ADDR) != 0)
