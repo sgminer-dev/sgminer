@@ -326,7 +326,6 @@ void init_adl(int nDevs)
 	struct gpu_adapters adapters[MAX_GPUDEVICES], vadapters[MAX_GPUDEVICES];
 	bool devs_match = true;
 	ADLBiosInfo BiosInfo;
-	int iNumDisplays;
 
 	applog(LOG_INFO, "Number of ADL devices: %d", nDevs);
 
