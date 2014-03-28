@@ -531,9 +531,9 @@ struct pool *add_pool(void)
 		quit(1, "Failed to calloc pool in add_pool");
 	pool->pool_no = pool->prio = total_pools;
 
-	/* Default pool name */
+	/* Default pool name is "" (empty string) */
 	char buf[32];
-	sprintf(buf, "");
+	buf[0] = '\0';
 	pool->name = strdup(buf);
 
 	pools = (struct pool **)realloc(pools, sizeof(struct pool *) * (total_pools + 2));
