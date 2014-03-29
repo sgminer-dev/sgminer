@@ -364,12 +364,9 @@ AC_OUTPUT
 
 
 echo
-echo
-echo
 echo "------------------------------------------------------------------------"
 echo "$PACKAGE $VERSION"
 echo "------------------------------------------------------------------------"
-echo
 echo
 echo "Configuration Options Summary:"
 echo
@@ -388,7 +385,6 @@ if test $found_opencl = 1; then
 	echo "  OpenCL...............: FOUND. GPU mining support enabled"
 else
 	echo "  OpenCL...............: NOT FOUND. GPU mining support DISABLED"
-	AC_MSG_ERROR([OpenCL not found])
 fi
 
 if test "x$adl" != xno; then
@@ -415,3 +411,8 @@ echo
 echo "Installation...........: make install (as root if needed, with 'su' or 'sudo')"
 echo "  prefix...............: $prefix"
 echo
+
+# Error out here, so the entire summary can be printed first
+if test $found_opencl != 1; then
+	AC_MSG_ERROR([OpenCL not found])
+fi
