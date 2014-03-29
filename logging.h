@@ -32,6 +32,7 @@ extern int opt_log_show_date;
 
 void applog(int prio, const char* fmt, ...);
 extern void _applog(int prio, const char *str, bool force);
+extern void _simplelog(int prio, const char *str, bool force);
 
 #define IN_FMT_FFL " in %s %s():%d"
 

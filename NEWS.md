@@ -13,6 +13,8 @@
 * Multiple `--name` parsing should now work as expected (by _troky_).
 * `--coin` configuration parameter to specify a freeform pool
   description (by _troky_).
+* Forward-port changes from `ckolivas/cgminer` slightly after 3.12.3
+  (up to 133252175b90159d18151b004bf767d5a43812ea).
 
 
 ## Version 4.1.153 - 14th March 2014

@@ -460,3 +460,30 @@ For example (this is wrapped, but it's all on one line for real):
     000000004a4366808f81d44f26df3d69d7dc4b3473385930462d9ab707b50498
     f681634a4f1f63d01a0cd43fb338000000000080000000000000000000000000
     0000000000000000000000000000000000000000000000000000000080020000
+
+
+## Benchmark
+
+The --benchmark option hashes a single fixed work item over and over and does
+not submit shares to any pools.
+
+The --benchfile <arg> option hashes the work given in the file <arg> supplied.
+The format of the work file is:
+version,merkleroot,prevhash,diffbits,noncetime
+Any empty line or any line starting with '#' or '/' is ignored.
+When it reaches the end of the file it continues back at the top.
+
+The format of the data items matches the byte ordering and format of the
+the bitcoind getblock RPC output.
+
+An example file containing bitcoin block #1 would be:
+
+# Block 1
+1,0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098,00000000001
+9d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f,1d00ffff,1231469665
+
+However, the work data should be one line without the linebreak in the middle
+
+If you use --benchfile <arg>, then --benchfile-display will output a log line,
+for each nonce found, showing the nonce value in decimal and hex and the work
+used to find it in hex.
