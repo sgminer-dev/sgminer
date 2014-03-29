@@ -199,7 +199,9 @@ static pthread_mutex_t lp_lock;
 static pthread_cond_t lp_cond;
 
 static pthread_mutex_t algo_switch_lock;
-static pthread_t algo_switch_thr = 0;
+static int algo_switch_n = 0;
+static pthread_mutex_t algo_switch_wait_lock;
+static pthread_cond_t algo_switch_wait_cond;
 
 pthread_mutex_t restart_lock;
 pthread_cond_t restart_cond;
@@ -6023,67 +6025,51 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
 	cgtime(&work->tv_staged);
 }
 
-static void *switch_algo_thread(void *arg)
-{
-	algorithm_t *new_algo = (algorithm_t *) arg;
-	int i;
-
-	pthread_detach(pthread_self());
-
-	applog(LOG_WARNING, "Switching algorithm to %s (%d)",
-		new_algo->name, new_algo->nfactor);
-
-	// TODO: When threads are canceled, they may leak memory, for example
-	// the "work" variable in get_work.
-	rd_lock(&devices_lock);
-	for (i = 0; i < total_devices; i++) {
-		devices[i]->algorithm = *new_algo;
-		reinit_device(devices[i]);
-	}
-	rd_unlock(&devices_lock);
-
-	// Wait for reinit_gpu to finish
-	while (42) {
-		struct thread_q *tq = control_thr[gpur_thr_id].q;
-		bool stop = false;
-		mutex_lock(&tq->mutex);
-		stop = list_empty(&tq->q);
-		mutex_unlock(&tq->mutex);
-		if (stop) break;
-		usleep(50000);
-	}
-
-	mutex_lock(&algo_switch_lock);
-	algo_switch_thr = 0;
-	mutex_unlock(&algo_switch_lock);
-
-	return NULL;
-}
-
-static void wait_to_die(void)
-{
-	mutex_unlock(&algo_switch_lock);
-	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-	sleep(60);
-	applog(LOG_ERR, "Thread not canceled within 60 seconds");
-}
-
 static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 {
-	struct cgpu_info *cgpu = mythr->cgpu;
+	int i;
 
-	mutex_lock(&algo_switch_lock);
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-	if (!cmp_algorithm(&work->pool->algorithm, &cgpu->algorithm)) {
-		// stage work back to queue, we cannot process it yet
-		stage_work(work);
-		if (algo_switch_thr == 0)
-			pthread_create(&algo_switch_thr, NULL, &switch_algo_thread, &work->pool->algorithm);
-		wait_to_die();
-	} else {
+	mutex_lock(&algo_switch_lock);
+
+	if (cmp_algorithm(&work->pool->algorithm, &mythr->cgpu->algorithm) && (algo_switch_n == 0)) {
 		mutex_unlock(&algo_switch_lock);
 		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+		return;
 	}
+
+	algo_switch_n++;
+
+	// If all threads are waiting now
+	if (algo_switch_n >= mining_threads) {
+		rd_lock(&mining_thr_lock);
+		// Shutdown all threads first (necessary)
+		for (i = 0; i < mining_threads; i++) {
+			struct thr_info *thr = mining_thr[i];
+		  thr->cgpu->drv->thread_shutdown(thr);
+		}
+		// Change algorithm for each thread (thread_prepare calls initCl)
+		for (i = 0; i < mining_threads; i++) {
+			struct thr_info *thr = mining_thr[i];
+			thr->cgpu->algorithm = work->pool->algorithm;
+		  thr->cgpu->drv->thread_prepare(thr);
+		}
+		rd_unlock(&mining_thr_lock);
+	  algo_switch_n = 0;
+		mutex_unlock(&algo_switch_lock);
+		// Signal other threads to start working now
+		mutex_lock(&algo_switch_wait_lock);
+		pthread_cond_broadcast(&algo_switch_wait_cond);
+		mutex_unlock(&algo_switch_wait_lock);
+	// Not all threads are waiting, join the waiting list
+	} else {
+		mutex_unlock(&algo_switch_lock);
+		// Wait for signal to start working again
+		mutex_lock(&algo_switch_wait_lock);
+		pthread_cond_wait(&algo_switch_wait_cond, &algo_switch_wait_lock);
+		mutex_unlock(&algo_switch_wait_lock);
+	}
+	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 }
 
 struct work *get_work(struct thr_info *thr, const int thr_id)
@@ -7947,6 +7933,10 @@ int main(int argc, char *argv[])
 	mutex_init(&restart_lock);
 	if (unlikely(pthread_cond_init(&restart_cond, NULL)))
 		quit(1, "Failed to pthread_cond_init restart_cond");
+
+	mutex_init(&algo_switch_wait_lock);
+	if (unlikely(pthread_cond_init(&algo_switch_wait_cond, NULL)))
+		quit(1, "Failed to pthread_cond_init algo_switch_wait_cond");
 
 	if (unlikely(pthread_cond_init(&gws_cond, NULL)))
 		quit(1, "Failed to pthread_cond_init gws_cond");
