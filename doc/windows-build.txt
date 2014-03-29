@@ -238,15 +238,14 @@ remember 'make distclean' may delete it!
 
 mkdir -p ../win32/lib
 cd ../win32
-mkdir include
-mkdir bin
+mkdir bin include
 
 NB: All following steps assume you are in the "win32" directory. Adjust as necessary.
 
 ** pdcurses
 
 wget http://internode.dl.sourceforge.net/project/pdcurses/pdcurses/3.4/pdc34dllw.zip
-unzip /home/gus/Downloads/pdc34dllw.zip
+unzip pdc34dllw.zip
 mv *.h include/
 mv pdcurses.lib lib/
 mv pdcurses.dll bin/
@@ -273,20 +272,16 @@ mv curl-7.33.0-devel-mingw32/bin/* bin/
 rm -rf curl-7.33.0-devel-mingw32
 
 
-** clean up
-
-rm *.zip
-
-
 ** Building
 
 Below assumes you're building in a "build-win32" or similar directory
-inside the sgminer directory. Fix up the -I and -L paths appropriately
-if you're building in-tree or someplace else.
+inside the sgminer directory. Fix up the `-I` and `-L` paths appropriately
+if you're building in-tree or someplace else. Verify `--prefix`, `--host`
+and `--build`.
 
 Configure command:
 
-CPPFLAGS="-I`pwd`/../../win32/include" LDFLAGS="-L`pwd`/../../win32/lib -lcurldll" ../autogen.sh --prefix=/usr/local/i586-mingw32 --host=i586-mingw32msvc --build=i686-linux 
+CPPFLAGS="-I`pwd`/../../win32/include" LDFLAGS="-L`pwd`/../../win32/lib -lcurldll" ../autogen.sh --prefix=/usr/local/i586-mingw32 --host=i586-mingw32msvc --build=i686-linux && ../configure
 
 ^^^ Plus whatever configure arguments you want to add. Note the paths
     to win32 that you may need to change.
