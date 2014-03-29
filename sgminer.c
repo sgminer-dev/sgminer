@@ -7189,7 +7189,7 @@ static void *watchpool_thread(void __maybe_unused *userdata)
 
 			/* Get a rolling utility per pool over 10 mins */
 			if (intervals > 19) {
-				applog(LOG_DEBUG, "Getting rolling utility for %s", pool->poolname);
+				applog(LOG_DEBUG, "Getting rolling utility for %s", pool->name);
 				int shares = pool->diff1 - pool->last_shares;
 
 				pool->last_shares = pool->diff1;
@@ -7198,21 +7198,21 @@ static void *watchpool_thread(void __maybe_unused *userdata)
 			}
 
 			if (pool->state == POOL_DISABLED) {
-				applog(LOG_DEBUG, "Skipping disabled %s", pool->poolname);
+				applog(LOG_DEBUG, "Skipping disabled %s", pool->name);
 				continue;
 			}
 
 			/* Don't start testing any pools if the test threads
 			 * from startup are still doing their first attempt. */
 			if (unlikely(pool->testing)) {
-				applog(LOG_DEBUG, "Testing %s", pool->poolname);
+				applog(LOG_DEBUG, "Testing %s", pool->name);
 				pthread_join(pool->test_thread, NULL);
 				pool->testing = false;
 			}
 
 			/* Test pool is idle once every minute */
 			if (pool->idle && now.tv_sec - pool->tv_idle.tv_sec > 30) {
-				applog(LOG_DEBUG, "Testing idle %s", pool->poolname);
+				applog(LOG_DEBUG, "Testing idle %s", pool->name);
 				cgtime(&pool->tv_idle);
 				if (pool_active(pool, true) && pool_tclear(pool, &pool->idle))
 					pool_resus(pool);
@@ -7230,7 +7230,7 @@ static void *watchpool_thread(void __maybe_unused *userdata)
 		}
 
 		if (current_pool()->idle) {
-			applog(LOG_DEBUG, "%s is idle, switching pools", current_pool()->poolname);
+			applog(LOG_DEBUG, "%s is idle, switching pools", current_pool()->name);
 			switch_pools(NULL);
 		}
 
