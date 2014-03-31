@@ -474,6 +474,11 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 			strcpy(filename, MYRIADCOIN_GROESTL_KERNNAME".cl");
 			strcpy(binaryfilename, MYRIADCOIN_GROESTL_KERNNAME);
 			break;
+		case KL_SIFCOIN:
+			applog(LOG_WARNING, "Kernel sifcoin is experimental.");
+			strcpy(filename, SIFCOIN_KERNNAME".cl");
+			strcpy(binaryfilename, SIFCOIN_KERNNAME);
+			break;
 		case KL_NONE: /* Shouldn't happen */
 			break;
 	}
