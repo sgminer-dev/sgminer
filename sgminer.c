@@ -4251,6 +4251,9 @@ void write_config(FILE *fcfg)
 				case KL_GROESTLCOIN:
 					fprintf(fcfg, GROESTLCOIN_KERNNAME);
 					break;
+				case KL_SIFCOIN:
+					fprintf(fcfg, SIFCOIN_KERNNAME);
+					break;
 			}
 		}
 
@@ -6078,6 +6081,9 @@ static void rebuild_nonce(struct work *work, uint32_t nonce)
 			break;
 		case KL_GROESTLCOIN:
 			groestlcoin_regenhash(work);
+			break;
+		case KL_SIFCOIN:
+			sifcoin_regenhash(work);
 			break;
 		default:
 			scrypt_regenhash(work);
