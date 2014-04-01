@@ -68,6 +68,14 @@ sgminer-specific configuration options:
     --disable-adl           Override detection and disable building with adl
 	--disable-adl-checks
     --without-curses        Do not compile support for curses TUI
+    
+#### Debian Example
+
+    apt-get install libcurl4-openssl-dev
+    apt-get install pkg-config
+    apt-get install libtool
+    apt-get install libncurses5-dev
+AMD APP SDK and AMD ADL SDK must be downloaded from the amd websites.
 
 ### *nix build instructions
 
