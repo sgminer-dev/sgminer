@@ -48,7 +48,6 @@ static void my_log_curses(int prio, const char *datetime, const char *str, bool 
 }
 
 /* high-level logging function, based on global opt_log_level */
-
 void applog(int prio, const char* fmt, ...) {
 	va_list args;
 
