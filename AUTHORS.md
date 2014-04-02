@@ -31,6 +31,7 @@ updated by many others.
 
 ## Testing, bug fixes, improvements
 
+* Hot-switching OpenCL kernel (N-Factor): Jan Berdajs <mrbrdo> 15bULC8snaKAMeFb3xBmmhbWj1xyTmBUfm
 * Gabriel Devenyi <gdevenyi>
 * Benjamin Herrenschmidt <ozbenh>
 * Joe4782 <Joe4782>
