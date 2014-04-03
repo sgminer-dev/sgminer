@@ -1,5 +1,5 @@
-#ifndef __DEVICE_GPU_H__
-#define __DEVICE_GPU_H__
+#ifndef DEVICE_GPU_H
+#define DEVICE_GPU_H
 
 #include "miner.h"
 
@@ -32,4 +32,4 @@ extern int opt_platform_id;
 
 extern struct device_drv opencl_drv;
 
-#endif /* __DEVICE_GPU_H__ */
+#endif /* DEVICE_GPU_H */

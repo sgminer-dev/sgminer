@@ -1,5 +1,5 @@
-#ifndef __LOGGING_H__
-#define __LOGGING_H__
+#ifndef LOGGING_H
+#define LOGGING_H
 
 #include "config.h"
 #include <stdbool.h>
@@ -100,4 +100,4 @@ extern void _applog(int prio, const char *str, bool force);
 
 #endif
 
-#endif /* __LOGGING_H__ */
+#endif /* LOGGING_H */

@@ -1,5 +1,6 @@
-#ifndef __ADL_H__
-#define __ADL_H__
+#ifndef ADL_H
+#define ADL_H
+
 #ifdef HAVE_ADL
 extern bool adl_active;
 extern bool opt_reorder;
@@ -19,10 +20,14 @@ bool gpu_stats(int gpu, float *temp, int *engineclock, int *memclock, float *vdd
 void change_gpusettings(int gpu);
 void gpu_autotune(int gpu, enum dev_enable *denable);
 void clear_adl(int nDevs);
+
 #else /* HAVE_ADL */
+
 #define adl_active (0)
 static inline void init_adl(__maybe_unused int nDevs) {}
 static inline void change_gpusettings(__maybe_unused int gpu) { }
 static inline void clear_adl(__maybe_unused int nDevs) {}
-#endif
-#endif
+
+#endif /* HAVE_ADL */
+
+#endif /* ADL_H */

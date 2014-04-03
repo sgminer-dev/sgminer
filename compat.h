@@ -1,5 +1,5 @@
-#ifndef __COMPAT_H__
-#define __COMPAT_H__
+#ifndef COMPAT_H
+#define COMPAT_H
 
 #ifdef WIN32
 #include "config.h"
@@ -88,4 +88,4 @@ typedef long suseconds_t;
 #define PTH(thr) ((thr)->pth)
 #endif /* WIN32 */
 
-#endif /* __COMPAT_H__ */
+#endif /* COMPAT_H */

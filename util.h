@@ -1,5 +1,5 @@
-#ifndef __UTIL_H__
-#define __UTIL_H__
+#ifndef UTIL_H
+#define UTIL_H
 
 #include <semaphore.h>
 
@@ -164,4 +164,4 @@ static inline void align_len(size_t *len)
 		*len += 4 - (*len % 4);
 }
 
-#endif /* __UTIL_H__ */
+#endif /* UTIL_H */
