@@ -499,6 +499,11 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 			strcpy(filename, SIFCOIN_KERNNAME".cl");
 			strcpy(binaryfilename, SIFCOIN_KERNNAME);
 			break;
+		case KL_TWECOIN:
+			applog(LOG_WARNING, "Kernel twecoin is experimental.");
+			strcpy(filename, TWECOIN_KERNNAME".cl");
+			strcpy(binaryfilename, TWECOIN_KERNNAME);
+			break;
 		case KL_NONE: /* Shouldn't happen */
 			break;
 	}

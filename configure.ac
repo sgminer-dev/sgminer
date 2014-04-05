@@ -354,6 +354,7 @@ AC_DEFINE_UNQUOTED([INKCOIN_KERNNAME], ["inkcoin"], [Filename for InkCoin optimi
 AC_DEFINE_UNQUOTED([ANIMECOIN_KERNNAME], ["animecoin"], [Filename for AnimeCoin optimised kernel])
 AC_DEFINE_UNQUOTED([GROESTLCOIN_KERNNAME], ["groestlcoin"], [Filename for GroestlCoin optimised kernel])
 AC_DEFINE_UNQUOTED([SIFCOIN_KERNNAME], ["sifcoin"], [Filename for Sifcoin optimised kernel])
+AC_DEFINE_UNQUOTED([TWECOIN_KERNNAME], ["twecoin"], [Filename for Twecoin optimised kernel])
 
 AC_SUBST(OPENCL_LIBS)
 AC_SUBST(OPENCL_FLAGS)

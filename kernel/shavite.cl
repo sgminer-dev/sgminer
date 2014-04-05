@@ -605,3 +605,409 @@
 	hF ^= p7; \
 	} while (0)
 
+#define c256(msg)    do { \
+	sph_u32 p0, p1, p2, p3, p4, p5, p6, p7; \
+	sph_u32 x0, x1, x2, x3; \
+        \
+	p0 = h[0x0]; \
+	p1 = h[0x1]; \
+	p2 = h[0x2]; \
+	p3 = h[0x3]; \
+	p4 = h[0x4]; \
+	p5 = h[0x5]; \
+	p6 = h[0x6]; \
+	p7 = h[0x7]; \
+	/* round 0 */ \
+	x0 = p4 ^ rk0; \
+	x1 = p5 ^ rk1; \
+	x2 = p6 ^ rk2; \
+	x3 = p7 ^ rk3; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	x0 ^= rk4; \
+	x1 ^= rk5; \
+	x2 ^= rk6; \
+	x3 ^= rk7; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	x0 ^= rk8; \
+	x1 ^= rk9; \
+	x2 ^= rkA; \
+	x3 ^= rkB; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	p0 ^= x0; \
+	p1 ^= x1; \
+	p2 ^= x2; \
+	p3 ^= x3; \
+	/* round 1 */ \
+	x0 = p0 ^ rkC; \
+	x1 = p1 ^ rkD; \
+	x2 = p2 ^ rkE; \
+	x3 = p3 ^ rkF; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	KEY_EXPAND_ELT(rk0, rk1, rk2, rk3); \
+	rk0 ^= rkC ^ count0; \
+	rk1 ^= rkD ^ SPH_T32(~count1); \
+	rk2 ^= rkE; \
+	rk3 ^= rkF; \
+	x0 ^= rk0; \
+	x1 ^= rk1; \
+	x2 ^= rk2; \
+	x3 ^= rk3; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	KEY_EXPAND_ELT(rk4, rk5, rk6, rk7); \
+	rk4 ^= rk0; \
+	rk5 ^= rk1; \
+	rk6 ^= rk2; \
+	rk7 ^= rk3; \
+	x0 ^= rk4; \
+	x1 ^= rk5; \
+	x2 ^= rk6; \
+	x3 ^= rk7; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	p4 ^= x0; \
+	p5 ^= x1; \
+	p6 ^= x2; \
+	p7 ^= x3; \
+	/* round 2 */ \
+	KEY_EXPAND_ELT(rk8, rk9, rkA, rkB); \
+	rk8 ^= rk4; \
+	rk9 ^= rk5; \
+	rkA ^= rk6; \
+	rkB ^= rk7; \
+	x0 = p4 ^ rk8; \
+	x1 = p5 ^ rk9; \
+	x2 = p6 ^ rkA; \
+	x3 = p7 ^ rkB; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	KEY_EXPAND_ELT(rkC, rkD, rkE, rkF); \
+	rkC ^= rk8; \
+	rkD ^= rk9; \
+	rkE ^= rkA; \
+	rkF ^= rkB; \
+	x0 ^= rkC; \
+	x1 ^= rkD; \
+	x2 ^= rkE; \
+	x3 ^= rkF; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	rk0 ^= rkD; \
+	x0 ^= rk0; \
+	rk1 ^= rkE; \
+	x1 ^= rk1; \
+	rk2 ^= rkF; \
+	x2 ^= rk2; \
+	rk3 ^= rk0; \
+	x3 ^= rk3; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	p0 ^= x0; \
+	p1 ^= x1; \
+	p2 ^= x2; \
+	p3 ^= x3; \
+	/* round 3 */ \
+	rk4 ^= rk1; \
+	x0 = p0 ^ rk4; \
+	rk5 ^= rk2; \
+	x1 = p1 ^ rk5; \
+	rk6 ^= rk3; \
+	x2 = p2 ^ rk6; \
+	rk7 ^= rk4; \
+	x3 = p3 ^ rk7; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	rk8 ^= rk5; \
+	x0 ^= rk8; \
+	rk9 ^= rk6; \
+	x1 ^= rk9; \
+	rkA ^= rk7; \
+	x2 ^= rkA; \
+	rkB ^= rk8; \
+	x3 ^= rkB; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	rkC ^= rk9; \
+	x0 ^= rkC; \
+	rkD ^= rkA; \
+	x1 ^= rkD; \
+	rkE ^= rkB; \
+	x2 ^= rkE; \
+	rkF ^= rkC; \
+	x3 ^= rkF; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	p4 ^= x0; \
+	p5 ^= x1; \
+	p6 ^= x2; \
+	p7 ^= x3; \
+	/* round 4 */ \
+	KEY_EXPAND_ELT(rk0, rk1, rk2, rk3); \
+	rk0 ^= rkC; \
+	rk1 ^= rkD; \
+	rk2 ^= rkE; \
+	rk3 ^= rkF; \
+	x0 = p4 ^ rk0; \
+	x1 = p5 ^ rk1; \
+	x2 = p6 ^ rk2; \
+	x3 = p7 ^ rk3; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	KEY_EXPAND_ELT(rk4, rk5, rk6, rk7); \
+	rk4 ^= rk0; \
+	rk5 ^= rk1; \
+	rk6 ^= rk2; \
+	rk7 ^= rk3; \
+	x0 ^= rk4; \
+	x1 ^= rk5; \
+	x2 ^= rk6; \
+	x3 ^= rk7; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	KEY_EXPAND_ELT(rk8, rk9, rkA, rkB); \
+	rk8 ^= rk4; \
+	rk9 ^= rk5 ^ count1; \
+	rkA ^= rk6 ^ SPH_T32(~count0); \
+	rkB ^= rk7; \
+	x0 ^= rk8; \
+	x1 ^= rk9; \
+	x2 ^= rkA; \
+	x3 ^= rkB; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	p0 ^= x0; \
+	p1 ^= x1; \
+	p2 ^= x2; \
+	p3 ^= x3; \
+	/* round 5 */ \
+	KEY_EXPAND_ELT(rkC, rkD, rkE, rkF); \
+	rkC ^= rk8; \
+	rkD ^= rk9; \
+	rkE ^= rkA; \
+	rkF ^= rkB; \
+	x0 = p0 ^ rkC; \
+	x1 = p1 ^ rkD; \
+	x2 = p2 ^ rkE; \
+	x3 = p3 ^ rkF; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	rk0 ^= rkD; \
+	x0 ^= rk0; \
+	rk1 ^= rkE; \
+	x1 ^= rk1; \
+	rk2 ^= rkF; \
+	x2 ^= rk2; \
+	rk3 ^= rk0; \
+	x3 ^= rk3; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	rk4 ^= rk1; \
+	x0 ^= rk4; \
+	rk5 ^= rk2; \
+	x1 ^= rk5; \
+	rk6 ^= rk3; \
+	x2 ^= rk6; \
+	rk7 ^= rk4; \
+	x3 ^= rk7; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	p4 ^= x0; \
+	p5 ^= x1; \
+	p6 ^= x2; \
+	p7 ^= x3; \
+	/* round 6 */ \
+	rk8 ^= rk5; \
+	x0 = p4 ^ rk8; \
+	rk9 ^= rk6; \
+	x1 = p5 ^ rk9; \
+	rkA ^= rk7; \
+	x2 = p6 ^ rkA; \
+	rkB ^= rk8; \
+	x3 = p7 ^ rkB; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	rkC ^= rk9; \
+	x0 ^= rkC; \
+	rkD ^= rkA; \
+	x1 ^= rkD; \
+	rkE ^= rkB; \
+	x2 ^= rkE; \
+	rkF ^= rkC; \
+	x3 ^= rkF; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	KEY_EXPAND_ELT(rk0, rk1, rk2, rk3); \
+	rk0 ^= rkC; \
+	rk1 ^= rkD; \
+	rk2 ^= rkE; \
+	rk3 ^= rkF; \
+	x0 ^= rk0; \
+	x1 ^= rk1; \
+	x2 ^= rk2; \
+	x3 ^= rk3; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	p0 ^= x0; \
+	p1 ^= x1; \
+	p2 ^= x2; \
+	p3 ^= x3; \
+	/* round 7 */ \
+	KEY_EXPAND_ELT(rk4, rk5, rk6, rk7); \
+	rk4 ^= rk0; \
+	rk5 ^= rk1; \
+	rk6 ^= rk2 ^ count1; \
+	rk7 ^= rk3 ^ SPH_T32(~count0); \
+	x0 = p0 ^ rk4; \
+	x1 = p1 ^ rk5; \
+	x2 = p2 ^ rk6; \
+	x3 = p3 ^ rk7; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	KEY_EXPAND_ELT(rk8, rk9, rkA, rkB); \
+	rk8 ^= rk4; \
+	rk9 ^= rk5; \
+	rkA ^= rk6; \
+	rkB ^= rk7; \
+	x0 ^= rk8; \
+	x1 ^= rk9; \
+	x2 ^= rkA; \
+	x3 ^= rkB; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	KEY_EXPAND_ELT(rkC, rkD, rkE, rkF); \
+	rkC ^= rk8; \
+	rkD ^= rk9; \
+	rkE ^= rkA; \
+	rkF ^= rkB; \
+	x0 ^= rkC; \
+	x1 ^= rkD; \
+	x2 ^= rkE; \
+	x3 ^= rkF; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	p4 ^= x0; \
+	p5 ^= x1; \
+	p6 ^= x2; \
+	p7 ^= x3; \
+	/* round 8 */ \
+	rk0 ^= rkD; \
+	x0 = p4 ^ rk0; \
+	rk1 ^= rkE; \
+	x1 = p5 ^ rk1; \
+	rk2 ^= rkF; \
+	x2 = p6 ^ rk2; \
+	rk3 ^= rk0; \
+	x3 = p7 ^ rk3; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	rk4 ^= rk1; \
+	x0 ^= rk4; \
+	rk5 ^= rk2; \
+	x1 ^= rk5; \
+	rk6 ^= rk3; \
+	x2 ^= rk6; \
+	rk7 ^= rk4; \
+	x3 ^= rk7; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	rk8 ^= rk5; \
+	x0 ^= rk8; \
+	rk9 ^= rk6; \
+	x1 ^= rk9; \
+	rkA ^= rk7; \
+	x2 ^= rkA; \
+	rkB ^= rk8; \
+	x3 ^= rkB; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	p0 ^= x0; \
+	p1 ^= x1; \
+	p2 ^= x2; \
+	p3 ^= x3; \
+	/* round 9 */ \
+	rkC ^= rk9; \
+	x0 = p0 ^ rkC; \
+	rkD ^= rkA; \
+	x1 = p1 ^ rkD; \
+	rkE ^= rkB; \
+	x2 = p2 ^ rkE; \
+	rkF ^= rkC; \
+	x3 = p3 ^ rkF; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	KEY_EXPAND_ELT(rk0, rk1, rk2, rk3); \
+	rk0 ^= rkC; \
+	rk1 ^= rkD; \
+	rk2 ^= rkE; \
+	rk3 ^= rkF; \
+	x0 ^= rk0; \
+	x1 ^= rk1; \
+	x2 ^= rk2; \
+	x3 ^= rk3; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	KEY_EXPAND_ELT(rk4, rk5, rk6, rk7); \
+	rk4 ^= rk0; \
+	rk5 ^= rk1; \
+	rk6 ^= rk2; \
+	rk7 ^= rk3; \
+	x0 ^= rk4; \
+	x1 ^= rk5; \
+	x2 ^= rk6; \
+	x3 ^= rk7; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	p4 ^= x0; \
+	p5 ^= x1; \
+	p6 ^= x2; \
+	p7 ^= x3; \
+	/* round 10 */ \
+	KEY_EXPAND_ELT(rk8, rk9, rkA, rkB); \
+	rk8 ^= rk4; \
+	rk9 ^= rk5; \
+	rkA ^= rk6; \
+	rkB ^= rk7; \
+	x0 = p4 ^ rk8; \
+	x1 = p5 ^ rk9; \
+	x2 = p6 ^ rkA; \
+	x3 = p7 ^ rkB; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	KEY_EXPAND_ELT(rkC, rkD, rkE, rkF); \
+	rkC ^= rk8 ^ count0; \
+	rkD ^= rk9; \
+	rkE ^= rkA; \
+	rkF ^= rkB ^ SPH_T32(~count1); \
+	x0 ^= rkC; \
+	x1 ^= rkD; \
+	x2 ^= rkE; \
+	x3 ^= rkF; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	rk0 ^= rkD; \
+	x0 ^= rk0; \
+	rk1 ^= rkE; \
+	x1 ^= rk1; \
+	rk2 ^= rkF; \
+	x2 ^= rk2; \
+	rk3 ^= rk0; \
+	x3 ^= rk3; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	p0 ^= x0; \
+	p1 ^= x1; \
+	p2 ^= x2; \
+	p3 ^= x3; \
+	/* round 11 */ \
+	rk4 ^= rk1; \
+	x0 = p0 ^ rk4; \
+	rk5 ^= rk2; \
+	x1 = p1 ^ rk5; \
+	rk6 ^= rk3; \
+	x2 = p2 ^ rk6; \
+	rk7 ^= rk4; \
+	x3 = p3 ^ rk7; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	rk8 ^= rk5; \
+	x0 ^= rk8; \
+	rk9 ^= rk6; \
+	x1 ^= rk9; \
+	rkA ^= rk7; \
+	x2 ^= rkA; \
+	rkB ^= rk8; \
+	x3 ^= rkB; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	rkC ^= rk9; \
+	x0 ^= rkC; \
+	rkD ^= rkA; \
+	x1 ^= rkD; \
+	rkE ^= rkB; \
+	x2 ^= rkE; \
+	rkF ^= rkC; \
+	x3 ^= rkF; \
+	AES_ROUND_NOKEY(x0, x1, x2, x3); \
+	p4 ^= x0; \
+	p5 ^= x1; \
+	p6 ^= x2; \
+	p7 ^= x3; \
+	h[0x0] ^= p0; \
+	h[0x1] ^= p1; \
+	h[0x2] ^= p2; \
+	h[0x3] ^= p3; \
+	h[0x4] ^= p4; \
+	h[0x5] ^= p5; \
+	h[0x6] ^= p6; \
+	h[0x7] ^= p7; \
+        } while(0)
+

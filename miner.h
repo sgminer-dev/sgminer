@@ -390,6 +390,7 @@ enum cl_kernels {
 	KL_MYRIADCOIN_GROESTL,
 	KL_FUGUECOIN,
 	KL_GROESTLCOIN,
+	KL_TWECOIN,
 };
 
 enum dev_reason {
