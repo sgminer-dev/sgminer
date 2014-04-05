@@ -474,6 +474,11 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 			strcpy(filename, MYRIADCOIN_GROESTL_KERNNAME".cl");
 			strcpy(binaryfilename, MYRIADCOIN_GROESTL_KERNNAME);
 			break;
+		case KL_TWECOIN:
+			applog(LOG_WARNING, "Kernel twecoin is experimental.");
+			strcpy(filename, TWECOIN_KERNNAME".cl");
+			strcpy(binaryfilename, TWECOIN_KERNNAME);
+			break;
 		case KL_NONE: /* Shouldn't happen */
 			break;
 	}

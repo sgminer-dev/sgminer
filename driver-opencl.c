@@ -215,6 +215,8 @@ static enum cl_kernels select_kernel(char *arg)
 		return KL_QUARKCOIN;
 	if (!strcmp(arg, MYRIADCOIN_GROESTL_KERNNAME))
 		return KL_MYRIADCOIN_GROESTL;
+	if (!strcmp(arg, TWECOIN_KERNNAME))
+		return KL_TWECOIN;
 
 	return KL_NONE;
 }
@@ -1367,6 +1369,9 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 			case KL_MYRIADCOIN_GROESTL:
 				cgpu->kname = MYRIADCOIN_GROESTL_KERNNAME;
 				break;
+			case KL_TWECOIN:
+				cgpu->kname = TWECOIN_KERNNAME;
+				break;
 			default:
 				break;
 		}
@@ -1406,6 +1411,7 @@ static bool opencl_thread_init(struct thr_info *thr)
 	case KL_QUBITCOIN:
 	case KL_QUARKCOIN:
 	case KL_MYRIADCOIN_GROESTL:
+	case KL_TWECOIN:
 		thrdata->queue_kernel_parameters = &queue_sph_kernel;
 		break;
 	default:
