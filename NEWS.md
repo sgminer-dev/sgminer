@@ -11,8 +11,9 @@
 * Configuration parameter `poolname` has been renamed to `name`.
   `poolname` is deprecated and will be removed in a future version.
 * Multiple `--name` parsing should now work as expected (by _troky_).
-* `--coin` configuration parameter to specify a freeform pool
-  description (by _troky_).
+* `--description` configuration parameter to specify a freeform pool
+  description, and `--priority` to specify the pool's priority (by
+  _troky_).
 
 
 ## Version 4.1.153 - 14th March 2014

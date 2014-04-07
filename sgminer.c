@@ -230,6 +230,8 @@ int total_pools, enabled_pools;
 enum pool_strategy pool_strategy = POOL_FAILOVER;
 int opt_rotate_period;
 static int total_urls;
+
+/* Used in config parsing, e.g. pool array. */
 static int json_array_index = -1;
 
 static
@@ -554,11 +556,12 @@ struct pool *add_pool(void)
 	pool->quota = 1;
 	adjust_quota_gcd();
 
-	pool->coin = "";
+	pool->description = "";
 
 	return pool;
 }
 
+/* Used in configuration parsing. */
 static struct pool* get_current_pool() 
 {
 	while ((json_array_index + 1) > total_pools)
@@ -571,6 +574,18 @@ static struct pool* get_current_pool()
 	}
 	
 	return pools[json_array_index];	
+}
+
+/* Used everywhere else. */
+struct pool *current_pool(void)
+{
+	struct pool *pool;
+
+	cg_rlock(&control_lock);
+	pool = currentpool;
+	cg_runlock(&control_lock);
+
+	return pool;
 }
 
 /* Pool variant of test and set */
@@ -596,17 +611,6 @@ bool pool_tclear(struct pool *pool, bool *var)
 	mutex_unlock(&pool->pool_lock);
 
 	return ret;
-}
-
-struct pool *current_pool(void)
-{
-	struct pool *pool;
-
-	cg_rlock(&control_lock);
-	pool = currentpool;
-	cg_runlock(&control_lock);
-
-	return pool;
 }
 
 char *set_int_range(const char *arg, int *i, int min, int max)
@@ -927,12 +931,12 @@ static char *set_pool_priority(char *arg)
 	return NULL;
 }
 
-static char *set_pool_coin(char *arg)
+static char *set_pool_description(char *arg)
 {
 	struct pool *pool = get_current_pool();
 
-	applog(LOG_DEBUG, "Setting pool %i coin to %s", pool->pool_no, arg);
-	opt_set_charp(arg, &pool->coin);
+	applog(LOG_DEBUG, "Setting pool %i description to %s", pool->pool_no, arg);
+	opt_set_charp(arg, &pool->description);
 
 	return NULL;
 }
@@ -1144,9 +1148,6 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--benchmark",
 			opt_set_bool, &opt_benchmark,
 			"Run sgminer in benchmark mode - produces no shares"),
-	OPT_WITH_ARG("--coin",
-		     set_pool_coin, NULL, NULL,
-		     "Pool coin"),
 #ifdef HAVE_CURSES
 	OPT_WITHOUT_ARG("--compact",
 			opt_set_bool, &opt_compact,
@@ -1155,6 +1156,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--debug|-D",
 		     enable_debug, &opt_debug,
 		     "Enable debug output"),
+	OPT_WITH_ARG("--description",
+		     set_pool_description, NULL, NULL,
+		     "Pool description"),
 	OPT_WITH_ARG("--device|-d",
 		     set_devices, NULL, NULL,
 	             "Select device to use, one value, range and/or comma separated (e.g. 0-2,4) default: all"),
@@ -1292,9 +1296,12 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITHOUT_ARG("--per-device-stats",
 			opt_set_bool, &want_per_device_stats,
 			"Force verbose mode and output per-device statistics"),
-	OPT_WITH_ARG("--poolname", /* Backward compatibility, to be removed. */
+	OPT_WITH_ARG("--poolname", /* TODO: Backward compatibility, to be removed. */
 		     set_poolname_deprecated, NULL, NULL,
 		     opt_hidden),
+	OPT_WITH_ARG("--priority",
+			 set_pool_priority, NULL, NULL,
+			 "Pool priority"),
 	OPT_WITHOUT_ARG("--protocol-dump|-P",
 			opt_set_bool, &opt_protocol,
 			"Verbose dump of protocol-level activities"),
@@ -1409,9 +1416,6 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--userpass|-O",
 		     set_userpass, NULL, NULL,
 		     "Username:Password pair for bitcoin JSON-RPC server"),
-	OPT_WITH_ARG("--pool-priority",
-			 set_pool_priority, NULL, NULL,
-			 "Pool priority"),
 	OPT_WITHOUT_ARG("--worktime",
 			opt_set_bool, &opt_worktime,
 			"Display extra work time debug information"),
