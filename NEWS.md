@@ -2,6 +2,11 @@
 
 ## Version 4.2.0 - TBA
 
+* Allow setting algorithm per-pool and initial implementation of kernel
+  hot-swapping (by _mrbrdo_). Use options `pool-algorithm` (in config
+  file or in CLI) or `algorithm` (config-only).
+
+
 ## Version 4.1.242 - 7th April 2014
 
 * There are now two mailing lists (on SourceForge), see `README.md`.
