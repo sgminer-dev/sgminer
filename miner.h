@@ -1015,7 +1015,7 @@ extern int opt_queue;
 extern int opt_scantime;
 extern int opt_expiry;
 
-extern algorithm_t *default_algorithm;
+extern algorithm_t *opt_algorithm;
 
 extern cglock_t control_lock;
 extern pthread_mutex_t hash_lock;

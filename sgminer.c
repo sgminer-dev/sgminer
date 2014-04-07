@@ -98,7 +98,7 @@ int opt_queue = 1;
 int opt_scantime = 7;
 int opt_expiry = 28;
 
-algorithm_t *default_algorithm;
+algorithm_t *opt_algorithm;
 
 static const bool opt_time = true;
 unsigned long long global_hashrate;
@@ -543,7 +543,7 @@ struct pool *add_pool(void)
 	pool->name = strdup(buf);
 
 	/* Algorithm */
-	pool->algorithm = *default_algorithm;
+	pool->algorithm = *opt_algorithm;
 
 	pools = (struct pool **)realloc(pools, sizeof(struct pool *) * (total_pools + 2));
 	pools[total_pools++] = pool;
@@ -1070,17 +1070,17 @@ static void load_temp_cutoffs()
 
 static char *set_algo(const char *arg)
 {
-	set_algorithm(default_algorithm, arg);
-	applog(LOG_INFO, "Set default algorithm to %s", default_algorithm->name);
+	set_algorithm(opt_algorithm, arg);
+	applog(LOG_INFO, "Set default algorithm to %s", opt_algorithm->name);
 
 	return NULL;
 }
 
 static char *set_nfactor(const char *arg)
 {
-	set_algorithm_nfactor(default_algorithm, (const uint8_t) atoi(arg));
+	set_algorithm_nfactor(opt_algorithm, (const uint8_t) atoi(arg));
 	applog(LOG_INFO, "Set algorithm N-factor to %d (N to %d)",
-	       default_algorithm->nfactor, default_algorithm->n);
+	       opt_algorithm->nfactor, opt_algorithm->n);
 
 	return NULL;
 }
@@ -4456,8 +4456,8 @@ void write_config(FILE *fcfg)
 	}
 	if (opt_removedisabled)
 		fprintf(fcfg, ",\n\"remove-disabled\" : true");
-	if (strcmp(default_algorithm->name, "scrypt") != 0)
-		fprintf(fcfg, ",\n\"algorithm\" : \"%s\"", json_escape(default_algorithm->name));
+	if (strcmp(opt_algorithm->name, "scrypt") != 0)
+		fprintf(fcfg, ",\n\"algorithm\" : \"%s\"", json_escape(opt_algorithm->name));
 	if (opt_api_allow)
 		fprintf(fcfg, ",\n\"api-allow\" : \"%s\"", json_escape(opt_api_allow));
 	if (strcmp(opt_api_mcast_addr, API_MCAST_ADDR) != 0)
@@ -7985,8 +7985,8 @@ int main(int argc, char *argv[])
 #endif
 
 	/* Default algorithm specified in algorithm.c ATM */
-	default_algorithm = (algorithm_t *)alloca(sizeof(algorithm_t));
-	set_algorithm(default_algorithm, "scrypt");
+	opt_algorithm = (algorithm_t *)alloca(sizeof(algorithm_t));
+	set_algorithm(opt_algorithm, "scrypt");
 
 	devcursor = 8;
 	logstart = devcursor + 1;

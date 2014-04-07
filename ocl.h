@@ -37,4 +37,3 @@ extern int clDevicesNum(void);
 extern _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *algorithm);
 
 #endif /* OCL_H */
-

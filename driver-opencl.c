@@ -1188,7 +1188,7 @@ static void opencl_detect(bool hotplug)
 			cgpu->threads = 1;
 #endif
 		cgpu->virtual_gpu = i;
-		cgpu->algorithm = *default_algorithm;
+		cgpu->algorithm = *opt_algorithm;
 		add_cgpu(cgpu);
 	}
 
