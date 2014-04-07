@@ -204,7 +204,7 @@ PBKDF2_SHA256_80_128(const uint32_t * passwd, uint32_t * buf)
 	uint32_t ihash[8];
 	uint32_t i;
 	uint32_t pad[16];
-	
+
 	static const uint32_t innerpad[11] = {0x00000080, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xa0040000};
 
 	/* If Klen > 64, the key is really SHA256(K). */
@@ -237,7 +237,7 @@ PBKDF2_SHA256_80_128(const uint32_t * passwd, uint32_t * buf)
 	for (i = 0; i < 4; i++) {
 		uint32_t istate[8];
 		uint32_t ostate[8];
-		
+
 		memcpy(istate, PShictx.state, 32);
 		PShictx.buf[4] = i + 1;
 		SHA256_Transform(istate, PShictx.buf, 0);
@@ -259,7 +259,7 @@ PBKDF2_SHA256_80_128_32(const uint32_t * passwd, const uint32_t * salt, uint32_t
 
 	/* Compute HMAC state after processing P and S. */
 	uint32_t pad[16];
-	
+
 	static const uint32_t ihash_finalblk[16] = {0x00000001,0x80000000,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0x00000620};
 
 	/* If Klen > 64, the key is really SHA256(K). */
@@ -358,7 +358,7 @@ salsa20_8(uint32_t B[16], const uint32_t Bx[16])
  * scratchpad size needs to be at least (bytes):
  * 63 + (128 * r * p) + (256 * r + 64) + (128 * r * N)
  */
-static void scrypt_n_1_1_256_sp(const uint32_t* input, char* scratchpad, uint32_t *ostate)
+static void scrypt_n_1_1_256_sp(const uint32_t* input, char* scratchpad, uint32_t *ostate, uint32_t n)
 {
 	uint32_t * V;
 	uint32_t X[32];
@@ -372,7 +372,7 @@ static void scrypt_n_1_1_256_sp(const uint32_t* input, char* scratchpad, uint32_
 
 	PBKDF2_SHA256_80_128(input, X);
 
-	for (i = 0; i < algorithm->n; i += 2) {
+	for (i = 0; i < n; i += 2) {
 		memcpy(&V[i * 32], X, 128);
 
 		salsa20_8(&X[0], &X[16]);
@@ -383,8 +383,8 @@ static void scrypt_n_1_1_256_sp(const uint32_t* input, char* scratchpad, uint32_
 		salsa20_8(&X[0], &X[16]);
 		salsa20_8(&X[16], &X[0]);
 	}
-	for (i = 0; i < algorithm->n; i += 2) {
-		j = X[16] & (algorithm->n-1);
+	for (i = 0; i < n; i += 2) {
+		j = X[16] & (n-1);
 		p2 = (uint64_t *)(&V[j * 32]);
 		for(k = 0; k < 16; k++)
 			p1[k] ^= p2[k];
@@ -392,7 +392,7 @@ static void scrypt_n_1_1_256_sp(const uint32_t* input, char* scratchpad, uint32_
 		salsa20_8(&X[0], &X[16]);
 		salsa20_8(&X[16], &X[0]);
 
-		j = X[16] & (algorithm->n-1);
+		j = X[16] & (n-1);
 		p2 = (uint64_t *)(&V[j * 32]);
 		for(k = 0; k < 16; k++)
 			p1[k] ^= p2[k];
@@ -404,91 +404,19 @@ static void scrypt_n_1_1_256_sp(const uint32_t* input, char* scratchpad, uint32_
 	PBKDF2_SHA256_80_128_32(input, X, ostate);
 }
 
-void scrypt_regenhash(struct work *work)
+void scrypt_regenhash(struct work *work, uint32_t n)
 {
 	uint32_t data[20];
 	char *scratchbuf;
 	uint32_t *nonce = (uint32_t *)(work->data + 76);
 	uint32_t *ohash = (uint32_t *)(work->hash);
- 	
+
 	be32enc_vect(data, (const uint32_t *)work->data, 19);
 	data[19] = htobe32(*nonce);
 
-	scratchbuf = (char *)alloca(algorithm->n * 128 + 512);
-	scrypt_n_1_1_256_sp(data, scratchbuf, ohash);
+	scratchbuf = (char *)alloca(n * 128 + 512);
+	scrypt_n_1_1_256_sp(data, scratchbuf, ohash, n);
 	flip32(ohash, ohash);
 }
 
 static const uint32_t diff1targ = 0x0000ffff;
-
-/* Used externally as confirmation of correct OCL code */
-/* FIXME: find reference in git blame and see why it was present, remove if obsolete */
-/*
-int scrypt_test(unsigned char *pdata, const unsigned char *ptarget, uint32_t nonce)
-{
-	uint32_t tmp_hash7, Htarg = le32toh(((const uint32_t *)ptarget)[7]);
-	uint32_t data[20], ohash[8];
-	char *scratchbuf;
-
-	be32enc_vect(data, (const uint32_t *)pdata, 19);
-	data[19] = htobe32(nonce);
-	scratchbuf = (char *)alloca(SCRATCHBUF_SIZE);
-	scrypt_n_1_1_256_sp(data, scratchbuf, ohash, algorithm->n);
-	tmp_hash7 = be32toh(ohash[7]);
-
-	applog(LOG_DEBUG, "htarget %08lx diff1 %08lx hash %08lx",
-				(long unsigned int)Htarg,
-				(long unsigned int)diff1targ,
-				(long unsigned int)tmp_hash7);
-	if (tmp_hash7 > diff1targ)
-		return -1;
-	if (tmp_hash7 > Htarg)
-		return 0;
-	return 1;
-}
-
-bool scanhash_scrypt(struct thr_info *thr, const unsigned char __maybe_unused *pmidstate,
-		     unsigned char *pdata, unsigned char __maybe_unused *phash1,
-		     unsigned char __maybe_unused *phash, const unsigned char *ptarget,
-		     uint32_t max_nonce, uint32_t *last_nonce, uint32_t n)
-{
-	uint32_t *nonce = (uint32_t *)(pdata + 76);
-	char *scratchbuf;
-	uint32_t data[20];
-	uint32_t tmp_hash7;
-	uint32_t Htarg = le32toh(((const uint32_t *)ptarget)[7]);
-	bool ret = false;
-
-	be32enc_vect(data, (const uint32_t *)pdata, 19);
-
-	scratchbuf = (char *)malloc(SCRATCHBUF_SIZE);
-	if (unlikely(!scratchbuf)) {
-		applog(LOG_ERR, "Failed to malloc scratchbuf in scanhash_scrypt");
-		return ret;
-	}
-
-	while(1) {
-		uint32_t ostate[8];
-
-		*nonce = ++n;
-		data[19] = htobe32(n);
-		scrypt_n_1_1_256_sp(data, scratchbuf, ostate, algorithm->n);
-		tmp_hash7 = be32toh(ostate[7]);
-
-		if (unlikely(tmp_hash7 <= Htarg)) {
-			((uint32_t *)pdata)[19] = htobe32(n);
-			*last_nonce = n;
-			ret = true;
-			break;
-		}
-
-		if (unlikely((n >= max_nonce) || thr->work_restart)) {
-			*last_nonce = n;
-			break;
-		}
-	}
-
-	free(scratchbuf);;
-	return ret;
-}
-*/

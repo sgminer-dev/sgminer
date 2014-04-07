@@ -2,6 +2,7 @@
 #define ALGORITHM_H
 
 #include <inttypes.h>
+#include <stdbool.h>
 
 /* Describes the Scrypt parameters and hashing functions used to mine
  * a specific coin.
@@ -17,5 +18,8 @@ void set_algorithm(algorithm_t* algo, const char* name);
 
 /* Set to specific N factor. */
 void set_algorithm_nfactor(algorithm_t* algo, const uint8_t nfactor);
+
+/* Compare two algorithm parameters */
+bool cmp_algorithm(algorithm_t* algo1, algorithm_t* algo2);
 
 #endif /* ALGORITHM_H */

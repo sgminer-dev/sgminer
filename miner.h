@@ -241,7 +241,7 @@ enum drv_driver {
 /* Use DRIVER_PARSE_COMMANDS to generate extern device_drv prototypes */
 #ifndef _MSC_VER
 DRIVER_PARSE_COMMANDS(DRIVER_PROTOTYPE)
-#endif 
+#endif
 
 enum alive {
 	LIFE_WELL,
@@ -475,6 +475,7 @@ struct cgpu_info {
 	cl_uint vwidth;
 	size_t work_size;
 	cl_ulong max_alloc;
+	algorithm_t algorithm;
 
 	int opt_lg, lookup_gap;
 	size_t opt_tc, thread_concurrency;
@@ -548,7 +549,6 @@ struct thread_q {
 struct thr_info {
 	int		id;
 	int		device_thread;
-	bool		primary_thread;
 
 	pthread_t	pth;
 	cgsem_t		sem;
@@ -559,6 +559,7 @@ struct thr_info {
 	struct timeval sick;
 
 	bool	pause;
+	bool	paused;
 	bool	getwork;
 	double	rolling;
 
@@ -1014,8 +1015,7 @@ extern int opt_queue;
 extern int opt_scantime;
 extern int opt_expiry;
 
-extern char *opt_algorithm;
-extern algorithm_t *algorithm;
+extern algorithm_t *default_algorithm;
 
 extern cglock_t control_lock;
 extern pthread_mutex_t hash_lock;
@@ -1218,6 +1218,8 @@ struct pool {
 	char *rpc_user, *rpc_pass;
 	proxytypes_t rpc_proxytype;
 	char *rpc_proxy;
+
+	algorithm_t algorithm;
 
 	pthread_mutex_t pool_lock;
 	cglock_t data_lock;
