@@ -2,6 +2,8 @@
 
 ## Version 4.2.0 - TBA
 
+## Version 4.1.242 - 7th April 2014
+
 * There are now two mailing lists (on SourceForge), see `README.md`.
 * Adaptive-N-factor algorithm support (by _Bufius_, _Zuikkis_ and
   _veox_). For details on choosing the algorithm, see
