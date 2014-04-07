@@ -809,7 +809,7 @@ static char *set_pool_nfactor(char *arg)
 	return NULL;
 }
 
-static char *set_poolname(char *arg)
+static char *set_pool_name(char *arg)
 {
 	struct pool *pool = get_current_pool();
 
@@ -822,7 +822,7 @@ static char *set_poolname(char *arg)
 static char *set_poolname_deprecated(char *arg)
 {
 	applog(LOG_ERR, "Specifying pool name by --poolname is deprecated. Use --name instead.");
-	set_poolname(arg);
+	set_pool_name(arg);
 
 	return NULL;
 }
@@ -1298,7 +1298,7 @@ static struct opt_table opt_config_table[] = {
 		     "Use custom pipe cmd for output messages"),
 #endif // defined(unix)
 	OPT_WITH_ARG("--name",
-		     set_poolname, NULL, NULL,
+		     set_pool_name, NULL, NULL,
 		     "Name of pool"),
 	OPT_WITHOUT_ARG("--net-delay",
 			opt_set_bool, &opt_delaynet,
