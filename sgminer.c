@@ -583,7 +583,7 @@ static struct pool* get_current_pool()
 	return pools[json_array_index];
 }
 
-/* Used everywhere else. */
+/* Used everywhere else (to get pool currently mined on). */
 struct pool *current_pool(void)
 {
 	struct pool *pool;
