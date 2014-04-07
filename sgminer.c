@@ -783,11 +783,7 @@ static char *set_url(char *arg)
 
 static char *set_pool_algorithm(char *arg)
 {
-	struct pool *pool;
-
-	while ((json_array_index + 1) > total_pools)
-		add_pool();
-	pool = pools[json_array_index];
+	struct pool *pool = get_current_pool();
 
 	applog(LOG_DEBUG, "Setting pool %i algorithm to %s", pool->pool_no, arg);
 	set_algorithm(&pool->algorithm, arg);
@@ -797,11 +793,7 @@ static char *set_pool_algorithm(char *arg)
 
 static char *set_pool_nfactor(char *arg)
 {
-	struct pool *pool;
-
-	while ((json_array_index + 1) > total_pools)
-		add_pool();
-	pool = pools[json_array_index];
+	struct pool *pool = get_current_pool();
 
 	applog(LOG_DEBUG, "Setting pool %i N-factor to %s", pool->pool_no, arg);
 	set_algorithm_nfactor(&pool->algorithm, (const uint8_t) atoi(arg));
