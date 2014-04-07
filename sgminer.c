@@ -1062,17 +1062,25 @@ static void load_temp_cutoffs()
 
 static char *set_algo(const char *arg)
 {
-	set_algorithm(opt_algorithm, arg);
-	applog(LOG_INFO, "Set default algorithm to %s", opt_algorithm->name);
+	if (json_array_index < 0) {
+		set_algorithm(opt_algorithm, arg);
+		applog(LOG_INFO, "Set default algorithm to %s", opt_algorithm->name);
+	} else {
+		set_pool_algorithm(arg);
+	}
 
 	return NULL;
 }
 
 static char *set_nfactor(const char *arg)
 {
-	set_algorithm_nfactor(opt_algorithm, (const uint8_t) atoi(arg));
-	applog(LOG_INFO, "Set algorithm N-factor to %d (N to %d)",
-	       opt_algorithm->nfactor, opt_algorithm->n);
+	if (json_array_index < 0) {
+		set_algorithm_nfactor(opt_algorithm, (const uint8_t) atoi(arg));
+		applog(LOG_INFO, "Set algorithm N-factor to %d (N to %d)",
+		       opt_algorithm->nfactor, opt_algorithm->n);
+	} else {
+		set_pool_nfactor(arg);
+	}
 
 	return NULL;
 }
