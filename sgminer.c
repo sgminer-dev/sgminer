@@ -781,7 +781,7 @@ static char *set_url(char *arg)
 }
 
 
-static char *set_pool_algorithm(char *arg)
+static char *set_pool_algorithm(const char *arg)
 {
 	struct pool *pool = get_current_pool();
 
@@ -791,7 +791,7 @@ static char *set_pool_algorithm(char *arg)
 	return NULL;
 }
 
-static char *set_pool_nfactor(char *arg)
+static char *set_pool_nfactor(const char *arg)
 {
 	struct pool *pool = get_current_pool();
 
@@ -1436,11 +1436,11 @@ static struct opt_table opt_config_table[] = {
 		     set_url, NULL, NULL,
 		     "URL for bitcoin JSON-RPC server"),
 	OPT_WITH_ARG("--pool-algorithm",
-				 set_pool_algorithm, NULL, NULL,
-				 "Set algorithm for pool"),
+		     set_pool_algorithm, NULL, NULL,
+		     "Set algorithm for pool"),
 	OPT_WITH_ARG("--pool-nfactor",
-				 set_pool_nfactor, NULL, NULL,
-         "Set N-factor for pool"),
+		     set_pool_nfactor, NULL, NULL,
+		     "Set N-factor for pool"),
 	OPT_WITH_ARG("--user|-u",
 		     set_user, NULL, NULL,
 		     "Username for bitcoin JSON-RPC server"),
