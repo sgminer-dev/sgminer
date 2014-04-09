@@ -2181,7 +2181,7 @@ static void suffix_string(uint64_t val, char *buf, size_t bufsiz, int sigdigits)
 	} else {
 		/* Always show sigdigits + 1, padded on right with zeroes
 		 * followed by suffix */
-		double ndigits = sigdigits - 1 - (dval > 0.0 ? floor(log10(dval)) : 0);
+		int ndigits = sigdigits - 1 - (dval > 0.0 ? (int)floor(log10(dval)) : 0);
 
 		snprintf(buf, bufsiz, "%*.*f%s", sigdigits + 1, ndigits, dval, suffix);
 	}
@@ -2687,7 +2687,7 @@ static bool submit_upstream_work(struct work *work, CURL *curl, bool resubmit)
 {
 	char *hexstr = NULL;
 	json_t *val, *res, *err;
-//	char *s;
+	char *s;
 	bool rc = false;
 	int thr_id = work->thr_id;
 	struct cgpu_info *cgpu;
