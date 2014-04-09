@@ -1286,12 +1286,12 @@ struct pool {
 	uint32_t curtime;
 	uint32_t gbt_bits;
 	unsigned char *txn_hashes;
-	int gbt_txns;
-	int coinbase_len;
+	size_t gbt_txns;
+	size_t coinbase_len;
 
 	/* Shared by both stratum & GBT */
 	unsigned char *coinbase;
-	int nonce2_offset;
+	size_t nonce2_offset;
 	unsigned char header_bin[128];
 	int merkle_offset;
 
