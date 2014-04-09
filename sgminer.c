@@ -1717,7 +1717,7 @@ void free_work(struct work *w)
 	free(w);
 }
 
-static void gen_hash(unsigned char *data, unsigned char *hash, int len);
+static void gen_hash(unsigned char *data, unsigned char *hash, size_t len);
 static void calc_diff(struct work *work, double known);
 char *workpadding = "000000800000000000000000000000000000000000000000000000000000000000000000000000000000000080020000";
 
@@ -5889,7 +5889,7 @@ out_unlock:
 	return work;
 }
 
-static void gen_hash(unsigned char *data, unsigned char *hash, int len)
+static void gen_hash(unsigned char *data, unsigned char *hash, size_t len)
 {
 	unsigned char hash1[32];
 
