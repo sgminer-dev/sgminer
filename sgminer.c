@@ -888,7 +888,8 @@ static char *set_pool_state(char *arg)
 static char *set_quota(char *arg)
 {
 	char *semicolon = strchr(arg, ';'), *url;
-	int len, qlen, quota;
+	size_t len, qlen;
+	int quota;
 	struct pool *pool;
 
 	if (!semicolon)
@@ -1507,7 +1508,7 @@ static char *parse_config(json_t *config, bool fileconf, int parent_iteration)
 				err = opt->cb_arg(json_string_value(val),
 						  opt->u.arg);
 			} else if ((opt->type & OPT_HASARG) && json_is_array(val)) {
-				int n, size = json_array_size(val);
+				size_t n, size = json_array_size(val);
 
 				for (n = 0; n < size && !err; n++) {
 					if (json_is_string(json_array_get(val, n)))
@@ -1753,7 +1754,7 @@ static bool __build_gbt_txns(struct pool *pool, json_t *res_val)
 	for (i = 0; i < pool->gbt_txns; i++) {
 		json_t *txn_val = json_object_get(json_array_get(txn_array, i), "data");
 		const char *txn = json_string_value(txn_val);
-		int txn_len = strlen(txn);
+		size_t txn_len = strlen(txn);
 		unsigned char *txn_bin;
 
 		cal_len = txn_len;
@@ -1913,7 +1914,7 @@ static bool gbt_decode(struct pool *pool, json_t *res_val)
 	bool submitold;
 	const char *bits;
 	const char *workid;
-	int cbt_len, orig_len;
+	size_t cbt_len, orig_len;
 	uint8_t *extra_len;
 	size_t cal_len;
 
@@ -2180,7 +2181,7 @@ static void suffix_string(uint64_t val, char *buf, size_t bufsiz, int sigdigits)
 	} else {
 		/* Always show sigdigits + 1, padded on right with zeroes
 		 * followed by suffix */
-		int ndigits = sigdigits - 1 - (dval > 0.0 ? floor(log10(dval)) : 0);
+		double ndigits = sigdigits - 1 - (dval > 0.0 ? floor(log10(dval)) : 0);
 
 		snprintf(buf, bufsiz, "%*.*f%s", sigdigits + 1, ndigits, dval, suffix);
 	}
@@ -2686,7 +2687,7 @@ static bool submit_upstream_work(struct work *work, CURL *curl, bool resubmit)
 {
 	char *hexstr = NULL;
 	json_t *val, *res, *err;
-	char *s;
+//	char *s;
 	bool rc = false;
 	int thr_id = work->thr_id;
 	struct cgpu_info *cgpu;
