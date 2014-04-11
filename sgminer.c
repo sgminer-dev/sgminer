@@ -7515,7 +7515,7 @@ static void *test_pool_thread(void *arg)
 /* Always returns true that the pool details were added unless we are not
  * live, implying this is the only pool being added, so if no pools are
  * active it returns false. */
-bool add_pool_details(struct pool *pool, bool live, char *url, char *user, char *pass)
+bool add_pool_details(struct pool *pool, bool live, char *url, char *user, char *pass, char *name, char *desc, char *algo)
 {
 	size_t siz;
 
@@ -7524,6 +7524,10 @@ bool add_pool_details(struct pool *pool, bool live, char *url, char *user, char 
 	pool->rpc_url = url;
 	pool->rpc_user = user;
 	pool->rpc_pass = pass;
+	pool->name = name;
+	pool->description = desc;
+	strcpy(pool->algorithm.name, algo);
+
 	siz = strlen(pool->rpc_user) + strlen(pool->rpc_pass) + 2;
 	pool->rpc_userpass = (char *)malloc(siz);
 	if (!pool->rpc_userpass)
@@ -7547,23 +7551,26 @@ bool add_pool_details(struct pool *pool, bool live, char *url, char *user, char 
 static bool input_pool(bool live)
 {
 	char *url = NULL, *user = NULL, *pass = NULL;
+	char *name = NULL, *desc = NULL, *algo = NULL;
 	struct pool *pool;
 	bool ret = false;
 
 	immedok(logwin, true);
 	wlogprint("Input server details.\n");
 
+	/* Get user input */
 	url = curses_input("URL");
-	if (!url)
-		goto out;
-
-	user = curses_input("Username");
-	if (!user)
-		goto out;
-
+	if (!url) goto out;
+	user = curses_input("User name");
+	if (!user) goto out;
 	pass = curses_input("Password");
-	if (!pass)
-		goto out;
+	if (!pass) goto out;
+	name = curses_input("Pool name (optional)");
+	if (strcmp(name, "-1") == 0) strcpy(name, "");
+	desc = curses_input("Description (optional)");
+	if (strcmp(desc, "-1") == 0) strcpy(desc, "");
+	algo = curses_input("Algorithm (optional)");
+	if (strcmp(name, "-1") == 0) strcpy(algo, "");
 
 	pool = add_pool();
 
@@ -7580,7 +7587,8 @@ static bool input_pool(bool live)
 		url = httpinput;
 	}
 
-	ret = add_pool_details(pool, live, url, user, pass);
+	ret = add_pool_details(pool, live, url, user, pass,
+			       name, desc, algo);
 out:
 	immedok(logwin, false);
 
@@ -7591,6 +7599,12 @@ out:
 			free(user);
 		if (pass)
 			free(pass);
+		if (name)
+			free(name);
+		if (desc)
+			free(desc);
+		if (algo)
+			free(algo);
 	}
 	return ret;
 }

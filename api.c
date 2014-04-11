@@ -2112,7 +2112,8 @@ static void copyadvanceafter(char ch, char **param, char **buf)
 	*(dst_b++) = '\0';
 }
 
-static bool pooldetails(char *param, char **url, char **user, char **pass)
+static bool pooldetails(char *param, char **url, char **user, char **pass,
+			char **name, char **desc, char **algo)
 {
 	char *ptr, *buf;
 
@@ -2121,24 +2122,31 @@ static bool pooldetails(char *param, char **url, char **user, char **pass)
 		quit(1, "Failed to malloc pooldetails buf");
 
 	*url = buf;
-
-	// copy url
 	copyadvanceafter(',', &param, &buf);
-
 	if (!(*param)) // missing user
 		goto exitsama;
 
 	*user = buf;
-
-	// copy user
 	copyadvanceafter(',', &param, &buf);
-
 	if (!*param) // missing pass
 		goto exitsama;
 
 	*pass = buf;
+	copyadvanceafter(',', &param, &buf);
+	if (!*param) // missing name
+		goto exitsama;
 
-	// copy pass
+	*name = buf;
+	copyadvanceafter(',', &param, &buf);
+	if (!*param) // missing desc
+		goto exitsama;
+
+	*desc = buf;
+	copyadvanceafter(',', &param, &buf);
+	if (!*param) // missing algo
+		goto exitsama;
+
+	*algo = buf;
 	copyadvanceafter(',', &param, &buf);
 
 	return true;
@@ -2151,6 +2159,7 @@ exitsama:
 static void addpool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
 {
 	char *url, *user, *pass;
+	char *name, *desc, *algo;
 	struct pool *pool;
 	char *ptr;
 
@@ -2159,7 +2168,8 @@ static void addpool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *
 		return;
 	}
 
-	if (!pooldetails(param, &url, &user, &pass)) {
+	if (!pooldetails(param, &url, &user, &pass,
+			 &name, &desc, &algo)) {
 		ptr = escape_string(param, isjson);
 		message(io_data, MSG_INVPDP, 0, ptr, isjson);
 		if (ptr != param)
@@ -2170,7 +2180,7 @@ static void addpool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *
 
 	pool = add_pool();
 	detect_stratum(pool, url);
-	add_pool_details(pool, true, url, user, pass);
+	add_pool_details(pool, true, url, user, pass, name, desc, algo);
 
 	ptr = escape_string(url, isjson);
 	message(io_data, MSG_ADDPOOL, 0, ptr, isjson);
