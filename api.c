@@ -124,7 +124,7 @@ static const char GPUSEP = ',';
 #define JOIN_CMD "CMD="
 #define BETWEEN_JOIN SEPSTR
 
-static const char *APIVERSION = "3.1";
+static const char *APIVERSION = "3.2";
 static const char *DEAD = "Dead";
 static const char *SICK = "Sick";
 static const char *NOSTART = "NoStart";
@@ -2133,8 +2133,8 @@ static bool pooldetails(char *param, char **url, char **user, char **pass,
 
 	*pass = buf;
 	copyadvanceafter(',', &param, &buf);
-	if (!*param) // missing name
-		goto exitsama;
+	if (!*param) // missing name (allowed)
+		return true;
 
 	*name = buf;
 	copyadvanceafter(',', &param, &buf);
