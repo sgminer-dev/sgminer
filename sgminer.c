@@ -4274,6 +4274,13 @@ void write_config(FILE *fcfg)
 	for(i = 0; i < total_pools; i++) {
 		struct pool *pool = pools[i];
 
+		/* Using get_pool_name() here is unsafe if opt_incognito is true. */
+		if (strcmp(pool->name, "") != 0) {
+			fprintf(fcfg, "\n\t\t\"name\" : \"%s\",", json_escape(pool->name));
+		}
+		if (strcmp(pool->description, "") != 0) {
+			fprintf(fcfg, "\n\t\t\"description\" : \"%s\",", json_escape(pool->description));
+		}
 		if (pool->quota != 1) {
 			fprintf(fcfg, "%s\n\t{\n\t\t\"quota\" : \"%s%s%s%d;%s\",", i > 0 ? "," : "",
 				pool->rpc_proxy ? json_escape((char *)proxytype(pool->rpc_proxytype)) : "",

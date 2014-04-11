@@ -22,9 +22,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * This file was originally written by Colin Percival as part of the Tarsnap
- * online backup system.
  */
 
 #include "config.h"
@@ -37,17 +34,17 @@
 
 char* get_pool_name(struct pool *pool) {
     if (opt_incognito) 
-		return "<pool>";
+	return "<pool>";
 
-    if (strcmp(pool->name, "") == 0) 
-		return pool->sockaddr_url;
+    if (strcmp(pool->name, "") == 0)
+	return pool->sockaddr_url;
 
     return pool->name;
 }
 
 char* get_pool_user(struct pool *pool) {
-    if (opt_incognito) 
-		return "<user>";
+    if (opt_incognito)
+	return "<user>";
 
     return pool->rpc_user;
 }
