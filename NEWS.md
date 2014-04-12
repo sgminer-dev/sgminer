@@ -2,9 +2,20 @@
 
 ## Version 4.2.0 - TBA
 
+* 
+
+
+## Version 4.1.270 - 12th April 2014
+
 * Allow setting algorithm per-pool and initial implementation of kernel
   hot-swapping (by _mrbrdo_). Use options `pool-algorithm` (in config
   file or in CLI) or `algorithm` (config-only).
+* NCurses UI [S][W] writes pool name and description to configuration.
+* Added algorithm name to `pools` API command (by _troky_).
+* NCurses UI asks for (optional) pool name, description and algorithm
+  when adding pool.
+* API command `addpool` allows both `url,user,pass` and
+  `url,user,pass,name,desc,algo`.
 
 
 ## Version 4.1.242 - 7th April 2014
