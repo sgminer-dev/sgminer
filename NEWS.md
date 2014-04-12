@@ -5,7 +5,7 @@
 * 
 
 
-## Version 4.1.270 - 12th April 2014
+## Version 4.1.271 - 12th April 2014
 
 * Allow setting algorithm per-pool and initial implementation of kernel
   hot-swapping (by _mrbrdo_). Use options `pool-algorithm` (in config

@@ -2159,7 +2159,7 @@ exitsama:
 static void addpool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
 {
 	char *url, *user, *pass;
-	char *name, *desc, *algo;
+	char *name = NULL, *desc = NULL, *algo = NULL;
 	struct pool *pool;
 	char *ptr;
 
