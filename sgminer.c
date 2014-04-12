@@ -7526,7 +7526,7 @@ bool add_pool_details(struct pool *pool, bool live, char *url, char *user, char 
 	pool->rpc_pass = pass;
 	pool->name = name;
 	pool->description = desc;
-	strcpy(pool->algorithm.name, algo);
+	set_algorithm(&pool->algorithm, algo);
 
 	siz = strlen(pool->rpc_user) + strlen(pool->rpc_pass) + 2;
 	pool->rpc_userpass = (char *)malloc(siz);
