@@ -200,22 +200,22 @@ __constant static const sph_u32 alpha_f[] = {
 		h[0x7] = c7; \
 	} while (0)
 
-#define s0   m0
-#define s1   m1
-#define s2   c0
-#define s3   c1
-#define s4   c2
-#define s5   c3
-#define s6   m2
-#define s7   m3
-#define s8   m4
-#define s9   m5
-#define sA   c4
-#define sB   c5
-#define sC   c6
-#define sD   c7
-#define sE   m6
-#define sF   m7
+#define hamsi_s0   m0
+#define hamsi_s1   m1
+#define hamsi_s2   c0
+#define hamsi_s3   c1
+#define hamsi_s4   c2
+#define hamsi_s5   c3
+#define hamsi_s6   m2
+#define hamsi_s7   m3
+#define hamsi_s8   m4
+#define hamsi_s9   m5
+#define hamsi_sA   c4
+#define hamsi_sB   c5
+#define hamsi_sC   c6
+#define hamsi_sD   c7
+#define hamsi_sE   m6
+#define hamsi_sF   m7
 
 #define SBOX(a, b, c, d)   do { \
 		sph_u32 t; \
@@ -240,7 +240,7 @@ __constant static const sph_u32 alpha_f[] = {
 		(d) = SPH_T32(~t); \
 	} while (0)
 
-#define L(a, b, c, d)   do { \
+#define HAMSI_L(a, b, c, d)   do { \
 		(a) = SPH_ROTL32(a, 13); \
 		(c) = SPH_ROTL32(c, 3); \
 		(b) ^= (a) ^ (c); \
@@ -254,30 +254,30 @@ __constant static const sph_u32 alpha_f[] = {
 	} while (0)
 
 #define ROUND_SMALL(rc, alpha)   do { \
-		s0 ^= alpha[0x00]; \
-		s1 ^= alpha[0x01] ^ (sph_u32)(rc); \
-		s2 ^= alpha[0x02]; \
-		s3 ^= alpha[0x03]; \
-		s4 ^= alpha[0x08]; \
-		s5 ^= alpha[0x09]; \
-		s6 ^= alpha[0x0A]; \
-		s7 ^= alpha[0x0B]; \
-		s8 ^= alpha[0x10]; \
-		s9 ^= alpha[0x11]; \
-		sA ^= alpha[0x12]; \
-		sB ^= alpha[0x13]; \
-		sC ^= alpha[0x18]; \
-		sD ^= alpha[0x19]; \
-		sE ^= alpha[0x1A]; \
-		sF ^= alpha[0x1B]; \
-		SBOX(s0, s4, s8, sC); \
-		SBOX(s1, s5, s9, sD); \
-		SBOX(s2, s6, sA, sE); \
-		SBOX(s3, s7, sB, sF); \
-		L(s0, s5, sA, sF); \
-		L(s1, s6, sB, sC); \
-		L(s2, s7, s8, sD); \
-		L(s3, s4, s9, sE); \
+		hamsi_s0 ^= alpha[0x00]; \
+		hamsi_s1 ^= alpha[0x01] ^ (sph_u32)(rc); \
+		hamsi_s2 ^= alpha[0x02]; \
+		hamsi_s3 ^= alpha[0x03]; \
+		hamsi_s4 ^= alpha[0x08]; \
+		hamsi_s5 ^= alpha[0x09]; \
+		hamsi_s6 ^= alpha[0x0A]; \
+		hamsi_s7 ^= alpha[0x0B]; \
+		hamsi_s8 ^= alpha[0x10]; \
+		hamsi_s9 ^= alpha[0x11]; \
+		hamsi_sA ^= alpha[0x12]; \
+		hamsi_sB ^= alpha[0x13]; \
+		hamsi_sC ^= alpha[0x18]; \
+		hamsi_sD ^= alpha[0x19]; \
+		hamsi_sE ^= alpha[0x1A]; \
+		hamsi_sF ^= alpha[0x1B]; \
+		SBOX(hamsi_s0, hamsi_s4, hamsi_s8, hamsi_sC); \
+		SBOX(hamsi_s1, hamsi_s5, hamsi_s9, hamsi_sD); \
+		SBOX(hamsi_s2, hamsi_s6, hamsi_sA, hamsi_sE); \
+		SBOX(hamsi_s3, hamsi_s7, hamsi_sB, hamsi_sF); \
+		HAMSI_L(hamsi_s0, hamsi_s5, hamsi_sA, hamsi_sF); \
+		HAMSI_L(hamsi_s1, hamsi_s6, hamsi_sB, hamsi_sC); \
+		HAMSI_L(hamsi_s2, hamsi_s7, hamsi_s8, hamsi_sD); \
+		HAMSI_L(hamsi_s3, hamsi_s4, hamsi_s9, hamsi_sE); \
 	} while (0)
 
 #define P_SMALL   do { \
@@ -297,13 +297,147 @@ __constant static const sph_u32 alpha_f[] = {
 
 #define T_SMALL   do { \
 		/* order is important */ \
-		c7 = (h[7] ^= sB); \
-		c6 = (h[6] ^= sA); \
-		c5 = (h[5] ^= s9); \
-		c4 = (h[4] ^= s8); \
-		c3 = (h[3] ^= s3); \
-		c2 = (h[2] ^= s2); \
-		c1 = (h[1] ^= s1); \
-		c0 = (h[0] ^= s0); \
+		c7 = (h[7] ^= hamsi_sB); \
+		c6 = (h[6] ^= hamsi_sA); \
+		c5 = (h[5] ^= hamsi_s9); \
+		c4 = (h[4] ^= hamsi_s8); \
+		c3 = (h[3] ^= hamsi_s3); \
+		c2 = (h[2] ^= hamsi_s2); \
+		c1 = (h[1] ^= hamsi_s1); \
+		c0 = (h[0] ^= hamsi_s0); \
 	} while (0)
+
+#define hamsi_s00   m0
+#define hamsi_s01   m1
+#define hamsi_s02   c0
+#define hamsi_s03   c1
+#define hamsi_s04   m2
+#define hamsi_s05   m3
+#define hamsi_s06   c2
+#define hamsi_s07   c3
+#define hamsi_s08   c4
+#define hamsi_s09   c5
+#define hamsi_s0A   m4
+#define hamsi_s0B   m5
+#define hamsi_s0C   c6
+#define hamsi_s0D   c7
+#define hamsi_s0E   m6
+#define hamsi_s0F   m7
+#define hamsi_s10   m8
+#define hamsi_s11   m9
+#define hamsi_s12   c8
+#define hamsi_s13   c9
+#define hamsi_s14   mA
+#define hamsi_s15   mB
+#define hamsi_s16   cA
+#define hamsi_s17   cB
+#define hamsi_s18   cC
+#define hamsi_s19   cD
+#define hamsi_s1A   mC
+#define hamsi_s1B   mD
+#define hamsi_s1C   cE
+#define hamsi_s1D   cF
+#define hamsi_s1E   mE
+#define hamsi_s1F   mF
+
+#define ROUND_BIG(rc, alpha)   do { \
+		hamsi_s00 ^= alpha[0x00]; \
+		hamsi_s01 ^= alpha[0x01] ^ (sph_u32)(rc); \
+		hamsi_s02 ^= alpha[0x02]; \
+		hamsi_s03 ^= alpha[0x03]; \
+		hamsi_s04 ^= alpha[0x04]; \
+		hamsi_s05 ^= alpha[0x05]; \
+		hamsi_s06 ^= alpha[0x06]; \
+		hamsi_s07 ^= alpha[0x07]; \
+		hamsi_s08 ^= alpha[0x08]; \
+		hamsi_s09 ^= alpha[0x09]; \
+		hamsi_s0A ^= alpha[0x0A]; \
+		hamsi_s0B ^= alpha[0x0B]; \
+		hamsi_s0C ^= alpha[0x0C]; \
+		hamsi_s0D ^= alpha[0x0D]; \
+		hamsi_s0E ^= alpha[0x0E]; \
+		hamsi_s0F ^= alpha[0x0F]; \
+		hamsi_s10 ^= alpha[0x10]; \
+		hamsi_s11 ^= alpha[0x11]; \
+		hamsi_s12 ^= alpha[0x12]; \
+		hamsi_s13 ^= alpha[0x13]; \
+		hamsi_s14 ^= alpha[0x14]; \
+		hamsi_s15 ^= alpha[0x15]; \
+		hamsi_s16 ^= alpha[0x16]; \
+		hamsi_s17 ^= alpha[0x17]; \
+		hamsi_s18 ^= alpha[0x18]; \
+		hamsi_s19 ^= alpha[0x19]; \
+		hamsi_s1A ^= alpha[0x1A]; \
+		hamsi_s1B ^= alpha[0x1B]; \
+		hamsi_s1C ^= alpha[0x1C]; \
+		hamsi_s1D ^= alpha[0x1D]; \
+		hamsi_s1E ^= alpha[0x1E]; \
+		hamsi_s1F ^= alpha[0x1F]; \
+		SBOX(hamsi_s00, hamsi_s08, hamsi_s10, hamsi_s18); \
+		SBOX(hamsi_s01, hamsi_s09, hamsi_s11, hamsi_s19); \
+		SBOX(hamsi_s02, hamsi_s0A, hamsi_s12, hamsi_s1A); \
+		SBOX(hamsi_s03, hamsi_s0B, hamsi_s13, hamsi_s1B); \
+		SBOX(hamsi_s04, hamsi_s0C, hamsi_s14, hamsi_s1C); \
+		SBOX(hamsi_s05, hamsi_s0D, hamsi_s15, hamsi_s1D); \
+		SBOX(hamsi_s06, hamsi_s0E, hamsi_s16, hamsi_s1E); \
+		SBOX(hamsi_s07, hamsi_s0F, hamsi_s17, hamsi_s1F); \
+		HAMSI_L(hamsi_s00, hamsi_s09, hamsi_s12, hamsi_s1B); \
+		HAMSI_L(hamsi_s01, hamsi_s0A, hamsi_s13, hamsi_s1C); \
+		HAMSI_L(hamsi_s02, hamsi_s0B, hamsi_s14, hamsi_s1D); \
+		HAMSI_L(hamsi_s03, hamsi_s0C, hamsi_s15, hamsi_s1E); \
+		HAMSI_L(hamsi_s04, hamsi_s0D, hamsi_s16, hamsi_s1F); \
+		HAMSI_L(hamsi_s05, hamsi_s0E, hamsi_s17, hamsi_s18); \
+		HAMSI_L(hamsi_s06, hamsi_s0F, hamsi_s10, hamsi_s19); \
+		HAMSI_L(hamsi_s07, hamsi_s08, hamsi_s11, hamsi_s1A); \
+		HAMSI_L(hamsi_s00, hamsi_s02, hamsi_s05, hamsi_s07); \
+		HAMSI_L(hamsi_s10, hamsi_s13, hamsi_s15, hamsi_s16); \
+		HAMSI_L(hamsi_s09, hamsi_s0B, hamsi_s0C, hamsi_s0E); \
+		HAMSI_L(hamsi_s19, hamsi_s1A, hamsi_s1C, hamsi_s1F); \
+	} while (0)
+
+
+#define P_BIG   do { \
+		ROUND_BIG(0, alpha_n); \
+		ROUND_BIG(1, alpha_n); \
+		ROUND_BIG(2, alpha_n); \
+		ROUND_BIG(3, alpha_n); \
+		ROUND_BIG(4, alpha_n); \
+		ROUND_BIG(5, alpha_n); \
+	} while (0)
+
+#define PF_BIG   do { \
+		ROUND_BIG(0, alpha_f); \
+		ROUND_BIG(1, alpha_f); \
+		ROUND_BIG(2, alpha_f); \
+		ROUND_BIG(3, alpha_f); \
+		ROUND_BIG(4, alpha_f); \
+		ROUND_BIG(5, alpha_f); \
+		ROUND_BIG(6, alpha_f); \
+		ROUND_BIG(7, alpha_f); \
+		ROUND_BIG(8, alpha_f); \
+		ROUND_BIG(9, alpha_f); \
+		ROUND_BIG(10, alpha_f); \
+		ROUND_BIG(11, alpha_f); \
+	} while (0)
+
+#define T_BIG   do { \
+		/* order is important */ \
+		cF = (h[0xF] ^= hamsi_s17); \
+		cE = (h[0xE] ^= hamsi_s16); \
+		cD = (h[0xD] ^= hamsi_s15); \
+		cC = (h[0xC] ^= hamsi_s14); \
+		cB = (h[0xB] ^= hamsi_s13); \
+		cA = (h[0xA] ^= hamsi_s12); \
+		c9 = (h[0x9] ^= hamsi_s11); \
+		c8 = (h[0x8] ^= hamsi_s10); \
+		c7 = (h[0x7] ^= hamsi_s07); \
+		c6 = (h[0x6] ^= hamsi_s06); \
+		c5 = (h[0x5] ^= hamsi_s05); \
+		c4 = (h[0x4] ^= hamsi_s04); \
+		c3 = (h[0x3] ^= hamsi_s03); \
+		c2 = (h[0x2] ^= hamsi_s02); \
+		c1 = (h[0x1] ^= hamsi_s01); \
+		c0 = (h[0x0] ^= hamsi_s00); \
+	} while (0)
+
 

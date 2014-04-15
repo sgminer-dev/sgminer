@@ -8371,7 +8371,7 @@ __constant static const sph_u32 T512[64][16] = {
 };
 
 #define INPUT_BIG   do { \
-		const sph_u32 *tp = &T512[0][0]; \
+		__constant const sph_u32 *tp = &T512[0][0]; \
 		unsigned u, v; \
 		m0 = 0; \
 		m1 = 0; \
@@ -8390,7 +8390,7 @@ __constant static const sph_u32 T512[64][16] = {
 		mE = 0; \
 		mF = 0; \
 		for (u = 0; u < 8; u ++) { \
-			unsigned db = buf[u]; \
+			unsigned db = buf(u); \
 			for (v = 0; v < 8; v ++, db >>= 1) { \
 				sph_u32 dm = SPH_T32(-(sph_u32)(db & 1)); \
 				m0 ^= dm & *tp ++; \

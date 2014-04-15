@@ -4273,6 +4273,9 @@ void write_config(FILE *fcfg)
 				case KL_TWECOIN:
 					fprintf(fcfg, TWECOIN_KERNNAME);
 					break;
+				case KL_MARUCOIN:
+					fprintf(fcfg, MARUCOIN_KERNNAME);
+					break;
 			}
 		}
 
@@ -6109,6 +6112,9 @@ static void rebuild_nonce(struct work *work, uint32_t nonce)
 			break;
 		case KL_TWECOIN:
 			twecoin_regenhash(work);
+			break;
+		case KL_MARUCOIN:
+			marucoin_regenhash(work);
 			break;
 		default:
 			scrypt_regenhash(work);
