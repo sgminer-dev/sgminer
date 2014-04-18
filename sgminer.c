@@ -4274,13 +4274,6 @@ void write_config(FILE *fcfg)
 	for(i = 0; i < total_pools; i++) {
 		struct pool *pool = pools[i];
 
-		/* Using get_pool_name() here is unsafe if opt_incognito is true. */
-		if (strcmp(pool->name, "") != 0) {
-			fprintf(fcfg, "\n\t\t\"name\" : \"%s\",", json_escape(pool->name));
-		}
-		if (strcmp(pool->description, "") != 0) {
-			fprintf(fcfg, "\n\t\t\"description\" : \"%s\",", json_escape(pool->description));
-		}
 		if (pool->quota != 1) {
 			fprintf(fcfg, "%s\n\t{\n\t\t\"quota\" : \"%s%s%s%d;%s\",", i > 0 ? "," : "",
 				pool->rpc_proxy ? json_escape((char *)proxytype(pool->rpc_proxytype)) : "",
@@ -4296,8 +4289,22 @@ void write_config(FILE *fcfg)
 				json_escape(pool->rpc_url));
 		}
 		fprintf(fcfg, "\n\t\t\"user\" : \"%s\",", json_escape(pool->rpc_user));
-		fprintf(fcfg, "\n\t\t\"pass\" : \"%s\"\n\t}", json_escape(pool->rpc_pass));
+		fprintf(fcfg, "\n\t\t\"pass\" : \"%s\",", json_escape(pool->rpc_pass));
+		/* Using get_pool_name() here is unsafe if opt_incognito is true. */
+		if (strcmp(pool->name, "") != 0) {
+			fprintf(fcfg, "\n\t\t\"name\" : \"%s\",", json_escape(pool->name));
 		}
+		if (strcmp(pool->description, "") != 0) {
+			fprintf(fcfg, "\n\t\t\"description\" : \"%s\",", json_escape(pool->description));
+		}
+		if (!cmp_algorithm(&pool->algorithm, opt_algorithm)) {
+			fprintf(fcfg, "\n\t\t\"algorithm\" : \"%s\",", json_escape(pool->algorithm.name));
+		}
+		if (pool->prio != i) {
+			fprintf(fcfg, "\n\t\t\"priority\" : \"%d\"", pool->prio);
+		}
+		fprintf(fcfg, "\n\t}");
+	}
 	fputs("\n]\n", fcfg);
 
 	/* Write only if there are usable GPUs */
