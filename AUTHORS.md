@@ -2,7 +2,7 @@
 
 ## Core
 
-* Scrypt-only refactor and maintenance: Noel Maersk <veox at wemakethings dot net> LfxRFgXzA13TSTxgFGUFEtumv5ShGzAmLw
+* Scrypt-only refactor: Noel Maersk <veox at wemakethings dot net> LfxRFgXzA13TSTxgFGUFEtumv5ShGzAmLw
 * Core: Martin Danielsen <kalroth {at} gmail _dot_ com> 1DNBcSEENBwDKrcTyTW61ezWhzsPy5imkn
 * Core: Con Kolivas <kernel [at] kolivas {dot} org> 15qSxP1SQcUX3o4nhkfdbgyoWEFMomJ4rZ
 * Core: Luke Dashjr <luke-jr+cgminer @at@ utopios .dot. org> 1QATWksNFGeUJCWBrN4g6hGM178Lovm7Wh
