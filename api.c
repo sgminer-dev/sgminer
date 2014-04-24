@@ -28,6 +28,7 @@
 #include "compat.h"
 #include "miner.h"
 #include "util.h"
+#include "pool.h"
 
 // BUFSIZ varies on Windows and Linux
 #define TMPBUFSIZ	8192
