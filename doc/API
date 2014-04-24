@@ -145,8 +145,9 @@ The list of requests - a (*) means it requires privileged access - and replies:
 
  Request       Reply Section  Details
  -------       -------------  -------
- version       VERSION        SGMiner=sgminer, version
-                              API=API| version
+ version       VERSION        Miner="sgminer " sgminer version
+                              CGMiner=sgminer version
+                              API=API version
 
  config        CONFIG         Some miner configuration information:
                               GPU Count=N, <- the number of GPUs
@@ -519,13 +520,20 @@ api-example.c - a 'C' program to access the API (with source code)
 
 miner.php - an example web page to access the API
  This includes buttons and inputs to attempt access to the privileged commands
- See the end of this API-README for details of how to tune the display
+ See the end of this API readme for details of how to tune the display
  and also to use the option to display a multi-rig summary
 
 ----------
 
 Feature Changelog for external applications using the API:
 
+
+API V
+
+Modified API commands:
+ 'version' - add 'Miner'
+
+----------
 
 API V3.1 (cgminer v3.12.1)
 
