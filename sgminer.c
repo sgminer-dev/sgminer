@@ -1825,17 +1825,17 @@ static void update_gbt(struct pool *pool)
 		total_getworks++;
 		pool->getwork_requested++;
 		if (rc) {
-			applog(LOG_DEBUG, "Successfully retrieved and updated GBT from %s", pool->name);
+			applog(LOG_DEBUG, "Successfully retrieved and updated GBT from %s", get_pool_name(pool));
 			cgtime(&pool->tv_idle);
 			if (pool == current_pool())
 				opt_work_update = true;
 		} else {
-			applog(LOG_DEBUG, "Successfully retrieved but FAILED to decipher GBT from %s", pool->name);
+			applog(LOG_DEBUG, "Successfully retrieved but FAILED to decipher GBT from %s", get_pool_name(pool));
 		}
 		json_decref(val);
 		free_work(work);
 	} else {
-		applog(LOG_DEBUG, "FAILED to update GBT from %s", pool->name);
+		applog(LOG_DEBUG, "FAILED to update GBT from %s", get_pool_name(pool));
 	}
 	curl_easy_cleanup(curl);
 }
@@ -2589,7 +2589,7 @@ share_result(json_t *val, json_t *res, json_t *err, const struct work *work,
 
 			strcpy(reason, "");
 			if (total_pools > 1)
-				snprintf(where, sizeof(where), "%s", work->pool->name);
+				snprintf(where, sizeof(where), "%s", get_pool_name(pool));
 			else
 				strcpy(where, "");
 
@@ -3023,7 +3023,7 @@ static inline struct pool *select_pool(bool lagging)
 	if (!pool)
 		pool = cp;
 out:
-	applog(LOG_DEBUG, "Selecting %s for work", pool->name);
+	applog(LOG_DEBUG, "Selecting %s for work", get_pool_name(pool));
 	return pool;
 }
 
@@ -3332,7 +3332,7 @@ retry:
 	mutex_unlock(&pool->pool_lock);
 
 	if (recruited)
-		applog(LOG_DEBUG, "Recruited curl for %s", pool->name);
+		applog(LOG_DEBUG, "Recruited curl for %s", get_pool_name(pool));
 	return ce;
 }
 
@@ -4082,7 +4082,7 @@ static bool test_work_current(struct work *work)
 				applog(LOG_NOTICE, "Stratum from %s detected new block", get_pool_name(pool));
 			} else {
 				applog(LOG_NOTICE, "%sLONGPOLL from %s detected new block",
-				       work->gbt ? "GBT " : "", work->pool->name);
+				       work->gbt ? "GBT " : "", get_pool_name(pool));
 			}
 		} else if (have_longpoll)
 			applog(LOG_NOTICE, "New block detected on network before pool notification");
@@ -4097,12 +4097,12 @@ static bool test_work_current(struct work *work)
 			 * block. */
 			if (memcmp(bedata, current_block, 32)) {
 				/* Doesn't match current block. It's stale */
-				applog(LOG_DEBUG, "Stale data from %s", pool->name);
+				applog(LOG_DEBUG, "Stale data from %s", get_pool_name(pool));
 				ret = false;
 			} else {
 				/* Work is from new block and pool is up now
 				 * current. */
-				applog(LOG_INFO, "%s now up to date", pool->name);
+				applog(LOG_INFO, "%s now up to date", get_pool_name(pool));
 				memcpy(pool->prev_block, bedata, 32);
 			}
 		}
@@ -4111,7 +4111,7 @@ static bool test_work_current(struct work *work)
 		 * accepting shares from it. To maintain fair work distribution
 		 * we work on it anyway. */
 		if (memcmp(bedata, current_block, 32))
-			applog(LOG_DEBUG, "%s still on old block", pool->name);
+			applog(LOG_DEBUG, "%s still on old block", get_pool_name(pool));
 #endif
 		if (work->longpoll) {
 			work->work_block = ++work_block;
@@ -4119,7 +4119,7 @@ static bool test_work_current(struct work *work)
 				if (work->stratum) {
 					applog(LOG_NOTICE, "Stratum from %s requested work restart", get_pool_name(pool));
 				} else {
-					applog(LOG_NOTICE, "%sLONGPOLL from %s requested work restart", work->gbt ? "GBT " : "", work->pool->name);
+					applog(LOG_NOTICE, "%sLONGPOLL from %s requested work restart", work->gbt ? "GBT " : "", get_pool_name(pool));
 				}
 				restart_threads();
 			}
@@ -4161,7 +4161,7 @@ static bool hash_push(struct work *work)
 
 static void stage_work(struct work *work)
 {
-	applog(LOG_DEBUG, "Pushing work from %s to hash queue", work->pool->name);
+	applog(LOG_DEBUG, "Pushing work from %s to hash queue", get_pool_name(work->pool));
 	work->work_block = work_block;
 	test_work_current(work);
 	work->pool->works++;
@@ -5436,7 +5436,7 @@ static void *stratum_rthread(void *userdata)
 		 * assume the connection has been dropped and treat this pool
 		 * as dead */
 		if (!sock_full(pool) && (sel_ret = select(pool->sock + 1, &rd, NULL, NULL, &timeout)) < 1) {
-			applog(LOG_DEBUG, "Stratum select failed on %s with value %d", pool->name, sel_ret);
+			applog(LOG_DEBUG, "Stratum select failed on %s with value %d", get_pool_name(pool), sel_ret);
 			s = NULL;
 		} else
 			s = recv_line(pool);
@@ -5659,9 +5659,9 @@ static bool pool_active(struct pool *pool, bool pinging)
 	int rolltime = 0;
 
 	if (pool->has_gbt)
-		applog(LOG_DEBUG, "Retrieving block template from %s", pool->name);
+		applog(LOG_DEBUG, "Retrieving block template from %s", get_pool_name(pool));
 	else
-		applog(LOG_INFO, "Testing %s", pool->name);
+		applog(LOG_INFO, "Testing %s", get_pool_name(pool));
 
 	/* This is the central point we activate stratum when we can */
 retry_stratum:
@@ -5761,7 +5761,7 @@ retry_stratum:
 
 		rc = work_decode(pool, work, val);
 		if (rc) {
-			applog(LOG_DEBUG, "Successfully retrieved and deciphered work from %s", pool->name);
+			applog(LOG_DEBUG, "Successfully retrieved and deciphered work from %s", get_pool_name(pool));
 			work->pool = pool;
 			work->rolltime = rolltime;
 			copy_time(&work->tv_getwork, &tv_getwork);
@@ -5776,7 +5776,7 @@ retry_stratum:
 			ret = true;
 			cgtime(&pool->tv_idle);
 		} else {
-			applog(LOG_DEBUG, "Successfully retrieved but FAILED to decipher work from %s", pool->name);
+			applog(LOG_DEBUG, "Successfully retrieved but FAILED to decipher work from %s", get_pool_name(pool));
 			free_work(work);
 		}
 		json_decref(val);
@@ -5824,7 +5824,7 @@ retry_stratum:
 			pool->has_stratum = true;
 			goto retry_stratum;
 		}
-		applog(LOG_DEBUG, "FAILED to retrieve work from %s", pool->name);
+		applog(LOG_DEBUG, "FAILED to retrieve work from %s", get_pool_name(pool));
 		if (!pinging)
 			applog(LOG_WARNING, "%s slow/down or URL or credentials invalid", get_pool_name(pool));
 	}
@@ -6158,7 +6158,7 @@ static void submit_work_async(struct work *work)
 	}
 
 	if (work->stratum) {
-		applog(LOG_DEBUG, "Pushing %s work to stratum queue", pool->name);
+		applog(LOG_DEBUG, "Pushing %s work to stratum queue", get_pool_name(pool));
 		if (unlikely(!tq_push(pool->stratum_q, work))) {
 			applog(LOG_DEBUG, "Discarding work from removed pool");
 			free_work(work);
@@ -6231,7 +6231,7 @@ static void update_work_stats(struct thr_info *thr, struct work *work)
 		work->pool->solved++;
 		found_blocks++;
 		work->mandatory = true;
-		applog(LOG_NOTICE, "Found block for %s!", work->pool->name);
+		applog(LOG_NOTICE, "Found block for %s!", get_pool_name(work->pool));
 	}
 
 	mutex_lock(&stats_lock);
@@ -7088,7 +7088,7 @@ static void reap_curl(struct pool *pool)
 	mutex_unlock(&pool->pool_lock);
 
 	if (reaped)
-		applog(LOG_DEBUG, "Reaped %d curl%s from %s", reaped, reaped > 1 ? "s" : "", pool->name);
+		applog(LOG_DEBUG, "Reaped %d curl%s from %s", reaped, reaped > 1 ? "s" : "", get_pool_name(pool));
 }
 
 static void *watchpool_thread(void __maybe_unused *userdata)
@@ -8469,7 +8469,7 @@ retry:
 		ce = pop_curl_entry(pool);
 		/* obtain new work from bitcoin via JSON-RPC */
 		if (!get_upstream_work(work, ce->curl)) {
-			applog(LOG_DEBUG, "%s json_rpc_call failed on get work, retrying in 5s", pool->name);
+			applog(LOG_DEBUG, "%s json_rpc_call failed on get work, retrying in 5s", get_pool_name(pool));
 			/* Make sure the pool just hasn't stopped serving
 			 * requests but is up as we'll keep hammering it */
 			if (++pool->seq_getfails > mining_threads + opt_queue)
