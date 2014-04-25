@@ -2,7 +2,8 @@
 
 ## Version 4.2.0 - TBA
 
-* 
+* API response to `version` has field `CGMiner` instead of `SGMiner`,
+  and an additional `Miner` field (by _luke-jr_).
 
 
 ## Version 4.1.271 - 12th April 2014
