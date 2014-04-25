@@ -1075,6 +1075,7 @@ extern int nDevs;
 extern int hw_errors;
 extern bool use_syslog;
 extern bool opt_quiet;
+extern bool opt_extranonce_subscribe;
 extern struct thr_info *control_thr;
 extern struct thr_info **mining_thr;
 extern struct cgpu_info gpus[MAX_GPUDEVICES];
@@ -1172,6 +1173,7 @@ struct pool {
 	char *name;
 	char *description;
 	int prio;
+	bool extranonce_subscribe;
 	int accepted, rejected;
 	int seq_rejects;
 	int seq_getfails;
