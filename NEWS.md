@@ -4,6 +4,8 @@
 
 * API response to `version` has field `CGMiner` instead of `SGMiner`,
   and an additional `Miner` field (by _luke-jr_).
+* API response to `restart` and `quit` only contains a `status` section
+  and passes JSON validation (by _luke-jr_).
 
 
 ## Version 4.1.271 - 12th April 2014
