@@ -854,7 +854,7 @@ retry: // TODO: refactor
 			cgsem_post(&thr->sem);
 		}
 		goto retry;
-	} if (!strncasecmp(&input, "d", 1)) {
+	} else if (!strncasecmp(&input, "d", 1)) {
 		if (selected)
 			selected = curses_int("Select GPU to disable");
 		if (selected < 0 || selected >= nDevs) {
