@@ -4274,34 +4274,35 @@ void write_config(FILE *fcfg)
 	for(i = 0; i < total_pools; i++) {
 		struct pool *pool = pools[i];
 
+		fprintf(fcfg, "%s", i > 0 ? "," : "");
 		if (pool->quota != 1) {
-			fprintf(fcfg, "%s\n\t{\n\t\t\"quota\" : \"%s%s%s%d;%s\",", i > 0 ? "," : "",
+			fprintf(fcfg, "\n\t{\n\t\t\"quota\" : \"%s%s%s%d;%s\"", 
 				pool->rpc_proxy ? json_escape((char *)proxytype(pool->rpc_proxytype)) : "",
 				pool->rpc_proxy ? json_escape(pool->rpc_proxy) : "",
 				pool->rpc_proxy ? "|" : "",
 				pool->quota,
 				json_escape(pool->rpc_url));
 		} else {
-			fprintf(fcfg, "%s\n\t{\n\t\t\"url\" : \"%s%s%s%s\",", i > 0 ? "," : "",
+			fprintf(fcfg, "\n\t{\n\t\t\"url\" : \"%s%s%s%s\"",
 				pool->rpc_proxy ? json_escape((char *)proxytype(pool->rpc_proxytype)) : "",
 				pool->rpc_proxy ? json_escape(pool->rpc_proxy) : "",
 				pool->rpc_proxy ? "|" : "",
 				json_escape(pool->rpc_url));
 		}
-		fprintf(fcfg, "\n\t\t\"user\" : \"%s\",", json_escape(pool->rpc_user));
-		fprintf(fcfg, "\n\t\t\"pass\" : \"%s\",", json_escape(pool->rpc_pass));
+		fprintf(fcfg, ",\n\t\t\"user\" : \"%s\"", json_escape(pool->rpc_user));
+		fprintf(fcfg, ",\n\t\t\"pass\" : \"%s\"", json_escape(pool->rpc_pass));
 		/* Using get_pool_name() here is unsafe if opt_incognito is true. */
 		if (strcmp(pool->name, "") != 0) {
-			fprintf(fcfg, "\n\t\t\"name\" : \"%s\",", json_escape(pool->name));
+			fprintf(fcfg, ",\n\t\t\"name\" : \"%s\"", json_escape(pool->name));
 		}
 		if (strcmp(pool->description, "") != 0) {
-			fprintf(fcfg, "\n\t\t\"description\" : \"%s\",", json_escape(pool->description));
+			fprintf(fcfg, ",\n\t\t\"description\" : \"%s\"", json_escape(pool->description));
 		}
 		if (!cmp_algorithm(&pool->algorithm, opt_algorithm)) {
-			fprintf(fcfg, "\n\t\t\"algorithm\" : \"%s\",", json_escape(pool->algorithm.name));
+			fprintf(fcfg, ",\n\t\t\"algorithm\" : \"%s\"", json_escape(pool->algorithm.name));
 		}
 		if (pool->prio != i) {
-			fprintf(fcfg, "\n\t\t\"priority\" : \"%d\"", pool->prio);
+			fprintf(fcfg, ",\n\t\t\"priority\" : \"%d\"", pool->prio);
 		}
 		fprintf(fcfg, "\n\t}");
 	}
@@ -7577,7 +7578,7 @@ static bool input_pool(bool live)
 	desc = curses_input("Description (optional)");
 	if (strcmp(desc, "-1") == 0) strcpy(desc, "");
 	algo = curses_input("Algorithm (optional)");
-	if (strcmp(name, "-1") == 0) strcpy(algo, "");
+	if (strcmp(algo, "-1") == 0) strcpy(algo, opt_algorithm->name);
 
 	pool = add_pool();
 
