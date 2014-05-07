@@ -1626,7 +1626,7 @@ static const char *status2str(enum alive status)
 static void gpustatus(struct io_data *io_data, int gpu, bool isjson, bool precom)
 {
 	struct api_data *root = NULL;
-	char intensity[20], xintensity[20], rawintensity[20];
+	char intensity[20];
 	char buf[TMPBUFSIZ];
 	char *enabled;
 	char *status;
@@ -1657,8 +1657,6 @@ static void gpustatus(struct io_data *io_data, int gpu, bool isjson, bool precom
 			strcpy(intensity, DYNAMIC);
 		else
 			sprintf(intensity, "%d", cgpu->intensity);
-		sprintf(xintensity, "%d", cgpu->xintensity);
-		sprintf(rawintensity, "%d", cgpu->rawintensity);
 
 		root = api_add_int(root, "GPU", &gpu, false);
 		root = api_add_string(root, "Enabled", enabled, false);
@@ -1687,8 +1685,8 @@ static void gpustatus(struct io_data *io_data, int gpu, bool isjson, bool precom
 		root = api_add_int(root, "Hardware Errors", &(cgpu->hw_errors), false);
 		root = api_add_utility(root, "Utility", &(cgpu->utility), false);
 		root = api_add_string(root, "Intensity", intensity, false);
-		root = api_add_string(root, "XIntensity", xintensity, false);
-		root = api_add_string(root, "RawIntensity", rawintensity, false);
+		root = api_add_int(root, "XIntensity", &(cgpu->xintensity), false);
+		root = api_add_int(root, "RawIntensity", &(cgpu->rawintensity), false);
 		int last_share_pool = cgpu->last_share_pool_time > 0 ?
 					cgpu->last_share_pool : -1;
 		root = api_add_int(root, "Last Share Pool", &last_share_pool, false);
