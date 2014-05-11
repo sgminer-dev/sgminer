@@ -175,10 +175,6 @@ static int input_thr_id;
 int gpur_thr_id;
 static int api_thr_id;
 static int total_control_threads;
-bool hotplug_mode;
-static int new_devices;
-static int new_threads;
-int hotplug_time = 5;
 
 #if LOCK_TRACKING
 pthread_mutex_t lockstat_lock;
@@ -7842,17 +7838,11 @@ void enable_device(struct cgpu_info *cgpu)
 	devices[cgpu->sgminer_id = sgminer_id_count++] = cgpu;
 	wr_unlock(&devices_lock);
 
-	if (hotplug_mode) {
-		new_threads += cgpu->threads;
+	mining_threads += cgpu->threads;
 #ifdef HAVE_CURSES
-		adj_width(mining_threads + new_threads, &dev_width);
+	adj_width(mining_threads, &dev_width);
 #endif
-	} else {
-		mining_threads += cgpu->threads;
-#ifdef HAVE_CURSES
-		adj_width(mining_threads, &dev_width);
-#endif
-	}
+
 	if (cgpu->drv->drv_id == DRIVER_opencl) {
 		gpu_threads += cgpu->threads;
 	}
@@ -7888,17 +7878,14 @@ bool add_cgpu(struct cgpu_info *cgpu)
 	}
 
 	wr_lock(&devices_lock);
-	devices = (struct cgpu_info **)realloc(devices, sizeof(struct cgpu_info *) * (total_devices + new_devices + 2));
+	devices = (struct cgpu_info **)realloc(devices, sizeof(struct cgpu_info *) * (total_devices + 2));
 	wr_unlock(&devices_lock);
 
 	mutex_lock(&stats_lock);
 	cgpu->last_device_valid_work = time(NULL);
 	mutex_unlock(&stats_lock);
 
-	if (hotplug_mode)
-		devices[total_devices + new_devices++] = cgpu;
-	else
-		devices[total_devices++] = cgpu;
+	devices[total_devices++] = cgpu;
 
 	adjust_mostdevs();
 	return true;

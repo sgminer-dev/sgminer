@@ -1071,8 +1071,6 @@ extern bool add_pool_details(struct pool *pool, bool live, char *url, char *user
 #define MAX_RAWINTENSITY 2147483647
 #define MAX_RAWINTENSITY_STR "2147483647"
 
-extern bool hotplug_mode;
-extern int hotplug_time;
 extern struct list_head scan_devices;
 extern int nDevs;
 extern int hw_errors;
