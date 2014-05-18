@@ -1,6 +1,6 @@
 /*-
  * Copyright 2009 Colin Percival, 2011 ArtForz, 2011 pooler, 2012 mtrlt,
- * 2012-2013 Con Kolivas.
+ * 2012-2013 Con Kolivas, 2014 Bufius.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -706,9 +706,9 @@ __kernel void search(__global const uint4 * const restrict input,
 	SHA256_fixed(&tmp0, &tmp1);
 	SHA256(&ostate0, &ostate1, tmp0, tmp1, (uint4)(K[84], 0U, 0U, 0U), (uint4)(0U, 0U, 0U, K[88]));
 
-	bool found = EndianSwap(ostate1.w) <= target;
+    bool found = EndianSwap(ostate1.w) <= target;
     barrier(CLK_GLOBAL_MEM_FENCE); 
     if (found)
-		SETFOUND(get_global_id(0));
+        SETFOUND(get_global_id(0));
 }
 
