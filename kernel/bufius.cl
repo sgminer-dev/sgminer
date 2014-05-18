@@ -623,40 +623,40 @@ void scrypt_core(uint4 X[8], __global uint4* const restrict lookup)
 
     // write lookup table to memory
 #pragma unroll 1    
-        for (i=0; i<write_loop; ++i) {
-        
+    for (i=0; i<write_loop; ++i) {
+    
 #pragma unroll 8     
-            for(z=0; z<8; ++z)
-                lookup[CO+z] = X[z];
-  
+        for(z=0; z<8; ++z)
+            lookup[CO+z] = X[z];
+
 #pragma unroll 2
-            for (j=0; j<LOOKUP_GAP; ++j)      
-                salsa(X);
-	
-            CO += COy;
-        }
+        for (j=0; j<LOOKUP_GAP; ++j)      
+            salsa(X);
+
+        CO += COy;
+    }
 
     // read lookup table from memory and compute
 #pragma unroll 1    
-        for (i=0; i<N[NFACTOR]; ++i) {
-            j = mul24((X[7].x & (N[NFACTOR]-LOOKUP_GAP)), (uint)(CONCURRENT_THREADS));
-            CO = COx + rotl(j, 3U-lookup_bits);
-            additional_salsa = mod2(X[7].x, LOOKUP_GAP);            
+    for (i=0; i<N[NFACTOR]; ++i) {
+        j = mul24((X[7].x & (N[NFACTOR]-LOOKUP_GAP)), (uint)(CONCURRENT_THREADS));
+        CO = COx + rotl(j, 3U-lookup_bits);
+        additional_salsa = mod2(X[7].x, LOOKUP_GAP);            
 
 #pragma unroll 8
-            for(z=0; z<8; ++z)
-                V[z] = lookup[CO+z];
+        for(z=0; z<8; ++z)
+            V[z] = lookup[CO+z];
 
 #pragma unroll 1
-            for (j=0; j<additional_salsa; ++j)
-                salsa(V);
-        
+        for (j=0; j<additional_salsa; ++j)
+            salsa(V);
+    
 #pragma unroll 8
-            for(z=0; z<8; ++z)
-                X[z] ^= V[z];
-        		
-            salsa(X);
-        }
+        for(z=0; z<8; ++z)
+            X[z] ^= V[z];
+    		
+        salsa(X);
+    }
     
     unshittify(X);
 }
