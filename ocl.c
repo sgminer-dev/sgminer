@@ -456,6 +456,11 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
 		applog(LOG_WARNING, "Kernel zuikkis only supports lookup-gap = 2 (currently %d), forcing.", cgpu->lookup_gap);
 		cgpu->lookup_gap = 2;
 	}
+	
+	if ((strcmp(cgpu->kernelname, "bufius") == 0) && ((cgpu->lookup_gap != 2) && (cgpu->lookup_gap != 4) && (cgpu->lookup_gap != 8))) {
+		applog(LOG_WARNING, "Kernel bufius only supports lookup-gap of 2, 4 or 8 (currently %d), forcing to 2", cgpu->lookup_gap);
+		cgpu->lookup_gap = 2;
+	}	
 
 	if (!cgpu->opt_tc) {
 		unsigned int sixtyfours;
