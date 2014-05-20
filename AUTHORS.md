@@ -27,6 +27,7 @@ updated by many others.
 * ckolivas: Con Kolivas <kernel @at@ kolivas }dot{ org> 15qSxP1SQcUX3o4nhkfdbgyoWEFMomJ4rZ
 * psw: Pavel Semjanov LP6GRFvgoMxKA6AW4TVF668cNezEGZvEtr
 * zuikkis: Zuikkis LeXck7EYgxyjw13zNDxZFmmgmWffFvhmSh
+* bufius: Bufius VvvmmkYHKGtdr97JLyyZuJ3Th5ayungnjk
 
 
 ## Testing, bug fixes, improvements

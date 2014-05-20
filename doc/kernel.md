@@ -58,6 +58,15 @@ Only supports `vectors=1` and `lookup-gap=2`.
 [Announcement](https://litecointalk.org/index.php?topic=6058.msg90873#msg90873).
 
 
+### bufius
+
+Bufius' optimised kernel, based on `ckolivas`.
+
+Only supports `vectors=1` and `lookup-gap 2, 4 or 8`.
+
+Takeover from vertminer
+
+
 ## Submitting new kernels
 
 ### Requirements
