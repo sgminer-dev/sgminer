@@ -1,11 +1,19 @@
 # Release news
 
-## Version 4.2.0 - TBA
+## Version 4.2.0 - 20th May 2014
 
-* API response to `version` has field `CGMiner` instead of `SGMiner`,
-  and an additional `Miner` field (by _luke-jr_).
+* git repo moved to [sgminer-dev](https://github.com/sgminer-dev/sgminer).
+  It is now a GitHub organisation with several people having write access.
+* Kernel `bufius` merger from `vertminer` (by _Bufius_).
+* Set pool as idle on several stratum failure conditions (by _elbandi_).
+* API response to `version` has field `CGMiner` instead of `SGMiner`
+  for API client compatibility, and an additional `Miner` field (by
+  _luke-jr_).
 * API response to `restart` and `quit` only contains a `status` section
   and passes JSON validation (by _luke-jr_).
+* API response to `devs` contains `XIntensity` and `RawIntensity` fields.
+* Config file writing from TUI/API should produce a borked config less
+  often.
 
 
 ## Version 4.1.271 - 12th April 2014
@@ -13,7 +21,7 @@
 * Allow setting algorithm per-pool and initial implementation of kernel
   hot-swapping (by _mrbrdo_). Use options `pool-algorithm` (in config
   file or in CLI) or `algorithm` (config-only).
-* NCurses UI [S][W] writes pool name and description to configuration.
+* NCurses UI `[S][W]` writes pool name and description to configuration.
 * Added algorithm name to `pools` API command (by _troky_).
 * NCurses UI asks for (optional) pool name, description and algorithm
   when adding pool.
