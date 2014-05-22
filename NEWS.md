@@ -3,7 +3,7 @@
 ## Version 4.2.1 - 22nd May 2014
 
 * Fixed MSVS building, tested with MSVC++ 2010 and 2013 (by _troky_).
-* Added the "ultratune" feature form `sph-sgminer`, available in the
+* Added the "ultratune" feature from `sph-sgminer`, available in the
   NCurses interface with `[G][C][U]` (by _ultracorp_).
 
 
