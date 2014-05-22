@@ -7941,7 +7941,7 @@ int main(int argc, char *argv[])
 		quithere(1, "Failed to pthread_mutex_init lockstat_lock errno=%d", errno);
 #endif
 
-	initial_args = (char **)malloc(sizeof(char *)* (argc + 1));
+	initial_args = (const char **)malloc(sizeof(char *)* (argc + 1));
 	for  (i = 0; i < argc; i++)
 		initial_args[i] = strdup(argv[i]);
 	initial_args[argc] = NULL;
