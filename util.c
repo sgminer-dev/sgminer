@@ -43,6 +43,7 @@
 #include "elist.h"
 #include "compat.h"
 #include "util.h"
+#include "pool.h"
 
 #define DEFAULT_SOCKWAIT 60
 extern double opt_diff_mult;
@@ -63,12 +64,11 @@ static void keep_sockalive(SOCKETTYPE fd)
 	ioctlsocket(fd, FIONBIO, &flags);
 #endif
 
-	setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (const void *)&tcp_one, sizeof(tcp_one));
-#ifndef __linux__
+	setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (const char *)&tcp_one, sizeof(tcp_one));
 	if (!opt_delaynet)
-		setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (const void *)&tcp_one, sizeof(tcp_one));
-#else /* __linux__ */
-	if (!opt_delaynet)
+#ifndef __linux
+		setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (const char *)&tcp_one, sizeof(tcp_one));
+#else /* __linux */
 		setsockopt(fd, SOL_TCP, TCP_NODELAY, (const void *)&tcp_one, sizeof(tcp_one));
 	setsockopt(fd, SOL_TCP, TCP_KEEPCNT, &tcp_one, sizeof(tcp_one));
 	setsockopt(fd, SOL_TCP, TCP_KEEPIDLE, &tcp_keepidle, sizeof(tcp_keepidle));
@@ -122,7 +122,7 @@ static void databuf_free(struct data_buffer *db)
 static size_t all_data_cb(const void *ptr, size_t size, size_t nmemb,
 			  void *user_data)
 {
-	struct data_buffer *db = user_data;
+	struct data_buffer *db = (struct data_buffer *)user_data;
 	size_t len = size * nmemb;
 	size_t oldlen, newlen;
 	void *newmem;
@@ -137,8 +137,8 @@ static size_t all_data_cb(const void *ptr, size_t size, size_t nmemb,
 
 	db->buf = newmem;
 	db->len = newlen;
-	memcpy(db->buf + oldlen, ptr, len);
-	memcpy(db->buf + newlen, &zero, 1);	/* null terminate */
+	memcpy((uint8_t*)db->buf + oldlen, ptr, len);
+	memcpy((uint8_t*)db->buf + newlen, &zero, 1);	/* null terminate */
 
 	return len;
 }
@@ -146,7 +146,7 @@ static size_t all_data_cb(const void *ptr, size_t size, size_t nmemb,
 static size_t upload_data_cb(void *ptr, size_t size, size_t nmemb,
 			     void *user_data)
 {
-	struct upload_buffer *ub = user_data;
+	struct upload_buffer *ub = (struct upload_buffer *)user_data;
 	unsigned int len = size * nmemb;
 
 	if (len > ub->len)
@@ -154,7 +154,7 @@ static size_t upload_data_cb(void *ptr, size_t size, size_t nmemb,
 
 	if (len) {
 		memcpy(ptr, ub->buf, len);
-		ub->buf += len;
+		ub->buf = (uint8_t*)ub->buf + len;
 		ub->len -= len;
 	}
 
@@ -163,26 +163,26 @@ static size_t upload_data_cb(void *ptr, size_t size, size_t nmemb,
 
 static size_t resp_hdr_cb(void *ptr, size_t size, size_t nmemb, void *user_data)
 {
-	struct header_info *hi = user_data;
+	struct header_info *hi = (struct header_info *)user_data;
 	size_t remlen, slen, ptrlen = size * nmemb;
 	char *rem, *val = NULL, *key = NULL;
 	void *tmp;
 
-	val = calloc(1, ptrlen);
-	key = calloc(1, ptrlen);
+	val = (char *)calloc(1, ptrlen);
+	key = (char *)calloc(1, ptrlen);
 	if (!key || !val)
 		goto out;
 
 	tmp = memchr(ptr, ':', ptrlen);
 	if (!tmp || (tmp == ptr))	/* skip empty keys / blanks */
 		goto out;
-	slen = tmp - ptr;
+	slen = (uint8_t*)tmp - (uint8_t*)ptr;
 	if ((slen + 1) == ptrlen)	/* skip key w/ no value */
 		goto out;
 	memcpy(key, ptr, slen);		/* store & nul term key */
 	key[slen] = 0;
 
-	rem = ptr + slen + 1;		/* trim value's leading whitespace */
+	rem = (char*)ptr + slen + 1;	/* trim value's leading whitespace */
 	remlen = ptrlen - slen - 1;
 	while ((remlen > 0) && (isspace(*rem))) {
 		remlen--;
@@ -458,7 +458,7 @@ json_t *json_rpc_call(CURL *curl, const char *url,
 	pool->sgminer_pool_stats.canroll = hi.canroll;
 	pool->sgminer_pool_stats.hadexpire = hi.hadexpire;
 
-	val = JSON_LOADS(all_data.buf, &err);
+	val = JSON_LOADS((const char *)all_data.buf, &err);
 	if (!val) {
 		applog(LOG_INFO, "JSON decode failed(%d): %s", err.line, err.text);
 
@@ -541,7 +541,7 @@ static struct {
 	{ "socks5:",	PROXY_SOCKS5 },
 	{ "socks4a:",	PROXY_SOCKS4A },
 	{ "socks5h:",	PROXY_SOCKS5H },
-	{ NULL,	0 }
+	{ NULL,	(proxytypes_t)NULL }
 };
 
 const char *proxytype(proxytypes_t proxytype)
@@ -570,7 +570,7 @@ char *get_proxy(char *url, struct pool *pool)
 
 			*split = '\0';
 			len = split - url;
-			pool->rpc_proxy = malloc(1 + len - plen);
+			pool->rpc_proxy = (char *)malloc(1 + len - plen);
 			if (!(pool->rpc_proxy))
 				quithere(1, "Failed to malloc rpc_proxy");
 
@@ -608,7 +608,7 @@ char *bin2hex(const unsigned char *p, size_t len)
 	slen = len * 2 + 1;
 	if (slen % 4)
 		slen += 4 - (slen % 4);
-	s = calloc(slen, 1);
+	s = (char *)calloc(slen, 1);
 	if (unlikely(!s))
 		quithere(1, "Failed to calloc");
 
@@ -714,7 +714,7 @@ struct thread_q *tq_new(void)
 {
 	struct thread_q *tq;
 
-	tq = calloc(1, sizeof(*tq));
+	tq = (struct thread_q *)calloc(1, sizeof(*tq));
 	if (!tq)
 		return NULL;
 
@@ -767,7 +767,7 @@ bool tq_push(struct thread_q *tq, void *data)
 	struct tq_ent *ent;
 	bool rc = true;
 
-	ent = calloc(1, sizeof(*ent));
+	ent = (struct tq_ent *)calloc(1, sizeof(*ent));
 	if (!ent)
 		return false;
 
@@ -806,7 +806,7 @@ void *tq_pop(struct thread_q *tq, const struct timespec *abstime)
 	if (list_empty(&tq->q))
 		goto out;
 pop:
-	ent = list_entry(tq->q.next, struct tq_ent, q_node);
+	ent = list_entry(tq->q.next, struct tq_ent*, q_node);
 	rval = ent->data;
 
 	list_del(&ent->q_node);
@@ -1307,7 +1307,7 @@ bool stratum_send(struct pool *pool, char *s, ssize_t len)
 		case SEND_OK:
 			break;
 		case SEND_SELECTFAIL:
-			applog(LOG_DEBUG, "Write select failed on %s sock", pool->poolname);
+			applog(LOG_DEBUG, "Write select failed on %s sock", get_pool_name(pool));
 			suspend_stratum(pool);
 			break;
 		case SEND_SENDFAIL:
@@ -1373,20 +1373,20 @@ static void clear_sock(struct pool *pool)
  * and zeroing the new memory */
 static void recalloc_sock(struct pool *pool, size_t len)
 {
-	size_t old, new;
+	size_t old, newlen;
 
 	old = strlen(pool->sockbuf);
-	new = old + len + 1;
-	if (new < pool->sockbuf_size)
+	newlen = old + len + 1;
+	if (newlen < pool->sockbuf_size)
 		return;
-	new = new + (RBUFSIZE - (new % RBUFSIZE));
+	newlen = newlen + (RBUFSIZE - (newlen % RBUFSIZE));
 	// Avoid potentially recursive locking
 	// applog(LOG_DEBUG, "Recallocing pool sockbuf to %d", new);
-	pool->sockbuf = realloc(pool->sockbuf, new);
+	pool->sockbuf = (char *)realloc(pool->sockbuf, newlen);
 	if (!pool->sockbuf)
 		quithere(1, "Failed to realloc pool sockbuf");
-	memset(pool->sockbuf + old, 0, new - old);
-	pool->sockbuf_size = new;
+	memset(pool->sockbuf + old, 0, newlen - old);
+	pool->sockbuf_size = newlen;
 }
 
 /* Peeks at a socket to find the first end of line and then reads just that
@@ -1557,12 +1557,12 @@ static bool parse_notify(struct pool *pool, json_t *val)
 	for (i = 0; i < pool->swork.merkles; i++)
 		free(pool->swork.merkle_bin[i]);
 	if (merkles) {
-		pool->swork.merkle_bin = realloc(pool->swork.merkle_bin,
+		pool->swork.merkle_bin = (unsigned char **)realloc(pool->swork.merkle_bin,
 						 sizeof(char *) * merkles + 1);
 		for (i = 0; i < merkles; i++) {
 			char *merkle = json_array_string(arr, i);
 
-			pool->swork.merkle_bin[i] = malloc(32);
+			pool->swork.merkle_bin[i] = (unsigned char *)malloc(32);
 			if (unlikely(!pool->swork.merkle_bin[i]))
 				quit(1, "Failed to malloc pool swork merkle_bin");
 			hex2bin(pool->swork.merkle_bin[i], merkle, 32);
@@ -1583,7 +1583,7 @@ static bool parse_notify(struct pool *pool, json_t *val)
 	pool->merkle_offset /= 2;
 	pool->swork.header_len = pool->swork.header_len * 2 + 1;
 	align_len(&pool->swork.header_len);
-	header = alloca(pool->swork.header_len);
+	header = (char *)alloca(pool->swork.header_len);
 	snprintf(header, pool->swork.header_len,
 		"%s%s%s%s%s%s%s",
 		pool->swork.bbversion,
@@ -1596,17 +1596,17 @@ static bool parse_notify(struct pool *pool, json_t *val)
 	if (unlikely(!hex2bin(pool->header_bin, header, 128)))
 		quit(1, "Failed to convert header to header_bin in parse_notify");
 
-	cb1 = calloc(cb1_len, 1);
+	cb1 = (unsigned char *)calloc(cb1_len, 1);
 	if (unlikely(!cb1))
 		quithere(1, "Failed to calloc cb1 in parse_notify");
 	hex2bin(cb1, coinbase1, cb1_len);
-	cb2 = calloc(cb2_len, 1);
+	cb2 = (unsigned char *)calloc(cb2_len, 1);
 	if (unlikely(!cb2))
 		quithere(1, "Failed to calloc cb2 in parse_notify");
 	hex2bin(cb2, coinbase2, cb2_len);
 	free(pool->coinbase);
 	align_len(&alloc_len);
-	pool->coinbase = calloc(alloc_len, 1);
+	pool->coinbase = (unsigned char *)calloc(alloc_len, 1);
 	if (unlikely(!pool->coinbase))
 		quit(1, "Failed to calloc pool coinbase in parse_notify");
 	memcpy(pool->coinbase, cb1, cb1_len);
@@ -1656,11 +1656,11 @@ static bool parse_diff(struct pool *pool, json_t *val)
 		int idiff = diff;
 
 		if ((double)idiff == diff)
-			applog(LOG_NOTICE, "%s difficulty changed to %d", pool->poolname ,idiff);
+			applog(pool == current_pool() ? LOG_NOTICE : LOG_DEBUG, "%s difficulty changed to %d", get_pool_name(pool), idiff);
 		else
-			applog(LOG_NOTICE, "%s difficulty changed to %.3f", pool->poolname, diff);
+			applog(pool == current_pool() ? LOG_NOTICE : LOG_DEBUG, "%s difficulty changed to %.3f", get_pool_name(pool), diff);
 	} else
-		applog(LOG_DEBUG, "%s difficulty set to %f", pool->poolname, diff);
+		applog(LOG_DEBUG, "%s difficulty set to %f", get_pool_name(pool), diff);
 
 	return true;
 }
@@ -1679,6 +1679,11 @@ static bool parse_reconnect(struct pool *pool, json_t *val)
 	char *sockaddr_url, *stratum_port, *tmp;
 	char *url, *port, address[256];
 
+	if (opt_disable_client_reconnect) {
+		applog(LOG_WARNING, "Stratum client.reconnect forbidden, aborting.");
+		return false;
+	}
+
 	memset(address, 0, 255);
 	url = (char *)json_string_value(json_array_get(val, 0));
 	if (!url)
@@ -1693,7 +1698,7 @@ static bool parse_reconnect(struct pool *pool, json_t *val)
 	if (!extract_sockaddr(address, &sockaddr_url, &stratum_port))
 		return false;
 
-	applog(LOG_NOTICE, "Reconnect requested from %s to %s", pool->poolname, address);
+	applog(LOG_NOTICE, "Reconnect requested from %s to %s", get_pool_name(pool), address);
 
 	clear_pool_work(pool);
 
@@ -1708,8 +1713,10 @@ static bool parse_reconnect(struct pool *pool, json_t *val)
 	free(tmp);
 	mutex_unlock(&pool->stratum_lock);
 
-	if (!restart_stratum(pool))
+	if (!restart_stratum(pool)) {
+		pool_failed(pool);
 		return false;
+	}
 
 	return true;
 }
@@ -1718,7 +1725,7 @@ static bool send_version(struct pool *pool, json_t *val)
 {
 	char s[RBUFSIZE];
 	int id = json_integer_value(json_object_get(val, "id"));
-	
+
 	if (!id)
 		return false;
 
@@ -1738,7 +1745,7 @@ static bool show_message(struct pool *pool, json_t *val)
 	msg = (char *)json_string_value(json_array_get(val, 0));
 	if (!msg)
 		return false;
-	applog(LOG_NOTICE, "%s message: %s", pool->poolname, msg);
+	applog(LOG_NOTICE, "%s message: %s", get_pool_name(pool), msg);
 	return true;
 }
 
@@ -1860,14 +1867,16 @@ bool auth_stratum(struct pool *pool)
 			ss = json_dumps(err_val, JSON_INDENT(3));
 		else
 			ss = strdup("(unknown reason)");
-		applog(LOG_INFO, "%s JSON stratum auth failed: %s", pool->poolname, ss);
+		applog(LOG_INFO, "%s JSON stratum auth failed: %s", get_pool_name(pool), ss);
 		free(ss);
+
+		suspend_stratum(pool);
 
 		goto out;
 	}
 
 	ret = true;
-	applog(LOG_INFO, "Stratum authorisation success for %s", pool->poolname);
+	applog(LOG_INFO, "Stratum authorisation success for %s", get_pool_name(pool));
 	pool->probed = true;
 	successful_connect = true;
 
@@ -2127,7 +2136,7 @@ static bool setup_stratum_socket(struct pool *pool)
 	pool->stratum_active = false;
 	if (pool->sock) {
 		/* FIXME: change to LOG_DEBUG if issue #88 resolved */
-		applog(LOG_INFO, "Closing %s socket", pool->poolname);
+		applog(LOG_INFO, "Closing %s socket", get_pool_name(pool));
 		CLOSESOCKET(pool->sock);
 	}
 	pool->sock = 0;
@@ -2155,7 +2164,7 @@ static bool setup_stratum_socket(struct pool *pool)
 
 	ret = getaddrinfo(sockaddr_url, sockaddr_port, hints, &servinfo);
 	if (ret) {
-		applog(LOG_ERR, "getaddrinfo() in setup_stratum_socket() returned %i: %s", ret, gai_strerror(ret));
+		applog(LOG_INFO, "getaddrinfo() in setup_stratum_socket() returned %i: %s", ret, gai_strerror(ret));
 		if (!pool->probed) {
 			applog(LOG_WARNING, "Failed to resolve (wrong URL?) %s:%s",
 			       sockaddr_url, sockaddr_port);
@@ -2197,7 +2206,7 @@ retry:
 				int err, n;
 
 				len = sizeof(err);
-				n = getsockopt(sockd, SOL_SOCKET, SO_ERROR, (void *)&err, &len);
+				n = getsockopt(sockd, SOL_SOCKET, SO_ERROR, (char *)&err, &len);
 				if (!n && !err) {
 					applog(LOG_DEBUG, "Succeeded delayed connect");
 					block_socket(sockd);
@@ -2255,7 +2264,7 @@ retry:
 	}
 
 	if (!pool->sockbuf) {
-		pool->sockbuf = calloc(RBUFSIZE, 1);
+		pool->sockbuf = (char *)calloc(RBUFSIZE, 1);
 		if (!pool->sockbuf)
 			quithere(1, "Failed to calloc pool sockbuf");
 		pool->sockbuf_size = RBUFSIZE;
@@ -2296,7 +2305,7 @@ out:
 
 void suspend_stratum(struct pool *pool)
 {
-	applog(LOG_INFO, "Closing socket for stratum %s", pool->poolname);
+	applog(LOG_INFO, "Closing socket for stratum %s", get_pool_name(pool));
 
 	mutex_lock(&pool->stratum_lock);
 	__suspend_stratum(pool);
@@ -2314,7 +2323,7 @@ bool initiate_stratum(struct pool *pool)
 resend:
 	if (!setup_stratum_socket(pool)) {
 		/* FIXME: change to LOG_DEBUG when issue #88 resolved */
-		applog(LOG_INFO, "setup_stratum_socket() on %s failed", pool->poolname);
+		applog(LOG_INFO, "setup_stratum_socket() on %s failed", get_pool_name(pool));
 		sockd = false;
 		goto out;
 	}
@@ -2396,7 +2405,7 @@ resend:
 	pool->nonce1 = nonce1;
 	pool->n1_len = strlen(nonce1) / 2;
 	free(pool->nonce1bin);
-	pool->nonce1bin = calloc(pool->n1_len, 1);
+	pool->nonce1bin = (unsigned char *)calloc(pool->n1_len, 1);
 	if (unlikely(!pool->nonce1bin))
 		quithere(1, "Failed to calloc pool->nonce1bin");
 	hex2bin(pool->nonce1bin, pool->nonce1, pool->n1_len);
@@ -2404,7 +2413,7 @@ resend:
 	cg_wunlock(&pool->data_lock);
 
 	if (sessionid)
-		applog(LOG_DEBUG, "%s stratum session id: %s", pool->poolname, pool->sessionid);
+		applog(LOG_DEBUG, "%s stratum session id: %s", get_pool_name(pool), pool->sessionid);
 
 	ret = true;
 out:
@@ -2415,7 +2424,7 @@ out:
 		pool->swork.diff = 1;
 		if (opt_protocol) {
 			applog(LOG_DEBUG, "%s confirmed mining.subscribe with extranonce1 %s extran2size %d",
-			       pool->poolname, pool->nonce1, pool->n2size);
+			       get_pool_name(pool), pool->nonce1, pool->n2size);
 		}
 	} else {
 		if (recvd && !noresume) {
@@ -2433,9 +2442,9 @@ out:
 			json_decref(val);
 			goto resend;
 		}
-		applog(LOG_DEBUG, "Initiating stratum failed on %s", pool->poolname);
+		applog(LOG_DEBUG, "Initiating stratum failed on %s", get_pool_name(pool));
 		if (sockd) {
-		  applog(LOG_DEBUG, "Suspending stratum on %s", pool->poolname);
+		  applog(LOG_DEBUG, "Suspending stratum on %s", get_pool_name(pool));
 			suspend_stratum(pool);
 		}
 	}
@@ -2446,7 +2455,7 @@ out:
 
 bool restart_stratum(struct pool *pool)
 {
-	applog(LOG_DEBUG, "Restarting stratum on pool %s", pool->poolname);
+	applog(LOG_DEBUG, "Restarting stratum on pool %s", get_pool_name(pool));
 
 	if (pool->stratum_active)
 		suspend_stratum(pool);
@@ -2509,7 +2518,7 @@ void *realloc_strcat(char *ptr, char *s)
 	len += old + 1;
 	align_len(&len);
 
-	ret = malloc(len);
+	ret = (char *)malloc(len);
 	if (unlikely(!ret))
 		quithere(1, "Failed to malloc");
 
@@ -2535,7 +2544,7 @@ void *str_text(char *ptr)
 
 	uptr = (unsigned char *)ptr;
 
-	ret = txt = malloc(strlen(ptr)*4+5); // Guaranteed >= needed
+	ret = txt = (char *)malloc(strlen(ptr) * 4 + 5); // Guaranteed >= needed
 	if (unlikely(!txt))
 		quithere(1, "Failed to malloc txt");
 
@@ -2761,11 +2770,17 @@ bool cg_completion_timeout(void *fn, void *fnarg, int timeout)
 	pthread_t pthread;
 	bool ret = false;
 
-	cgc = malloc(sizeof(struct cg_completion));
+	cgc = (struct cg_completion *)malloc(sizeof(struct cg_completion));
 	if (unlikely(!cgc))
 		return ret;
 	cgsem_init(&cgc->cgsem);
+
+#ifdef _MSC_VER
+	cgc->fn = (void(__cdecl *)(void *))fn;
+#else
 	cgc->fn = fn;
+#endif
+
 	cgc->fnarg = fnarg;
 
 	pthread_create(&pthread, NULL, completion_thread, (void *)cgc);

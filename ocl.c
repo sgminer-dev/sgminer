@@ -31,13 +31,20 @@
 #include <unistd.h>
 
 #include "findnonce.h"
+#include "algorithm.h"
 #include "ocl.h"
+
+/* FIXME: only here for global config vars, replace with configuration.h
+ * or similar as soon as config is in a struct instead of littered all
+ * over the global namespace.
+ */
+#include "miner.h"
 
 int opt_platform_id = -1;
 
 char *file_contents(const char *filename, int *length)
 {
-	char *fullpath = alloca(PATH_MAX);
+	char *fullpath = (char *)alloca(PATH_MAX);
 	void *buffer;
 	FILE *f;
 
@@ -157,7 +164,7 @@ int clDevicesNum(void) {
 
 static int advance(char **area, unsigned *remaining, const char *marker)
 {
-	char *find = memmem(*area, *remaining, marker, strlen(marker));
+	char *find = (char *)memmem(*area, *remaining, (void *)marker, strlen(marker));
 
 	if (!find) {
 		applog(LOG_DEBUG, "Marker \"%s\" not found", marker);
@@ -212,9 +219,9 @@ void patch_opcodes(char *w, unsigned remaining)
 	applog(LOG_DEBUG, "Patched a total of %i BFI_INT instructions", patched);
 }
 
-_clState *initCl(unsigned int gpu, char *name, size_t nameSize)
+_clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *algorithm)
 {
-	_clState *clState = calloc(1, sizeof(_clState));
+	_clState *clState = (_clState *)calloc(1, sizeof(_clState));
 	bool patchbfi = false, prog_built = false;
 	struct cgpu_info *cgpu = &gpus[gpu];
 	cl_platform_id platform = NULL;
@@ -332,7 +339,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 
 	/* Check for BFI INT support. Hopefully people don't mix devices with
 	 * and without it! */
-	char * extensions = malloc(1024);
+	char * extensions = (char *)malloc(1024);
 	const char * camo = "cl_amd_media_ops";
 	char *find;
 
@@ -344,9 +351,9 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	find = strstr(extensions, camo);
 	if (find)
 		clState->hasBitAlign = true;
-		
+
 	/* Check for OpenCL >= 1.0 support, needed for global offset parameter usage. */
-	char * devoclver = malloc(1024);
+	char * devoclver = (char *)malloc(1024);
 	const char * ocl10 = "OpenCL 1.0";
 	const char * ocl11 = "OpenCL 1.1";
 
@@ -376,7 +383,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 		return NULL;
 	}
 	applog(LOG_DEBUG, "Max work group size reported %d", (int)(clState->max_work_size));
-	
+
 	size_t compute_units = 0;
 	status = clGetDeviceInfo(devices[gpu], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(size_t), (void *)&compute_units, NULL);
 	if (status != CL_SUCCESS) {
@@ -396,23 +403,22 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	applog(LOG_DEBUG, "Max mem alloc size is %lu", (long unsigned int)(cgpu->max_alloc));
 
 	/* Create binary filename based on parameters passed to opencl
-	 * compiler to ensure we only load a binary that matches what would
-	 * have otherwise created. The filename is:
-	 * name + kernelname +/- g(offset) + v + vectors + w + work_size + l + sizeof(long) + .bin
-	 * For scrypt the filename is:
-	 * name + kernelname + g + lg + lookup_gap + tc + thread_concurrency + w + work_size + l + sizeof(long) + .bin
+	 * compiler to ensure we only load a binary that matches what
+	 * would have otherwise created. The filename is:
+	 * name + kernelname + g + lg + lookup_gap + tc + thread_concurrency + nf + nfactor + w + work_size + l + sizeof(long) + .bin
 	 */
 	char binaryfilename[255];
 	char filename[255];
-	char numbuf[16];
+	char strbuf[32];
 
-	if (cgpu->kernel == KL_NONE) {
-		applog(LOG_INFO, "Selecting kernel ckolivas");
-		clState->chosen_kernel = KL_CKOLIVAS;
-		cgpu->kernel = clState->chosen_kernel;
-	} else {
-		clState->chosen_kernel = cgpu->kernel;
+	if (cgpu->kernelname == NULL) {
+		applog(LOG_INFO, "No kernel specified, defaulting to ckolivas");
+		cgpu->kernelname = strdup("ckolivas");
 	}
+
+	sprintf(strbuf, "%s.cl", cgpu->kernelname);
+	strcpy(filename, strbuf);
+	strcpy(binaryfilename, cgpu->kernelname);
 
 	/* For some reason 2 vectors is still better even if the card says
 	 * otherwise, and many cards lie about their max so use 256 as max
@@ -425,95 +431,8 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	/* All available kernels only support vector 1 */
 	cgpu->vwidth = 1;
 
-	switch (clState->chosen_kernel) {
-		case KL_ALEXKARNEW:
-			applog(LOG_WARNING, "Kernel alexkarnew is experimental.");
-			strcpy(filename, ALEXKARNEW_KERNNAME".cl");
-			strcpy(binaryfilename, ALEXKARNEW_KERNNAME);
-			break;
-		case KL_ALEXKAROLD:
-			applog(LOG_WARNING, "Kernel alexkarold is experimental.");
-			strcpy(filename, ALEXKAROLD_KERNNAME".cl");
-			strcpy(binaryfilename, ALEXKAROLD_KERNNAME);
-			break;
-		case KL_CKOLIVAS:
-			strcpy(filename, CKOLIVAS_KERNNAME".cl");
-			strcpy(binaryfilename, CKOLIVAS_KERNNAME);
-			break;
-		case KL_PSW:
-			applog(LOG_WARNING, "Kernel psw is experimental.");
-			strcpy(filename, PSW_KERNNAME".cl");
-			strcpy(binaryfilename, PSW_KERNNAME);
-			break;
-		case KL_ZUIKKIS:
-			applog(LOG_WARNING, "Kernel zuikkis is experimental.");
-			strcpy(filename, ZUIKKIS_KERNNAME".cl");
-			strcpy(binaryfilename, ZUIKKIS_KERNNAME);
-			/* Kernel only supports lookup-gap 2 */
-			cgpu->lookup_gap = 2;
-			/* Kernel only supports worksize 256 */
-			cgpu->work_size = 256;
-			break;
-		case KL_DARKCOIN:
-			applog(LOG_WARNING, "Kernel darkcoin is experimental.");
-			strcpy(filename, DARKCOIN_KERNNAME".cl");
-			strcpy(binaryfilename, DARKCOIN_KERNNAME);
-			break;
-		case KL_QUBITCOIN:
-			applog(LOG_WARNING, "Kernel qubitcoin is experimental.");
-			strcpy(filename, QUBITCOIN_KERNNAME".cl");
-			strcpy(binaryfilename, QUBITCOIN_KERNNAME);
-			break;
-		case KL_QUARKCOIN:
-			applog(LOG_WARNING, "Kernel quarkcoin is experimental.");
-			strcpy(filename, QUARKCOIN_KERNNAME".cl");
-			strcpy(binaryfilename, QUARKCOIN_KERNNAME);
-			break;
-		case KL_MYRIADCOIN_GROESTL:
-			applog(LOG_WARNING, "Kernel myriadcoin-groestl is experimental.");
-			strcpy(filename, MYRIADCOIN_GROESTL_KERNNAME".cl");
-			strcpy(binaryfilename, MYRIADCOIN_GROESTL_KERNNAME);
-			break;
-		case KL_FUGUECOIN:
-			applog(LOG_WARNING, "Kernel fuguecoin is experimental.");
-			strcpy(filename, FUGUECOIN_KERNNAME".cl");
-			strcpy(binaryfilename, FUGUECOIN_KERNNAME);
-			break;
-		case KL_INKCOIN:
-			applog(LOG_WARNING, "Kernel inkcoin is experimental.");
-			strcpy(filename, INKCOIN_KERNNAME".cl");
-			strcpy(binaryfilename, INKCOIN_KERNNAME);
-			break;
-		case KL_ANIMECOIN:
-			applog(LOG_WARNING, "Kernel animecoin is experimental.");
-			strcpy(filename, ANIMECOIN_KERNNAME".cl");
-			strcpy(binaryfilename, ANIMECOIN_KERNNAME);
-			break;
-		case KL_GROESTLCOIN:
-			applog(LOG_WARNING, "Kernel groestlcoin is experimental.");
-			strcpy(filename, GROESTLCOIN_KERNNAME".cl");
-			strcpy(binaryfilename, GROESTLCOIN_KERNNAME);
-			break;
-		case KL_SIFCOIN:
-			applog(LOG_WARNING, "Kernel sifcoin is experimental.");
-			strcpy(filename, SIFCOIN_KERNNAME".cl");
-			strcpy(binaryfilename, SIFCOIN_KERNNAME);
-			break;
-		case KL_TWECOIN:
-			applog(LOG_WARNING, "Kernel twecoin is experimental.");
-			strcpy(filename, TWECOIN_KERNNAME".cl");
-			strcpy(binaryfilename, TWECOIN_KERNNAME);
-			break;
-		case KL_MARUCOIN:
-			applog(LOG_WARNING, "Kernel marucoin is experimental.");
-			strcpy(filename, MARUCOIN_KERNNAME".cl");
-			strcpy(binaryfilename, MARUCOIN_KERNNAME);
-			break;
-		case KL_NONE: /* Shouldn't happen */
-			break;
-	}
-
-	if (cgpu->vwidth)
+	/* Vectors are hard-set to 1 above. */
+	if (likely(cgpu->vwidth))
 		clState->vwidth = cgpu->vwidth;
 	else {
 		clState->vwidth = preferred_vwidth;
@@ -533,10 +452,20 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	} else
 		cgpu->lookup_gap = cgpu->opt_lg;
 
+	if ((strcmp(cgpu->kernelname, "zuikkis") == 0) && (cgpu->lookup_gap != 2)) {
+		applog(LOG_WARNING, "Kernel zuikkis only supports lookup-gap = 2 (currently %d), forcing.", cgpu->lookup_gap);
+		cgpu->lookup_gap = 2;
+	}
+
+	if ((strcmp(cgpu->kernelname, "bufius") == 0) && ((cgpu->lookup_gap != 2) && (cgpu->lookup_gap != 4) && (cgpu->lookup_gap != 8))) {
+		applog(LOG_WARNING, "Kernel bufius only supports lookup-gap of 2, 4 or 8 (currently %d), forcing to 2", cgpu->lookup_gap);
+		cgpu->lookup_gap = 2;
+	}
+
 	if (!cgpu->opt_tc) {
 		unsigned int sixtyfours;
 
-		sixtyfours =  cgpu->max_alloc / 131072 / 64 - 1;
+		sixtyfours =  cgpu->max_alloc / 131072 / 64 / (algorithm->n/1024) - 1;
 		cgpu->thread_concurrency = sixtyfours * 64;
 		if (cgpu->shaders && cgpu->thread_concurrency > cgpu->shaders) {
 			cgpu->thread_concurrency -= cgpu->thread_concurrency % cgpu->shaders;
@@ -561,12 +490,12 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	if (!source)
 		return NULL;
 
-	binary_sizes = calloc(sizeof(size_t) * MAX_GPUDEVICES * 4, 1);
+	binary_sizes = (size_t *)calloc(sizeof(size_t) * MAX_GPUDEVICES * 4, 1);
 	if (unlikely(!binary_sizes)) {
 		applog(LOG_ERR, "Unable to calloc binary_sizes");
 		return NULL;
 	}
-	binaries = calloc(sizeof(char *) * MAX_GPUDEVICES * 4, 1);
+	binaries = (char **)calloc(sizeof(char *) * MAX_GPUDEVICES * 4, 1);
 	if (unlikely(!binaries)) {
 		applog(LOG_ERR, "Unable to calloc binaries");
 		return NULL;
@@ -576,13 +505,13 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	if (clState->goffset)
 		strcat(binaryfilename, "g");
 
-	sprintf(numbuf, "lg%utc%u", cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency);
-	strcat(binaryfilename, numbuf);
+	sprintf(strbuf, "lg%utc%unf%u", cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, algorithm->nfactor);
+	strcat(binaryfilename, strbuf);
 
-	sprintf(numbuf, "w%d", (int)clState->wsize);
-	strcat(binaryfilename, numbuf);
-	sprintf(numbuf, "l%d", (int)sizeof(long));
-	strcat(binaryfilename, numbuf);
+	sprintf(strbuf, "w%d", (int)clState->wsize);
+	strcat(binaryfilename, strbuf);
+	sprintf(strbuf, "l%d", (int)sizeof(long));
+	strcat(binaryfilename, strbuf);
 	strcat(binaryfilename, ".bin");
 
 	binaryfile = fopen(binaryfilename, "rb");
@@ -633,6 +562,8 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize)
 	/////////////////////////////////////////////////////////////////
 
 build:
+	applog(LOG_NOTICE, "Building binary %s", binaryfilename);
+
 	clState->program = clCreateProgramWithSource(clState->context, 1, (const char **)&source, sourceSize, &status);
 	if (status != CL_SUCCESS) {
 		applog(LOG_ERR, "Error %d: Loading Binary into cl_program (clCreateProgramWithSource)", status);
@@ -640,11 +571,11 @@ build:
 	}
 
 	/* create a cl program executable for all the devices specified */
-	char *CompilerOptions = calloc(1, 256);
+	char *CompilerOptions = (char *)calloc(1, 256);
 
-	sprintf(CompilerOptions, "-I \"%s\" -I \"%s\" -I \"%skernel\" -I \".\" -D LOOKUP_GAP=%d -D CONCURRENT_THREADS=%d -D WORKSIZE=%d",
+	sprintf(CompilerOptions, "-I \"%s\" -I \"%s\" -I \"%skernel\" -I \".\" -D LOOKUP_GAP=%d -D CONCURRENT_THREADS=%d -D WORKSIZE=%d -D NFACTOR=%d",
 			opt_kernel_path, sgminer_path, sgminer_path,
-			cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, (int)clState->wsize);
+			cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, (int)clState->wsize, (unsigned int)algorithm->nfactor);
 
 	applog(LOG_DEBUG, "Setting worksize to %d", (int)(clState->wsize));
 	if (clState->vwidth > 1)
@@ -692,7 +623,7 @@ build:
 		size_t logSize;
 		status = clGetProgramBuildInfo(clState->program, devices[gpu], CL_PROGRAM_BUILD_LOG, 0, NULL, &logSize);
 
-		char *log = malloc(logSize);
+		char *log = (char *)malloc(logSize);
 		status = clGetProgramBuildInfo(clState->program, devices[gpu], CL_PROGRAM_BUILD_LOG, logSize, log, NULL);
 		applog(LOG_ERR, "%s", log);
 		return NULL;
@@ -731,7 +662,7 @@ build:
 		applog(LOG_ERR, "OpenCL compiler generated a zero sized binary, FAIL!");
 		return NULL;
 	}
-	binaries[slot] = calloc(sizeof(char) * binary_sizes[slot], 1);
+	binaries[slot] = (char *)calloc(sizeof(char)* binary_sizes[slot], 1);
 	status = clGetProgramInfo(clState->program, CL_PROGRAM_BINARIES, sizeof(char *) * cpnd, binaries, NULL );
 	if (unlikely(status != CL_SUCCESS)) {
 		applog(LOG_ERR, "Error %d: Getting program info. CL_PROGRAM_BINARIES (clGetProgramInfo)", status);
@@ -793,7 +724,7 @@ build:
 	/* Save the binary to be loaded next time */
 	binaryfile = fopen(binaryfilename, "wb");
 	if (!binaryfile) {
-		/* Not a fatal problem, just means we build it again next time */
+		/* Not fatal, just means we build it again next time */
 		applog(LOG_DEBUG, "Unable to create file %s", binaryfilename);
 	} else {
 		if (unlikely(fwrite(binaries[slot], 1, binary_sizes[slot], binaryfile) != binary_sizes[slot])) {
@@ -808,8 +739,9 @@ built:
 	free(binaries);
 	free(binary_sizes);
 
-	applog(LOG_INFO, "Initialising kernel %s with%s bitalign, %d vectors and worksize %d",
-	       filename, clState->hasBitAlign ? "" : "out", clState->vwidth, (int)(clState->wsize));
+	applog(LOG_NOTICE, "Initialising kernel %s with%s bitalign, %spatched BFI, nfactor %d, n %d",
+	       filename, clState->hasBitAlign ? "" : "out", patchbfi ? "" : "un",
+	       algorithm->nfactor, algorithm->n);
 
 	if (!prog_built) {
 		/* create a cl program executable for all the devices specified */
@@ -819,7 +751,7 @@ built:
 			size_t logSize;
 			status = clGetProgramBuildInfo(clState->program, devices[gpu], CL_PROGRAM_BUILD_LOG, 0, NULL, &logSize);
 
-			char *log = malloc(logSize);
+			char *log = (char *)malloc(logSize);
 			status = clGetProgramBuildInfo(clState->program, devices[gpu], CL_PROGRAM_BUILD_LOG, logSize, log, NULL);
 			applog(LOG_ERR, "%s", log);
 			return NULL;
@@ -833,17 +765,18 @@ built:
 		return NULL;
 	}
 
-	size_t ipt = (1024 / cgpu->lookup_gap + (1024 % cgpu->lookup_gap > 0));
+	size_t ipt = (algorithm->n / cgpu->lookup_gap +
+		      (algorithm->n % cgpu->lookup_gap > 0));
 	size_t bufsize = 128 * ipt * cgpu->thread_concurrency;
 
 	/* Use the max alloc value which has been rounded to a power of
 	 * 2 greater >= required amount earlier */
 	if (bufsize > cgpu->max_alloc) {
 		applog(LOG_WARNING, "Maximum buffer memory device %d supports says %lu",
-			   gpu, (long unsigned int)(cgpu->max_alloc));
-		applog(LOG_WARNING, "Your scrypt settings come to %d", (int)bufsize);
+			   gpu, (unsigned long)(cgpu->max_alloc));
+		applog(LOG_WARNING, "Your scrypt settings come to %lu", (unsigned long)bufsize);
 	}
-	applog(LOG_DEBUG, "Creating scrypt buffer sized %d", (int)bufsize);
+	applog(LOG_DEBUG, "Creating scrypt buffer sized %lu", (unsigned long)bufsize);
 	clState->padbufsize = bufsize;
 
 	/* This buffer is weird and might work to some degree even if

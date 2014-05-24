@@ -11,7 +11,6 @@
 #include "config.h"
 
 #include <stdio.h>
-#include <inttypes.h>
 #include <pthread.h>
 #include <string.h>
 
@@ -213,7 +212,7 @@ static void *postcalc_hash(void *userdata)
 
 void postcalc_hash_async(struct thr_info *thr, struct work *work, uint32_t *res)
 {
-	struct pc_data *pcd = malloc(sizeof(struct pc_data));
+	struct pc_data *pcd = (struct pc_data *)malloc(sizeof(struct pc_data));
 	int buffersize;
 
 	if (unlikely(!pcd)) {

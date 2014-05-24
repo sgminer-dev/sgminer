@@ -41,8 +41,8 @@ bool adl_active;
 bool opt_reorder = false;
 
 int opt_hysteresis = 3;
-const int opt_targettemp = 75;
-const int opt_overheattemp = 85;
+int opt_targettemp = 75;
+int opt_overheattemp = 85;
 static pthread_mutex_t adl_lock;
 
 struct gpu_adapters {
@@ -121,7 +121,6 @@ static	ADL_OVERDRIVE6_POWERCONTROL_SET		ADL_Overdrive6_PowerControl_Set;
 #endif
 static int iNumberAdapters;
 static LPAdapterInfo lpInfo = NULL;
-static LPADLDisplayInfo lpAdlDisplayInfo = NULL;
 
 int set_fanspeed(int gpu, int iFanSpeed);
 static float __gpu_temp(struct gpu_adl *ga);
@@ -326,7 +325,6 @@ void init_adl(int nDevs)
 	struct gpu_adapters adapters[MAX_GPUDEVICES], vadapters[MAX_GPUDEVICES];
 	bool devs_match = true;
 	ADLBiosInfo BiosInfo;
-	int iNumDisplays;
 
 	applog(LOG_INFO, "Number of ADL devices: %d", nDevs);
 
@@ -346,7 +344,7 @@ void init_adl(int nDevs)
 	}
 
 	if (iNumberAdapters > 0) {
-		lpInfo = malloc ( sizeof (AdapterInfo) * iNumberAdapters );
+		lpInfo = (LPAdapterInfo)malloc ( sizeof (AdapterInfo) * iNumberAdapters );
 		memset ( lpInfo,'\0', sizeof (AdapterInfo) * iNumberAdapters );
 
 		lpInfo->iSize = sizeof(lpInfo);
@@ -361,7 +359,7 @@ void init_adl(int nDevs)
 		return;
 	}
 
-	applog(LOG_INFO, "Found %d ADL adapters", iNumberAdapters);
+	applog(LOG_INFO, "Found %d logical ADL adapters", iNumberAdapters);
 
 	/* Iterate over iNumberAdapters and find the lpAdapterID of real devices */
 	for (i = 0; i < iNumberAdapters; i++) {
@@ -554,7 +552,7 @@ void init_adl(int nDevs)
 		lev = ga->lpOdParameters.iNumberOfPerformanceLevels - 1;
 		/* We're only interested in the top performance level */
 		plsize = sizeof(ADLODPerformanceLevels) + lev * sizeof(ADLODPerformanceLevel);
-		lpOdPerformanceLevels = malloc(plsize);
+		lpOdPerformanceLevels = (ADLODPerformanceLevels *)malloc(plsize);
 		lpOdPerformanceLevels->iSize = plsize;
 
 		/* Get default performance levels first */
@@ -574,7 +572,7 @@ void init_adl(int nDevs)
 			applog(LOG_INFO, "Failed to ADL_Overdrive5_ODPerformanceLevels_Get");
 		else {
 			/* Save these values as the defaults in case we wish to reset to defaults */
-			ga->DefPerfLev = malloc(plsize);
+			ga->DefPerfLev = (ADLODPerformanceLevels *)malloc(plsize);
 			memcpy(ga->DefPerfLev, lpOdPerformanceLevels, plsize);
 		}
 
@@ -1000,7 +998,7 @@ int set_engineclock(int gpu, int iEngineClock)
 	ga->lastengine = iEngineClock;
 
 	lev = ga->lpOdParameters.iNumberOfPerformanceLevels - 1;
-	lpOdPerformanceLevels = alloca(sizeof(ADLODPerformanceLevels) + (lev * sizeof(ADLODPerformanceLevel)));
+	lpOdPerformanceLevels = (ADLODPerformanceLevels *)alloca(sizeof(ADLODPerformanceLevels)+(lev * sizeof(ADLODPerformanceLevel)));
 	lpOdPerformanceLevels->iSize = sizeof(ADLODPerformanceLevels) + sizeof(ADLODPerformanceLevel) * lev;
 
 	lock_adl();
@@ -1063,7 +1061,7 @@ int set_memoryclock(int gpu, int iMemoryClock)
 	ga = &gpus[gpu].adl;
 
 	lev = ga->lpOdParameters.iNumberOfPerformanceLevels - 1;
-	lpOdPerformanceLevels = alloca(sizeof(ADLODPerformanceLevels) + (lev * sizeof(ADLODPerformanceLevel)));
+	lpOdPerformanceLevels = (ADLODPerformanceLevels *)alloca(sizeof(ADLODPerformanceLevels)+(lev * sizeof(ADLODPerformanceLevel)));
 	lpOdPerformanceLevels->iSize = sizeof(ADLODPerformanceLevels) + sizeof(ADLODPerformanceLevel) * lev;
 
 	lock_adl();
@@ -1128,7 +1126,7 @@ int set_vddc(int gpu, float fVddc)
 	ga = &gpus[gpu].adl;
 
 	lev = ga->lpOdParameters.iNumberOfPerformanceLevels - 1;
-	lpOdPerformanceLevels = alloca(sizeof(ADLODPerformanceLevels) + (lev * sizeof(ADLODPerformanceLevel)));
+	lpOdPerformanceLevels = (ADLODPerformanceLevels *)alloca(sizeof(ADLODPerformanceLevels)+(lev * sizeof(ADLODPerformanceLevel)));
 	lpOdPerformanceLevels->iSize = sizeof(ADLODPerformanceLevels) + sizeof(ADLODPerformanceLevel) * lev;
 
 	lock_adl();
@@ -1239,7 +1237,7 @@ static int set_powertune(int gpu, int iPercentage)
 static bool fan_autotune(int gpu, int temp, int fanpercent, int lasttemp, bool *fan_window)
 {
 	struct cgpu_info *cgpu = &gpus[gpu];
-	int tdiff = round(temp - lasttemp);
+	int tdiff = round((double)(temp - lasttemp));
 	struct gpu_adl *ga = &cgpu->adl;
 	int top = gpus[gpu].gpu_fan;
 	int bot = gpus[gpu].min_fan;
@@ -1476,9 +1474,20 @@ void change_gpusettings(int gpu)
 	struct gpu_adl *ga = &gpus[gpu].adl;
 	float fval, fmin = 0, fmax = 0;
 	int val, imin = 0, imax = 0;
-	char input;
+	char input, ut_c;
 	int engineclock = 0, memclock = 0, activity = 0, fanspeed = 0, fanpercent = 0, powertune = 0;
 	float temp = 0, vddc = 0;
+	double ut_best_score = 0;	/* Best hashrate */
+    int ut_best_gpu = 0;	/* Best score GPU engine clock */
+	int ut_best_mem = 0;	/* Best score MEM clock */
+	int ut_gpu, ut_mem, gpu_min, gpu_max, mem_min, mem_max;
+	int ut_gpu_resume = 0, ut_mem_resume = 0;
+	int ut_stabledelay;		/* Time to wait after applying new GPU/MEM freq. settings before taking performance measurements (ms) */
+	int ut_loops;
+	int i;
+
+	double displayed_rolling, displayed_total, last_rolling;
+	bool mhash_base = true, ut_best_mhash_base;
 
 updated:
 	if (gpu_stats(gpu, &temp, &engineclock, &memclock, &vddc, &activity, &fanspeed, &fanpercent, &powertune))
@@ -1497,7 +1506,7 @@ updated:
 		  gpus[gpu].min_fan, gpus[gpu].gpu_fan);
 	wlogprint("GPU engine clock autotune is %s (%d-%d)\n", ga->autoengine ? "enabled" : "disabled",
 		ga->minspeed / 100, ga->maxspeed / 100);
-	wlogprint("Change [A]utomatic [E]ngine [F]an [M]emory [V]oltage [P]owertune\n");
+	wlogprint("Change [A]utomatic [E]ngine [F]an [M]emory [V]oltage [P]owertune [U]ltratune\n");
 	wlogprint("Or press any other key to continue\n");
 	input = getch();
 
@@ -1571,6 +1580,170 @@ updated:
 			wlogprint("Driver reports success but check values below\n");
 		else
 			wlogprint("Failed to modify powertune value\n");
+	} else if (!strncasecmp(&input, "u", 1)) {
+	/* Ultratune - Search for optimal tuning parameters for hardware */
+
+		/* We need ADL */
+		if (!gpus[gpu].has_adl || !adl_active) {
+			wlogprint("ADL must be enabled to use this feature.");
+			cgsleep_ms(3000);
+			return;
+		}
+
+		wlogprint("Enter MINIMUM GPU engine speed [900]");
+		gpu_min = curses_int("");
+		if (gpu_min == -1)
+			gpu_min = 900;
+		wlogprint("Enter MAXIMUM GPU engine speed [1150]");
+		gpu_max = curses_int("");
+		if (gpu_max == -1)
+			gpu_max = 1150;
+		wlogprint("Enter MINIMUM MEMORY speed [1400]");
+		mem_min = curses_int("");
+		if (mem_min == -1)
+			mem_min = 1400;
+		wlogprint("Enter MAXIMUM MEMORY speed [1750]");
+		mem_max = curses_int("");
+		if (mem_max == -1)
+			mem_max = 1750;
+		wlogprint("Enter stabilization time (ms) [5000]");
+		ut_stabledelay = curses_int("");
+		if (!ut_stabledelay)
+			ut_stabledelay = 5000;
+		wlogprint("Resume from previous session? (y/n)");
+		ut_c = getch();
+		wlogprint("\n");
+		if (!strncasecmp(&ut_c, "y", 1)) {
+			wlogprint("Enter previous session's best GPU clock (MHz)");
+			ut_gpu_resume = curses_int("");
+			if (!ut_gpu_resume)
+				ut_gpu_resume = 0;
+			wlogprint("Enter previous session's best MEMORY clock (MHz)");
+			ut_mem_resume = curses_int("");
+			if (!ut_mem_resume)
+				ut_mem_resume = 0;
+		}
+
+		clear_logwin();
+
+		wlogprint("Here comes *LOTS* of trial and error, be patient...\n");
+		ut_best_score = 0;
+		ut_best_mhash_base = mhash_base;
+		ut_best_gpu = engineclock;
+		ut_best_mem = memclock;
+
+		/* Increase the GPU clock from MIN to MAX and run through various memory settings for each speed */
+		for (ut_gpu = gpu_min; ut_gpu <= gpu_max; ut_gpu += 10) {
+
+			/* Resume? */
+			if (ut_gpu_resume) {
+				ut_gpu = ut_gpu_resume;
+				ut_gpu_resume = 0;
+			}
+
+			/* Set GPU clock speed */
+			if (set_engineclock(gpu, ut_gpu)) {
+				/* Failed, wait a couple seconds and try again */
+				wlogprint("Failed to set GPU clock to %d MHz.  Trying again...\n", ut_gpu);
+				cgsleep_ms(2000);
+				if (set_engineclock(gpu, ut_gpu)) {
+					wlogprint("Failed to set GPU clock to %d MHz.  Ultratune Aborted.\n", ut_gpu);
+					input = getch();
+					return;
+				}
+			}
+
+			/* Run through memory speeds to find the best one for this GPU freq. */
+			ut_loops = 0;
+			for (ut_mem = mem_min; ut_mem <= mem_max; ut_mem += 5) {
+				ut_loops++;
+
+				/* Resume? */
+				if (ut_mem_resume) {
+					ut_mem = ut_mem_resume;
+					ut_mem_resume = 0;
+				}
+
+				/* Set new memory speed */
+				if (set_memoryclock(gpu, ut_mem)) {
+					/* Failed, wait a couple seconds and try again */
+					wlogprint("Failed to set MEM clock to %d MHz.  Trying again...\n", ut_mem);
+					cgsleep_ms(2000);
+					if (set_memoryclock(gpu, ut_mem)) {
+						wlogprint("Failed to set MEM clock to %d MHz.  Ultratune Aborted.\n", ut_mem);
+						input = getch();
+						return;
+					}
+				}
+
+				wlogprint("Ultratune Clocks: GPU: %d MHz, MEM: %d", ut_gpu, ut_mem);
+				cgsleep_ms(ut_stabledelay);
+
+				/* Loop if the hash rate is increasing */
+				/* This loop is tuned (number of loops + delay) based on trial and error */
+				last_rolling = gpus[gpu].rolling;
+				for (i = 0; i < 6; i++) {
+					cgsleep_ms(1250);
+					/* keep waiting? */
+					if (gpus[gpu].rolling > last_rolling) {
+						last_rolling = gpus[gpu].rolling;
+						/* Wait around even longer if hashes are going up occasionally */
+						if (i) i--;
+						if (i) i--;
+						continue;
+					}
+				}
+
+				displayed_rolling = last_rolling;
+				displayed_total = gpus[gpu].total_mhashes / total_secs;
+				ut_best_mhash_base = true;
+				if (displayed_rolling < 1) {
+					displayed_rolling *= 1000;
+					displayed_total *= 1000;
+					mhash_base = false;
+					ut_best_mhash_base = mhash_base;
+				}
+
+				/* Display score */
+				wlogprint(", Score: %.1f%sh/s, Ratio: %.3f\n", displayed_rolling, mhash_base ? "M" : "K", (double) ut_gpu / ut_mem);
+
+				/* Record the score */
+				if (last_rolling > ut_best_score) {
+					ut_best_score = last_rolling;
+					ut_best_gpu = ut_gpu;
+					ut_best_mem = ut_mem;
+				}
+
+				/* Show Ultratune's best settings */
+				if (!(ut_loops % 5)) {
+					wlogprint("Best Settings (so far): GPU = %d MHz, MEM = %d MHz, Score = %.1f%sh\n", ut_best_gpu, ut_best_mem, ut_best_score < 1 ? ut_best_score * 1000 : ut_best_score, ut_best_mhash_base ? "M" : "K");
+				}
+				/* Remind the user how to quit once in a while */
+				if (!(ut_loops % 10)) {
+					wlogprint("Press Ctrl-C to Quit.  Write down best GPU/MEM settings (above).\n");
+				}
+			}
+		}
+
+		/* Ultratune finished */
+		wlogprint("Best Settings: GPU = %d MHz, MEM = %d MHz, Score: %.1f%sh, Ratio: %.3f\n", ut_best_gpu, ut_best_mem, ut_best_score < 1 ? ut_best_score * 1000 : ut_best_score, ut_best_mhash_base ? "M" : "K", (double) ut_best_gpu / ut_best_mem);
+
+		/* Set the card to the best settings */
+		if (set_engineclock(gpu, ut_best_gpu)) {
+			/* Failed */
+			wlogprint("Failed to set GPU engine clock to %d MHz.  Ultratune Aborted.", ut_best_gpu);
+			input = getch();
+			return;
+		}
+		if (set_memoryclock(gpu, ut_best_mem)) {
+			/* Failed */
+			wlogprint("Failed to set MEM engine clock to %d MHz.  Ultratune Aborted.", ut_best_mem);
+			input = getch();
+			return;
+		}
+
+		wlogprint("Ultratune Finished.  Write down the above values then press any key.\n");
+		input = getch();
 	} else {
 		clear_logwin();
 		return;

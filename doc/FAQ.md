@@ -9,12 +9,16 @@ untrusted providers is a security risk. There has not been sufficient
 community interest to provide distributed determininstic builds.
 
 
-## It would be nice to have step-by-step installation instructions for Linux.
+## Where are the step-by-step installation instructions for Linux?
+
+A generic description of the build process is in `README.md`.
 
 These instructions cannot be specific enough, since it depends a lot
 on the GNU/Linux distribution you're using. It should be handled by the
 package manager anyway. Otherwise, such instructions will constantly
-be out-of-date. AMD does not allow redistribution of their SDKs'
+be out-of-date.
+
+AMD does not allow redistribution of their SDKs'
 source code, so providing packages can be difficult for some GNU/Linux
 distributions.
 
@@ -40,14 +44,13 @@ software.
 
 ## Will there be scrypt-jane/Keccak/SHA-3 support?
 
-Perhaps eventually, if it can be implemented without code bloat.
+All algorithms are valid candidates for inclusion if they use Scrypt.
 
 
 ## Can you modify the display...
 
-...to include more of one thing in the output
-and less of another, or can you change the quiet mode or can you add
-yet another output mode?
+...to include more of one thing in the output and less of another, or
+can you change the quiet mode or can you add yet another output mode?
 
 Probably not. Everyone will always have their own view of what's
 important to monitor. The shipped NCurses TUI is intentionally ascetic,
@@ -57,35 +60,42 @@ client if you want to customise the display.
 
 ## Can I mine on servers from different networks...
 
-...(e.g. litecoin and dogecoin) at the same time?
+...(e.g. Litecoin and Dogecoin) at the same time?
 
-No. `sgminer` keeps a database of the block it's working on to ensure
+No. The software keeps a database of the block it's working on to ensure
 it does not work on stale blocks, and having different blocks from two
 networks would make it invalidate the work from each other.
 
+A workaround is running separate instances (see next question).
 
-## Can I mine with different login credentials or pools for each separate device?
 
-No. Run separate instances with `-d`.
+## Can I mine with different login credentials or pools for each separate
+device?
+
+No. Run per-device instances with command-line argument `-d`, or specify
+`device` in the configuration file. Use per-instance configuration files
+if needed (specified with `--config` on the command line).
 
 
 ## Can I put multiple pools in the config file?
 
 Yes, check the `example.conf` file. Alternatively, set up everything
 either on the command line or via the menu after startup and choose
-`Settings -> Write config file`.
+`Settings -> Write config file`. The latter two methods are, however,
+messy, and the result is only as good as modifying the configuration
+file manually.
 
 
 ## The build fails with `gcc is unable to build a binary`.
 
-Remove the "-march=native" component of your `CFLAGS` as your version
+Remove the `-march=native` component of your `CFLAGS` as your version
 of gcc does not support it.
 
 
 ## Can you implement feature X?
 
-I can, but time is limited, and people who donate are more likely to
-get their feature requests implemented.
+If you cannot implement the feature yourself, see if a feature request
+has already been filed on the issue tracker (including closed issues).
 
 
 ## Work keeps going to my backup pool...
@@ -116,7 +126,7 @@ No. The API makes it possible for someone else to write one though.
 ## What are the best parameters to pass for pool / hardware / device?
 
 See `doc/MINING.md` in your source distribution directory, or
-[doc/MINING.md](https://github.com/veox/sgminer/blob/master/doc/MINING.md]
+[doc/MINING.md](https://github.com/veox/sgminer/blob/master/doc/MINING.md)
 for an online version. Note that the latter is for the latest
 development version, and arguments listed there are not necessarily
 available in your local version.
@@ -167,9 +177,8 @@ Try the `--net-delay` option.
 ## How do I tune for P2Pool?
 
 P2Pool has very rapid expiration of work and new blocks, it is
-suggested you decrease intensity, decrease `scantime` and `expiry`,
-and/or decrease GPU threads to 1 with `-g 1`. It is also recommended to
-use `--failover-only` since the work is effectively a separate
+suggested you decrease `scantime` and `expiry`. It is also recommended
+to use `--failover-only` since the work is effectively a separate
 blockchain.
 
 
@@ -185,10 +194,11 @@ See `doc/KERNEL.md` in your source distribution directory, or
 for an online version.
 
 
-## I run PHP on Windows to access the API with the example
+## I run PHP on Windows to access the API with the example...
 
-`miner.php`. Why does it fail when PHP is installed properly but
-I only get errors about Sockets not working in the logs?
+`miner.php`. PHP is installed properly but I only get errors about
+sockets not working in the logs?
+
 See [this](http://us.php.net/manual/en/sockets.installation.php).
 
 

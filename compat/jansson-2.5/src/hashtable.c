@@ -170,7 +170,7 @@ static int hashtable_do_rehash(hashtable_t *hashtable)
     hashtable->num_buckets++;
     new_size = num_buckets(hashtable);
 
-    hashtable->buckets = jsonp_malloc(new_size * sizeof(bucket_t));
+    hashtable->buckets = (struct hashtable_bucket *)jsonp_malloc(new_size * sizeof(bucket_t));
     if(!hashtable->buckets)
         return -1;
 
@@ -200,7 +200,7 @@ int hashtable_init(hashtable_t *hashtable)
 
     hashtable->size = 0;
     hashtable->num_buckets = 0;  /* index to primes[] */
-    hashtable->buckets = jsonp_malloc(num_buckets(hashtable) * sizeof(bucket_t));
+    hashtable->buckets = (struct hashtable_bucket *)jsonp_malloc(num_buckets(hashtable) * sizeof(bucket_t));
     if(!hashtable->buckets)
         return -1;
 
@@ -249,7 +249,7 @@ int hashtable_set(hashtable_t *hashtable,
         /* offsetof(...) returns the size of pair_t without the last,
            flexible member. This way, the correct amount is
            allocated. */
-        pair = jsonp_malloc(offsetof(pair_t, key) + strlen(key) + 1);
+        pair = (pair_t *)jsonp_malloc(offsetof(pair_t, key) + strlen(key) + 1);
         if(!pair)
             return -1;
 

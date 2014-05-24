@@ -28,6 +28,7 @@
 #include "compat.h"
 #include "miner.h"
 #include "util.h"
+#include "pool.h"
 
 // BUFSIZ varies on Windows and Linux
 #define TMPBUFSIZ	8192
@@ -124,7 +125,7 @@ static const char GPUSEP = ',';
 #define JOIN_CMD "CMD="
 #define BETWEEN_JOIN SEPSTR
 
-static const char *APIVERSION = "3.1";
+static const char *APIVERSION = "3.2";
 static const char *DEAD = "Dead";
 static const char *SICK = "Sick";
 static const char *NOSTART = "NoStart";
@@ -144,8 +145,6 @@ static const char *NULLSTR = "(null)";
 
 static const char *TRUESTR = "true";
 static const char *FALSESTR = "false";
-
-static const char *SCRYPTSTR = "scrypt";
 
 static const char *DEVICECODE = "GPU ";
 
@@ -205,8 +204,6 @@ static const char ISJSON = '{';
 #define JSON_GPUS	JSON1 _GPUS JSON2
 #define JSON_NOTIFY	JSON1 _NOTIFY JSON2
 #define JSON_DEVDETAILS	JSON1 _DEVDETAILS JSON2
-#define JSON_BYE	JSON1 _BYE JSON1
-#define JSON_RESTART	JSON1 _RESTART JSON1
 #define JSON_CLOSE	JSON3
 #define JSON_MINESTATS	JSON1 _MINESTATS JSON2
 #define JSON_CHECK	JSON1 _CHECK JSON2
@@ -302,6 +299,8 @@ static const char *JSON_PARAMETER = "parameter";
 #define MSG_ZERINV 95
 #define MSG_ZERSUM 96
 #define MSG_ZERNOSUM 97
+
+#define MSG_BYE 0x101
 
 #define MSG_INVNEG 121
 #define MSG_SETQUOTA 122
@@ -424,7 +423,8 @@ struct CODES {
  { SEVERITY_SUCC,  MSG_ZERNOSUM, PARAM_STR,	"Zeroed %s stats without summary" },
  { SEVERITY_SUCC,  MSG_LOCKOK,	PARAM_NONE,	"Lock stats created" },
  { SEVERITY_WARN,  MSG_LOCKDIS,	PARAM_NONE,	"Lock stats not enabled" },
- { SEVERITY_FAIL, 0, 0, NULL }
+ { SEVERITY_SUCC,  MSG_BYE,		PARAM_STR,	"%s" },
+ { SEVERITY_FAIL, 0, (enum code_parameters)0, NULL }
 };
 
 static const char *localaddr = "127.0.0.1";
@@ -496,13 +496,13 @@ static struct io_data *_io_new(size_t initial, bool socket_buf)
 	struct io_data *io_data;
 	struct io_list *io_list;
 
-	io_data = malloc(sizeof(*io_data));
-	io_data->ptr = malloc(initial);
+	io_data = (struct io_data *)malloc(sizeof(*io_data));
+	io_data->ptr = (char *)malloc(initial);
 	io_data->siz = initial;
 	io_data->sock = socket_buf;
 	io_reinit(io_data);
 
-	io_list = malloc(sizeof(*io_list));
+	io_list = (struct io_list *)malloc(sizeof(*io_list));
 
 	io_list->io_data = io_data;
 
@@ -530,26 +530,20 @@ static bool io_add(struct io_data *io_data, char *buf)
 	tot = len + 1 + dif + sizeof(JSON_CLOSE) + sizeof(JSON_END);
 
 	if (tot > io_data->siz) {
-		size_t new = io_data->siz + (2 * SOCKBUFALLOCSIZ);
+		size_t newsize = io_data->siz + (2 * SOCKBUFALLOCSIZ);
 
-		if (new < tot)
-			new = (2 + (size_t)((float)tot / (float)SOCKBUFALLOCSIZ)) * SOCKBUFALLOCSIZ;
+		if (newsize < tot)
+			newsize = (2 + (size_t)((float)tot / (float)SOCKBUFALLOCSIZ)) * SOCKBUFALLOCSIZ;
 
-		io_data->ptr = realloc(io_data->ptr, new);
+		io_data->ptr = (char *)realloc(io_data->ptr, newsize);
 		io_data->cur = io_data->ptr + dif;
-		io_data->siz = new;
+		io_data->siz = newsize;
 	}
 
 	memcpy(io_data->cur, buf, len + 1);
 	io_data->cur += len;
 
 	return true;
-}
-
-static bool io_put(struct io_data *io_data, char *buf)
-{
-	io_reinit(io_data);
-	return io_add(io_data, buf);
 }
 
 static void io_close(struct io_data *io_data)
@@ -606,7 +600,7 @@ static char *escape_string(char *str, bool isjson)
 	if (count == 0)
 		return str;
 
-	buf = malloc(strlen(str) + count + 1);
+	buf = (char *)malloc(strlen(str) + count + 1);
 	if (unlikely(!buf))
 		quit(1, "Failed to malloc escape buf");
 
@@ -1005,9 +999,9 @@ static struct api_data *print_data(struct api_data *root, char *buf, bool isjson
 				sprintf(buf, "%s", *((bool *)(root->data)) ? TRUESTR : FALSESTR);
 				break;
 			case API_TIMEVAL:
-				snprintf(buf, sizeof(buf), "%ld.%06ld",
-					(long)((struct timeval *)(root->data))->tv_sec,
-					(long)((struct timeval *)(root->data))->tv_usec);
+				sprintf(buf, "%"PRIu64".%06lu",
+					(uint64_t)((struct timeval *)(root->data))->tv_sec,
+					(unsigned long)((struct timeval *)(root->data))->tv_usec);
 				break;
 			case API_TEMP:
 				sprintf(buf, "%.2f", *((float *)(root->data)));
@@ -1556,7 +1550,8 @@ static void apiversion(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
 	message(io_data, MSG_VERSION, 0, NULL, isjson);
 	io_open = io_add(io_data, isjson ? COMSTR JSON_VERSION : _VERSION COMSTR);
 
-	root = api_add_string(root, "SGMiner", VERSION, false);
+	root = api_add_string(root, "Miner", PACKAGE " " VERSION, false);
+	root = api_add_string(root, "CGMiner", VERSION, false);
 	root = api_add_const(root, "API", APIVERSION, false);
 
 	root = print_data(root, buf, isjson, false);
@@ -1690,6 +1685,8 @@ static void gpustatus(struct io_data *io_data, int gpu, bool isjson, bool precom
 		root = api_add_int(root, "Hardware Errors", &(cgpu->hw_errors), false);
 		root = api_add_utility(root, "Utility", &(cgpu->utility), false);
 		root = api_add_string(root, "Intensity", intensity, false);
+		root = api_add_int(root, "XIntensity", &(cgpu->xintensity), false);
+		root = api_add_int(root, "RawIntensity", &(cgpu->rawintensity), false);
 		int last_share_pool = cgpu->last_share_pool_time > 0 ?
 					cgpu->last_share_pool : -1;
 		root = api_add_int(root, "Last Share Pool", &last_share_pool, false);
@@ -1820,7 +1817,10 @@ static void poolstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
 			lp = (char *)NO;
 
 		root = api_add_int(root, "POOL", &i, false);
+		root = api_add_string(root, "Name", get_pool_name(pool), false);
 		root = api_add_escape(root, "URL", pool->rpc_url, false);
+		root = api_add_string(root, "Algorithm", pool->algorithm.name, false);
+		root = api_add_string(root, "Description", pool->description, false);
 		root = api_add_string(root, "Status", status, false);
 		root = api_add_int(root, "Priority", &(pool->prio), false);
 		root = api_add_int(root, "Quota", &pool->quota, false);
@@ -2111,33 +2111,41 @@ static void copyadvanceafter(char ch, char **param, char **buf)
 	*(dst_b++) = '\0';
 }
 
-static bool pooldetails(char *param, char **url, char **user, char **pass)
+static bool pooldetails(char *param, char **url, char **user, char **pass,
+			char **name, char **desc, char **algo)
 {
 	char *ptr, *buf;
 
-	ptr = buf = malloc(strlen(param)+1);
+	ptr = buf = (char *)malloc(strlen(param) + 1);
 	if (unlikely(!buf))
 		quit(1, "Failed to malloc pooldetails buf");
 
 	*url = buf;
-
-	// copy url
 	copyadvanceafter(',', &param, &buf);
-
 	if (!(*param)) // missing user
 		goto exitsama;
 
 	*user = buf;
-
-	// copy user
 	copyadvanceafter(',', &param, &buf);
-
 	if (!*param) // missing pass
 		goto exitsama;
 
 	*pass = buf;
+	copyadvanceafter(',', &param, &buf);
+	if (!*param) // missing name (allowed)
+		return true;
 
-	// copy pass
+	*name = buf;
+	copyadvanceafter(',', &param, &buf);
+	if (!*param) // missing desc
+		goto exitsama;
+
+	*desc = buf;
+	copyadvanceafter(',', &param, &buf);
+	if (!*param) // missing algo
+		goto exitsama;
+
+	*algo = buf;
 	copyadvanceafter(',', &param, &buf);
 
 	return true;
@@ -2150,6 +2158,7 @@ exitsama:
 static void addpool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
 {
 	char *url, *user, *pass;
+	char *name = NULL, *desc = NULL, *algo = NULL;
 	struct pool *pool;
 	char *ptr;
 
@@ -2158,7 +2167,8 @@ static void addpool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *
 		return;
 	}
 
-	if (!pooldetails(param, &url, &user, &pass)) {
+	if (!pooldetails(param, &url, &user, &pass,
+			 &name, &desc, &algo)) {
 		ptr = escape_string(param, isjson);
 		message(io_data, MSG_INVPDP, 0, ptr, isjson);
 		if (ptr != param)
@@ -2167,9 +2177,14 @@ static void addpool(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *
 		return;
 	}
 
+	/* If API client is old, it might not have provided all fields. */
+	if (name == NULL) name = strdup("");
+	if (desc == NULL) desc = strdup("");
+	if (algo == NULL) algo = strdup("scrypt");  // FIXME?
+
 	pool = add_pool();
 	detect_stratum(pool, url);
-	add_pool_details(pool, true, url, user, pass);
+	add_pool_details(pool, true, url, user, pass, name, desc, algo);
 
 	ptr = escape_string(url, isjson);
 	message(io_data, MSG_ADDPOOL, 0, ptr, isjson);
@@ -2231,8 +2246,9 @@ static void poolpriority(struct io_data *io_data, __maybe_unused SOCKETTYPE c, c
 		return;
 	}
 
-	bool pools_changed[total_pools];
-	int new_prio[total_pools];
+	bool* pools_changed = (bool*)alloca(total_pools*sizeof(bool));
+	int* new_prio = (int*)alloca(total_pools*sizeof(int));
+
 	for (i = 0; i < total_pools; ++i)
 		pools_changed[i] = false;
 
@@ -2557,10 +2573,7 @@ static void gpuvddc(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __mayb
 
 void doquit(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
 {
-	if (isjson)
-		io_put(io_data, JSON_START JSON_BYE);
-	else
-		io_put(io_data, _BYE);
+	message(io_data, MSG_BYE, 0, _BYE, isjson);
 
 	bye = true;
 	do_a_quit = true;
@@ -2568,10 +2581,7 @@ void doquit(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused
 
 void dorestart(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
 {
-	if (isjson)
-		io_put(io_data, JSON_START JSON_RESTART);
-	else
-		io_put(io_data, _RESTART);
+	message(io_data, MSG_BYE, 0, _RESTART, isjson);
 
 	bye = true;
 	do_a_restart = true;
@@ -2697,9 +2707,9 @@ static void devdetails(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
 		root = api_add_string(root, "Name", cgpu->drv->name, false);
 		root = api_add_int(root, "ID", &(cgpu->device_id), false);
 		root = api_add_string(root, "Driver", cgpu->drv->dname, false);
-		root = api_add_const(root, "Kernel", cgpu->kname ? : BLANK, false);
-		root = api_add_const(root, "Model", cgpu->name ? : BLANK, false);
-		root = api_add_const(root, "Device Path", cgpu->device_path ? : BLANK, false);
+		root = api_add_const(root, "Kernel", cgpu->kernelname ? cgpu->kernelname : BLANK, false);
+		root = api_add_const(root, "Model", cgpu->name ? cgpu->name : BLANK, false);
+		root = api_add_const(root, "Device Path", cgpu->device_path ? cgpu->device_path : BLANK, false);
 
 		root = print_data(root, buf, isjson, isjson && (i > 0));
 		io_add(io_data, buf);
@@ -2855,7 +2865,7 @@ static void minecoin(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __may
 	message(io_data, MSG_MINECOIN, 0, NULL, isjson);
 	io_open = io_add(io_data, isjson ? COMSTR JSON_MINECOIN : _MINECOIN COMSTR);
 
-	root = api_add_const(root, "Hash Method", SCRYPTSTR, false);
+	root = api_add_string(root, "Hash Method", get_devices(0)->algorithm.name, false);
 
 	cg_rlock(&ch_lock);
 	root = api_add_timeval(root, "Current Block Time", &block_timeval, true);
@@ -3267,7 +3277,7 @@ static void setup_groups()
 	bool addstar, did;
 	int i;
 
-	buf = malloc(strlen(api_groups) + 1);
+	buf = (char *)malloc(strlen(api_groups) + 1);
 	if (unlikely(!buf))
 		quit(1, "Failed to malloc ipgroups buf");
 
@@ -3357,7 +3367,7 @@ static void setup_groups()
 			}
 		}
 
-		ptr = apigroups[GROUPOFFSET(group)].commands = malloc(strlen(commands) + 1);
+		ptr = apigroups[GROUPOFFSET(group)].commands = (char *)malloc(strlen(commands) + 1);
 		if (unlikely(!ptr))
 			quit(1, "Failed to malloc group commands buf");
 
@@ -3377,7 +3387,7 @@ static void setup_groups()
 		}
 	}
 
-	ptr = apigroups[GROUPOFFSET(NOPRIVGROUP)].commands = malloc(strlen(commands) + 1);
+	ptr = apigroups[GROUPOFFSET(NOPRIVGROUP)].commands = (char *)malloc(strlen(commands) + 1);
 	if (unlikely(!ptr))
 		quit(1, "Failed to malloc noprivgroup commands buf");
 
@@ -3403,7 +3413,7 @@ static void setup_ipaccess()
 	int ipcount, mask, octet, i;
 	char group;
 
-	buf = malloc(strlen(opt_api_allow) + 1);
+	buf = (char *)malloc(strlen(opt_api_allow) + 1);
 	if (unlikely(!buf))
 		quit(1, "Failed to malloc ipaccess buf");
 
@@ -3416,7 +3426,7 @@ static void setup_ipaccess()
 			ipcount++;
 
 	// possibly more than needed, but never less
-	ipaccess = calloc(ipcount, sizeof(struct IP4ACCESS));
+	ipaccess = (struct IP4ACCESS *)calloc(ipcount, sizeof(struct IP4ACCESS));
 	if (unlikely(!ipaccess))
 		quit(1, "Failed to calloc ipaccess");
 
@@ -3579,7 +3589,7 @@ static void mcast()
 	mcast_sock = socket(AF_INET, SOCK_DGRAM, 0);
 
 	int optval = 1;
-	if (SOCKETFAIL(setsockopt(mcast_sock, SOL_SOCKET, SO_REUSEADDR, (void *)(&optval), sizeof(optval)))) {
+	if (SOCKETFAIL(setsockopt(mcast_sock, SOL_SOCKET, SO_REUSEADDR, (const char *)(&optval), sizeof(optval)))) {
 		applog(LOG_ERR, "API mcast setsockopt SO_REUSEADDR failed (%s)%s", SOCKERRMSG, MUNAVAILABLE);
 		goto die;
 	}
@@ -3608,13 +3618,13 @@ static void mcast()
 		goto die;
 	}
 
-	if (SOCKETFAIL(setsockopt(mcast_sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (void *)(&grp), sizeof(grp)))) {
+	if (SOCKETFAIL(setsockopt(mcast_sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char *)(&grp), sizeof(grp)))) {
 		applog(LOG_ERR, "API mcast join failed (%s)%s", SOCKERRMSG, MUNAVAILABLE);
 		goto die;
 	}
 
 	expect_code_len = sizeof(expect) + strlen(opt_api_mcast_code);
-	expect_code = malloc(expect_code_len+1);
+	expect_code = (char *)malloc(expect_code_len + 1);
 	if (!expect_code)
 		quit(1, "Failed to malloc mcast expect_code");
 	snprintf(expect_code, expect_code_len+1, "%s%s-", expect, opt_api_mcast_code);
@@ -3687,7 +3697,7 @@ die:
 
 static void *mcast_thread(void *userdata)
 {
-	struct thr_info *mythr = userdata;
+	struct thr_info *mythr = (struct thr_info *)userdata;
 
 	pthread_detach(pthread_self());
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
@@ -3705,7 +3715,7 @@ void mcast_init()
 {
 	struct thr_info *thr;
 
-	thr = calloc(1, sizeof(*thr));
+	thr = (struct thr_info *)calloc(1, sizeof(*thr));
 	if (!thr)
 		quit(1, "Failed to calloc mcast thr");
 
@@ -3742,7 +3752,7 @@ void api(int api_thr_id)
 
 	SOCKETTYPE *apisock;
 
-	apisock = malloc(sizeof(*apisock));
+	apisock = (SOCKETTYPE *)malloc(sizeof(*apisock));
 	*apisock = INVSOCK;
 
 	if (!opt_api_listen) {
@@ -3941,7 +3951,7 @@ void api(int api_thr_id)
 					if (strchr(cmd, CMDJOIN)) {
 						firstjoin = isjoin = true;
 						// cmd + leading '|' + '\0'
-						cmdsbuf = malloc(strlen(cmd) + 2);
+						cmdsbuf = (char *)malloc(strlen(cmd) + 2);
 						if (!cmdsbuf)
 							quithere(1, "OOM cmdsbuf");
 						strcpy(cmdsbuf, "|");
@@ -4026,7 +4036,7 @@ die:
 	pthread_cleanup_pop(true);
 
 	free(apisock);
-	
+
 	if (opt_debug)
 		applog(LOG_DEBUG, "API: terminating due to: %s",
 				do_a_quit ? "QUIT" : (do_a_restart ? "RESTART" : (bye ? "BYE" : "UNKNOWN!")));

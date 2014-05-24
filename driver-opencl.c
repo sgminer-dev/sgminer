@@ -195,74 +195,34 @@ char *set_thread_concurrency(char *arg)
 	return NULL;
 }
 
-static enum cl_kernels select_kernel(char *arg)
-{
-	if (!strcmp(arg, ALEXKARNEW_KERNNAME))
-		return KL_ALEXKARNEW;
-	if (!strcmp(arg, ALEXKAROLD_KERNNAME))
-		return KL_ALEXKAROLD;
-	if (!strcmp(arg, CKOLIVAS_KERNNAME))
-		return KL_CKOLIVAS;
-	if (!strcmp(arg, ZUIKKIS_KERNNAME))
-		return KL_ZUIKKIS;
-	if (!strcmp(arg, PSW_KERNNAME))
-		return KL_PSW;
-	if (!strcmp(arg, DARKCOIN_KERNNAME))
-		return KL_DARKCOIN;
-	if (!strcmp(arg, QUBITCOIN_KERNNAME))
-		return KL_QUBITCOIN;
-	if (!strcmp(arg, QUARKCOIN_KERNNAME))
-		return KL_QUARKCOIN;
-	if (!strcmp(arg, MYRIADCOIN_GROESTL_KERNNAME))
-		return KL_MYRIADCOIN_GROESTL;
-	if (!strcmp(arg, FUGUECOIN_KERNNAME))
-		return KL_FUGUECOIN;
-	if (!strcmp(arg, INKCOIN_KERNNAME))
-		return KL_INKCOIN;
-	if (!strcmp(arg, ANIMECOIN_KERNNAME))
-		return KL_ANIMECOIN;
-	if (!strcmp(arg, GROESTLCOIN_KERNNAME))
-		return KL_GROESTLCOIN;
-	if (!strcmp(arg, SIFCOIN_KERNNAME))
-		return KL_SIFCOIN;
-	if (!strcmp(arg, TWECOIN_KERNNAME))
-		return KL_TWECOIN;
-	if (!strcmp(arg, MARUCOIN_KERNNAME))
-		return KL_MARUCOIN;
-
-	return KL_NONE;
-}
-
 char *set_kernel(char *arg)
 {
-	enum cl_kernels kern;
-	int i, device = 0;
 	char *nextptr;
+	int i, device = 0;
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
 		return "Invalid parameters for set kernel";
-	kern = select_kernel(nextptr);
-	if (kern == KL_NONE)
-		return "Invalid parameter to set_kernel";
-	gpus[device++].kernel = kern;
-	if (kern >= KL_DARKCOIN)
-		dm_mode = DM_BITCOIN;
-	else if(kern >= KL_QUARKCOIN)
-		dm_mode = DM_QUARKCOIN;
-	else
-		dm_mode = DM_LITECOIN;
+
+	if (gpus[device].kernelname != NULL)
+		free(gpus[device].kernelname);
+	gpus[device].kernelname = strdup(nextptr);
+	device++;
 
 	while ((nextptr = strtok(NULL, ",")) != NULL) {
-		kern = select_kernel(nextptr);
-		if (kern == KL_NONE)
-			return "Invalid parameter to set_kernel";
-
-		gpus[device++].kernel = kern;
+		if (gpus[device].kernelname != NULL)
+			free(gpus[device].kernelname);
+		gpus[device].kernelname = strdup(nextptr);
+		device++;
 	}
+
+	/* If only one kernel name provided, use same for all GPUs. */
 	if (device == 1) {
-		for (i = device; i < MAX_GPUDEVICES; i++)
-			gpus[i].kernel = gpus[0].kernel;
+		for (i = device; i < MAX_GPUDEVICES; i++) {
+			if (gpus[i].kernelname != NULL)
+				free(gpus[i].kernelname);
+			gpus[i].kernelname = strdup(gpus[0].kernelname);
+	    }
 	}
 
 	return NULL;
@@ -324,7 +284,7 @@ char *set_gpu_threads(char *arg)
 		for (i = device; i < MAX_GPUDEVICES; i++)
 			gpus[i].threads = gpus[0].threads;
 	}
-	
+
 	return NULL;
 }
 
@@ -895,7 +855,7 @@ retry: // TODO: refactor
 			cgsem_post(&thr->sem);
 		}
 		goto retry;
-	} if (!strncasecmp(&input, "d", 1)) {
+	} else if (!strncasecmp(&input, "d", 1)) {
 		if (selected)
 			selected = curses_int("Select GPU to disable");
 		if (selected < 0 || selected >= nDevs) {
@@ -921,7 +881,7 @@ retry: // TODO: refactor
 
 		intvar = curses_input("Set GPU scan intensity (d or "
 							  MIN_INTENSITY_STR " -> "
-							  MAX_INTENSITY_STR ")");		
+							  MAX_INTENSITY_STR ")");
 		if (!intvar) {
 			wlogprint("Invalid input\n");
 			goto retry;
@@ -978,14 +938,14 @@ retry: // TODO: refactor
 	} else if (!strncasecmp(&input, "a", 1)) {
 		int rawintensity;
 		char *intvar;
-		
+
 		if (selected)
 		  selected = curses_int("Select GPU to change raw intensity on");
 		if (selected < 0 || selected >= nDevs) {
 		  wlogprint("Invalid selection\n");
 		  goto retry;
 		}
-		
+
 		intvar = curses_input("Set raw GPU scan intensity (" MIN_RAWINTENSITY_STR " -> " MAX_RAWINTENSITY_STR ")");
 		if (!intvar) {
 		  wlogprint("Invalid input\n");
@@ -1114,7 +1074,7 @@ static void set_threads_hashes(unsigned int vectors, unsigned int compute_shader
  * GPU */
 void *reinit_gpu(void *userdata)
 {
-	struct thr_info *mythr = userdata;
+	struct thr_info *mythr = (struct thr_info *)userdata;
 	struct cgpu_info *cgpu;
 	struct thr_info *thr;
 	struct timeval now;
@@ -1125,7 +1085,7 @@ void *reinit_gpu(void *userdata)
 	pthread_detach(pthread_self());
 
 select_cgpu:
-	cgpu = tq_pop(mythr->q, NULL);
+	cgpu = (struct cgpu_info *)tq_pop(mythr->q, NULL);
 	if (!cgpu)
 		goto out;
 
@@ -1155,6 +1115,8 @@ select_cgpu:
 		cgtime(&thr->sick);
 		if (!pthread_cancel(thr->pth)) {
 			applog(LOG_WARNING, "Thread %d still exists, killing it off", thr_id);
+			pthread_join(thr->pth, NULL);
+			thr->cgpu->drv->thread_shutdown(thr);
 		} else
 			applog(LOG_WARNING, "Thread %d no longer exists", thr_id);
 	}
@@ -1181,7 +1143,7 @@ select_cgpu:
 		//free(clState);
 
 		applog(LOG_INFO, "Reinit GPU thread %d", thr_id);
-		clStates[thr_id] = initCl(virtual_gpu, name, sizeof(name));
+		clStates[thr_id] = initCl(virtual_gpu, name, sizeof(name), &cgpu->algorithm);
 		if (!clStates[thr_id]) {
 			applog(LOG_ERR, "Failed to reinit GPU thread %d", thr_id);
 			goto select_cgpu;
@@ -1247,6 +1209,7 @@ static void opencl_detect(bool hotplug)
 			cgpu->threads = 1;
 #endif
 		cgpu->virtual_gpu = i;
+		cgpu->algorithm = *opt_algorithm;
 		add_cgpu(cgpu);
 	}
 
@@ -1314,7 +1277,7 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 	int buffersize = BUFFERSIZE;
 
 	if (!blank_res)
-		blank_res = calloc(buffersize, 1);
+		blank_res = (uint32_t *)calloc(buffersize, 1);
 	if (!blank_res) {
 		applog(LOG_ERR, "Failed to calloc in opencl_thread_init");
 		return false;
@@ -1322,7 +1285,7 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 
 	strcpy(name, "");
 	applog(LOG_INFO, "Init GPU thread %i GPU %i virtual GPU %i", i, gpu, virtual_gpu);
-	clStates[i] = initCl(virtual_gpu, name, sizeof(name));
+	clStates[i] = initCl(virtual_gpu, name, sizeof(name), &cgpu->algorithm);
 	if (!clStates[i]) {
 #ifdef HAVE_CURSES
 		if (use_curses)
@@ -1331,7 +1294,7 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 		applog(LOG_ERR, "Failed to init GPU thread %d, disabling device %d", i, gpu);
 		if (!failmessage) {
 			applog(LOG_ERR, "Restarting the GPU from the menu will not fix this.");
-			applog(LOG_ERR, "Try restarting sgminer.");
+			applog(LOG_ERR, "Re-check your configuration and try restarting.");
 			failmessage = true;
 #ifdef HAVE_CURSES
 			char *buf;
@@ -1351,61 +1314,9 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 	}
 	if (!cgpu->name)
 		cgpu->name = strdup(name);
-	if (!cgpu->kname)
-	{
-		switch (clStates[i]->chosen_kernel) {
-			case KL_ALEXKARNEW:
-				cgpu->kname = ALEXKARNEW_KERNNAME;
-				break;
-			case KL_ALEXKAROLD:
-				cgpu->kname = ALEXKAROLD_KERNNAME;
-				break;
-			case KL_CKOLIVAS:
-				cgpu->kname = CKOLIVAS_KERNNAME;
-				break;
-			case KL_ZUIKKIS:
-				cgpu->kname = ZUIKKIS_KERNNAME;
-				break;
-			case KL_PSW:
-				cgpu->kname = PSW_KERNNAME;
-				break;
-			case KL_DARKCOIN:
-				cgpu->kname = DARKCOIN_KERNNAME;
-				break;
-			case KL_QUBITCOIN:
-				cgpu->kname = QUBITCOIN_KERNNAME;
-				break;
-			case KL_QUARKCOIN:
-				cgpu->kname = QUARKCOIN_KERNNAME;
-				break;
-			case KL_MYRIADCOIN_GROESTL:
-				cgpu->kname = MYRIADCOIN_GROESTL_KERNNAME;
-				break;
-			case KL_FUGUECOIN:
-				cgpu->kname = FUGUECOIN_KERNNAME;
-				break;
-			case KL_INKCOIN:
-				cgpu->kname = INKCOIN_KERNNAME;
-				break;
-			case KL_ANIMECOIN:
-				cgpu->kname = ANIMECOIN_KERNNAME;
-				break;
-			case KL_GROESTLCOIN:
-				cgpu->kname = GROESTLCOIN_KERNNAME;
-				break;
-			case KL_SIFCOIN:
-				cgpu->kname = SIFCOIN_KERNNAME;
-				break;
-			case KL_TWECOIN:
-				cgpu->kname = TWECOIN_KERNNAME;
-				break;
-			case KL_MARUCOIN:
-				cgpu->kname = MARUCOIN_KERNNAME;
-				break;
-			default:
-				break;
-		}
-	}
+	if (!cgpu->kernelname)
+		cgpu->kernelname = strdup("ckolivas");
+
 	applog(LOG_INFO, "initCl() finished. Found %s", name);
 	cgtime(&now);
 	get_datestamp(cgpu->init, sizeof(cgpu->init), &now);
@@ -1420,7 +1331,7 @@ static bool opencl_thread_init(struct thr_info *thr)
 	struct opencl_thread_data *thrdata;
 	_clState *clState = clStates[thr_id];
 	cl_int status = 0;
-	thrdata = calloc(1, sizeof(*thrdata));
+	thrdata = (struct opencl_thread_data *)calloc(1, sizeof(*thrdata));
 	thr->cgpu_data = thrdata;
 	int buffersize = BUFFERSIZE;
 
@@ -1429,33 +1340,9 @@ static bool opencl_thread_init(struct thr_info *thr)
 		return false;
 	}
 
-	switch (clState->chosen_kernel) {
-	case KL_ALEXKARNEW:
-	case KL_ALEXKAROLD:
-	case KL_CKOLIVAS:
-	case KL_PSW:
-	case KL_ZUIKKIS:
-		thrdata->queue_kernel_parameters = &queue_scrypt_kernel;
-		break;
-	case KL_DARKCOIN:
-	case KL_QUBITCOIN:
-	case KL_QUARKCOIN:
-	case KL_MYRIADCOIN_GROESTL:
-	case KL_FUGUECOIN:
-	case KL_INKCOIN:
-	case KL_ANIMECOIN:
-	case KL_GROESTLCOIN:
-	case KL_SIFCOIN:
-	case KL_TWECOIN:
-	case KL_MARUCOIN:
-		thrdata->queue_kernel_parameters = &queue_sph_kernel;
-		break;
-	default:
-		applog(LOG_ERR, "Failed to choose kernel in opencl_thread_init");
-		break;
-	}
+	thrdata->queue_kernel_parameters = gpu->algorithm.queue_kernel;
 
-	thrdata->res = calloc(buffersize, 1);
+	thrdata->res = (uint32_t *)calloc(buffersize, 1);
 
 	if (!thrdata->res) {
 		free(thrdata);
@@ -1490,7 +1377,7 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 				int64_t __maybe_unused max_nonce)
 {
 	const int thr_id = thr->id;
-	struct opencl_thread_data *thrdata = thr->cgpu_data;
+	struct opencl_thread_data *thrdata = (struct opencl_thread_data *)thr->cgpu_data;
 	struct cgpu_info *gpu = thr->cgpu;
 	_clState *clState = clStates[thr_id];
 	const cl_kernel *kernel = &clState->kernel;
@@ -1580,30 +1467,58 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 	return hashes;
 }
 
+// Cleanup OpenCL memory on the GPU
+// Note: This function is not thread-safe (clStates modification not atomic)
 static void opencl_thread_shutdown(struct thr_info *thr)
 {
 	const int thr_id = thr->id;
 	_clState *clState = clStates[thr_id];
+	clStates[thr_id] = NULL;
 
-	clReleaseKernel(clState->kernel);
-	clReleaseProgram(clState->program);
-	clReleaseCommandQueue(clState->commandQueue);
-	clReleaseContext(clState->context);
+	if (clState) {
+		clFinish(clState->commandQueue);
+		clReleaseMemObject(clState->outputBuffer);
+		clReleaseMemObject(clState->CLbuffer0);
+		clReleaseMemObject(clState->padbuffer8);
+		clReleaseKernel(clState->kernel);
+		clReleaseProgram(clState->program);
+		clReleaseCommandQueue(clState->commandQueue);
+		clReleaseContext(clState->context);
+		free(clState);
+	}
 }
 
 struct device_drv opencl_drv = {
-	.drv_id = DRIVER_opencl,
-	.dname = "opencl",
-	.name = "GPU",
-	.drv_detect = opencl_detect,
-	.reinit_device = reinit_opencl_device,
+	/*.drv_id = */			DRIVER_opencl,
+	/*.dname = */			"opencl",
+	/*.name = */			"GPU",
+	/*.drv_detect = */		opencl_detect,
+	/*.reinit_device = */		reinit_opencl_device,
 #ifdef HAVE_ADL
-	.get_statline_before = get_opencl_statline_before,
+	/*.get_statline_before = */	get_opencl_statline_before,
+#else
+					NULL,
 #endif
-	.get_statline = get_opencl_statline,
-	.thread_prepare = opencl_thread_prepare,
-	.thread_init = opencl_thread_init,
-	.prepare_work = opencl_prepare_work,
-	.scanhash = opencl_scanhash,
-	.thread_shutdown = opencl_thread_shutdown,
+	/*.get_statline = */		get_opencl_statline,
+	/*.api_data = */		NULL,
+	/*.get_stats = */		NULL,
+	/*.identify_device = */		NULL,
+	/*.set_device = */		NULL,
+
+	/*.thread_prepare = */		opencl_thread_prepare,
+	/*.can_limit_work = */		NULL,
+	/*.thread_init = */		opencl_thread_init,
+	/*.prepare_work = */		opencl_prepare_work,
+	/*.hash_work = */		NULL,
+	/*.scanhash = */		opencl_scanhash,
+	/*.scanwork = */		NULL,
+	/*.queue_full = */		NULL,
+	/*.flush_work = */		NULL,
+	/*.update_work = */		NULL,
+	/*.hw_error = */		NULL,
+	/*.thread_shutdown = */		opencl_thread_shutdown,
+	/*.thread_enable =*/		NULL,
+					false,
+					0,
+					0
 };

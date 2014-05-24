@@ -13,7 +13,7 @@ In general, switching kernels requires reconfiguring mining parameters,
 such as (but not necessarily limited to) `thread-concurrency`, `intensity`,
 `gpu-engine` and `gpu-memclock`.
 
-A description of how to do this is available in `doc/MINING`.
+A description of how to do this is available in `doc/MINING.md`.
 
 
 ### alexkarnew
@@ -32,6 +32,13 @@ Alexey Karimov's optimised kernel, based on `ckolivas`. For Catalyst <13.4.
 Only supports `vectors=1`.
 
 [Announcement](https://litecointalk.org/index.php?topic=4082.0).
+
+
+### bufius
+
+Bufius' optimised kernel, based on `ckolivas`. Merged from vertminer.
+
+Only supports `vectors=1` and `lookup-gap` 2, 4 or 8.
 
 
 ### ckolivas
@@ -53,7 +60,7 @@ Pavel Semjanov optimised kernel, SHA256 speedups.
 
 Zuikkis' optimised kernel, based on `ckolivas`.
 
-Only supports `vectors=1`, `lookup-gap=2` and `worksize=256`.
+Only supports `vectors=1` and `lookup-gap=2`.
 
 [Announcement](https://litecointalk.org/index.php?topic=6058.msg90873#msg90873).
 
@@ -70,8 +77,8 @@ Only supports `vectors=1`, `lookup-gap=2` and `worksize=256`.
 
 ### Procedure
 
-* Copy the kernel you wish to modify, change the file encoding to UTF-8
-and commit it without any further modifications.
+* Copy the kernel you wish to modify, make sure the character encoding is
+UTF-8 and commit it without any further modifications.
 
 This way, it is easy to verify that there are no hidden changes. Note in
 the commit message which kernel is used as a base.
@@ -79,13 +86,6 @@ the commit message which kernel is used as a base.
 * Make changes to the kernel. Commit them.
 
 This allows to produce a diff that makes sense.
-
-* Search for `KL_CKOLIVAS and CKOLIVAS_KERNNAME` in the top-level source
-directory and make additions to the listed files in order to integrate
-the new kernel.
-
-Now it can be selected when starting via the `--kernel` argument or
-`kernel` configuration option.
 
 * Recompile and test that the kernel actually works.
 

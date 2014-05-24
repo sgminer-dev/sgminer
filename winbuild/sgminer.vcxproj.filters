@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Libraries">
+      <UniqueIdentifier>{f88c4590-fe1f-4c7e-ac04-b7ee56ff742c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\jansson">
+      <UniqueIdentifier>{d18d03ff-8391-466a-9992-6701c4dbf0f3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\adl.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\api.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver-opencl.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\findnonce.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\hexdump.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\logging.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ocl.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\scrypt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sgminer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sha2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\util.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ccan\opt\opt.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ccan\opt\parse.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ccan\opt\usage.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ccan\opt\helpers.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\dump.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\error.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\hashtable.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\load.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\memory.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\pack_unpack.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\strbuffer.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\strconv.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\utf.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\compat\jansson-2.5\src\value.c">
+      <Filter>Libraries\jansson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pool.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\adl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arg-nonnull.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\bench_block.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\c++defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\compat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver-opencl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\elist.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\findnonce.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\logging.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\miner.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ocl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\scrypt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sha2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\uthash.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\warn-on-use.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dist\include\config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\compat\jansson-2.5\src\hashtable.h">
+      <Filter>Libraries\jansson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\compat\jansson-2.5\src\jansson.h">
+      <Filter>Libraries\jansson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\compat\jansson-2.5\src\jansson_private.h">
+      <Filter>Libraries\jansson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\compat\jansson-2.5\src\strbuffer.h">
+      <Filter>Libraries\jansson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\compat\jansson-2.5\src\utf.h">
+      <Filter>Libraries\jansson</Filter>
+    </ClInclude>
+    <ClInclude Include="dist\include\winbuild.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.txt" />
+  </ItemGroup>
+</Project>

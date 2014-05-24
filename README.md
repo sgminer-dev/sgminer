@@ -4,33 +4,42 @@
 ## Introduction
 
 This is a multi-threaded multi-pool GPU miner with ATI GPU monitoring,
-(over)clocking and fanspeed support for scrypt-based coins. It is based on
-cgminer by Con Kolivas (ckolivas), which is in turn based on cpuminer by
-Jeff Garzik (jgarzik).
+(over)clocking and fanspeed support for scrypt-based cryptocurrency. It is
+based on cgminer by Con Kolivas (ckolivas), which is in turn based on
+cpuminer by Jeff Garzik (jgarzik).
 
-**releases**: https://github.com/veox/sgminer/releases
+**releases**: https://github.com/sgminer-dev/sgminer/releases
 
-**git tree**: https://github.com/veox/sgminer
+**git tree**: https://github.com/sgminer-dev/sgminer
 
-**issues**: https://github.com/veox/sgminer/issues
+**bugtracker**: https://github.com/sgminer-dev/sgminer/issues
 
-**irc**: `#sgminer` on freenode
+**irc**: `#sgminer` and `#sgminer-dev` on freenode
+
+**mailing lists**: https://sourceforge.net/p/sgminer/mailman/
 
 License: GPLv3.  See `COPYING` for details.
 
 
 ## Documentation
 
-Documentation is available in directory `doc`. For details on several topics, see:
+Documentation is available in directory `doc`. It is organised by topics:
 
 * `API` for the RPC API specification;
+* `configuration.md` for (largely incomplete) detailed information on all
+  configuration options;
 * `FAQ.md` for frequently asked questions;
-* `GPU` for semi-obsolete information on GPU configuration options and mining SHA256d-based coins;
-* `KERNEL.md` for OpenCL kernel-related information;
-* `MINING.md` for how to find the right balance in GPU configuration to mine Scrypt-based coins effectively;
+* `GPU` for semi-obsolete information on GPU configuration options and mining
+  SHA256d-based coins;
+* `kernel.md` for OpenCL kernel-related information, including development
+  procedure;
+* `MINING.md` for how to find the right balance in GPU configuration to mine
+  Scrypt-based coins efficiently;
 * `windows-build.txt` for information on how to build on Windows.
 
-Note that **most of the documentation is outdated**. If you want to contribute, fork this repository, update as needed, and submit a pull request.
+Note that **most of the documentation is outdated or incomplete**. If
+you want to contribute, fork this repository, update as needed, and
+submit a pull request.
 
 
 ## Building
@@ -59,6 +68,11 @@ sgminer-specific configuration options:
     --disable-adl           Override detection and disable building with adl
 	--disable-adl-checks
     --without-curses        Do not compile support for curses TUI
+    
+#### Debian Example
+
+    apt-get install libcurl4-openssl-dev pkg-config libtool libncurses5-dev
+AMD APP SDK and AMD ADL SDK must be downloaded from the amd websites.
 
 ### *nix build instructions
 
@@ -81,7 +95,10 @@ directory directly, or `make install` if you wish to install
 
 ### Windows build instructions
 
-See `doc/windows-build.txt` (might be outdated).
+See `doc/windows-build.txt` for MinGW compilation and cross-compiation,
+`doc/cygwin-build.txt` for building using Cygwin, or use the provided
+`winbuild` Microsoft Visual Studio project (tested on MSVS2010), with
+instructions in `winbuild/README.txt`.
 
 
 ## Basic Usage

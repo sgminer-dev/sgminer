@@ -145,8 +145,9 @@ The list of requests - a (*) means it requires privileged access - and replies:
 
  Request       Reply Section  Details
  -------       -------------  -------
- version       VERSION        SGMiner=sgminer, version
-                              API=API| version
+ version       VERSION        Miner="sgminer " sgminer version
+                              CGMiner=sgminer version
+                              API=API version
 
  config        CONFIG         Some miner configuration information:
                               GPU Count=N, <- the number of GPUs
@@ -206,12 +207,13 @@ The list of requests - a (*) means it requires privileged access - and replies:
                               stating the results of enabling pool N
                               The Msg includes the pool URL
 
- addpool|URL,USR,PASS (*)
+ addpool|URL,USR,PASS[,NAME,DESC,ALGO] (*)
                none           There is no reply section just the STATUS section
                               stating the results of attempting to add pool N
                               The Msg includes the pool URL
                               Use '\\' to get a '\' and '\,' to include a comma
                               inside URL, USR or PASS
+			      Name, description and algorithm are optional
 
  poolpriority|N,... (*)
                none           There is no reply section just the STATUS section
@@ -276,8 +278,8 @@ The list of requests - a (*) means it requires privileged access - and replies:
                               The filename is optional and will use the sgminer
                               default if not specified
 
- quit (*)      none           There is no status section but just a single "BYE"
-                              reply before sgminer quits
+ quit (*)      none           There is no reply section just the STATUS section
+                              before BFGMiner quits
 
  notify        NOTIFY         The last status and history count of each devices
                               problem
@@ -327,8 +329,8 @@ The list of requests - a (*) means it requires privileged access - and replies:
                               supported by the 'devs' command
                               e.g. DEVDETAILS=0,Name=GPU,ID=0,Driver=opencl,...|
 
- restart (*)   none           There is no status section but just a single
-                              "RESTART" reply before sgminer restarts
+ restart (*)   none           There is no reply section just the STATUS section
+                              before BFGMiner restarts
 
  stats         STATS          Each device or pool that has 1 or more getworks
                               with a list of stats regarding getwork times
@@ -519,13 +521,20 @@ api-example.c - a 'C' program to access the API (with source code)
 
 miner.php - an example web page to access the API
  This includes buttons and inputs to attempt access to the privileged commands
- See the end of this API-README for details of how to tune the display
+ See the end of this API readme for details of how to tune the display
  and also to use the option to display a multi-rig summary
 
 ----------
 
 Feature Changelog for external applications using the API:
 
+
+API V
+
+Modified API commands:
+ 'version' - add 'Miner'
+
+----------
 
 API V3.1 (cgminer v3.12.1)
 

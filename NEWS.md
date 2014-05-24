@@ -1,8 +1,72 @@
 # Release news
 
-## Version 4.2.0 - TBA
+## Version 4.2.1 - 22nd May 2014
 
+* Fixed MSVS building, tested with MSVC++ 2010 and 2013 (by _troky_).
+* Added the "ultratune" feature from `sph-sgminer`, available in the
+  NCurses interface with `[G][C][U]` (by _ultracorp_).
+
+
+## Version 4.2.0 - 20th May 2014
+
+* git repo moved to [sgminer-dev](https://github.com/sgminer-dev/sgminer).
+  It is now a GitHub organisation with several people having write access.
+* Kernel `bufius` merger from `vertminer` (by _Bufius_).
+* Set pool as idle on several stratum failure conditions (by _elbandi_).
+* API response to `version` has field `CGMiner` instead of `SGMiner`
+  for API client compatibility, and an additional `Miner` field (by
+  _luke-jr_).
+* API response to `restart` and `quit` only contains a `status` section
+  and passes JSON validation (by _luke-jr_).
+* API response to `devs` contains `XIntensity` and `RawIntensity` fields.
+* Config file writing from TUI/API should produce a borked config less
+  often.
+
+
+## Version 4.1.271 - 12th April 2014
+
+* Allow setting algorithm per-pool and initial implementation of kernel
+  hot-swapping (by _mrbrdo_). Use options `pool-algorithm` (in config
+  file or in CLI) or `algorithm` (config-only).
+* NCurses UI `[S][W]` writes pool name and description to configuration.
+* Added algorithm name to `pools` API command (by _troky_).
+* NCurses UI asks for (optional) pool name, description and algorithm
+  when adding pool.
+* API command `addpool` allows both `url,user,pass` and
+  `url,user,pass,name,desc,algo`.
+
+
+## Version 4.1.242 - 7th April 2014
+
+* There are now two mailing lists (on SourceForge), see `README.md`.
+* Adaptive-N-factor algorithm support (by _Bufius_, _Zuikkis_ and
+  _veox_). For details on choosing the algorithm, see
+  `doc/configuration.md`.
+* Allowed kernel names are no longer hard-coded. It is now possible to
+  use any `.cl` file.
+* Configuration parameter `poolname` has been renamed to `name`.
+  `poolname` is deprecated and will be removed in a future version.
+* Multiple `--name` parsing should now work as expected (by _troky_).
+* `--description` configuration parameter to specify a freeform pool
+  description, and `--priority` to specify the pool's priority (by
+  _troky_).
+
+
+## Version 4.1.153 - 14th March 2014
+
+* Display pool URL instead of "Pool N" if no `poolname` specified.
+* Incognito mode to hide user name in NCurses interface - useful for
+  publishing screenshots. To enable, use `--incognito` on command line,
+  `incognito` in config or `[D][I]` in NCurses interface.
+* Support building in Microsoft Visual Studio 2010, perhaps other
+  versions as well (by _troky_). Documentation in `winbuild/README.txt`.
+* Support building in Cygwin (by _markuspeloquin_). Documentation in
+  `doc/cygwin-build.txt`.
 * Forward-port changes from `ckolivas/cgminer` up to 3.12.3.
+* Allow setting `worksize` for kernel `zuikkis`.
+* More log messages in pool handling.
+* Updated `doc/FAQ.md`.
+* Updated `example.conf`.
 
 
 ## Version 4.1.0 - 7th February 2014
