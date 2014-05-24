@@ -48,7 +48,6 @@ extern bool opt_loginput;
 extern char *opt_kernel_path;
 extern int gpur_thr_id;
 extern bool opt_noadl;
-extern enum diff_calc_mode dm_mode;
 
 extern void *miner_thread(void *userdata);
 extern int dev_from_id(int thr_id);
@@ -190,39 +189,6 @@ char *set_thread_concurrency(char *arg)
 	if (device == 1) {
 		for (i = device; i < MAX_GPUDEVICES; i++)
 			gpus[i].opt_tc = gpus[0].opt_tc;
-	}
-
-	return NULL;
-}
-
-char *set_kernel(char *arg)
-{
-	char *nextptr;
-	int i, device = 0;
-
-	nextptr = strtok(arg, ",");
-	if (nextptr == NULL)
-		return "Invalid parameters for set kernel";
-
-	if (gpus[device].kernelname != NULL)
-		free(gpus[device].kernelname);
-	gpus[device].kernelname = strdup(nextptr);
-	device++;
-
-	while ((nextptr = strtok(NULL, ",")) != NULL) {
-		if (gpus[device].kernelname != NULL)
-			free(gpus[device].kernelname);
-		gpus[device].kernelname = strdup(nextptr);
-		device++;
-	}
-
-	/* If only one kernel name provided, use same for all GPUs. */
-	if (device == 1) {
-		for (i = device; i < MAX_GPUDEVICES; i++) {
-			if (gpus[i].kernelname != NULL)
-				free(gpus[i].kernelname);
-			gpus[i].kernelname = strdup(gpus[0].kernelname);
-	    }
 	}
 
 	return NULL;
@@ -997,52 +963,6 @@ void manage_gpu(void)
 
 static _clState *clStates[MAX_GPUDEVICES];
 
-#define CL_SET_BLKARG(blkvar) status |= clSetKernelArg(*kernel, num++, sizeof(uint), (void *)&blk->blkvar)
-#define CL_SET_ARG(var) status |= clSetKernelArg(*kernel, num++, sizeof(var), (void *)&var)
-#define CL_SET_VARG(args, var) status |= clSetKernelArg(*kernel, num++, args * sizeof(uint), (void *)var)
-
-static cl_int queue_scrypt_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_unused cl_uint threads)
-{
-	unsigned char *midstate = blk->work->midstate;
-	cl_kernel *kernel = &clState->kernel;
-	unsigned int num = 0;
-	cl_uint le_target;
-	cl_int status = 0;
-
-	le_target = *(cl_uint *)(blk->work->device_target + 28);
-	memcpy(clState->cldata, blk->work->data, 80);
-	status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
-
-	CL_SET_ARG(clState->CLbuffer0);
-	CL_SET_ARG(clState->outputBuffer);
-	CL_SET_ARG(clState->padbuffer8);
-	CL_SET_VARG(4, &midstate[0]);
-	CL_SET_VARG(4, &midstate[16]);
-	CL_SET_ARG(le_target);
-
-	return status;
-}
-
-static cl_int queue_sph_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_unused cl_uint threads)
-{
-	unsigned char *midstate = blk->work->midstate;
-	cl_kernel *kernel = &clState->kernel;
-	unsigned int num = 0;
-	cl_ulong le_target;
-	cl_int status = 0;
-
-	le_target = *(cl_ulong *)(blk->work->device_target + 24);
-	flip80(clState->cldata, blk->work->data);
-	status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
-
-	CL_SET_ARG(clState->CLbuffer0);
-	CL_SET_ARG(clState->outputBuffer);
-	CL_SET_ARG(le_target);
-
-	return status;
-}
-
-
 static void set_threads_hashes(unsigned int vectors, unsigned int compute_shaders, int64_t *hashes, size_t *globalThreads,
 			       unsigned int minthreads, __maybe_unused int *intensity, __maybe_unused int *xintensity, __maybe_unused int *rawintensity)
 {
@@ -1270,6 +1190,7 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 	char name[256];
 	struct timeval now;
 	struct cgpu_info *cgpu = thr->cgpu;
+	struct opencl_thread_data *thrdata = (struct opencl_thread_data *)thr->cgpu_data;
 	int gpu = cgpu->device_id;
 	int virtual_gpu = cgpu->virtual_gpu;
 	int i = thr->id;
@@ -1285,6 +1206,9 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 
 	strcpy(name, "");
 	applog(LOG_INFO, "Init GPU thread %i GPU %i virtual GPU %i", i, gpu, virtual_gpu);
+	if (thrdata)
+		thrdata->queue_kernel_parameters = cgpu->algorithm.queue_kernel;
+
 	clStates[i] = initCl(virtual_gpu, name, sizeof(name), &cgpu->algorithm);
 	if (!clStates[i]) {
 #ifdef HAVE_CURSES
@@ -1314,8 +1238,6 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 	}
 	if (!cgpu->name)
 		cgpu->name = strdup(name);
-	if (!cgpu->kernelname)
-		cgpu->kernelname = strdup("ckolivas");
 
 	applog(LOG_INFO, "initCl() finished. Found %s", name);
 	cgtime(&now);
@@ -1341,7 +1263,6 @@ static bool opencl_thread_init(struct thr_info *thr)
 	}
 
 	thrdata->queue_kernel_parameters = gpu->algorithm.queue_kernel;
-
 	thrdata->res = (uint32_t *)calloc(buffersize, 1);
 
 	if (!thrdata->res) {

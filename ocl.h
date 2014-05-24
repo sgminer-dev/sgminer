@@ -12,7 +12,7 @@
 
 #include "miner.h"
 
-typedef struct {
+typedef struct __clState {
 	cl_context context;
 	cl_kernel kernel;
 	cl_command_queue commandQueue;

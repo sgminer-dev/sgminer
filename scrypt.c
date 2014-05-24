@@ -404,7 +404,7 @@ static void scrypt_n_1_1_256_sp(const uint32_t* input, char* scratchpad, uint32_
 	PBKDF2_SHA256_80_128_32(input, X, ostate);
 }
 
-void scrypt_regenhash(struct work *work, uint32_t n)
+void scrypt_regenhash(struct work *work)
 {
 	uint32_t data[20];
 	char *scratchbuf;
@@ -414,8 +414,8 @@ void scrypt_regenhash(struct work *work, uint32_t n)
 	be32enc_vect(data, (const uint32_t *)work->data, 19);
 	data[19] = htobe32(*nonce);
 
-	scratchbuf = (char *)alloca(n * 128 + 512);
-	scrypt_n_1_1_256_sp(data, scratchbuf, ohash, n);
+	scratchbuf = (char *)alloca(work->pool->algorithm.n * 128 + 512);
+	scrypt_n_1_1_256_sp(data, scratchbuf, ohash, work->pool->algorithm.n);
 	flip32(ohash, ohash);
 }
 

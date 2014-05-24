@@ -462,7 +462,6 @@ struct cgpu_info {
 
 	int64_t max_hashes;
 
-	char *kernelname;  /* Human-readable kernel name. */
 	bool mapped;
 	int virtual_gpu;
 	int virtual_adl;
@@ -1029,7 +1028,7 @@ extern pthread_cond_t restart_cond;
 
 extern void clear_stratum_shares(struct pool *pool);
 extern void clear_pool_work(struct pool *pool);
-extern void set_target(unsigned char *dest_target, double diff);
+extern void set_target(unsigned char *dest_target, double diff, double diff_multiplier2);
 extern int restart_wait(struct thr_info *thr, unsigned int mstime);
 
 extern void kill_work(void);
@@ -1109,7 +1108,7 @@ extern double best_diff;
 extern struct timeval block_timeval;
 extern char *workpadding;
 
-typedef struct {
+typedef struct _dev_blk_ctx {
 	cl_uint ctx_a; cl_uint ctx_b; cl_uint ctx_c; cl_uint ctx_d;
 	cl_uint ctx_e; cl_uint ctx_f; cl_uint ctx_g; cl_uint ctx_h;
 	cl_uint cty_a; cl_uint cty_b; cl_uint cty_c; cl_uint cty_d;

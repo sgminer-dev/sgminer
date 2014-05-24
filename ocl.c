@@ -405,20 +405,15 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
 	/* Create binary filename based on parameters passed to opencl
 	 * compiler to ensure we only load a binary that matches what
 	 * would have otherwise created. The filename is:
-	 * name + kernelname + g + lg + lookup_gap + tc + thread_concurrency + nf + nfactor + w + work_size + l + sizeof(long) + .bin
+	 * name + g + lg + lookup_gap + tc + thread_concurrency + nf + nfactor + w + work_size + l + sizeof(long) + .bin
 	 */
 	char binaryfilename[255];
 	char filename[255];
 	char strbuf[32];
 
-	if (cgpu->kernelname == NULL) {
-		applog(LOG_INFO, "No kernel specified, defaulting to ckolivas");
-		cgpu->kernelname = strdup("ckolivas");
-	}
-
-	sprintf(strbuf, "%s.cl", cgpu->kernelname);
+	sprintf(strbuf, "%s.cl", cgpu->algorithm.name);
 	strcpy(filename, strbuf);
-	strcpy(binaryfilename, cgpu->kernelname);
+	strcpy(binaryfilename, cgpu->algorithm.name);
 
 	/* For some reason 2 vectors is still better even if the card says
 	 * otherwise, and many cards lie about their max so use 256 as max
@@ -452,12 +447,12 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
 	} else
 		cgpu->lookup_gap = cgpu->opt_lg;
 
-	if ((strcmp(cgpu->kernelname, "zuikkis") == 0) && (cgpu->lookup_gap != 2)) {
+	if ((strcmp(cgpu->algorithm.name, "zuikkis") == 0) && (cgpu->lookup_gap != 2)) {
 		applog(LOG_WARNING, "Kernel zuikkis only supports lookup-gap = 2 (currently %d), forcing.", cgpu->lookup_gap);
 		cgpu->lookup_gap = 2;
 	}
 
-	if ((strcmp(cgpu->kernelname, "bufius") == 0) && ((cgpu->lookup_gap != 2) && (cgpu->lookup_gap != 4) && (cgpu->lookup_gap != 8))) {
+	if ((strcmp(cgpu->algorithm.name, "bufius") == 0) && ((cgpu->lookup_gap != 2) && (cgpu->lookup_gap != 4) && (cgpu->lookup_gap != 8))) {
 		applog(LOG_WARNING, "Kernel bufius only supports lookup-gap of 2, 4 or 8 (currently %d), forcing to 2", cgpu->lookup_gap);
 		cgpu->lookup_gap = 2;
 	}

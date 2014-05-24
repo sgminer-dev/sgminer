@@ -5,7 +5,7 @@
  * ==========================(LICENSE BEGIN)============================
  *
  * Copyright (c) 2007-2010  Projet RNRT SAPHIR
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -13,10 +13,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -2809,7 +2809,6 @@ static void
 groestl_small_close(sph_groestl_small_context *sc,
 	unsigned ub, unsigned n, void *dst, size_t out_len)
 {
-	unsigned char *buf;
 	unsigned char pad[72];
 	size_t u, ptr, pad_len;
 #if SPH_64
@@ -2820,7 +2819,6 @@ groestl_small_close(sph_groestl_small_context *sc,
 	unsigned z;
 	DECL_STATE_SMALL
 
-	buf = sc->buf;
 	ptr = sc->ptr;
 	z = 0x80 >> n;
 	pad[0] = ((ub & -z) | z) & 0xFF;
@@ -2945,7 +2943,6 @@ static void
 groestl_big_close(sph_groestl_big_context *sc,
 	unsigned ub, unsigned n, void *dst, size_t out_len)
 {
-	unsigned char *buf;
 	unsigned char pad[136];
 	size_t ptr, pad_len, u;
 #if SPH_64
@@ -2956,7 +2953,6 @@ groestl_big_close(sph_groestl_big_context *sc,
 	unsigned z;
 	DECL_STATE_BIG
 
-	buf = sc->buf;
 	ptr = sc->ptr;
 	z = 0x80 >> n;
 	pad[0] = ((ub & -z) | z) & 0xFF;

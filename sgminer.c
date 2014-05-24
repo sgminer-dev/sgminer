@@ -56,8 +56,6 @@ char *curly = ":D";
 #include "bench_block.h"
 
 #include "algorithm.h"
-#include "scrypt.h"
-#include "darkcoin.h"
 #include "pool.h"
 
 #if defined(unix) || defined(__APPLE__)
@@ -159,7 +157,7 @@ int opt_tcp_keepalive = 30;
 #else
 int opt_tcp_keepalive;
 #endif
-double opt_diff_mult = 1.0;
+double opt_diff_mult = 0.0;
 
 char *opt_kernel_path;
 char *sgminer_path;
@@ -314,10 +312,6 @@ struct schedtime {
 struct schedtime schedstart;
 struct schedtime schedstop;
 bool sched_paused;
-
-#define DM_SELECT(x, y, z) (dm_mode == DM_BITCOIN ? x : (dm_mode == DM_QUARKCOIN ? y : z))
-
-enum diff_calc_mode dm_mode = DM_LITECOIN;
 
 static bool time_before(struct tm *tm1, struct tm *tm2)
 {
@@ -1293,9 +1287,6 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--kernel-path|-K",
 		     opt_set_charp, opt_show_charp, &opt_kernel_path,
 	             "Specify a path to where kernel files are"),
-	OPT_WITH_ARG("--kernel|-k",
-		     set_kernel, NULL, NULL,
-		     "Override kernel to use - one value or comma separated"),
 	OPT_WITHOUT_ARG("--load-balance",
 			set_loadbalance, &pool_strategy,
 			"Change multipool strategy from failover to quota based balance"),
@@ -1736,7 +1727,6 @@ void free_work(struct work *w)
 	free(w);
 }
 
-static void gen_hash(unsigned char *data, unsigned char *hash, size_t len);
 static void calc_diff(struct work *work, double known);
 char *workpadding = "000000800000000000000000000000000000000000000000000000000000000000000000000000000000000080020000";
 
@@ -1783,7 +1773,7 @@ static bool __build_gbt_txns(struct pool *pool, json_t *res_val)
 		if (unlikely(!hex2bin(txn_bin, txn, txn_len / 2)))
 			quit(1, "Failed to hex2bin txn_bin");
 
-		gen_hash(txn_bin, pool->txn_hashes + (32 * i), txn_len / 2);
+		gen_hash(txn_bin, txn_len / 2, pool->txn_hashes + (32 * i));
 		free(txn_bin);
 	}
 out:
@@ -1799,7 +1789,7 @@ static unsigned char *__gbt_merkleroot(struct pool *pool)
 	if (unlikely(!merkle_hash))
 		quit(1, "Failed to calloc merkle_hash in __gbt_merkleroot");
 
-	gen_hash(pool->coinbase, merkle_hash, pool->coinbase_len);
+	gen_hash(pool->coinbase, pool->coinbase_len, merkle_hash);
 
 	if (pool->gbt_txns)
 		memcpy(merkle_hash + 32, pool->txn_hashes, pool->gbt_txns * 32);
@@ -1813,7 +1803,7 @@ static unsigned char *__gbt_merkleroot(struct pool *pool)
 		for (i = 0; i < txns; i += 2){
 			unsigned char hashout[32];
 
-			gen_hash(merkle_hash + (i * 32), hashout, 64);
+			gen_hash(merkle_hash + (i * 32), 64, hashout);
 			memcpy(merkle_hash + (i / 2 * 32), hashout, 32);
 		}
 		txns /= 2;
@@ -2679,7 +2669,7 @@ static void show_hash(struct work *work, char *hashshow)
 	char diffdisp[16], wdiffdisp[16];
 	unsigned long h32;
 	uint32_t *hash32;
-	int intdiff, ofs;
+	int ofs;
 
 	swab256(rhash, work->hash);
 	for (ofs = 0; ofs <= 28; ofs ++) {
@@ -2688,7 +2678,6 @@ static void show_hash(struct work *work, char *hashshow)
 	}
 	hash32 = (uint32_t *)(rhash + ofs);
 	h32 = be32toh(*hash32);
-	intdiff = round(work->work_difficulty);
 	suffix_string_double(work->share_diff, diffdisp, sizeof (diffdisp), 0);
 	suffix_string_double(work->work_difficulty, wdiffdisp, sizeof (wdiffdisp), 0);
 	snprintf(hashshow, 64, "%08lx Diff %s/%s%s", h32, diffdisp, wdiffdisp,
@@ -3094,14 +3083,13 @@ static void calc_diff(struct work *work, double known)
 {
 	struct sgminer_pool_stats *pool_stats = &(work->pool->sgminer_pool_stats);
 	double difficulty;
-	uint64_t uintdiff;
 
 	if (known)
 		work->work_difficulty = known;
 	else {
 		double d64, dcut64;
 
-		d64 = (double) DM_SELECT(1, 256, 65536) * truediffone;
+		d64 = work->pool->algorithm.diff_multiplier2 * truediffone;
 
 		dcut64 = le256todouble(work->target);
 		if (unlikely(!dcut64))
@@ -3731,7 +3719,7 @@ static double share_diff(const struct work *work)
 	double d64, s64;
 	double ret;
 
-	d64 = (double) DM_SELECT(1, 256, 65536) * truediffone;
+	d64 = work->pool->algorithm.diff_multiplier2 * truediffone;
 	s64 = le256todouble(work->hash);
 	if (unlikely(!s64))
 		s64 = 0;
@@ -4054,7 +4042,7 @@ static void set_blockdiff(const struct work *work)
 	uint8_t pow = work->data[72];
 	int powdiff = (8 * (0x1d - 3)) - (8 * (pow - 3));
 	uint32_t diff32 = be32toh(*((uint32_t *)(work->data + 72))) & 0x00FFFFFF;
-	double numerator = DM_SELECT(0xFFFFULL, 0xFFFFFFULL, 0xFFFFFFFFULL) << powdiff;
+	double numerator = work->pool->algorithm.diff_numerator << powdiff;
 	double ddiff = numerator / (double)diff32;
 
 	if (unlikely(current_diff != ddiff)) {
@@ -4373,10 +4361,10 @@ void write_config(FILE *fcfg)
 			fprintf(fcfg, "%s%d", i > 0 ? "," : "",
 				(int)gpus[i].work_size);
 
-		fputs("\",\n\"kernel\" : \"", fcfg);
+		fputs("\",\n\"algorithm\" : \"", fcfg);
 		for(i = 0; i < nDevs; i++) {
 			fprintf(fcfg, "%s", i > 0 ? "," : "");
-			fprintf(fcfg, "%s", gpus[i].kernelname);
+			fprintf(fcfg, "%s", gpus[i].algorithm.name);
 		}
 
 		fputs("\",\n\"lookup-gap\" : \"", fcfg);
@@ -5947,15 +5935,7 @@ out_unlock:
 	return work;
 }
 
-static void gen_hash(unsigned char *data, unsigned char *hash, size_t len)
-{
-	unsigned char hash1[32];
-
-	sha256(data, len, hash1);
-	sha256(hash1, 32, hash);
-}
-
-void set_target(unsigned char *dest_target, double diff)
+void set_target(unsigned char *dest_target, double diff, double diff_multiplier2)
 {
 	unsigned char target[32];
 	uint64_t *data64, h64;
@@ -5968,7 +5948,7 @@ void set_target(unsigned char *dest_target, double diff)
 	}
 
 	// FIXME: is target set right?
-	d64 = (double) DM_SELECT(1, 256, 65536) * truediffone;
+	d64 = diff_multiplier2 * truediffone;
 	d64 /= diff;
 
 	dcut64 = d64 / bits192;
@@ -6031,14 +6011,11 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
 	cg_dwlock(&pool->data_lock);
 
 	/* Generate merkle root */
-	if (gpus[0].kernel == KL_FUGUECOIN || gpus[0].kernel == KL_GROESTLCOIN || gpus[0].kernel == KL_TWECOIN)
-		sha256(pool->coinbase, pool->swork.cb_len, merkle_root);
-	else
-		gen_hash(pool->coinbase, merkle_root, pool->swork.cb_len);
+	pool->algorithm.gen_hash(pool->coinbase, pool->swork.cb_len, merkle_root);
 	memcpy(merkle_sha, merkle_root, 32);
 	for (i = 0; i < pool->swork.merkles; i++) {
 		memcpy(merkle_sha + 32, pool->swork.merkle_bin[i], 32);
-		gen_hash(merkle_sha, merkle_root, 64);
+		gen_hash(merkle_sha, 64, merkle_root);
 		memcpy(merkle_sha, merkle_root, 32);
 	}
 	data32 = (uint32_t *)merkle_sha;
@@ -6073,7 +6050,7 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
 	}
 
 	calc_midstate(work);
-	set_target(work->target, work->sdiff);
+	set_target(work->target, work->sdiff, pool->algorithm.diff_multiplier2);
 
 	local_work++;
 	work->pool = pool;
@@ -6236,7 +6213,7 @@ static void rebuild_nonce(struct work *work, uint32_t nonce)
 
 	*work_nonce = htole32(nonce);
 
-	work->pool->algorithm.regenhash(work, work->pool->algorithm.n);
+	work->pool->algorithm.regenhash(work);
 }
 
 /* For testing a nonce against diff 1 */
@@ -6257,7 +6234,7 @@ bool test_nonce_diff(struct work *work, uint32_t nonce, double diff)
 	uint64_t *hash64 = (uint64_t *)(work->hash + 24), diff64;
 
 	rebuild_nonce(work, nonce);
-	diff64 = DM_SELECT(0x00000000ffff0000ULL, 0x000000ffff000000ULL, 0x0000ffff00000000ULL);
+	diff64 = work->pool->algorithm.diff_nonce;
 	diff64 /= diff;
 
 	return (le64toh(*hash64) <= diff64);
@@ -6266,11 +6243,11 @@ bool test_nonce_diff(struct work *work, uint32_t nonce, double diff)
 static void update_work_stats(struct thr_info *thr, struct work *work)
 {
 	double test_diff = current_diff;
-	test_diff *= DM_SELECT(1, 256, 65536);
+	test_diff *= work->pool->algorithm.diff_multiplier2;
 
 	work->share_diff = share_diff(work);
 
-	test_diff *= DM_SELECT(1, 256, 65536);
+	test_diff *= work->pool->algorithm.diff_multiplier2;
 
 	if (unlikely(work->share_diff >= test_diff)) {
 		work->block = true;
@@ -6425,7 +6402,7 @@ static void hash_sole_work(struct thr_info *mythr)
 			work->device_diff = MIN(drv->working_diff, work->work_difficulty);
 		} else if (drv->working_diff > work->work_difficulty)
 			drv->working_diff = work->work_difficulty;
-		set_target(work->device_target, work->device_diff);
+		set_target(work->device_target, work->device_diff, work->pool->algorithm.diff_multiplier2);
 
 		do {
 			cgtime(&tv_start);
