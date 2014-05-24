@@ -207,12 +207,13 @@ The list of requests - a (*) means it requires privileged access - and replies:
                               stating the results of enabling pool N
                               The Msg includes the pool URL
 
- addpool|URL,USR,PASS (*)
+ addpool|URL,USR,PASS[,NAME,DESC,ALGO] (*)
                none           There is no reply section just the STATUS section
                               stating the results of attempting to add pool N
                               The Msg includes the pool URL
                               Use '\\' to get a '\' and '\,' to include a comma
                               inside URL, USR or PASS
+			      Name, description and algorithm are optional
 
  poolpriority|N,... (*)
                none           There is no reply section just the STATUS section
