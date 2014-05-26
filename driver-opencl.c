@@ -964,16 +964,20 @@ void manage_gpu(void)
 static _clState *clStates[MAX_GPUDEVICES];
 
 static void set_threads_hashes(unsigned int vectors, unsigned int compute_shaders, int64_t *hashes, size_t *globalThreads,
-			       unsigned int minthreads, __maybe_unused int *intensity, __maybe_unused int *xintensity, __maybe_unused int *rawintensity)
+			       unsigned int minthreads, __maybe_unused int *intensity, __maybe_unused int *xintensity,
+             __maybe_unused int *rawintensity, algorithm_t *algorithm)
 {
 	unsigned int threads = 0;
 	while (threads < minthreads) {
 		if (*rawintensity > 0) {
 			threads = *rawintensity;
 		} else if (*xintensity > 0) {
-			threads = compute_shaders * *xintensity;
+      if (algorithm->xintensity_shift)
+        threads = compute_shaders * (1 << (algorithm->xintensity_shift + *xintensity));
+      else
+        threads = compute_shaders * *xintensity;
 		} else {
-			threads = 1 << *intensity;
+			threads = 1 << (algorithm->intensity_shift + *intensity);
 		}
 		if (threads < minthreads) {
 			if (likely(*intensity < MAX_INTENSITY))
@@ -1285,7 +1289,6 @@ static bool opencl_thread_init(struct thr_info *thr)
 	return true;
 }
 
-
 static bool opencl_prepare_work(struct thr_info __maybe_unused *thr, struct work *work)
 {
 	work->blk.work = work;
@@ -1308,7 +1311,7 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 	size_t globalThreads[1];
 	size_t localThreads[1] = { clState->wsize };
 	int64_t hashes;
-	int found = FOUND;
+	int found = gpu->algorithm.found_idx;
 	int buffersize = BUFFERSIZE;
 
 	/* Windows' timer resolution is only 15ms so oversample 5x */
@@ -1330,7 +1333,7 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 	}
 
 	set_threads_hashes(clState->vwidth, clState->compute_shaders, &hashes, globalThreads, localThreads[0],
-			   &gpu->intensity, &gpu->xintensity, &gpu->rawintensity);
+			   &gpu->intensity, &gpu->xintensity, &gpu->rawintensity, &gpu->algorithm);
 	if (hashes > gpu->max_hashes)
 		gpu->max_hashes = hashes;
 
@@ -1369,7 +1372,7 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 	/* This finish flushes the readbuffer set with CL_FALSE in clEnqueueReadBuffer */
 	clFinish(clState->commandQueue);
 
-	/* FOUND entry is used as a counter to say how many nonces exist */
+	/* found entry is used as a counter to say how many nonces exist */
 	if (thrdata->res[found]) {
 		/* Clear the buffer again */
 		status = clEnqueueWriteBuffer(clState->commandQueue, clState->outputBuffer, CL_FALSE, 0,

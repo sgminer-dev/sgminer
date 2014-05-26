@@ -183,7 +183,7 @@ static void *postcalc_hash(void *userdata)
 	struct thr_info *thr = pcd->thr;
 	unsigned int entry = 0;
 
-	int found = FOUND;
+	int found = thr->cgpu->algorithm.found_idx;
 
 	pthread_detach(pthread_self());
 
@@ -199,6 +199,8 @@ static void *postcalc_hash(void *userdata)
 
 	for (entry = 0; entry < pcd->res[found]; entry++) {
 		uint32_t nonce = pcd->res[entry];
+		if (found == 0x0F)
+        nonce = swab32(nonce);
 
 		applog(LOG_DEBUG, "OCL NONCE %u found in slot %d", nonce, entry);
 		submit_nonce(thr, pcd->work, nonce);

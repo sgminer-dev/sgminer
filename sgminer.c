@@ -3719,7 +3719,7 @@ static double share_diff(const struct work *work)
 	double d64, s64;
 	double ret;
 
-	d64 = work->pool->algorithm.diff_multiplier2 * truediffone;
+	d64 = work->pool->algorithm.share_diff_multiplier * truediffone;
 	s64 = le256todouble(work->hash);
 	if (unlikely(!s64))
 		s64 = 0;
@@ -5947,7 +5947,6 @@ void set_target(unsigned char *dest_target, double diff, double diff_multiplier2
 		diff = 1.0;
 	}
 
-	// FIXME: is target set right?
 	d64 = diff_multiplier2 * truediffone;
 	d64 /= diff;
 
@@ -6223,7 +6222,7 @@ bool test_nonce(struct work *work, uint32_t nonce)
 	uint32_t diff1targ;
 
 	rebuild_nonce(work, nonce);
-	diff1targ = 0x0000ffffUL;
+	diff1targ = work->pool->algorithm.diff1targ;
 
 	return (le32toh(*hash_32) <= diff1targ);
 }
@@ -6243,11 +6242,11 @@ bool test_nonce_diff(struct work *work, uint32_t nonce, double diff)
 static void update_work_stats(struct thr_info *thr, struct work *work)
 {
 	double test_diff = current_diff;
-	test_diff *= work->pool->algorithm.diff_multiplier2;
+	test_diff *= work->pool->algorithm.share_diff_multiplier;
 
 	work->share_diff = share_diff(work);
 
-	test_diff *= work->pool->algorithm.diff_multiplier2;
+	test_diff *= work->pool->algorithm.share_diff_multiplier;
 
 	if (unlikely(work->share_diff >= test_diff)) {
 		work->block = true;

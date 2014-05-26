@@ -25,8 +25,13 @@ typedef struct _algorithm_t {
     uint8_t  nfactor;  /* Factor of N above (n = 2^nfactor) */
     double   diff_multiplier1;
     double   diff_multiplier2;
+    double   share_diff_multiplier;
+    uint32_t xintensity_shift;
+    uint32_t intensity_shift;
+    uint32_t found_idx;
     unsigned long long   diff_nonce;
     unsigned long long   diff_numerator;
+    uint32_t diff1targ;
     void     (*regenhash)(struct work *);
     cl_int   (*queue_kernel)(struct __clState *, struct _dev_blk_ctx *, cl_uint);
     void     (*gen_hash)(const unsigned char *, unsigned int, unsigned char *);
