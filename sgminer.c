@@ -6124,8 +6124,13 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 			struct thr_info *thr = mining_thr[i];
 			thr->cgpu->algorithm = work->pool->algorithm;
 		  thr->cgpu->drv->thread_prepare(thr);
+
+      // Necessary because algorithms can have dramatically different diffs
+      thr->cgpu->drv->working_diff = 1;
 		}
 		rd_unlock(&mining_thr_lock);
+    // Reset stats (e.g. for working_diff to be set properly in hash_sole_work)
+    zero_stats();
     // Apply other pool-specific settings
     // TODO: when config parser is improved, add else statements and set
     //       to default intensity
