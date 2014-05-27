@@ -788,6 +788,27 @@ static char *set_pool_algorithm(const char *arg)
 	return NULL;
 }
 
+static char *set_pool_intensity(const char *arg)
+{
+  struct pool *pool = get_current_pool();
+  pool->intensity = arg;
+  return NULL;
+}
+
+static char *set_pool_xintensity(const char *arg)
+{
+  struct pool *pool = get_current_pool();
+  pool->xintensity = arg;
+  return NULL;
+}
+
+static char *set_pool_rawintensity(const char *arg)
+{
+  struct pool *pool = get_current_pool();
+  pool->rawintensity = arg;
+  return NULL;
+}
+
 static char *set_pool_nfactor(const char *arg)
 {
 	struct pool *pool = get_current_pool();
@@ -1284,6 +1305,15 @@ static struct opt_table opt_config_table[] = {
 		     set_rawintensity, NULL, NULL,
 		     "Raw intensity of GPU scanning (" MIN_RAWINTENSITY_STR " to "
 			 MAX_RAWINTENSITY_STR "), overrides --intensity|-I and --xintensity|-X."),
+  OPT_WITH_ARG("--pool-intensity",
+         set_pool_intensity, NULL, NULL,
+         "Intensity of GPU scanning (pool-specific)"),
+  OPT_WITH_ARG("--pool-xintensity",
+         set_pool_xintensity, NULL, NULL,
+         "Shader based intensity of GPU scanning (pool-specific)"),
+  OPT_WITH_ARG("--pool-rawintensity",
+         set_pool_rawintensity, NULL, NULL,
+         "Raw intensity of GPU scanning (pool-specific)"),
 	OPT_WITH_ARG("--kernel-path|-K",
 		     opt_set_charp, opt_show_charp, &opt_kernel_path,
 	             "Specify a path to where kernel files are"),
@@ -6096,6 +6126,14 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 		  thr->cgpu->drv->thread_prepare(thr);
 		}
 		rd_unlock(&mining_thr_lock);
+    // Apply other pool-specific settings
+    if (work->pool->intensity)
+      set_intensity(work->pool->intensity);
+    if (work->pool->xintensity)
+      set_xintensity(work->pool->xintensity);
+    if (work->pool->rawintensity)
+      set_rawintensity(work->pool->rawintensity);
+    // Finish switching pools
 	  algo_switch_n = 0;
 		mutex_unlock(&algo_switch_lock);
 		// Signal other threads to start working now

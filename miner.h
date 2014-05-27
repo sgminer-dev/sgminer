@@ -1218,6 +1218,9 @@ struct pool {
 	char *rpc_proxy;
 
 	algorithm_t algorithm;
+  const char *intensity;
+  const char *xintensity;
+  const char *rawintensity;
 
 	pthread_mutex_t pool_lock;
 	cglock_t data_lock;
