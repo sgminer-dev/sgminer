@@ -329,7 +329,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
 	// Create an OpenCL command queue
 	/////////////////////////////////////////////////////////////////
 	clState->commandQueue = clCreateCommandQueue(clState->context, devices[gpu],
-						     CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, &status);
+						     cgpu->algorithm.cq_properties, &status);
 	if (status != CL_SUCCESS) /* Try again without OOE enable */
 		clState->commandQueue = clCreateCommandQueue(clState->context, devices[gpu], 0 , &status);
 	if (status != CL_SUCCESS) {
@@ -760,29 +760,56 @@ built:
 		return NULL;
 	}
 
-	size_t ipt = (algorithm->n / cgpu->lookup_gap +
-		      (algorithm->n % cgpu->lookup_gap > 0));
-	size_t bufsize = 128 * ipt * cgpu->thread_concurrency;
 
-	/* Use the max alloc value which has been rounded to a power of
-	 * 2 greater >= required amount earlier */
-	if (bufsize > cgpu->max_alloc) {
-		applog(LOG_WARNING, "Maximum buffer memory device %d supports says %lu",
-			   gpu, (unsigned long)(cgpu->max_alloc));
-		applog(LOG_WARNING, "Your scrypt settings come to %lu", (unsigned long)bufsize);
-	}
-	applog(LOG_DEBUG, "Creating scrypt buffer sized %lu", (unsigned long)bufsize);
-	clState->padbufsize = bufsize;
+  clState->n_extra_kernels = algorithm->n_extra_kernels;
+  if (clState->n_extra_kernels > 0) {
+    unsigned int i;
+    char *kernel_name = (char *)malloc(9); // max: search99 + 0x0
 
-	/* This buffer is weird and might work to some degree even if
-	 * the create buffer call has apparently failed, so check if we
-	 * get anything back before we call it a failure. */
-	clState->padbuffer8 = NULL;
-	clState->padbuffer8 = clCreateBuffer(clState->context, CL_MEM_READ_WRITE, bufsize, NULL, &status);
-	if (status != CL_SUCCESS && !clState->padbuffer8) {
-		applog(LOG_ERR, "Error %d: clCreateBuffer (padbuffer8), decrease TC or increase LG", status);
-		return NULL;
-	}
+    clState->extra_kernels = (cl_kernel *)malloc(sizeof(cl_kernel) * clState->n_extra_kernels);
+
+    for (i = 0; i < clState->n_extra_kernels; i++) {
+      snprintf(kernel_name, 9, "%s%d", "search", i + 1);
+      clState->extra_kernels[i] = clCreateKernel(clState->program, kernel_name, &status);
+      if (status != CL_SUCCESS) {
+        applog(LOG_ERR, "Error %d: Creating ExtraKernel #%d from program. (clCreateKernel)", status, i);
+        return NULL;
+      }
+    }
+
+    free(kernel_name);
+  }
+
+	size_t bufsize;
+
+  if (algorithm->rw_buffer_size < 0) {
+    size_t ipt = (algorithm->n / cgpu->lookup_gap +
+            (algorithm->n % cgpu->lookup_gap > 0));
+    bufsize = 128 * ipt * cgpu->thread_concurrency;
+  } else
+    bufsize = (size_t) algorithm->rw_buffer_size;
+
+  clState->padbuffer8 = NULL;
+
+  if (bufsize > 0) {
+    /* Use the max alloc value which has been rounded to a power of
+     * 2 greater >= required amount earlier */
+    if (bufsize > cgpu->max_alloc) {
+      applog(LOG_WARNING, "Maximum buffer memory device %d supports says %lu",
+           gpu, (unsigned long)(cgpu->max_alloc));
+      applog(LOG_WARNING, "Your settings come to %lu", (unsigned long)bufsize);
+    }
+    applog(LOG_DEBUG, "Creating buffer sized %lu", (unsigned long)bufsize);
+
+    /* This buffer is weird and might work to some degree even if
+     * the create buffer call has apparently failed, so check if we
+     * get anything back before we call it a failure. */
+    clState->padbuffer8 = clCreateBuffer(clState->context, CL_MEM_READ_WRITE, bufsize, NULL, &status);
+    if (status != CL_SUCCESS && !clState->padbuffer8) {
+      applog(LOG_ERR, "Error %d: clCreateBuffer (padbuffer8), decrease TC or increase LG", status);
+      return NULL;
+    }
+  }
 
 	clState->CLbuffer0 = clCreateBuffer(clState->context, CL_MEM_READ_ONLY, 128, NULL, &status);
 	if (status != CL_SUCCESS) {

@@ -32,6 +32,9 @@ typedef struct _algorithm_t {
     unsigned long long   diff_nonce;
     unsigned long long   diff_numerator;
     uint32_t diff1targ;
+    size_t n_extra_kernels;
+    long rw_buffer_size;
+    cl_command_queue_properties cq_properties;
     void     (*regenhash)(struct work *);
     cl_int   (*queue_kernel)(struct __clState *, struct _dev_blk_ctx *, cl_uint);
     void     (*gen_hash)(const unsigned char *, unsigned int, unsigned char *);

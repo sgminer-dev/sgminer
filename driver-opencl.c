@@ -1304,7 +1304,6 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 	struct opencl_thread_data *thrdata = (struct opencl_thread_data *)thr->cgpu_data;
 	struct cgpu_info *gpu = thr->cgpu;
 	_clState *clState = clStates[thr_id];
-	const cl_kernel *kernel = &clState->kernel;
 	const int dynamic_us = opt_dynamic_interval * 1000;
 
 	cl_int status;
@@ -1314,6 +1313,7 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 	int64_t hashes;
 	int found = gpu->algorithm.found_idx;
 	int buffersize = BUFFERSIZE;
+    unsigned int i;
 
 	/* Windows' timer resolution is only 15ms so oversample 5x */
 	if (gpu->dynamic && (++gpu->intervals * dynamic_us) > 70000) {
@@ -1346,12 +1346,22 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 
     if (clState->goffset)
         p_global_work_offset = &work->blk.nonce;
-    status = clEnqueueNDRangeKernel(clState->commandQueue, *kernel, 1, p_global_work_offset,
+
+    status = clEnqueueNDRangeKernel(clState->commandQueue, clState->kernel, 1, p_global_work_offset,
                     globalThreads, localThreads, 0,  NULL, NULL);
 	if (unlikely(status != CL_SUCCESS)) {
 		applog(LOG_ERR, "Error %d: Enqueueing kernel onto command queue. (clEnqueueNDRangeKernel)", status);
 		return -1;
 	}
+
+  for (i = 0; i < clState->n_extra_kernels; i++) {
+      status = clEnqueueNDRangeKernel(clState->commandQueue, clState->extra_kernels[i], 1, p_global_work_offset,
+                      globalThreads, localThreads, 0,  NULL, NULL);
+      if (unlikely(status != CL_SUCCESS)) {
+          applog(LOG_ERR, "Error %d: Enqueueing kernel onto command queue. (clEnqueueNDRangeKernel)", status);
+          return -1;
+      }
+  }
 
 	status = clEnqueueReadBuffer(clState->commandQueue, clState->outputBuffer, CL_FALSE, 0,
 				     buffersize, thrdata->res, 0, NULL, NULL);
@@ -1393,14 +1403,19 @@ static void opencl_thread_shutdown(struct thr_info *thr)
 {
 	const int thr_id = thr->id;
 	_clState *clState = clStates[thr_id];
+    cl_kernel *kernel = clState->extra_kernels;
 	clStates[thr_id] = NULL;
+    unsigned int i;
 
 	if (clState) {
 		clFinish(clState->commandQueue);
 		clReleaseMemObject(clState->outputBuffer);
 		clReleaseMemObject(clState->CLbuffer0);
-		clReleaseMemObject(clState->padbuffer8);
+		if (clState->padbuffer8)
+      clReleaseMemObject(clState->padbuffer8);
 		clReleaseKernel(clState->kernel);
+        for (i = 0; i < clState->n_extra_kernels; i++)
+            clReleaseKernel(clState->extra_kernels[i]);
 		clReleaseProgram(clState->program);
 		clReleaseCommandQueue(clState->commandQueue);
 		clReleaseContext(clState->context);
