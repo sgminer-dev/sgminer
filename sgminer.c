@@ -6127,6 +6127,8 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 		}
 		rd_unlock(&mining_thr_lock);
     // Apply other pool-specific settings
+    // TODO: when config parser is improved, add else statements and set
+    //       to default intensity
     if (work->pool->intensity)
       set_intensity(work->pool->intensity);
     if (work->pool->xintensity)
