@@ -3243,7 +3243,6 @@ void kill_work(void)
 	quit(0, "Shutdown signal received.");
 }
 
-static
 #ifdef WIN32
 const
 #endif
@@ -7941,7 +7940,12 @@ int main(int argc, char *argv[])
 		quithere(1, "Failed to pthread_mutex_init lockstat_lock errno=%d", errno);
 #endif
 
+#ifdef WIN32
 	initial_args = (const char **)malloc(sizeof(char *)* (argc + 1));
+#else
+	initial_args = (char **)malloc(sizeof(char *)* (argc + 1));
+#endif
+
 	for  (i = 0; i < argc; i++)
 		initial_args[i] = strdup(argv[i]);
 	initial_args[argc] = NULL;
