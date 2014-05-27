@@ -1310,6 +1310,7 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 	cl_int status;
 	size_t globalThreads[1];
 	size_t localThreads[1] = { clState->wsize };
+    size_t *p_global_work_offset = NULL;
 	int64_t hashes;
 	int found = gpu->algorithm.found_idx;
 	int buffersize = BUFFERSIZE;
@@ -1343,15 +1344,10 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 		return -1;
 	}
 
-	if (clState->goffset) {
-		size_t global_work_offset[1];
-
-		global_work_offset[0] = work->blk.nonce;
-		status = clEnqueueNDRangeKernel(clState->commandQueue, *kernel, 1, global_work_offset,
-						globalThreads, localThreads, 0,  NULL, NULL);
-	} else
-		status = clEnqueueNDRangeKernel(clState->commandQueue, *kernel, 1, NULL,
-						globalThreads, localThreads, 0,  NULL, NULL);
+    if (clState->goffset)
+        p_global_work_offset = &work->blk.nonce;
+    status = clEnqueueNDRangeKernel(clState->commandQueue, *kernel, 1, p_global_work_offset,
+                    globalThreads, localThreads, 0,  NULL, NULL);
 	if (unlikely(status != CL_SUCCESS)) {
 		applog(LOG_ERR, "Error %d: Enqueueing kernel onto command queue. (clEnqueueNDRangeKernel)", status);
 		return -1;
