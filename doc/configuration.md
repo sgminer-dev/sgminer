@@ -26,12 +26,6 @@ option for that pool only. Otherwise sets the default.
 * everything else - currently defaults to `scrypt`, subject to change
   without warning.
 
-
-### pool-algorithm
-
-Allows choosing the algorithm for a specific pool. See `algorithm`.
-
-
 ### nfactor
 
 Overrides the default scrypt parameter N, specified as the factor of 2
@@ -44,11 +38,32 @@ option for that pool only. Otherwise sets the default.
 
 *Default:* depends on `algorithm`; otherwise `10`.
 
+## Pool-specific configuration
+
+If you use any of these options for a pool, then **you must** set that option
+for every pool. This is necessary due to current poor implementation of
+sgminer config parser.
+
+### pool-algorithm
+
+Allows choosing the algorithm for a specific pool. See `algorithm`.
 
 ### pool-nfactor
 
 Overrides the default scrypt parameter N for a specific pool.
 See `nfactor`.
+
+### pool-intensity
+
+Overrides intensity. See `intensity`.
+
+### pool-xintensity
+
+Overrides xintensity. See `xintensity`.
+
+### pool-rawintensity
+
+Overrides rawintensity. See `rawintensity`.
 
 
 ## CLI-only options
