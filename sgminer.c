@@ -6229,8 +6229,6 @@ static void update_work_stats(struct thr_info *thr, struct work *work)
 
 	work->share_diff = share_diff(work);
 
-	test_diff *= 65536;
-
 	if (unlikely(work->share_diff >= test_diff)) {
 		work->block = true;
 		work->pool->solved++;
