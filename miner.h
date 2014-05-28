@@ -1224,6 +1224,7 @@ struct pool {
   const char *thread_concurrency;
   const char *gpu_engine;
   const char *gpu_memclock;
+  const char *gpu_threads;
 
 	pthread_mutex_t pool_lock;
 	cglock_t data_lock;

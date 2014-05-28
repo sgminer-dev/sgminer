@@ -829,6 +829,13 @@ static char *set_pool_gpu_memclock(const char *arg)
   return NULL;
 }
 
+static char *set_pool_gpu_threads(const char *arg)
+{
+  struct pool *pool = get_current_pool();
+  pool->gpu_threads = arg;
+  return NULL;
+}
+
 static char *set_pool_nfactor(const char *arg)
 {
   struct pool *pool = get_current_pool();
@@ -1319,6 +1326,10 @@ static struct opt_table opt_config_table[] = {
   OPT_WITH_ARG("--pool-gpu-memclock",
       set_pool_gpu_memclock, NULL, NULL,
       "Set the GPU memory (over)clock in Mhz - one value for all or separate by commas for per card"),
+  OPT_WITH_ARG("--pool-gpu-threads",
+      set_pool_gpu_threads, NULL, NULL,
+      "Number of threads per GPU for pool"),
+
 #endif
   OPT_WITH_ARG("--lookup-gap",
       set_lookup_gap, NULL, NULL,
@@ -6140,6 +6151,8 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
   cgtime(&work->tv_staged);
 }
 
+static void *restart_mining_threads_thread(void *userdata);
+
 static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 {
   int i;
@@ -6157,11 +6170,14 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 
   // If all threads are waiting now
   if (algo_switch_n >= mining_threads) {
+    bool soft_restart = !work->pool->gpu_threads;
     rd_lock(&mining_thr_lock);
     // Shutdown all threads first (necessary)
-    for (i = 0; i < mining_threads; i++) {
-      struct thr_info *thr = mining_thr[i];
-      thr->cgpu->drv->thread_shutdown(thr);
+    if (soft_restart) {
+      for (i = 0; i < mining_threads; i++) {
+        struct thr_info *thr = mining_thr[i];
+        thr->cgpu->drv->thread_shutdown(thr);
+      }
     }
     // Reset stats (e.g. for working_diff to be set properly in hash_sole_work)
     zero_stats();
@@ -6190,7 +6206,8 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
     for (i = 0; i < mining_threads; i++) {
       struct thr_info *thr = mining_thr[i];
       thr->cgpu->algorithm = work->pool->algorithm;
-      thr->cgpu->drv->thread_prepare(thr);
+      if (soft_restart)
+        thr->cgpu->drv->thread_prepare(thr);
 
       // Necessary because algorithms can have dramatically different diffs
       thr->cgpu->drv->working_diff = 1;
@@ -6199,6 +6216,20 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
     // Finish switching pools
     algo_switch_n = 0;
     mutex_unlock(&algo_switch_lock);
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    // Hard restart (when gpu_threads is changed)
+    if (!soft_restart) {
+      unsigned int n_threads = 0;
+      pthread_t restart_thr;
+      set_gpu_threads(work->pool->gpu_threads);
+      for (i = 0; i < total_devices; ++i)
+        n_threads += devices[i]->threads;
+
+      if (unlikely(pthread_create(&restart_thr, NULL, restart_mining_threads_thread, n_threads)))
+        quit(1, "restart_mining_threads create thread failed");
+      sleep(60);
+      quit(1, "thread was not cancelled in 60 seconds after restart_mining_threads");
+    }
     // Signal other threads to start working now
     mutex_lock(&algo_switch_wait_lock);
     pthread_cond_broadcast(&algo_switch_wait_cond);
@@ -6206,12 +6237,12 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
   // Not all threads are waiting, join the waiting list
   } else {
     mutex_unlock(&algo_switch_lock);
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     // Wait for signal to start working again
     mutex_lock(&algo_switch_wait_lock);
     pthread_cond_wait(&algo_switch_wait_cond, &algo_switch_wait_lock);
     mutex_unlock(&algo_switch_wait_lock);
   }
-  pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 }
 
 struct work *get_work(struct thr_info *thr, const int thr_id)
@@ -8093,6 +8124,13 @@ static void restart_mining_threads(unsigned int new_n_threads)
       }
     }
   }
+}
+
+static void *restart_mining_threads_thread(void *userdata)
+{
+  restart_mining_threads((unsigned int) userdata);
+
+  return NULL;
 }
 
 #define DRIVER_FILL_DEVICE_DRV(X) fill_device_drv(&X##_drv);
