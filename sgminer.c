@@ -1376,7 +1376,7 @@ static struct opt_table opt_config_table[] = {
 		        "Don't submit shares if they are detected as stale"),
 	OPT_WITHOUT_ARG("--no-extranonce-subscribe",
 			set_no_extranonce_subscribe, NULL,
-			"Disable 'extranonce' stratum subscribe"),
+			"Disable 'extranonce' stratum subscribe for pool"),
 	OPT_WITH_ARG("--pass|-p",
 		     set_pass, NULL, NULL,
 		     "Password for bitcoin JSON-RPC server"),
