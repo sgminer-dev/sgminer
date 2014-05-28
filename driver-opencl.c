@@ -169,10 +169,11 @@ char *set_lookup_gap(char *arg)
 	return NULL;
 }
 
-char *set_thread_concurrency(char *arg)
+char *set_thread_concurrency(const char *_arg)
 {
 	int i, val = 0, device = 0;
 	char *nextptr;
+  char *arg = strdupa(_arg);
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
@@ -225,10 +226,11 @@ char *set_gpu_map(char *arg)
 	return NULL;
 }
 
-char *set_gpu_threads(char *arg)
+char *set_gpu_threads(const char *_arg)
 {
 	int i, val = 1, device = 0;
 	char *nextptr;
+  char *arg = strdupa(_arg);
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
@@ -254,10 +256,11 @@ char *set_gpu_threads(char *arg)
 	return NULL;
 }
 
-char *set_gpu_engine(char *arg)
+char *set_gpu_engine(const char *_arg)
 {
 	int i, val1 = 0, val2 = 0, device = 0;
 	char *nextptr;
+  char *arg = strdupa(_arg);
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
@@ -325,10 +328,11 @@ char *set_gpu_fan(char *arg)
 	return NULL;
 }
 
-char *set_gpu_memclock(char *arg)
+char *set_gpu_memclock(const char *_arg)
 {
 	int i, val = 0, device = 0;
 	char *nextptr;
+  char *arg = strdupa(_arg);
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
@@ -509,10 +513,11 @@ char *set_temp_target(char *arg)
 }
 #endif
 
-char *set_intensity(char *arg)
+char *set_intensity(const char *_arg)
 {
 	int i, device = 0, *tt;
 	char *nextptr, val = 0;
+  char *arg = strdupa(_arg);
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
@@ -562,10 +567,11 @@ char *set_intensity(char *arg)
 	return NULL;
 }
 
-char *set_xintensity(char *arg)
+char *set_xintensity(const char *_arg)
 {
 	int i, device = 0, val = 0;
 	char *nextptr;
+  char *arg = strdupa(_arg);
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
@@ -603,10 +609,11 @@ char *set_xintensity(char *arg)
 	return NULL;
 }
 
-char *set_rawintensity(char *arg)
+char *set_rawintensity(const char *_arg)
 {
 	int i, device = 0, val = 0;
 	char *nextptr;
+  char *arg = strdupa(_arg);
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
@@ -1403,7 +1410,6 @@ static void opencl_thread_shutdown(struct thr_info *thr)
 {
 	const int thr_id = thr->id;
 	_clState *clState = clStates[thr_id];
-    cl_kernel *kernel = clState->extra_kernels;
 	clStates[thr_id] = NULL;
     unsigned int i;
 

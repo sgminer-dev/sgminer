@@ -1671,7 +1671,7 @@ static bool parse_diff(struct pool *pool, json_t *val)
 
 static bool parse_extranonce(struct pool *pool, json_t *val)
 {
-	char s[RBUFSIZE], *nonce1;
+	char *nonce1;
 	int n2size;
 
 	nonce1 = json_array_string(val, 0);

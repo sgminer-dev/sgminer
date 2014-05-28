@@ -1190,11 +1190,10 @@ static char *set_null(const char __maybe_unused *arg)
 
 char *set_difficulty_multiplier(char *arg)
 {
-  char **endptr = NULL;
   if (!(arg && arg[0]))
     return "Invalid parameters for set difficulty multiplier";
-  opt_diff_mult = strtod(arg, endptr);
-  if (opt_diff_mult == 0 || endptr == arg)
+  opt_diff_mult = strtod(arg, NULL);
+  if (opt_diff_mult == 0.0)
     return "Invalid value passed to set difficulty multiplier";
 
   return NULL;
@@ -3352,7 +3351,7 @@ static
 #ifdef WIN32
 const
 #endif
-char **initial_args;
+const char **initial_args;
 
 static void clean_up(bool restarting);
 
@@ -6225,7 +6224,7 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
       for (i = 0; i < total_devices; ++i)
         n_threads += devices[i]->threads;
 
-      if (unlikely(pthread_create(&restart_thr, NULL, restart_mining_threads_thread, n_threads)))
+      if (unlikely(pthread_create(&restart_thr, NULL, restart_mining_threads_thread, (void *)n_threads)))
         quit(1, "restart_mining_threads create thread failed");
       sleep(60);
       quit(1, "thread was not cancelled in 60 seconds after restart_mining_threads");
@@ -8143,8 +8142,7 @@ int main(int argc, char *argv[])
 #endif
   struct thr_info *thr;
   struct block *block;
-  unsigned int k;
-  int i, j;
+  int i;
   char *s;
 
   /* This dangerous function tramples random dynamically allocated
@@ -8160,7 +8158,7 @@ int main(int argc, char *argv[])
 
   initial_args = (const char **)malloc(sizeof(char *)* (argc + 1));
   for  (i = 0; i < argc; i++)
-    initial_args[i] = strdup(argv[i]);
+    initial_args[i] = (const char *)strdup(argv[i]);
   initial_args[argc] = NULL;
 
   mutex_init(&hash_lock);
