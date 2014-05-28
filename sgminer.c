@@ -107,7 +107,6 @@ time_t last_getwork;
 int nDevs;
 int opt_dynamic_interval = 7;
 int opt_g_threads = -1;
-int gpu_threads;
 bool opt_restart = true;
 
 struct list_head scan_devices;
@@ -165,7 +164,7 @@ char *sgminer_path;
 #define QUIET (opt_quiet || opt_realquiet)
 
 struct thr_info *control_thr;
-struct thr_info **mining_thr;
+struct thr_info **mining_thr = NULL;
 static int gwsched_thr_id;
 static int watchpool_thr_id;
 static int watchdog_thr_id;
@@ -1314,7 +1313,7 @@ static struct opt_table opt_config_table[] = {
   OPT_WITH_ARG("--gpu-vddc",
       set_gpu_vddc, NULL, NULL,
       "Set the GPU voltage in Volts - one value for all or separate by commas for per card"),
-OPT_WITH_ARG("--pool-gpu-engine",
+  OPT_WITH_ARG("--pool-gpu-engine",
       set_pool_gpu_engine, NULL, NULL,
       "GPU engine (over)clock range in Mhz - one value, range and/or comma separated list (e.g. 850-900,900,750-850)"),
   OPT_WITH_ARG("--pool-gpu-memclock",
@@ -7957,10 +7956,7 @@ void enable_device(struct cgpu_info *cgpu)
 #ifdef HAVE_CURSES
   adj_width(mining_threads, &dev_width);
 #endif
-
-  if (cgpu->drv->drv_id == DRIVER_opencl) {
-    gpu_threads += cgpu->threads;
-  }
+  
   rwlock_init(&cgpu->qlock);
   cgpu->queued_work = NULL;
 }
@@ -8028,6 +8024,74 @@ static void probe_pools(void)
 
     pool->testing = true;
     pthread_create(&pool->test_thread, NULL, test_pool_thread, (void *)pool);
+  }
+}
+
+static void restart_mining_threads(unsigned int new_n_threads)
+{
+  struct thr_info *thr;
+  unsigned int i, j, k;
+
+  // Stop and free threads
+  if (mining_thr) {
+    for (i = 0; i < mining_threads; i++) {
+      mining_thr[i]->cgpu->shutdown = true;
+    }
+    kill_mining();
+    for (i = 0; i < mining_threads; i++) {
+      thr = mining_thr[i];
+      thr->cgpu->drv->thread_shutdown(thr);
+      thr->cgpu->shutdown = false;
+    }
+    for (i = 0; i < total_devices; ++i) {
+      free(devices[i]->thr);
+    }
+    for (i = 0; i < mining_threads; i++) {
+      free(mining_thr[i]);
+    }
+    free(mining_thr);
+  }
+
+  // Alloc
+  mining_threads = (int) new_n_threads;
+  mining_thr = (struct thr_info **)calloc(mining_threads, sizeof(thr));
+  if (!mining_thr)
+    quit(1, "Failed to calloc mining_thr");
+  for (i = 0; i < mining_threads; i++) {
+    mining_thr[i] = (struct thr_info *)calloc(1, sizeof(*thr));
+    if (!mining_thr[i])
+      quit(1, "Failed to calloc mining_thr[%d]", i);
+  }
+
+  // Start threads
+  k = 0;
+  for (i = 0; i < total_devices; ++i) {
+    struct cgpu_info *cgpu = devices[i];
+    cgpu->thr = (struct thr_info **)malloc(sizeof(*cgpu->thr) * (cgpu->threads+1));
+    cgpu->thr[cgpu->threads] = NULL;
+    cgpu->status = LIFE_INIT;
+
+    for (j = 0; j < cgpu->threads; ++j, ++k) {
+      thr = get_thread(k);
+      thr->id = k;
+      thr->cgpu = cgpu;
+      thr->device_thread = j;
+
+      if (!cgpu->drv->thread_prepare(thr))
+        continue;
+
+      if (unlikely(thr_info_create(thr, NULL, miner_thread, thr)))
+        quit(1, "thread %d create failed", thr->id);
+
+      cgpu->thr[j] = thr;
+
+      /* Enable threads for devices set not to mine but disable
+       * their queue in case we wish to enable them later */
+      if (cgpu->deven != DEV_DISABLED) {
+        applog(LOG_DEBUG, "Pushing sem post to thread %d", thr->id);
+        cgsem_post(&thr->sem);
+      }
+    }
   }
 }
 
@@ -8315,45 +8379,7 @@ int main(int argc, char *argv[])
       fork_monitor();
   #endif // defined(unix)
 
-  mining_thr = (struct thr_info **)calloc(mining_threads, sizeof(thr));
-  if (!mining_thr)
-    quit(1, "Failed to calloc mining_thr");
-  for (i = 0; i < mining_threads; i++) {
-    mining_thr[i] = (struct thr_info *)calloc(1, sizeof(*thr));
-    if (!mining_thr[i])
-      quit(1, "Failed to calloc mining_thr[%d]", i);
-  }
-
-  // Start threads
-  k = 0;
-  for (i = 0; i < total_devices; ++i) {
-    struct cgpu_info *cgpu = devices[i];
-    cgpu->thr = (struct thr_info **)malloc(sizeof(*cgpu->thr) * (cgpu->threads+1));
-    cgpu->thr[cgpu->threads] = NULL;
-    cgpu->status = LIFE_INIT;
-
-    for (j = 0; j < cgpu->threads; ++j, ++k) {
-      thr = get_thread(k);
-      thr->id = k;
-      thr->cgpu = cgpu;
-      thr->device_thread = j;
-
-      if (!cgpu->drv->thread_prepare(thr))
-        continue;
-
-      if (unlikely(thr_info_create(thr, NULL, miner_thread, thr)))
-        quit(1, "thread %d create failed", thr->id);
-
-      cgpu->thr[j] = thr;
-
-      /* Enable threads for devices set not to mine but disable
-       * their queue in case we wish to enable them later */
-      if (cgpu->deven != DEV_DISABLED) {
-        applog(LOG_DEBUG, "Pushing sem post to thread %d", thr->id);
-        cgsem_post(&thr->sem);
-      }
-    }
-  }
+  restart_mining_threads(mining_threads);
 
   if (opt_benchmark)
     goto begin_bench;

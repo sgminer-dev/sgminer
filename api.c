@@ -1948,7 +1948,7 @@ static void gpuenable(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char
 	int id;
 	int i;
 
-	if (gpu_threads == 0) {
+	if (mining_threads == 0) {
 		message(io_data, MSG_GPUNON, 0, NULL, isjson);
 		return;
 	}
@@ -1972,7 +1972,7 @@ static void gpuenable(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char
 		return;
 	}
 
-	for (i = 0; i < gpu_threads; i++) {
+	for (i = 0; i < mining_threads; i++) {
 		thr = get_thread(i);
 		gpu = thr->cgpu->device_id;
 		if (gpu == id) {
