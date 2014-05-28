@@ -810,6 +810,27 @@ static char *set_pool_rawintensity(const char *arg)
   return NULL;
 }
 
+static char *set_pool_thread_concurrency(const char *arg)
+{
+  struct pool *pool = get_current_pool();
+  pool->thread_concurrency = arg;
+  return NULL;
+}
+
+static char *set_pool_gpu_engine(const char *arg)
+{
+  struct pool *pool = get_current_pool();
+  pool->gpu_engine = arg;
+  return NULL;
+}
+
+static char *set_pool_gpu_memclock(const char *arg)
+{
+  struct pool *pool = get_current_pool();
+  pool->gpu_memclock = arg;
+  return NULL;
+}
+
 static char *set_pool_nfactor(const char *arg)
 {
 	struct pool *pool = get_current_pool();
@@ -1294,6 +1315,12 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--gpu-vddc",
 		     set_gpu_vddc, NULL, NULL,
 		     "Set the GPU voltage in Volts - one value for all or separate by commas for per card"),
+OPT_WITH_ARG("--pool-gpu-engine",
+		     set_pool_gpu_engine, NULL, NULL,
+		     "GPU engine (over)clock range in Mhz - one value, range and/or comma separated list (e.g. 850-900,900,750-850)"),
+	OPT_WITH_ARG("--pool-gpu-memclock",
+		     set_pool_gpu_memclock, NULL, NULL,
+		     "Set the GPU memory (over)clock in Mhz - one value for all or separate by commas for per card"),
 #endif
 	OPT_WITH_ARG("--lookup-gap",
 		     set_lookup_gap, NULL, NULL,
@@ -1492,6 +1519,9 @@ static struct opt_table opt_config_table[] = {
 	OPT_WITH_ARG("--pool-nfactor",
 		     set_pool_nfactor, NULL, NULL,
 		     "Set N-factor for pool"),
+	OPT_WITH_ARG("--pool-thread-concurrency",
+		     set_pool_thread_concurrency, NULL, NULL,
+		     "Set thread concurrency for pool"),
 	OPT_WITH_ARG("--user|-u",
 		     set_user, NULL, NULL,
 		     "Username for bitcoin JSON-RPC server"),
@@ -6135,16 +6165,6 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 			struct thr_info *thr = mining_thr[i];
 		  thr->cgpu->drv->thread_shutdown(thr);
 		}
-		// Change algorithm for each thread (thread_prepare calls initCl)
-		for (i = 0; i < mining_threads; i++) {
-			struct thr_info *thr = mining_thr[i];
-			thr->cgpu->algorithm = work->pool->algorithm;
-		  thr->cgpu->drv->thread_prepare(thr);
-
-      // Necessary because algorithms can have dramatically different diffs
-      thr->cgpu->drv->working_diff = 1;
-		}
-		rd_unlock(&mining_thr_lock);
     // Reset stats (e.g. for working_diff to be set properly in hash_sole_work)
     zero_stats();
     // Apply other pool-specific settings
@@ -6156,6 +6176,28 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
       set_xintensity(work->pool->xintensity);
     if (work->pool->rawintensity)
       set_rawintensity(work->pool->rawintensity);
+    if (work->pool->thread_concurrency)
+      set_thread_concurrency(work->pool->thread_concurrency);
+    if (work->pool->gpu_engine) {
+    	set_gpu_engine(work->pool->gpu_engine);
+    	for (i = 0; i < nDevs; i++)
+    		set_engineclock(i, gpus[i].min_engine);
+    }
+    if (work->pool->gpu_memclock) {
+    	set_gpu_memclock(work->pool->gpu_memclock);
+    	for (i = 0; i < nDevs; i++)
+    		set_memoryclock(i, gpus[i].gpu_memclock);
+    }
+		// Change algorithm for each thread (thread_prepare calls initCl)
+		for (i = 0; i < mining_threads; i++) {
+			struct thr_info *thr = mining_thr[i];
+			thr->cgpu->algorithm = work->pool->algorithm;
+		  thr->cgpu->drv->thread_prepare(thr);
+
+      // Necessary because algorithms can have dramatically different diffs
+      thr->cgpu->drv->working_diff = 1;
+		}
+		rd_unlock(&mining_thr_lock);
     // Finish switching pools
 	  algo_switch_n = 0;
 		mutex_unlock(&algo_switch_lock);
