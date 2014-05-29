@@ -211,6 +211,7 @@ exit 0</Command>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WholeProgramOptimization>true</WholeProgramOptimization>
+      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -242,6 +243,7 @@ exit 0</Command>
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</WholeProgramOptimization>
     </ClCompile>
     <ClCompile Include="..\algorithm.c" />
+    <ClCompile Include="..\animecoin.c" />
     <ClCompile Include="..\api.c" />
     <ClCompile Include="..\ccan\opt\helpers.c" />
     <ClCompile Include="..\ccan\opt\opt.c" />
@@ -257,20 +259,50 @@ exit 0</Command>
     <ClCompile Include="..\compat\jansson-2.5\src\strconv.c" />
     <ClCompile Include="..\compat\jansson-2.5\src\utf.c" />
     <ClCompile Include="..\compat\jansson-2.5\src\value.c" />
+    <ClCompile Include="..\darkcoin.c" />
     <ClCompile Include="..\driver-opencl.c" />
     <ClCompile Include="..\findnonce.c" />
+    <ClCompile Include="..\fuguecoin.c" />
+    <ClCompile Include="..\groestlcoin.c" />
     <ClCompile Include="..\hexdump.c" />
+    <ClCompile Include="..\inkcoin.c" />
     <ClCompile Include="..\logging.c" />
+    <ClCompile Include="..\marucoin.c" />
+    <ClCompile Include="..\maxcoin.c" />
+    <ClCompile Include="..\myriadcoin-groestl.c" />
     <ClCompile Include="..\ocl.c" />
     <ClCompile Include="..\pool.c" />
+    <ClCompile Include="..\quarkcoin.c" />
+    <ClCompile Include="..\qubitcoin.c" />
     <ClCompile Include="..\scrypt.c" />
     <ClCompile Include="..\sgminer.c" />
     <ClCompile Include="..\sha2.c" />
+    <ClCompile Include="..\sifcoin.c" />
+    <ClCompile Include="..\sph\aes_helper.c" />
+    <ClCompile Include="..\sph\blake.c" />
+    <ClCompile Include="..\sph\bmw.c" />
+    <ClCompile Include="..\sph\cubehash.c" />
+    <ClCompile Include="..\sph\echo.c" />
+    <ClCompile Include="..\sph\fugue.c" />
+    <ClCompile Include="..\sph\groestl.c" />
+    <ClCompile Include="..\sph\hamsi.c" />
+    <ClCompile Include="..\sph\hamsi_helper.c" />
+    <ClCompile Include="..\sph\jh.c" />
+    <ClCompile Include="..\sph\keccak.c" />
+    <ClCompile Include="..\sph\luffa.c" />
+    <ClCompile Include="..\sph\panama.c" />
+    <ClCompile Include="..\sph\sha2.c" />
+    <ClCompile Include="..\sph\sha2big.c" />
+    <ClCompile Include="..\sph\shavite.c" />
+    <ClCompile Include="..\sph\simd.c" />
+    <ClCompile Include="..\sph\skein.c" />
+    <ClCompile Include="..\twecoin.c" />
     <ClCompile Include="..\util.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\adl.h" />
     <ClInclude Include="..\algorithm.h" />
+    <ClInclude Include="..\animecoin.h" />
     <ClInclude Include="..\arg-nonnull.h" />
     <ClInclude Include="..\bench_block.h" />
     <ClInclude Include="..\c++defs.h" />
@@ -280,15 +312,42 @@ exit 0</Command>
     <ClInclude Include="..\compat\jansson-2.5\src\jansson_private.h" />
     <ClInclude Include="..\compat\jansson-2.5\src\strbuffer.h" />
     <ClInclude Include="..\compat\jansson-2.5\src\utf.h" />
+    <ClInclude Include="..\darkcoin.h" />
     <ClInclude Include="..\driver-opencl.h" />
     <ClInclude Include="..\elist.h" />
     <ClInclude Include="..\findnonce.h" />
+    <ClInclude Include="..\fuguecoin.h" />
+    <ClInclude Include="..\groestlcoin.h" />
+    <ClInclude Include="..\inkcoin.h" />
     <ClInclude Include="..\logging.h" />
+    <ClInclude Include="..\marucoin.h" />
+    <ClInclude Include="..\maxcoin.h" />
     <ClInclude Include="..\miner.h" />
+    <ClInclude Include="..\myriadcoin-groestl.h" />
     <ClInclude Include="..\ocl.h" />
     <ClInclude Include="..\pool.h" />
+    <ClInclude Include="..\quarkcoin.h" />
+    <ClInclude Include="..\qubitcoin.h" />
     <ClInclude Include="..\scrypt.h" />
     <ClInclude Include="..\sha2.h" />
+    <ClInclude Include="..\sifcoin.h" />
+    <ClInclude Include="..\sph\sph_blake.h" />
+    <ClInclude Include="..\sph\sph_bmw.h" />
+    <ClInclude Include="..\sph\sph_cubehash.h" />
+    <ClInclude Include="..\sph\sph_echo.h" />
+    <ClInclude Include="..\sph\sph_fugue.h" />
+    <ClInclude Include="..\sph\sph_groestl.h" />
+    <ClInclude Include="..\sph\sph_hamsi.h" />
+    <ClInclude Include="..\sph\sph_jh.h" />
+    <ClInclude Include="..\sph\sph_keccak.h" />
+    <ClInclude Include="..\sph\sph_luffa.h" />
+    <ClInclude Include="..\sph\sph_panama.h" />
+    <ClInclude Include="..\sph\sph_sha2.h" />
+    <ClInclude Include="..\sph\sph_shavite.h" />
+    <ClInclude Include="..\sph\sph_simd.h" />
+    <ClInclude Include="..\sph\sph_skein.h" />
+    <ClInclude Include="..\sph\sph_types.h" />
+    <ClInclude Include="..\twecoin.h" />
     <ClInclude Include="..\uthash.h" />
     <ClInclude Include="..\util.h" />
     <ClInclude Include="..\warn-on-use.h" />
