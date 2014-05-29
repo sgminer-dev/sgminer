@@ -1,5 +1,15 @@
 # Release news
 
+## Master
+
+* Added support for animecoin, darkcoin, fuguecoin, groestlcoin, inkcoin,
+  marucoin, myriadcoin-groestl, quarkcoin, qubitcoin, sifcoin, twecoin,
+  darkcoin-mod ("X11-mod" kernel), maxcoin (by mrbrdo).
+* intensity, xintensity, rawintensity, gpu-memclock, gpu-engine,
+  thread-concurrency, gpu-threads now also have a `pool-*` version to
+  configure them for each pool separately (by mrbrdo).
+* Extranonce support for stratum (by bitbandi).
+
 ## Version 4.2.1 - 22nd May 2014
 
 * Fixed MSVS building, tested with MSVC++ 2010 and 2013 (by _troky_).

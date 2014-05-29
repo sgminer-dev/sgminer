@@ -44,27 +44,18 @@ If you use any of these options for a pool, then **you must** set that option
 for every pool. This is necessary due to current poor implementation of
 sgminer config parser.
 
-### pool-algorithm
+Options that can be configured have a `pool-` prefix and work the same as the
+global settings:
 
-Allows choosing the algorithm for a specific pool. See `algorithm`.
-
-### pool-nfactor
-
-Overrides the default scrypt parameter N for a specific pool.
-See `nfactor`.
-
-### pool-intensity
-
-Overrides intensity. See `intensity`.
-
-### pool-xintensity
-
-Overrides xintensity. See `xintensity`.
-
-### pool-rawintensity
-
-Overrides rawintensity. See `rawintensity`.
-
+* pool-algorithm
+* pool-nfactor
+* pool-intensity
+* pool-xintensity
+* pool-rawintensity
+* pool-gpu-engine
+* pool-gpu-memclock
+* pool-gpu-threads
+* pool-thread-concurrency
 
 ## CLI-only options
 
