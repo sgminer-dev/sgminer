@@ -1558,7 +1558,7 @@ init_small(void *cc, const u32 *iv)
 {
 	sph_simd_small_context *sc;
 
-	sc = cc;
+	sc = (sph_simd_small_context *)cc;
 	memcpy(sc->state, iv, sizeof sc->state);
 	sc->count_low = sc->count_high = 0;
 	sc->ptr = 0;
@@ -1569,7 +1569,7 @@ init_big(void *cc, const u32 *iv)
 {
 	sph_simd_big_context *sc;
 
-	sc = cc;
+	sc = (sph_simd_big_context *)cc;
 	memcpy(sc->state, iv, sizeof sc->state);
 	sc->count_low = sc->count_high = 0;
 	sc->ptr = 0;
@@ -1580,7 +1580,7 @@ update_small(void *cc, const void *data, size_t len)
 {
 	sph_simd_small_context *sc;
 
-	sc = cc;
+	sc = (sph_simd_small_context *)cc;
 	while (len > 0) {
 		size_t clen;
 
@@ -1605,7 +1605,7 @@ update_big(void *cc, const void *data, size_t len)
 {
 	sph_simd_big_context *sc;
 
-	sc = cc;
+	sc = (sph_simd_big_context *)cc;
 	while (len > 0) {
 		size_t clen;
 
@@ -1654,7 +1654,7 @@ finalize_small(void *cc, unsigned ub, unsigned n, void *dst, size_t dst_len)
 	unsigned char *d;
 	size_t u;
 
-	sc = cc;
+	sc = (sph_simd_small_context *)cc;
 	if (sc->ptr > 0 || n > 0) {
 		memset(sc->buf + sc->ptr, 0,
 			(sizeof sc->buf) - sc->ptr);
@@ -1664,8 +1664,8 @@ finalize_small(void *cc, unsigned ub, unsigned n, void *dst, size_t dst_len)
 	memset(sc->buf, 0, sizeof sc->buf);
 	encode_count_small(sc->buf, sc->count_low, sc->count_high, sc->ptr, n);
 	compress_small(sc, 1);
-	d = dst;
-	for (d = dst, u = 0; u < dst_len; u ++)
+	d = (unsigned char *)dst;
+	for (d = (unsigned char *)dst, u = 0; u < dst_len; u ++)
 		sph_enc32le(d + (u << 2), sc->state[u]);
 }
 
@@ -1676,7 +1676,7 @@ finalize_big(void *cc, unsigned ub, unsigned n, void *dst, size_t dst_len)
 	unsigned char *d;
 	size_t u;
 
-	sc = cc;
+	sc = (sph_simd_big_context *)cc;
 	if (sc->ptr > 0 || n > 0) {
 		memset(sc->buf + sc->ptr, 0,
 			(sizeof sc->buf) - sc->ptr);
@@ -1686,8 +1686,8 @@ finalize_big(void *cc, unsigned ub, unsigned n, void *dst, size_t dst_len)
 	memset(sc->buf, 0, sizeof sc->buf);
 	encode_count_big(sc->buf, sc->count_low, sc->count_high, sc->ptr, n);
 	compress_big(sc, 1);
-	d = dst;
-	for (d = dst, u = 0; u < dst_len; u ++)
+	d = (unsigned char *)dst;
+	for (d = (unsigned char *)dst, u = 0; u < dst_len; u ++)
 		sph_enc32le(d + (u << 2), sc->state[u]);
 }
 

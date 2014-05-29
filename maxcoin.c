@@ -59,7 +59,7 @@ struct bin32
 void maxcoin1(unsigned char *out, const unsigned char *inraw, unsigned inrawlen)
 {
   unsigned char temp[136];
-  unsigned round;
+  unsigned round_val;
 
   UINT64 Aba, Abe, Abi, Abo, Abu;
   UINT64 Aga, Age, Agi, Ago, Agu;
@@ -107,7 +107,7 @@ void maxcoin1(unsigned char *out, const unsigned char *inraw, unsigned inrawlen)
   Aso = 0;
   Asu = 0;
 
-  for( round = 0; round < 24; round += 2 )
+  for( round_val = 0; round_val < 24; round_val += 2 )
   {
     //    prepareTheta
     BCa = Aba^Aga^Aka^Ama^Asa;
@@ -116,7 +116,7 @@ void maxcoin1(unsigned char *out, const unsigned char *inraw, unsigned inrawlen)
     BCo = Abo^Ago^Ako^Amo^Aso;
     BCu = Abu^Agu^Aku^Amu^Asu;
 
-    //thetaRhoPiChiIotaPrepareTheta(round  , A, E)
+    //thetaRhoPiChiIotaPrepareTheta(round_val  , A, E)
     Da = BCu^ROL(BCe, 1);
     De = BCa^ROL(BCi, 1);
     Di = BCe^ROL(BCo, 1);
@@ -134,7 +134,7 @@ void maxcoin1(unsigned char *out, const unsigned char *inraw, unsigned inrawlen)
     Asu ^= Du;
     BCu = ROL(Asu, 14);
     Eba =   BCa ^((~BCe)&  BCi );
-    Eba ^= MaxcoinF_RoundConstants[round];
+    Eba ^= MaxcoinF_RoundConstants[round_val];
     Ebe =   BCe ^((~BCi)&  BCo );
     Ebi =   BCi ^((~BCo)&  BCu );
     Ebo =   BCo ^((~BCu)&  BCa );
@@ -211,7 +211,7 @@ void maxcoin1(unsigned char *out, const unsigned char *inraw, unsigned inrawlen)
     BCo = Ebo^Ego^Eko^Emo^Eso;
     BCu = Ebu^Egu^Eku^Emu^Esu;
 
-    //thetaRhoPiChiIotaPrepareTheta(round+1, E, A)
+    //thetaRhoPiChiIotaPrepareTheta(round_val+1, E, A)
     Da = BCu^ROL(BCe, 1);
     De = BCa^ROL(BCi, 1);
     Di = BCe^ROL(BCo, 1);
@@ -229,7 +229,7 @@ void maxcoin1(unsigned char *out, const unsigned char *inraw, unsigned inrawlen)
     Esu ^= Du;
     BCu = ROL(Esu, 14);
     Aba =   BCa ^((~BCe)&  BCi );
-    Aba ^= MaxcoinF_RoundConstants[round+1];
+    Aba ^= MaxcoinF_RoundConstants[round_val+1];
     Abe =   BCe ^((~BCi)&  BCo );
     Abi =   BCi ^((~BCo)&  BCu );
     Abo =   BCo ^((~BCu)&  BCa );

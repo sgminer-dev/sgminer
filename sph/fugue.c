@@ -1046,7 +1046,7 @@ fugue2_close(sph_fugue_context *sc, unsigned ub, unsigned n,
 	}
 	S[4] ^= S[0];
 	S[15] ^= S[0];
-	out = dst;
+	out = (unsigned char *)dst;
 	sph_enc32be(out +  0, S[ 1]);
 	sph_enc32be(out +  4, S[ 2]);
 	sph_enc32be(out +  8, S[ 3]);
@@ -1093,7 +1093,7 @@ fugue3_close(sph_fugue_context *sc, unsigned ub, unsigned n, void *dst)
 	S[4] ^= S[0];
 	S[12] ^= S[0];
 	S[24] ^= S[0];
-	out = dst;
+	out = (unsigned char *)dst;
 	sph_enc32be(out +  0, S[ 1]);
 	sph_enc32be(out +  4, S[ 2]);
 	sph_enc32be(out +  8, S[ 3]);
@@ -1150,7 +1150,7 @@ fugue4_close(sph_fugue_context *sc, unsigned ub, unsigned n, void *dst)
 	S[9] ^= S[0];
 	S[18] ^= S[0];
 	S[27] ^= S[0];
-	out = dst;
+	out = (unsigned char *)dst;
 	sph_enc32be(out +  0, S[ 1]);
 	sph_enc32be(out +  4, S[ 2]);
 	sph_enc32be(out +  8, S[ 3]);
@@ -1174,110 +1174,110 @@ fugue4_close(sph_fugue_context *sc, unsigned ub, unsigned n, void *dst)
 void
 sph_fugue224_init(void *cc)
 {
-	fugue_init(cc, 23, IV224, 7);
+	fugue_init((sph_fugue_context *)cc, 23, IV224, 7);
 }
 
 /* see sph_fugue.h */
 void
 sph_fugue224(void *cc, const void *data, size_t len)
 {
-	fugue2_core(cc, data, len);
+	fugue2_core((sph_fugue_context *)cc, data, len);
 }
 
 /* see sph_fugue.h */
 void
 sph_fugue224_close(void *cc, void *dst)
 {
-	fugue2_close(cc, 0, 0, dst, 7);
+	fugue2_close((sph_fugue_context *)cc, 0, 0, dst, 7);
 }
 
 /* see sph_fugue.h */
 void
 sph_fugue224_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	fugue2_close(cc, ub, n, dst, 7);
+	fugue2_close((sph_fugue_context *)cc, ub, n, dst, 7);
 }
 
 /* see sph_fugue.h */
 void
 sph_fugue256_init(void *cc)
 {
-	fugue_init(cc, 22, IV256, 8);
+	fugue_init((sph_fugue_context *)cc, 22, IV256, 8);
 }
 
 /* see sph_fugue.h */
 void
 sph_fugue256(void *cc, const void *data, size_t len)
 {
-	fugue2_core(cc, data, len);
+	fugue2_core((sph_fugue_context *)cc, data, len);
 }
 
 /* see sph_fugue.h */
 void
 sph_fugue256_close(void *cc, void *dst)
 {
-	fugue2_close(cc, 0, 0, dst, 8);
+	fugue2_close((sph_fugue_context *)cc, 0, 0, dst, 8);
 }
 
 /* see sph_fugue.h */
 void
 sph_fugue256_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	fugue2_close(cc, ub, n, dst, 8);
+	fugue2_close((sph_fugue_context *)cc, ub, n, dst, 8);
 }
 
 /* see sph_fugue.h */
 void
 sph_fugue384_init(void *cc)
 {
-	fugue_init(cc, 24, IV384, 12);
+	fugue_init((sph_fugue_context *)cc, 24, IV384, 12);
 }
 
 /* see sph_fugue.h */
 void
 sph_fugue384(void *cc, const void *data, size_t len)
 {
-	fugue3_core(cc, data, len);
+	fugue3_core((sph_fugue_context *)cc, data, len);
 }
 
 /* see sph_fugue.h */
 void
 sph_fugue384_close(void *cc, void *dst)
 {
-	fugue3_close(cc, 0, 0, dst);
+	fugue3_close((sph_fugue_context *)cc, 0, 0, dst);
 }
 
 /* see sph_fugue.h */
 void
 sph_fugue384_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	fugue3_close(cc, ub, n, dst);
+	fugue3_close((sph_fugue_context *)cc, ub, n, dst);
 }
 
 /* see sph_fugue.h */
 void
 sph_fugue512_init(void *cc)
 {
-	fugue_init(cc, 20, IV512, 16);
+	fugue_init((sph_fugue_context *)cc, 20, IV512, 16);
 }
 
 /* see sph_fugue.h */
 void
 sph_fugue512(void *cc, const void *data, size_t len)
 {
-	fugue4_core(cc, data, len);
+	fugue4_core((sph_fugue_context *)cc, data, len);
 }
 
 /* see sph_fugue.h */
 void
 sph_fugue512_close(void *cc, void *dst)
 {
-	fugue4_close(cc, 0, 0, dst);
+	fugue4_close((sph_fugue_context *)cc, 0, 0, dst);
 }
 
 /* see sph_fugue.h */
 void
 sph_fugue512_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	fugue4_close(cc, ub, n, dst);
+	fugue4_close((sph_fugue_context *)cc, ub, n, dst);
 }

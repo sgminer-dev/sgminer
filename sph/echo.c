@@ -915,110 +915,110 @@ echo_big_close(sph_echo_big_context *sc, unsigned ub, unsigned n,
 void
 sph_echo224_init(void *cc)
 {
-	echo_small_init(cc, 224);
+	echo_small_init((sph_echo_small_context *)cc, 224);
 }
 
 /* see sph_echo.h */
 void
 sph_echo224(void *cc, const void *data, size_t len)
 {
-	echo_small_core(cc, data, len);
+	echo_small_core((sph_echo_small_context *)cc, (const unsigned char *)data, len);
 }
 
 /* see sph_echo.h */
 void
 sph_echo224_close(void *cc, void *dst)
 {
-	echo_small_close(cc, 0, 0, dst, 7);
+	echo_small_close((sph_echo_small_context *)cc, 0, 0, dst, 7);
 }
 
 /* see sph_echo.h */
 void
 sph_echo224_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	echo_small_close(cc, ub, n, dst, 7);
+	echo_small_close((sph_echo_small_context *)cc, ub, n, dst, 7);
 }
 
 /* see sph_echo.h */
 void
 sph_echo256_init(void *cc)
 {
-	echo_small_init(cc, 256);
+	echo_small_init((sph_echo_small_context *)cc, 256);
 }
 
 /* see sph_echo.h */
 void
 sph_echo256(void *cc, const void *data, size_t len)
 {
-	echo_small_core(cc, data, len);
+	echo_small_core((sph_echo_small_context *)cc, (unsigned char *)data, len);
 }
 
 /* see sph_echo.h */
 void
 sph_echo256_close(void *cc, void *dst)
 {
-	echo_small_close(cc, 0, 0, dst, 8);
+	echo_small_close((sph_echo_small_context *)cc, 0, 0, dst, 8);
 }
 
 /* see sph_echo.h */
 void
 sph_echo256_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	echo_small_close(cc, ub, n, dst, 8);
+	echo_small_close((sph_echo_small_context *)cc, ub, n, dst, 8);
 }
 
 /* see sph_echo.h */
 void
 sph_echo384_init(void *cc)
 {
-	echo_big_init(cc, 384);
+	echo_big_init((sph_echo_big_context *)cc, 384);
 }
 
 /* see sph_echo.h */
 void
 sph_echo384(void *cc, const void *data, size_t len)
 {
-	echo_big_core(cc, data, len);
+	echo_big_core((sph_echo_big_context *)cc, (unsigned char *)data, len);
 }
 
 /* see sph_echo.h */
 void
 sph_echo384_close(void *cc, void *dst)
 {
-	echo_big_close(cc, 0, 0, dst, 12);
+	echo_big_close((sph_echo_big_context *)cc, 0, 0, dst, 12);
 }
 
 /* see sph_echo.h */
 void
 sph_echo384_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	echo_big_close(cc, ub, n, dst, 12);
+	echo_big_close((sph_echo_big_context *)cc, ub, n, dst, 12);
 }
 
 /* see sph_echo.h */
 void
 sph_echo512_init(void *cc)
 {
-	echo_big_init(cc, 512);
+	echo_big_init((sph_echo_big_context *)cc, 512);
 }
 
 /* see sph_echo.h */
 void
 sph_echo512(void *cc, const void *data, size_t len)
 {
-	echo_big_core(cc, data, len);
+	echo_big_core((sph_echo_big_context *)cc, (unsigned char *)data, len);
 }
 
 /* see sph_echo.h */
 void
 sph_echo512_close(void *cc, void *dst)
 {
-	echo_big_close(cc, 0, 0, dst, 16);
+	echo_big_close((sph_echo_big_context *)cc, 0, 0, dst, 16);
 }
 
 /* see sph_echo.h */
 void
 sph_echo512_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	echo_big_close(cc, ub, n, dst, 16);
+	echo_big_close((sph_echo_big_context *)cc, ub, n, dst, 16);
 }

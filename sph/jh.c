@@ -998,110 +998,110 @@ jh_close(sph_jh_context *sc, unsigned ub, unsigned n,
 void
 sph_jh224_init(void *cc)
 {
-	jh_init(cc, IV224);
+	jh_init((sph_jh_context *)cc, IV224);
 }
 
 /* see sph_jh.h */
 void
 sph_jh224(void *cc, const void *data, size_t len)
 {
-	jh_core(cc, data, len);
+	jh_core((sph_jh_context *)cc, data, len);
 }
 
 /* see sph_jh.h */
 void
 sph_jh224_close(void *cc, void *dst)
 {
-	jh_close(cc, 0, 0, dst, 7, IV224);
+	jh_close((sph_jh_context *)cc, 0, 0, dst, 7, IV224);
 }
 
 /* see sph_jh.h */
 void
 sph_jh224_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	jh_close(cc, ub, n, dst, 7, IV224);
+	jh_close((sph_jh_context *)cc, ub, n, dst, 7, IV224);
 }
 
 /* see sph_jh.h */
 void
 sph_jh256_init(void *cc)
 {
-	jh_init(cc, IV256);
+	jh_init((sph_jh_context *)cc, IV256);
 }
 
 /* see sph_jh.h */
 void
 sph_jh256(void *cc, const void *data, size_t len)
 {
-	jh_core(cc, data, len);
+	jh_core((sph_jh_context *)cc, data, len);
 }
 
 /* see sph_jh.h */
 void
 sph_jh256_close(void *cc, void *dst)
 {
-	jh_close(cc, 0, 0, dst, 8, IV256);
+	jh_close((sph_jh_context *)cc, 0, 0, dst, 8, IV256);
 }
 
 /* see sph_jh.h */
 void
 sph_jh256_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	jh_close(cc, ub, n, dst, 8, IV256);
+	jh_close((sph_jh_context *)cc, ub, n, dst, 8, IV256);
 }
 
 /* see sph_jh.h */
 void
 sph_jh384_init(void *cc)
 {
-	jh_init(cc, IV384);
+	jh_init((sph_jh_context *)cc, IV384);
 }
 
 /* see sph_jh.h */
 void
 sph_jh384(void *cc, const void *data, size_t len)
 {
-	jh_core(cc, data, len);
+	jh_core((sph_jh_context *)cc, data, len);
 }
 
 /* see sph_jh.h */
 void
 sph_jh384_close(void *cc, void *dst)
 {
-	jh_close(cc, 0, 0, dst, 12, IV384);
+	jh_close((sph_jh_context *)cc, 0, 0, dst, 12, IV384);
 }
 
 /* see sph_jh.h */
 void
 sph_jh384_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	jh_close(cc, ub, n, dst, 12, IV384);
+	jh_close((sph_jh_context *)cc, ub, n, dst, 12, IV384);
 }
 
 /* see sph_jh.h */
 void
 sph_jh512_init(void *cc)
 {
-	jh_init(cc, IV512);
+	jh_init((sph_jh_context *)cc, IV512);
 }
 
 /* see sph_jh.h */
 void
 sph_jh512(void *cc, const void *data, size_t len)
 {
-	jh_core(cc, data, len);
+	jh_core((sph_jh_context *)cc, data, len);
 }
 
 /* see sph_jh.h */
 void
 sph_jh512_close(void *cc, void *dst)
 {
-	jh_close(cc, 0, 0, dst, 16, IV512);
+	jh_close((sph_jh_context *)cc, 0, 0, dst, 16, IV512);
 }
 
 /* see sph_jh.h */
 void
 sph_jh512_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	jh_close(cc, ub, n, dst, 16, IV512);
+	jh_close((sph_jh_context *)cc, ub, n, dst, 16, IV512);
 }

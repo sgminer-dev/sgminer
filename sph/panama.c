@@ -231,7 +231,7 @@ sph_panama_init(void *cc)
 {
 	sph_panama_context *sc;
 
-	sc = cc;
+	sc = (sph_panama_context *)cc;
 	/*
 	 * This is not completely conformant, but "it will work
 	 * everywhere". Initial state consists of zeroes everywhere.
@@ -256,7 +256,7 @@ sph_panama(void *cc, const void *data, size_t len)
 	sph_panama_context *sc;
 	unsigned current;
 
-	sc = cc;
+	sc = (sph_panama_context *)cc;
 	current = sc->data_ptr;
 	while (len > 0) {
 		unsigned clen;
@@ -289,7 +289,7 @@ sph_panama(void *cc, const void *data, size_t len)
 		panama_short(cc, data, len);
 		return;
 	}
-	sc = cc;
+	sc = (sph_panama_context *)cc;
 	current = sc->data_ptr;
 	if (current > 0) {
 		unsigned t;
@@ -305,7 +305,7 @@ sph_panama(void *cc, const void *data, size_t len)
 		return;
 	}
 #endif
-	panama_push(sc, data, len >> 5);
+	panama_push(sc, (const unsigned char *)data, len >> 5);
 	rlen = len & 31;
 	if (rlen > 0)
 		memcpy(sc->data,
@@ -322,7 +322,7 @@ sph_panama_close(void *cc, void *dst)
 	unsigned current;
 	int i;
 
-	sc = cc;
+	sc = (sph_panama_context *)cc;
 	current = sc->data_ptr;
 	sc->data[current ++] = 0x01;
 	memset(sc->data + current, 0, (sizeof sc->data) - current);

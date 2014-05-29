@@ -173,7 +173,8 @@ char *set_thread_concurrency(const char *_arg)
 {
 	int i, val = 0, device = 0;
 	char *nextptr;
-  char *arg = strdupa(_arg);
+	char *arg = (char *)alloca(strlen(_arg) + 1);
+	strcpy(arg, _arg);
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
@@ -230,7 +231,8 @@ char *set_gpu_threads(const char *_arg)
 {
 	int i, val = 1, device = 0;
 	char *nextptr;
-  char *arg = strdupa(_arg);
+	char *arg = (char *)alloca(strlen(_arg) + 1);
+	strcpy(arg, _arg);
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
@@ -260,7 +262,8 @@ char *set_gpu_engine(const char *_arg)
 {
 	int i, val1 = 0, val2 = 0, device = 0;
 	char *nextptr;
-  char *arg = strdupa(_arg);
+	char *arg = (char *)alloca(strlen(_arg) + 1);
+	strcpy(arg, _arg);
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
@@ -332,7 +335,8 @@ char *set_gpu_memclock(const char *_arg)
 {
 	int i, val = 0, device = 0;
 	char *nextptr;
-  char *arg = strdupa(_arg);
+	char *arg = (char *)alloca(strlen(_arg) + 1);
+	strcpy(arg, _arg);
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
@@ -517,7 +521,8 @@ char *set_intensity(const char *_arg)
 {
 	int i, device = 0, *tt;
 	char *nextptr, val = 0;
-  char *arg = strdupa(_arg);
+	char *arg = (char *)alloca(strlen(_arg) + 1);
+	strcpy(arg, _arg);
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
@@ -571,7 +576,8 @@ char *set_xintensity(const char *_arg)
 {
 	int i, device = 0, val = 0;
 	char *nextptr;
-  char *arg = strdupa(_arg);
+	char *arg = (char *)alloca(strlen(_arg) + 1);
+	strcpy(arg, _arg);
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
@@ -613,7 +619,8 @@ char *set_rawintensity(const char *_arg)
 {
 	int i, device = 0, val = 0;
 	char *nextptr;
-  char *arg = strdupa(_arg);
+	char *arg = (char *)alloca(strlen(_arg) + 1);
+	strcpy(arg, _arg);
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)
@@ -1352,7 +1359,7 @@ static int64_t opencl_scanhash(struct thr_info *thr, struct work *work,
 	}
 
     if (clState->goffset)
-        p_global_work_offset = &work->blk.nonce;
+        p_global_work_offset = (size_t *)&work->blk.nonce;
 
     status = clEnqueueNDRangeKernel(clState->commandQueue, clState->kernel, 1, p_global_work_offset,
                     globalThreads, localThreads, 0,  NULL, NULL);

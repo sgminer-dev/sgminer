@@ -25,6 +25,8 @@
 #include "marucoin.h"
 #include "maxcoin.h"
 
+#include "compat.h"
+
 #include <inttypes.h>
 #include <string.h>
 

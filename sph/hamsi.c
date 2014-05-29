@@ -386,7 +386,7 @@ hamsi_small_core(sph_hamsi_small_context *sc, const void *data, size_t len)
 		}
 	}
 
-	hamsi_small(sc, data, (len >> 2));
+	hamsi_small(sc, (const unsigned char *)data, (len >> 2));
 	data = (const unsigned char *)data + (len & ~(size_t)3);
 	len &= (size_t)3;
 	memcpy(sc->partial, data, len);
@@ -416,7 +416,7 @@ hamsi_small_close(sph_hamsi_small_context *sc,
 		pad[ptr ++] = 0;
 	hamsi_small(sc, pad, 2);
 	hamsi_small_final(sc, pad + 8);
-	out = dst;
+	out = (unsigned char *)dst;
 	for (u = 0; u < out_size_w32; u ++)
 		sph_enc32be(out + (u << 2), sc->h[u]);
 }
@@ -689,7 +689,7 @@ hamsi_big_core(sph_hamsi_big_context *sc, const void *data, size_t len)
 		}
 	}
 
-	hamsi_big(sc, data, (len >> 3));
+	hamsi_big(sc, (const unsigned char *)data, (len >> 3));
 	data = (const unsigned char *)data + (len & ~(size_t)7);
 	len &= (size_t)7;
 	memcpy(sc->partial, data, len);
@@ -718,7 +718,7 @@ hamsi_big_close(sph_hamsi_big_context *sc,
 		sc->partial[ptr ++] = 0;
 	hamsi_big(sc, sc->partial, 1);
 	hamsi_big_final(sc, pad);
-	out = dst;
+	out = (unsigned char *)dst;
 	if (out_size_w32 == 12) {
 		sph_enc32be(out +  0, sc->h[ 0]);
 		sph_enc32be(out +  4, sc->h[ 1]);
@@ -742,118 +742,118 @@ hamsi_big_close(sph_hamsi_big_context *sc,
 void
 sph_hamsi224_init(void *cc)
 {
-	hamsi_small_init(cc, IV224);
+	hamsi_small_init((sph_hamsi_small_context *)cc, IV224);
 }
 
 /* see sph_hamsi.h */
 void
 sph_hamsi224(void *cc, const void *data, size_t len)
 {
-	hamsi_small_core(cc, data, len);
+	hamsi_small_core((sph_hamsi_small_context *)cc, data, len);
 }
 
 /* see sph_hamsi.h */
 void
 sph_hamsi224_close(void *cc, void *dst)
 {
-	hamsi_small_close(cc, 0, 0, dst, 7);
-	hamsi_small_init(cc, IV224);
+	hamsi_small_close((sph_hamsi_small_context *)cc, 0, 0, dst, 7);
+	hamsi_small_init((sph_hamsi_small_context *)cc, IV224);
 }
 
 /* see sph_hamsi.h */
 void
 sph_hamsi224_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	hamsi_small_close(cc, ub, n, dst, 7);
-	hamsi_small_init(cc, IV224);
+	hamsi_small_close((sph_hamsi_small_context *)cc, ub, n, dst, 7);
+	hamsi_small_init((sph_hamsi_small_context *)cc, IV224);
 }
 
 /* see sph_hamsi.h */
 void
 sph_hamsi256_init(void *cc)
 {
-	hamsi_small_init(cc, IV256);
+	hamsi_small_init((sph_hamsi_small_context *)cc, IV256);
 }
 
 /* see sph_hamsi.h */
 void
 sph_hamsi256(void *cc, const void *data, size_t len)
 {
-	hamsi_small_core(cc, data, len);
+	hamsi_small_core((sph_hamsi_small_context *)cc, data, len);
 }
 
 /* see sph_hamsi.h */
 void
 sph_hamsi256_close(void *cc, void *dst)
 {
-	hamsi_small_close(cc, 0, 0, dst, 8);
-	hamsi_small_init(cc, IV256);
+	hamsi_small_close((sph_hamsi_small_context *)cc, 0, 0, dst, 8);
+	hamsi_small_init((sph_hamsi_small_context *)cc, IV256);
 }
 
 /* see sph_hamsi.h */
 void
 sph_hamsi256_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	hamsi_small_close(cc, ub, n, dst, 8);
-	hamsi_small_init(cc, IV256);
+	hamsi_small_close((sph_hamsi_small_context *)cc, ub, n, dst, 8);
+	hamsi_small_init((sph_hamsi_small_context *)cc, IV256);
 }
 
 /* see sph_hamsi.h */
 void
 sph_hamsi384_init(void *cc)
 {
-	hamsi_big_init(cc, IV384);
+	hamsi_big_init((sph_hamsi_big_context *)cc, IV384);
 }
 
 /* see sph_hamsi.h */
 void
 sph_hamsi384(void *cc, const void *data, size_t len)
 {
-	hamsi_big_core(cc, data, len);
+	hamsi_big_core((sph_hamsi_big_context *)cc, data, len);
 }
 
 /* see sph_hamsi.h */
 void
 sph_hamsi384_close(void *cc, void *dst)
 {
-	hamsi_big_close(cc, 0, 0, dst, 12);
-	hamsi_big_init(cc, IV384);
+	hamsi_big_close((sph_hamsi_big_context *)cc, 0, 0, dst, 12);
+	hamsi_big_init((sph_hamsi_big_context *)cc, IV384);
 }
 
 /* see sph_hamsi.h */
 void
 sph_hamsi384_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	hamsi_big_close(cc, ub, n, dst, 12);
-	hamsi_big_init(cc, IV384);
+	hamsi_big_close((sph_hamsi_big_context *)cc, ub, n, dst, 12);
+	hamsi_big_init((sph_hamsi_big_context *)cc, IV384);
 }
 
 /* see sph_hamsi.h */
 void
 sph_hamsi512_init(void *cc)
 {
-	hamsi_big_init(cc, IV512);
+	hamsi_big_init((sph_hamsi_big_context *)cc, IV512);
 }
 
 /* see sph_hamsi.h */
 void
 sph_hamsi512(void *cc, const void *data, size_t len)
 {
-	hamsi_big_core(cc, data, len);
+	hamsi_big_core((sph_hamsi_big_context *)cc, data, len);
 }
 
 /* see sph_hamsi.h */
 void
 sph_hamsi512_close(void *cc, void *dst)
 {
-	hamsi_big_close(cc, 0, 0, dst, 16);
-	hamsi_big_init(cc, IV512);
+	hamsi_big_close((sph_hamsi_big_context *)cc, 0, 0, dst, 16);
+	hamsi_big_init((sph_hamsi_big_context *)cc, IV512);
 }
 
 /* see sph_hamsi.h */
 void
 sph_hamsi512_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	hamsi_big_close(cc, ub, n, dst, 16);
-	hamsi_big_init(cc, IV512);
+	hamsi_big_close((sph_hamsi_big_context *)cc, ub, n, dst, 16);
+	hamsi_big_init((sph_hamsi_big_context *)cc, IV512);
 }

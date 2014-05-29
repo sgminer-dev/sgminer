@@ -595,7 +595,7 @@ cubehash_close(sph_cubehash_context *sc, unsigned ub, unsigned n,
 			xv ^= SPH_C32(1);
 	}
 	WRITE_STATE(sc);
-	out = dst;
+	out = (unsigned char *)dst;
 	for (z = 0; z < out_size_w32; z ++)
 		sph_enc32le(out + (z << 2), sc->state[z]);
 }
@@ -604,14 +604,14 @@ cubehash_close(sph_cubehash_context *sc, unsigned ub, unsigned n,
 void
 sph_cubehash224_init(void *cc)
 {
-	cubehash_init(cc, IV224);
+	cubehash_init((sph_cubehash_context *)cc, IV224);
 }
 
 /* see sph_cubehash.h */
 void
 sph_cubehash224(void *cc, const void *data, size_t len)
 {
-	cubehash_core(cc, data, len);
+	cubehash_core((sph_cubehash_context *)cc, data, len);
 }
 
 /* see sph_cubehash.h */
@@ -625,7 +625,7 @@ sph_cubehash224_close(void *cc, void *dst)
 void
 sph_cubehash224_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	cubehash_close(cc, ub, n, dst, 7);
+	cubehash_close((sph_cubehash_context *)cc, ub, n, dst, 7);
 	sph_cubehash224_init(cc);
 }
 
@@ -633,14 +633,14 @@ sph_cubehash224_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 void
 sph_cubehash256_init(void *cc)
 {
-	cubehash_init(cc, IV256);
+	cubehash_init((sph_cubehash_context *)cc, IV256);
 }
 
 /* see sph_cubehash.h */
 void
 sph_cubehash256(void *cc, const void *data, size_t len)
 {
-	cubehash_core(cc, data, len);
+	cubehash_core((sph_cubehash_context *)cc, data, len);
 }
 
 /* see sph_cubehash.h */
@@ -654,7 +654,7 @@ sph_cubehash256_close(void *cc, void *dst)
 void
 sph_cubehash256_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	cubehash_close(cc, ub, n, dst, 8);
+	cubehash_close((sph_cubehash_context *)cc, ub, n, dst, 8);
 	sph_cubehash256_init(cc);
 }
 
@@ -662,14 +662,14 @@ sph_cubehash256_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 void
 sph_cubehash384_init(void *cc)
 {
-	cubehash_init(cc, IV384);
+	cubehash_init((sph_cubehash_context *)cc, IV384);
 }
 
 /* see sph_cubehash.h */
 void
 sph_cubehash384(void *cc, const void *data, size_t len)
 {
-	cubehash_core(cc, data, len);
+	cubehash_core((sph_cubehash_context *)cc, data, len);
 }
 
 /* see sph_cubehash.h */
@@ -683,7 +683,7 @@ sph_cubehash384_close(void *cc, void *dst)
 void
 sph_cubehash384_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	cubehash_close(cc, ub, n, dst, 12);
+	cubehash_close((sph_cubehash_context *)cc, ub, n, dst, 12);
 	sph_cubehash384_init(cc);
 }
 
@@ -691,14 +691,14 @@ sph_cubehash384_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 void
 sph_cubehash512_init(void *cc)
 {
-	cubehash_init(cc, IV512);
+	cubehash_init((sph_cubehash_context *)cc, IV512);
 }
 
 /* see sph_cubehash.h */
 void
 sph_cubehash512(void *cc, const void *data, size_t len)
 {
-	cubehash_core(cc, data, len);
+	cubehash_core((sph_cubehash_context *)cc, data, len);
 }
 
 /* see sph_cubehash.h */
@@ -712,6 +712,6 @@ sph_cubehash512_close(void *cc, void *dst)
 void
 sph_cubehash512_addbits_and_close(void *cc, unsigned ub, unsigned n, void *dst)
 {
-	cubehash_close(cc, ub, n, dst, 16);
+	cubehash_close((sph_cubehash_context *)cc, ub, n, dst, 16);
 	sph_cubehash512_init(cc);
 }

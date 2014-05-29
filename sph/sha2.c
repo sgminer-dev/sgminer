@@ -619,7 +619,7 @@ sph_sha224_init(void *cc)
 {
 	sph_sha224_context *sc;
 
-	sc = cc;
+	sc = (sph_sha224_context *)cc;
 	memcpy(sc->val, H224, sizeof H224);
 #if SPH_64
 	sc->count = 0;
@@ -634,7 +634,7 @@ sph_sha256_init(void *cc)
 {
 	sph_sha256_context *sc;
 
-	sc = cc;
+	sc = (sph_sha256_context *)cc;
 	memcpy(sc->val, H256, sizeof H256);
 #if SPH_64
 	sc->count = 0;
