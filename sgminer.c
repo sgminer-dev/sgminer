@@ -836,6 +836,13 @@ static char *set_pool_gpu_threads(const char *arg)
   return NULL;
 }
 
+static char *set_pool_gpu_fan(const char *arg)
+{
+  struct pool *pool = get_current_pool();
+  pool->gpu_fan = arg;
+  return NULL;
+}
+
 static char *set_pool_nfactor(const char *arg)
 {
   struct pool *pool = get_current_pool();
@@ -1328,7 +1335,9 @@ static struct opt_table opt_config_table[] = {
   OPT_WITH_ARG("--pool-gpu-threads",
       set_pool_gpu_threads, NULL, NULL,
       "Number of threads per GPU for pool"),
-
+  OPT_WITH_ARG("--pool-gpu-fan",
+      set_pool_gpu_fan, NULL, NULL,
+      "GPU fan for pool"),
 #endif
   OPT_WITH_ARG("--lookup-gap",
       set_lookup_gap, NULL, NULL,
@@ -6200,6 +6209,12 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
       set_gpu_memclock(work->pool->gpu_memclock);
       for (i = 0; i < nDevs; i++)
         set_memoryclock(i, gpus[i].gpu_memclock);
+    }
+    if (work->pool->gpu_fan) {
+      set_gpu_fan(work->pool->gpu_fan);
+      for (i = 0; i < nDevs; i++)
+        if (gpus[i].min_fan == gpus[i].gpu_fan)
+          set_fanspeed(i, gpus[i].gpu_fan);
     }
     // Change algorithm for each thread (thread_prepare calls initCl)
     for (i = 0; i < mining_threads; i++) {

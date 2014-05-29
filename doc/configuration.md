@@ -56,6 +56,7 @@ global settings:
 * pool-gpu-memclock
 * pool-gpu-threads
 * pool-thread-concurrency
+* pool-gpu-fan
 
 ## CLI-only options
 
