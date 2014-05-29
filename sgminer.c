@@ -8084,6 +8084,9 @@ static void restart_mining_threads(unsigned int new_n_threads)
 
   // Alloc
   mining_threads = (int) new_n_threads;
+#ifdef HAVE_CURSES
+  adj_width(mining_threads, &dev_width);
+#endif
   mining_thr = (struct thr_info **)calloc(mining_threads, sizeof(thr));
   if (!mining_thr)
     quit(1, "Failed to calloc mining_thr");
