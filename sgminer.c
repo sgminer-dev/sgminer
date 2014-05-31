@@ -7337,7 +7337,7 @@ static void *watchpool_thread(void __maybe_unused *userdata)
  * the screen at regular intervals, and restarts threads if they appear to have
  * died. */
 #define WATCHDOG_INTERVAL   2
-#define WATCHDOG_SICK_TIME    120
+#define WATCHDOG_SICK_TIME    240
 #define WATCHDOG_DEAD_TIME    600
 #define WATCHDOG_SICK_COUNT   (WATCHDOG_SICK_TIME/WATCHDOG_INTERVAL)
 #define WATCHDOG_DEAD_COUNT   (WATCHDOG_DEAD_TIME/WATCHDOG_INTERVAL)
@@ -7467,7 +7467,7 @@ static void *watchdog_thread(void __maybe_unused *userdata)
       } else if (cgpu->status == LIFE_WELL && (now.tv_sec - thr->last.tv_sec > WATCHDOG_SICK_TIME)) {
         thr->rolling = cgpu->rolling = 0;
         cgpu->status = LIFE_SICK;
-        applog(LOG_ERR, "%s: Idle for more than 60 seconds, declaring SICK!", dev_str);
+        applog(LOG_ERR, "%s: Idle for more than 2 minutes, declaring SICK!", dev_str);
         cgtime(&thr->sick);
 
         dev_error(cgpu, REASON_DEV_SICK_IDLE_60);
