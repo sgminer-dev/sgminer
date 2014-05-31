@@ -102,6 +102,7 @@ algorithm_t *opt_algorithm;
 static const bool opt_time = true;
 unsigned long long global_hashrate;
 unsigned long global_quota_gcd = 1;
+bool opt_show_coindiff = false;
 time_t last_getwork;
 
 int nDevs;
@@ -1484,6 +1485,9 @@ static struct opt_table opt_config_table[] = {
   OPT_WITH_ARG("--socks-proxy",
       opt_set_charp, NULL, &opt_socks_proxy,
       "Set socks4 proxy (host:port)"),
+  OPT_WITHOUT_ARG("--show-coindiff",
+      opt_set_bool, &opt_show_coindiff,
+      "Show coin difficulty rather than hash value of a share"),
   OPT_WITH_ARG("--state",
       set_pool_state, NULL, NULL,
       "Specify pool state at startup (default: enabled)"),
@@ -1937,6 +1941,16 @@ static void update_gbt(struct pool *pool)
     applog(LOG_DEBUG, "FAILED to update GBT from %s", get_pool_name(pool));
   }
   curl_easy_cleanup(curl);
+}
+
+/* Return the work coin/network difficulty */
+static double get_work_coindiff(const struct work *work)
+{
+  uint8_t pow = work->data[72];
+  int powdiff = (8 * (0x1d - 3)) - (8 * (pow - 3));
+  uint32_t diff32 = be32toh(*((uint32_t *)(work->data + 72))) & 0x00FFFFFF;
+  double numerator = 0xFFFFULL << powdiff;
+  return numerator / (double)diff32;
 }
 
 static void gen_gbt_work(struct pool *pool, struct work *work)
@@ -2787,17 +2801,23 @@ static void show_hash(struct work *work, char *hashshow)
   uint32_t *hash32;
   int ofs;
 
-  swab256(rhash, work->hash);
-  for (ofs = 0; ofs <= 28; ofs ++) {
-    if (rhash[ofs])
-      break;
-  }
-  hash32 = (uint32_t *)(rhash + ofs);
-  h32 = be32toh(*hash32);
   suffix_string_double(work->share_diff, diffdisp, sizeof (diffdisp), 0);
   suffix_string_double(work->work_difficulty, wdiffdisp, sizeof (wdiffdisp), 0);
-  snprintf(hashshow, 64, "%08lx Diff %s/%s%s", h32, diffdisp, wdiffdisp,
-     work->block ? " BLOCK!" : "");
+  if (opt_show_coindiff) {
+    snprintf(hashshow, 64, "Coin %.0f Diff %s/%s%s", get_work_coindiff(work), diffdisp, wdiffdisp,
+     work->block? " BLOCK!" : "");
+  } else {
+    swab256(rhash, work->hash);
+    for (ofs = 0; ofs <= 28; ofs ++) {
+      if (rhash[ofs])
+        break;
+    }
+    hash32 = (uint32_t *)(rhash + ofs);
+    h32 = be32toh(*hash32);
+    
+    snprintf(hashshow, 64, "%08lx Diff %s/%s%s", h32, diffdisp, wdiffdisp,
+       work->block ? " BLOCK!" : "");
+  }
 }
 
 #ifdef HAVE_LIBCURL
