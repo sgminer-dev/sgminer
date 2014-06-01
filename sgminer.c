@@ -1944,12 +1944,12 @@ static void update_gbt(struct pool *pool)
 }
 
 /* Return the work coin/network difficulty */
-static double get_work_coindiff(const struct work *work)
+static double get_work_blockdiff(const struct work *work)
 {
   uint8_t pow = work->data[72];
   int powdiff = (8 * (0x1d - 3)) - (8 * (pow - 3));
   uint32_t diff32 = be32toh(*((uint32_t *)(work->data + 72))) & 0x00FFFFFF;
-  double numerator = 0xFFFFULL << powdiff;
+  double numerator = work->pool->algorithm.diff_numerator << powdiff;
   return numerator / (double)diff32;
 }
 
@@ -2804,7 +2804,7 @@ static void show_hash(struct work *work, char *hashshow)
   suffix_string_double(work->share_diff, diffdisp, sizeof (diffdisp), 0);
   suffix_string_double(work->work_difficulty, wdiffdisp, sizeof (wdiffdisp), 0);
   if (opt_show_coindiff) {
-    snprintf(hashshow, 64, "Coin %.0f Diff %s/%s%s", get_work_coindiff(work), diffdisp, wdiffdisp,
+    snprintf(hashshow, 64, "Coin %.0f Diff %s/%s%s", get_work_blockdiff(work), diffdisp, wdiffdisp,
      work->block? " BLOCK!" : "");
   } else {
     swab256(rhash, work->hash);
@@ -4175,11 +4175,7 @@ static int block_sort(struct block *blocka, struct block *blockb)
 /* Decode the current block difficulty which is in packed form */
 static void set_blockdiff(const struct work *work)
 {
-  uint8_t pow = work->data[72];
-  int powdiff = (8 * (0x1d - 3)) - (8 * (pow - 3));
-  uint32_t diff32 = be32toh(*((uint32_t *)(work->data + 72))) & 0x00FFFFFF;
-  double numerator = work->pool->algorithm.diff_numerator << powdiff;
-  double ddiff = numerator / (double)diff32;
+  double ddiff = get_work_blockdiff(work);
 
   if (unlikely(current_diff != ddiff)) {
     suffix_string(ddiff, block_diff, sizeof(block_diff), 0);
@@ -7382,7 +7378,7 @@ static void *watchpool_thread(void __maybe_unused *userdata)
  * the screen at regular intervals, and restarts threads if they appear to have
  * died. */
 #define WATCHDOG_INTERVAL   2
-#define WATCHDOG_SICK_TIME    240
+#define WATCHDOG_SICK_TIME    120
 #define WATCHDOG_DEAD_TIME    600
 #define WATCHDOG_SICK_COUNT   (WATCHDOG_SICK_TIME/WATCHDOG_INTERVAL)
 #define WATCHDOG_DEAD_COUNT   (WATCHDOG_DEAD_TIME/WATCHDOG_INTERVAL)
