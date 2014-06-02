@@ -74,6 +74,7 @@ Only supports `vectors=1` and `lookup-gap=2`.
 #### groestlcoin
 #### inkcoin
 #### marucoin
+#### marucoin-mod
 #### myriadcoin-groestl
 #### quarkcoin
 #### qubitcoin
