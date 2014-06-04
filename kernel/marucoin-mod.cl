@@ -75,7 +75,7 @@ typedef long sph_s64;
 #define SPH_GROESTL_BIG_ENDIAN 0
 #define SPH_CUBEHASH_UNROLL 0
 #define SPH_KECCAK_UNROLL   0
-#define SPH_HAMSI_EXPAND_BIG 1
+#define SPH_HAMSI_EXPAND_BIG 4
 
 #include "blake.cl"
 #include "bmw.cl"
@@ -771,6 +771,8 @@ __kernel void search9(__global hash_t* hashes)
     barrier(CLK_GLOBAL_MEM_FENCE); 
 }
 
+#ifndef X13MODOLD
+
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
 __kernel void search10(__global hash_t* hashes)
 {
@@ -906,7 +908,7 @@ __kernel void search12(__global hash_t* hashes, __global uint* output, const ulo
 {
     uint gid = get_global_id(0);
     uint offset = get_global_offset(0);
-    __local  hash_t hash;
+    hash_t hash;
     __global hash_t *hashp = &(hashes[gid-offset]);
 
     for (int i = 0; i < 8; i++) {
@@ -992,9 +994,223 @@ __kernel void search12(__global hash_t* hashes, __global uint* output, const ulo
 
     bool result = (hash.h8[3] <= target);
     if (result)
-        output[output[0xFF]++] = SWAP4(gid);
+        output[atomic_inc(output+0xFF)] = SWAP4(gid);
 
     barrier(CLK_GLOBAL_MEM_FENCE); 
 }
 
+#else
+
+__attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
+__kernel void search10(__global hash_t* hashes, __global uint* output, const ulong target)
+{
+    uint gid = get_global_id(0);
+    uint offset = get_global_offset(0);
+    hash_t hash;
+
+    __local sph_u32 AES0[256], AES1[256], AES2[256], AES3[256];
+
+    int init = get_local_id(0);
+    int step = get_local_size(0);
+
+    for (int i = init; i < 256; i += step)
+    {
+        AES0[i] = AES0_C[i];
+        AES1[i] = AES1_C[i];
+        AES2[i] = AES2_C[i];
+        AES3[i] = AES3_C[i];
+    }
+
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    for (int i = 0; i < 8; i++) {
+        hash.h8[i] = hashes[gid-offset].h8[i];
+    }
+
+    // echo
+
+    {
+
+    sph_u64 W00, W01, W10, W11, W20, W21, W30, W31, W40, W41, W50, W51, W60, W61, W70, W71, W80, W81, W90, W91, WA0, WA1, WB0, WB1, WC0, WC1, WD0, WD1, WE0, WE1, WF0, WF1;
+    sph_u64 Vb00, Vb01, Vb10, Vb11, Vb20, Vb21, Vb30, Vb31, Vb40, Vb41, Vb50, Vb51, Vb60, Vb61, Vb70, Vb71;
+    Vb00 = Vb10 = Vb20 = Vb30 = Vb40 = Vb50 = Vb60 = Vb70 = 512UL;
+    Vb01 = Vb11 = Vb21 = Vb31 = Vb41 = Vb51 = Vb61 = Vb71 = 0;
+
+    sph_u32 K0 = 512;
+    sph_u32 K1 = 0;
+    sph_u32 K2 = 0;
+    sph_u32 K3 = 0;
+
+    W00 = Vb00;
+    W01 = Vb01;
+    W10 = Vb10;
+    W11 = Vb11;
+    W20 = Vb20;
+    W21 = Vb21;
+    W30 = Vb30;
+    W31 = Vb31;
+    W40 = Vb40;
+    W41 = Vb41;
+    W50 = Vb50;
+    W51 = Vb51;
+    W60 = Vb60;
+    W61 = Vb61;
+    W70 = Vb70;
+    W71 = Vb71;
+    W80 = hash.h8[0];
+    W81 = hash.h8[1];
+    W90 = hash.h8[2];
+    W91 = hash.h8[3];
+    WA0 = hash.h8[4];
+    WA1 = hash.h8[5];
+    WB0 = hash.h8[6];
+    WB1 = hash.h8[7];
+    WC0 = 0x80;
+    WC1 = 0;
+    WD0 = 0;
+    WD1 = 0;
+    WE0 = 0;
+    WE1 = 0x200000000000000;
+    WF0 = 0x200;
+    WF1 = 0;
+
+    for (unsigned u = 0; u < 10; u ++) {
+        BIG_ROUND;
+    }
+
+    hash.h8[0] ^= Vb00 ^ W00 ^ W80;
+    hash.h8[1] ^= Vb01 ^ W01 ^ W81;
+    hash.h8[2] ^= Vb10 ^ W10 ^ W90;
+    hash.h8[3] ^= Vb11 ^ W11 ^ W91;
+    hash.h8[4] ^= Vb20 ^ W20 ^ WA0;
+    hash.h8[5] ^= Vb21 ^ W21 ^ WA1;
+    hash.h8[6] ^= Vb30 ^ W30 ^ WB0;
+    hash.h8[7] ^= Vb31 ^ W31 ^ WB1;
+
+    }
+
+    // hamsi
+
+    {
+
+    sph_u32 c0 = HAMSI_IV512[0], c1 = HAMSI_IV512[1], c2 = HAMSI_IV512[2], c3 = HAMSI_IV512[3];
+    sph_u32 c4 = HAMSI_IV512[4], c5 = HAMSI_IV512[5], c6 = HAMSI_IV512[6], c7 = HAMSI_IV512[7];
+    sph_u32 c8 = HAMSI_IV512[8], c9 = HAMSI_IV512[9], cA = HAMSI_IV512[10], cB = HAMSI_IV512[11];
+    sph_u32 cC = HAMSI_IV512[12], cD = HAMSI_IV512[13], cE = HAMSI_IV512[14], cF = HAMSI_IV512[15];
+    sph_u32 m0, m1, m2, m3, m4, m5, m6, m7;
+    sph_u32 m8, m9, mA, mB, mC, mD, mE, mF;
+    sph_u32 h[16] = { c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, cA, cB, cC, cD, cE, cF };
+
+#define buf(u) hash.h1[i + u]
+    for(int i = 0; i < 64; i += 8) {
+        INPUT_BIG;
+        P_BIG;
+        T_BIG;
+    }
+#undef buf
+#define buf(u) (u == 0 ? 0x80 : 0)
+    INPUT_BIG;
+    P_BIG;
+    T_BIG;
+#undef buf
+#define buf(u) (u == 6 ? 2 : 0)
+    INPUT_BIG;
+    PF_BIG;
+    T_BIG;
+
+    for (unsigned u = 0; u < 16; u ++)
+  hash.h4[u] = h[u];
+
+    }
+
+    // fugue
+
+    {
+
+    sph_u32 S00, S01, S02, S03, S04, S05, S06, S07, S08, S09;
+    sph_u32 S10, S11, S12, S13, S14, S15, S16, S17, S18, S19;
+    sph_u32 S20, S21, S22, S23, S24, S25, S26, S27, S28, S29;
+    sph_u32 S30, S31, S32, S33, S34, S35;
+
+    ulong fc_bit_count = (sph_u64) 64 << 3;
+
+    S00 = S01 = S02 = S03 = S04 = S05 = S06 = S07 = S08 = S09 = S10 = S11 = S12 = S13 = S14 = S15 = S16 = S17 = S18 = S19 = 0;
+    S20 = SPH_C32(0x8807a57e); S21 = SPH_C32(0xe616af75); S22 = SPH_C32(0xc5d3e4db); S23 = SPH_C32(0xac9ab027);
+    S24 = SPH_C32(0xd915f117); S25 = SPH_C32(0xb6eecc54); S26 = SPH_C32(0x06e8020b); S27 = SPH_C32(0x4a92efd1);
+    S28 = SPH_C32(0xaac6e2c9); S29 = SPH_C32(0xddb21398); S30 = SPH_C32(0xcae65838); S31 = SPH_C32(0x437f203f);
+    S32 = SPH_C32(0x25ea78e7); S33 = SPH_C32(0x951fddd6); S34 = SPH_C32(0xda6ed11d); S35 = SPH_C32(0xe13e3567);
+
+    FUGUE512_3((hash.h4[0x0]), (hash.h4[0x1]), (hash.h4[0x2]));
+    FUGUE512_3((hash.h4[0x3]), (hash.h4[0x4]), (hash.h4[0x5]));
+    FUGUE512_3((hash.h4[0x6]), (hash.h4[0x7]), (hash.h4[0x8]));
+    FUGUE512_3((hash.h4[0x9]), (hash.h4[0xA]), (hash.h4[0xB]));
+    FUGUE512_3((hash.h4[0xC]), (hash.h4[0xD]), (hash.h4[0xE]));
+    FUGUE512_3((hash.h4[0xF]), as_uint2(fc_bit_count).y, as_uint2(fc_bit_count).x);
+
+    // apply round shift if necessary
+    int i;
+
+    for (i = 0; i < 32; i ++) {
+        ROR3;
+        CMIX36(S00, S01, S02, S04, S05, S06, S18, S19, S20);
+        SMIX(S00, S01, S02, S03);
+    }
+    for (i = 0; i < 13; i ++) {
+        S04 ^= S00;
+        S09 ^= S00;
+        S18 ^= S00;
+        S27 ^= S00;
+        ROR9;
+        SMIX(S00, S01, S02, S03);
+        S04 ^= S00;
+        S10 ^= S00;
+        S18 ^= S00;
+        S27 ^= S00;
+        ROR9;
+        SMIX(S00, S01, S02, S03);
+        S04 ^= S00;
+        S10 ^= S00;
+        S19 ^= S00;
+        S27 ^= S00;
+        ROR9;
+        SMIX(S00, S01, S02, S03);
+        S04 ^= S00;
+        S10 ^= S00;
+        S19 ^= S00;
+        S28 ^= S00;
+        ROR8;
+        SMIX(S00, S01, S02, S03);
+    }
+    S04 ^= S00;
+    S09 ^= S00;
+    S18 ^= S00;
+    S27 ^= S00;
+
+    hash.h4[0] = SWAP4(S01);
+    hash.h4[1] = SWAP4(S02);
+    hash.h4[2] = SWAP4(S03);
+    hash.h4[3] = SWAP4(S04);
+    hash.h4[4] = SWAP4(S09);
+    hash.h4[5] = SWAP4(S10);
+    hash.h4[6] = SWAP4(S11);
+    hash.h4[7] = SWAP4(S12);
+    hash.h4[8] = SWAP4(S18);
+    hash.h4[9] = SWAP4(S19);
+    hash.h4[10] = SWAP4(S20);
+    hash.h4[11] = SWAP4(S21);
+    hash.h4[12] = SWAP4(S27);
+    hash.h4[13] = SWAP4(S28);
+    hash.h4[14] = SWAP4(S29);
+    hash.h4[15] = SWAP4(S30);
+
+    }
+
+    bool result = (hash.h8[3] <= target);
+    if (result)
+      output[atomic_inc(output+0xFF)] = SWAP4(gid);
+
+    barrier(CLK_GLOBAL_MEM_FENCE); 
+}
+
+#endif // X13MODOLD
 #endif // X13MOD_CL
