@@ -9,7 +9,7 @@ extern void *reinit_gpu(void *userdata);
 extern char *set_gpu_map(char *arg);
 extern char *set_gpu_threads(const char *arg);
 extern char *set_gpu_engine(const char *arg);
-extern char *set_gpu_fan(char *arg);
+extern char *set_gpu_fan(const char *arg);
 extern char *set_gpu_memclock(const char *arg);
 extern char *set_gpu_memdiff(char *arg);
 extern char *set_gpu_powertune(char *arg);

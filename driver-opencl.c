@@ -295,10 +295,12 @@ char *set_gpu_engine(const char *_arg)
 	return NULL;
 }
 
-char *set_gpu_fan(char *arg)
+char *set_gpu_fan(const char *_arg)
 {
 	int i, val1 = 0, val2 = 0, device = 0;
 	char *nextptr;
+	char *arg = (char *)alloca(strlen(_arg) + 1);
+	strcpy(arg, _arg);
 
 	nextptr = strtok(arg, ",");
 	if (nextptr == NULL)

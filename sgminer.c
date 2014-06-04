@@ -2814,7 +2814,7 @@ static void show_hash(struct work *work, char *hashshow)
     }
     hash32 = (uint32_t *)(rhash + ofs);
     h32 = be32toh(*hash32);
-    
+
     snprintf(hashshow, 64, "%08lx Diff %s/%s%s", h32, diffdisp, wdiffdisp,
        work->block ? " BLOCK!" : "");
   }
@@ -6241,22 +6241,24 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
       set_rawintensity(work->pool->rawintensity);
     if (work->pool->thread_concurrency)
       set_thread_concurrency(work->pool->thread_concurrency);
-    if (work->pool->gpu_engine) {
-      set_gpu_engine(work->pool->gpu_engine);
-      for (i = 0; i < nDevs; i++)
-        set_engineclock(i, gpus[i].min_engine);
-    }
-    if (work->pool->gpu_memclock) {
-      set_gpu_memclock(work->pool->gpu_memclock);
-      for (i = 0; i < nDevs; i++)
-        set_memoryclock(i, gpus[i].gpu_memclock);
-    }
-    if (work->pool->gpu_fan) {
-      set_gpu_fan(work->pool->gpu_fan);
-      for (i = 0; i < nDevs; i++)
-        if (gpus[i].min_fan == gpus[i].gpu_fan)
-          set_fanspeed(i, gpus[i].gpu_fan);
-    }
+    #ifdef HAVE_ADL
+      if (work->pool->gpu_engine) {
+        set_gpu_engine(work->pool->gpu_engine);
+        for (i = 0; i < nDevs; i++)
+          set_engineclock(i, gpus[i].min_engine);
+      }
+      if (work->pool->gpu_memclock) {
+        set_gpu_memclock(work->pool->gpu_memclock);
+        for (i = 0; i < nDevs; i++)
+          set_memoryclock(i, gpus[i].gpu_memclock);
+      }
+      if (work->pool->gpu_fan) {
+        set_gpu_fan(work->pool->gpu_fan);
+        for (i = 0; i < nDevs; i++)
+          if (gpus[i].min_fan == gpus[i].gpu_fan)
+            set_fanspeed(i, gpus[i].gpu_fan);
+      }
+    #endif
     // Change algorithm for each thread (thread_prepare calls initCl)
     for (i = 0; i < mining_threads; i++) {
       struct thr_info *thr = mining_thr[i];
@@ -8042,7 +8044,7 @@ void enable_device(struct cgpu_info *cgpu)
 #ifdef HAVE_CURSES
   adj_width(mining_threads, &dev_width);
 #endif
-  
+
   rwlock_init(&cgpu->qlock);
   cgpu->queued_work = NULL;
 }
