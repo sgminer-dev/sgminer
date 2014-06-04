@@ -278,7 +278,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
 	}
 
 	if (numDevices > 0 ) {
-		devices = (cl_device_id *)malloc(numDevices*sizeof(cl_device_id));
+		devices = (cl_device_id *)alloca(numDevices*sizeof(cl_device_id));
 
 		/* Now, get the device list data */
 
@@ -339,7 +339,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
 
 	/* Check for BFI INT support. Hopefully people don't mix devices with
 	 * and without it! */
-	char * extensions = (char *)malloc(1024);
+	char extensions[1024];
 	const char * camo = "cl_amd_media_ops";
 	char *find;
 
@@ -353,7 +353,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
 		clState->hasBitAlign = true;
 
 	/* Check for OpenCL >= 1.0 support, needed for global offset parameter usage. */
-	char * devoclver = (char *)malloc(1024);
+	char devoclver[1024];
 	const char * ocl10 = "OpenCL 1.0";
 	const char * ocl11 = "OpenCL 1.1";
 
@@ -493,6 +493,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
 	binaries = (char **)calloc(sizeof(char *) * MAX_GPUDEVICES * 4, 1);
 	if (unlikely(!binaries)) {
 		applog(LOG_ERR, "Unable to calloc binaries");
+		free(binary_sizes);
 		return NULL;
 	}
 
@@ -528,7 +529,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
 		if (unlikely(!binaries[slot])) {
 			applog(LOG_ERR, "Unable to calloc binaries");
 			fclose(binaryfile);
-			return NULL;
+			goto not_built;
 		}
 
 		if (fread(binaries[slot], 1, binary_sizes[slot], binaryfile) != binary_sizes[slot]) {
@@ -562,7 +563,7 @@ build:
 	clState->program = clCreateProgramWithSource(clState->context, 1, (const char **)&source, sourceSize, &status);
 	if (status != CL_SUCCESS) {
 		applog(LOG_ERR, "Error %d: Loading Binary into cl_program (clCreateProgramWithSource)", status);
-		return NULL;
+		goto not_built;
 	}
 
 	/* create a cl program executable for all the devices specified */
@@ -615,13 +616,13 @@ build:
 
 	if (status != CL_SUCCESS) {
 		applog(LOG_ERR, "Error %d: Building Program (clBuildProgram)", status);
-		size_t logSize;
-		status = clGetProgramBuildInfo(clState->program, devices[gpu], CL_PROGRAM_BUILD_LOG, 0, NULL, &logSize);
+		size_t log_size;
+		status = clGetProgramBuildInfo(clState->program, devices[gpu], CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
 
-		char *log = (char *)malloc(logSize);
-		status = clGetProgramBuildInfo(clState->program, devices[gpu], CL_PROGRAM_BUILD_LOG, logSize, log, NULL);
-		applog(LOG_ERR, "%s", log);
-		return NULL;
+		char sz_log[log_size];
+		status = clGetProgramBuildInfo(clState->program, devices[gpu], CL_PROGRAM_BUILD_LOG, log_size, sz_log, NULL);
+		applog(LOG_ERR, "%s", sz_log);
+		goto not_built;
 	}
 
 	prog_built = true;
@@ -635,13 +636,13 @@ build:
 	status = clGetProgramInfo(clState->program, CL_PROGRAM_NUM_DEVICES, sizeof(cl_uint), &cpnd, NULL);
 	if (unlikely(status != CL_SUCCESS)) {
 		applog(LOG_ERR, "Error %d: Getting program info CL_PROGRAM_NUM_DEVICES. (clGetProgramInfo)", status);
-		return NULL;
+		goto not_built;
 	}
 
 	status = clGetProgramInfo(clState->program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t)*cpnd, binary_sizes, NULL);
 	if (unlikely(status != CL_SUCCESS)) {
 		applog(LOG_ERR, "Error %d: Getting program info CL_PROGRAM_BINARY_SIZES. (clGetProgramInfo)", status);
-		return NULL;
+		goto not_built;
 	}
 
 	/* The actual compiled binary ends up in a RANDOM slot! Grr, so we have
@@ -655,13 +656,13 @@ build:
 	applog(LOG_DEBUG, "Binary size for gpu %d found in binary slot %d: %d", gpu, slot, (int)(binary_sizes[slot]));
 	if (!binary_sizes[slot]) {
 		applog(LOG_ERR, "OpenCL compiler generated a zero sized binary, FAIL!");
-		return NULL;
+		goto not_built;
 	}
 	binaries[slot] = (char *)calloc(sizeof(char)* binary_sizes[slot], 1);
 	status = clGetProgramInfo(clState->program, CL_PROGRAM_BINARIES, sizeof(char *) * cpnd, binaries, NULL );
 	if (unlikely(status != CL_SUCCESS)) {
 		applog(LOG_ERR, "Error %d: Getting program info. CL_PROGRAM_BINARIES (clGetProgramInfo)", status);
-		return NULL;
+		goto not_built;
 	}
 
 	/* Patch the kernel if the hardware supports BFI_INT but it needs to
@@ -701,13 +702,13 @@ build:
 		status = clReleaseProgram(clState->program);
 		if (status != CL_SUCCESS) {
 			applog(LOG_ERR, "Error %d: Releasing program. (clReleaseProgram)", status);
-			return NULL;
+			goto not_built;
 		}
 
 		clState->program = clCreateProgramWithBinary(clState->context, 1, &devices[gpu], &binary_sizes[slot], (const unsigned char **)&binaries[slot], &status, NULL);
 		if (status != CL_SUCCESS) {
 			applog(LOG_ERR, "Error %d: Loading Binary into cl_program (clCreateProgramWithBinary)", status);
-			return NULL;
+			goto not_built;
 		}
 
 		/* Program needs to be rebuilt */
@@ -724,10 +725,18 @@ build:
 	} else {
 		if (unlikely(fwrite(binaries[slot], 1, binary_sizes[slot], binaryfile) != binary_sizes[slot])) {
 			applog(LOG_ERR, "Unable to fwrite to binaryfile");
-			return NULL;
+
 		}
 		fclose(binaryfile);
 	}
+
+	goto built;
+not_built:
+	if (binaries[slot])
+		free(binaries[slot]);
+	free(binaries);
+	free(binary_sizes);
+	return NULL;
 built:
 	if (binaries[slot])
 		free(binaries[slot]);
@@ -743,12 +752,12 @@ built:
 		status = clBuildProgram(clState->program, 1, &devices[gpu], NULL, NULL, NULL);
 		if (status != CL_SUCCESS) {
 			applog(LOG_ERR, "Error %d: Building Program (clBuildProgram)", status);
-			size_t logSize;
-			status = clGetProgramBuildInfo(clState->program, devices[gpu], CL_PROGRAM_BUILD_LOG, 0, NULL, &logSize);
+			size_t log_size;
+			status = clGetProgramBuildInfo(clState->program, devices[gpu], CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
 
-			char *log = (char *)malloc(logSize);
-			status = clGetProgramBuildInfo(clState->program, devices[gpu], CL_PROGRAM_BUILD_LOG, logSize, log, NULL);
-			applog(LOG_ERR, "%s", log);
+			char sz_log[log_size];
+			status = clGetProgramBuildInfo(clState->program, devices[gpu], CL_PROGRAM_BUILD_LOG, log_size, sz_log, NULL);
+			applog(LOG_ERR, "%s", sz_log);
 			return NULL;
 		}
 	}
@@ -764,7 +773,7 @@ built:
   clState->n_extra_kernels = algorithm->n_extra_kernels;
   if (clState->n_extra_kernels > 0) {
     unsigned int i;
-    char *kernel_name = (char *)malloc(9); // max: search99 + 0x0
+    char kernel_name[9]; // max: search99 + 0x0
 
     clState->extra_kernels = (cl_kernel *)malloc(sizeof(cl_kernel) * clState->n_extra_kernels);
 
@@ -776,8 +785,6 @@ built:
         return NULL;
       }
     }
-
-    free(kernel_name);
   }
 
 	size_t bufsize;

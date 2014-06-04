@@ -1673,6 +1673,7 @@ static char *load_config(const char *arg, void __maybe_unused *unused)
 #endif
   if (!json_is_object(config)) {
     siz = JSON_LOAD_ERROR_LEN + strlen(arg) + strlen(err.text);
+    // TODO: memory leak
     json_error = (char *)malloc(siz);
     if (!json_error)
       quit(1, "Malloc failure in json error");
@@ -5698,6 +5699,7 @@ static void *stratum_sthread(void *userdata)
       continue;
     }
 
+    // TODO: check for memory leaks
     sshare = (struct stratum_share *)calloc(sizeof(struct stratum_share), 1);
     hash32 = (uint32_t *)work->hash;
     submitted = false;
@@ -8088,19 +8090,6 @@ bool add_cgpu(struct cgpu_info *cgpu)
 
   adjust_mostdevs();
   return true;
-}
-
-struct device_drv *copy_drv(struct device_drv *drv)
-{
-  struct device_drv *copy;
-
-  if (unlikely(!(copy = (struct device_drv *)malloc(sizeof(*copy))))) {
-    quit(1, "Failed to allocate device_drv copy of %s (%s)",
-        drv->name, drv->copy ? "copy" : "original");
-  }
-  memcpy(copy, drv, sizeof(*copy));
-  copy->copy = true;
-  return copy;
 }
 
 static void probe_pools(void)

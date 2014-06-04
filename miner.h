@@ -370,8 +370,6 @@ struct device_drv {
 	double working_diff;
 };
 
-extern struct device_drv *copy_drv(struct device_drv*);
-
 enum dev_enable {
 	DEV_ENABLED,
 	DEV_DISABLED,
@@ -572,24 +570,6 @@ struct string_elist {
 
 	struct list_head list;
 };
-
-static inline void string_elist_add(const char *s, struct list_head *head)
-{
-	struct string_elist *n;
-
-	n = (struct string_elist *)calloc(1, sizeof(*n));
-	n->string = strdup(s);
-	n->free_me = true;
-	list_add_tail(&n->list, head);
-}
-
-static inline void string_elist_del(struct string_elist *item)
-{
-	if (item->free_me)
-		free(item->string);
-	list_del(&item->list);
-}
-
 
 static inline uint32_t swab32(uint32_t v)
 {

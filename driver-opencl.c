@@ -1294,6 +1294,8 @@ static bool opencl_thread_init(struct thr_info *thr)
 	status |= clEnqueueWriteBuffer(clState->commandQueue, clState->outputBuffer, CL_TRUE, 0,
 				       buffersize, blank_res, 0, NULL, NULL);
 	if (unlikely(status != CL_SUCCESS)) {
+		free(thrdata->res);
+		free(thrdata);
 		applog(LOG_ERR, "Error: clEnqueueWriteBuffer failed.");
 		return false;
 	}
@@ -1434,6 +1436,8 @@ static void opencl_thread_shutdown(struct thr_info *thr)
 		clReleaseProgram(clState->program);
 		clReleaseCommandQueue(clState->commandQueue);
 		clReleaseContext(clState->context);
+		if (clState->extra_kernels)
+			free(clState->extra_kernels);
 		free(clState);
 	}
 }

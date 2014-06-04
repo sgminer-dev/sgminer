@@ -2641,40 +2641,6 @@ void *realloc_strcat(char *ptr, char *s)
 	return ret;
 }
 
-/* Make a text readable version of a string using 0xNN for < ' ' or > '~'
- * Including 0x00 at the end
- * You must free the result yourself */
-void *str_text(char *ptr)
-{
-	unsigned char *uptr;
-	char *ret, *txt;
-
-	if (ptr == NULL) {
-		ret = strdup("(null)");
-
-		if (unlikely(!ret))
-			quithere(1, "Failed to malloc null");
-	}
-
-	uptr = (unsigned char *)ptr;
-
-	ret = txt = (char *)malloc(strlen(ptr) * 4 + 5); // Guaranteed >= needed
-	if (unlikely(!txt))
-		quithere(1, "Failed to malloc txt");
-
-	do {
-		if (*uptr < ' ' || *uptr > '~') {
-			sprintf(txt, "0x%02x", *uptr);
-			txt += 4;
-		} else
-			*(txt++) = *uptr;
-	} while (*(uptr++));
-
-	*txt = '\0';
-
-	return ret;
-}
-
 void RenameThread(const char* name)
 {
 	char buf[16];
@@ -2900,10 +2866,11 @@ bool cg_completion_timeout(void *fn, void *fnarg, int timeout)
 	pthread_create(&pthread, NULL, completion_thread, (void *)cgc);
 
 	ret = cgsem_mswait(&cgc->cgsem, timeout);
-	if (!ret) {
-		pthread_join(pthread, NULL);
-		free(cgc);
-	} else
+
+	if (ret)
 		pthread_cancel(pthread);
+
+	pthread_join(pthread, NULL);
+	free(cgc);
 	return !ret;
 }
