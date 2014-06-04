@@ -772,12 +772,11 @@ __kernel void search9(__global hash_t* hashes)
 }
 
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
-__kernel void search10(__global hash_t* hashes)
+__kernel void search10(__global hash_t* hashes, __global uint* output, const ulong target)
 {
     uint gid = get_global_id(0);
     uint offset = get_global_offset(0);
     hash_t hash;
-    __global hash_t *hashp = &(hashes[gid-offset]);
 
     __local sph_u32 AES0[256], AES1[256], AES2[256], AES3[256];
 
@@ -799,6 +798,9 @@ __kernel void search10(__global hash_t* hashes)
     }
 
     // echo
+
+    {
+
     sph_u64 W00, W01, W10, W11, W20, W21, W30, W31, W40, W41, W50, W51, W60, W61, W70, W71, W80, W81, W90, W91, WA0, WA1, WB0, WB1, WC0, WC1, WD0, WD1, WE0, WE1, WF0, WF1;
     sph_u64 Vb00, Vb01, Vb10, Vb11, Vb20, Vb21, Vb30, Vb31, Vb40, Vb41, Vb50, Vb51, Vb60, Vb61, Vb70, Vb71;
     Vb00 = Vb10 = Vb20 = Vb30 = Vb40 = Vb50 = Vb60 = Vb70 = 512UL;
@@ -846,25 +848,20 @@ __kernel void search10(__global hash_t* hashes)
         BIG_ROUND;
     }
 
-    hashp->h8[0] = hash.h8[0] ^ Vb00 ^ W00 ^ W80;
-    hashp->h8[1] = hash.h8[1] ^ Vb01 ^ W01 ^ W81;
-    hashp->h8[2] = hash.h8[2] ^ Vb10 ^ W10 ^ W90;
-    hashp->h8[3] = hash.h8[3] ^ Vb11 ^ W11 ^ W91;
-    hashp->h8[4] = hash.h8[4] ^ Vb20 ^ W20 ^ WA0;
-    hashp->h8[5] = hash.h8[5] ^ Vb21 ^ W21 ^ WA1;
-    hashp->h8[6] = hash.h8[6] ^ Vb30 ^ W30 ^ WB0;
-    hashp->h8[7] = hash.h8[7] ^ Vb31 ^ W31 ^ WB1;
+    hash.h8[0] ^= Vb00 ^ W00 ^ W80;
+    hash.h8[1] ^= Vb01 ^ W01 ^ W81;
+    hash.h8[2] ^= Vb10 ^ W10 ^ W90;
+    hash.h8[3] ^= Vb11 ^ W11 ^ W91;
+    hash.h8[4] ^= Vb20 ^ W20 ^ WA0;
+    hash.h8[5] ^= Vb21 ^ W21 ^ WA1;
+    hash.h8[6] ^= Vb30 ^ W30 ^ WB0;
+    hash.h8[7] ^= Vb31 ^ W31 ^ WB1;
 
-    barrier(CLK_GLOBAL_MEM_FENCE); 
-}
+    }
 
-__attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
-__kernel void search11(__global hash_t* hashes)
-{
-    uint gid = get_global_id(0);
-    uint offset = get_global_offset(0);
-    hash_t hash;
-    __global hash_t *hashp = &(hashes[gid-offset]);
+    // hamsi
+
+    {
 
     sph_u32 c0 = HAMSI_IV512[0], c1 = HAMSI_IV512[1], c2 = HAMSI_IV512[2], c3 = HAMSI_IV512[3];
     sph_u32 c4 = HAMSI_IV512[4], c5 = HAMSI_IV512[5], c6 = HAMSI_IV512[6], c7 = HAMSI_IV512[7];
@@ -873,10 +870,6 @@ __kernel void search11(__global hash_t* hashes)
     sph_u32 m0, m1, m2, m3, m4, m5, m6, m7;
     sph_u32 m8, m9, mA, mB, mC, mD, mE, mF;
     sph_u32 h[16] = { c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, cA, cB, cC, cD, cE, cF };
-
-    for (int i = 0; i < 8; i++) {
-        hash.h8[i] = hashes[gid-offset].h8[i];
-    }
 
 #define buf(u) hash.h1[i + u]
     for(int i = 0; i < 64; i += 8) {
@@ -896,47 +889,37 @@ __kernel void search11(__global hash_t* hashes)
     T_BIG;
 
     for (unsigned u = 0; u < 16; u ++)
-        hashp->h4[u] = h[u];
+  hash.h4[u] = h[u];
 
-    barrier(CLK_GLOBAL_MEM_FENCE); 
-}
-
-__attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
-__kernel void search12(__global hash_t* hashes, __global uint* output, const ulong target)
-{
-    uint gid = get_global_id(0);
-    uint offset = get_global_offset(0);
-    hash_t hash;
-    __global hash_t *hashp = &(hashes[gid-offset]);
-
-    for (int i = 0; i < 8; i++) {
-        hash.h8[i] = hashes[gid-offset].h8[i];
     }
 
     // fugue
+
+    {
+
     sph_u32 S00, S01, S02, S03, S04, S05, S06, S07, S08, S09;
     sph_u32 S10, S11, S12, S13, S14, S15, S16, S17, S18, S19;
     sph_u32 S20, S21, S22, S23, S24, S25, S26, S27, S28, S29;
     sph_u32 S30, S31, S32, S33, S34, S35;
-    
+
     ulong fc_bit_count = (sph_u64) 64 << 3;
-    
+
     S00 = S01 = S02 = S03 = S04 = S05 = S06 = S07 = S08 = S09 = S10 = S11 = S12 = S13 = S14 = S15 = S16 = S17 = S18 = S19 = 0;
     S20 = SPH_C32(0x8807a57e); S21 = SPH_C32(0xe616af75); S22 = SPH_C32(0xc5d3e4db); S23 = SPH_C32(0xac9ab027);
     S24 = SPH_C32(0xd915f117); S25 = SPH_C32(0xb6eecc54); S26 = SPH_C32(0x06e8020b); S27 = SPH_C32(0x4a92efd1);
     S28 = SPH_C32(0xaac6e2c9); S29 = SPH_C32(0xddb21398); S30 = SPH_C32(0xcae65838); S31 = SPH_C32(0x437f203f);
     S32 = SPH_C32(0x25ea78e7); S33 = SPH_C32(0x951fddd6); S34 = SPH_C32(0xda6ed11d); S35 = SPH_C32(0xe13e3567);
-    
+
     FUGUE512_3((hash.h4[0x0]), (hash.h4[0x1]), (hash.h4[0x2]));
     FUGUE512_3((hash.h4[0x3]), (hash.h4[0x4]), (hash.h4[0x5]));
     FUGUE512_3((hash.h4[0x6]), (hash.h4[0x7]), (hash.h4[0x8]));
     FUGUE512_3((hash.h4[0x9]), (hash.h4[0xA]), (hash.h4[0xB]));
     FUGUE512_3((hash.h4[0xC]), (hash.h4[0xD]), (hash.h4[0xE]));
     FUGUE512_3((hash.h4[0xF]), as_uint2(fc_bit_count).y, as_uint2(fc_bit_count).x);
-    
+
     // apply round shift if necessary
     int i;
-    
+
     for (i = 0; i < 32; i ++) {
         ROR3;
         CMIX36(S00, S01, S02, S04, S05, S06, S18, S19, S20);
@@ -990,9 +973,11 @@ __kernel void search12(__global hash_t* hashes, __global uint* output, const ulo
     hash.h4[14] = SWAP4(S29);
     hash.h4[15] = SWAP4(S30);
 
+    }
+
     bool result = (hash.h8[3] <= target);
     if (result)
-        output[atomic_inc(output+0xFF)] = SWAP4(gid);
+      output[atomic_inc(output+0xFF)] = SWAP4(gid);
 
     barrier(CLK_GLOBAL_MEM_FENCE); 
 }
