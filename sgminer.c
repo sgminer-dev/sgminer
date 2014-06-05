@@ -2385,7 +2385,7 @@ static void curses_print_uptime(void)
 
   cgtime(&now);
   timersub(&now, &total_tv_start, &tv);
-  d = div(tv.tv_sec, 86400);
+  d = div((int)tv.tv_sec, 86400);
   days = d.quot;
   d = div(d.rem, 3600);
   hours = d.quot;
