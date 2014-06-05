@@ -1,4 +1,5 @@
 /*
+ * Copyright 2013-2014 sgminer developers (see AUTHORS.md)
  * Copyright 2011-2013 Con Kolivas
  * Copyright 2011-2012 Luke Dashjr
  * Copyright 2010 Jeff Garzik
@@ -756,8 +757,7 @@ static void setup_url(struct pool *pool, char *arg)
     return;
 
   opt_set_charp(arg, &pool->rpc_url);
-  if (strncmp(arg, "http://", 7) &&
-      strncmp(arg, "https://", 8)) {
+  if (strncmp(arg, "http://", 7) && strncmp(arg, "https://", 8)) {
     char *httpinput;
 
     httpinput = (char *)malloc(255);
