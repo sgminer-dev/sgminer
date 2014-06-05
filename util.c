@@ -1219,6 +1219,13 @@ bool extract_sockaddr(char *url, char **sockaddr_url, char **sockaddr_port)
 
 	if (url_len < 1)
 		return false;
+	
+	if (url_len >= sizeof(url_address))
+	{
+		applog(LOG_WARNING, "%s: Truncating overflowed address '%.*s'",
+		       __func__, url_len, url_begin);
+		url_len = sizeof(url_address) - 1;
+	}
 
 	sprintf(url_address, "%.*s", url_len, url_begin);
 
