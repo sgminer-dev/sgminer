@@ -1,4 +1,5 @@
 /*
+ * Copyright 2013-2014 sgminer developers (see AUTHORS.md)
  * Copyright 2011-2013 Con Kolivas
  * Copyright 2011-2012 Luke Dashjr
  * Copyright 2010 Jeff Garzik
@@ -756,8 +757,7 @@ static void setup_url(struct pool *pool, char *arg)
     return;
 
   opt_set_charp(arg, &pool->rpc_url);
-  if (strncmp(arg, "http://", 7) &&
-      strncmp(arg, "https://", 8)) {
+  if (strncmp(arg, "http://", 7) && strncmp(arg, "https://", 8)) {
     char *httpinput;
 
     httpinput = (char *)malloc(255);
@@ -7412,6 +7412,8 @@ static void *watchdog_thread(void __maybe_unused *userdata)
 
     hashmeter(-1, &zero_tv, 0);
 
+    rd_lock(&mining_thr_lock);
+
 #ifdef HAVE_CURSES
     if (curses_active_locked()) {
       struct cgpu_info *cgpu;
@@ -7547,6 +7549,7 @@ static void *watchdog_thread(void __maybe_unused *userdata)
           reinit_device(cgpu);
       }
     }
+    rd_unlock(&mining_thr_lock);
   }
 
   return NULL;
@@ -8122,6 +8125,10 @@ static void restart_mining_threads(unsigned int new_n_threads)
       thr->cgpu->drv->thread_shutdown(thr);
       thr->cgpu->shutdown = false;
     }
+  }
+
+  rd_lock(&mining_thr_lock);
+  if (mining_thr) {
     for (i = 0; i < total_devices; ++i) {
       free(devices[i]->thr);
     }
@@ -8159,13 +8166,25 @@ static void restart_mining_threads(unsigned int new_n_threads)
       thr->cgpu = cgpu;
       thr->device_thread = j;
 
+      cgtime(&thr->last);
+
+      cgpu->thr[j] = thr;
+    }
+  }
+
+  rd_unlock(&mining_thr_lock);
+
+  for (i = 0; i < total_devices; ++i) {
+    struct cgpu_info *cgpu = devices[i];
+
+    for (j = 0; j < cgpu->threads; ++j) {
+      thr = cgpu->thr[j];
+
       if (!cgpu->drv->thread_prepare(thr))
         continue;
 
       if (unlikely(thr_info_create(thr, NULL, miner_thread, thr)))
         quit(1, "thread %d create failed", thr->id);
-
-      cgpu->thr[j] = thr;
 
       /* Enable threads for devices set not to mine but disable
        * their queue in case we wish to enable them later */
