@@ -24,8 +24,6 @@ typedef struct __clState {
 	cl_mem padbuffer8;
 	unsigned char cldata[80];
 	bool hasBitAlign;
-	bool hasOpenCL11plus;
-	bool hasOpenCL12plus;
 	bool goffset;
 	cl_uint vwidth;
 	size_t max_work_size;
@@ -33,7 +31,6 @@ typedef struct __clState {
 	size_t compute_shaders;
 } _clState;
 
-extern char *file_contents(const char *filename, int *length);
 extern int clDevicesNum(void);
 extern _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *algorithm);
 

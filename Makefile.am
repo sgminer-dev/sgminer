@@ -57,6 +57,9 @@ sgminer_SOURCES += twecoin.c twecoin.h
 sgminer_SOURCES += marucoin.c marucoin.h
 sgminer_SOURCES += maxcoin.c maxcoin.h
 sgminer_SOURCES += kernel/*.cl
+sgminer_SOURCES += ocl/patch_kernel.c ocl/patch_kernel.h
+sgminer_SOURCES += ocl/build_kernel.c ocl/build_kernel.h
+sgminer_SOURCES += ocl/binary_kernel.c ocl/binary_kernel.h
 
 bin_SCRIPTS	= $(top_srcdir)/kernel/*.cl
 
