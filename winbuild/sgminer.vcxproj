@@ -96,6 +96,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -112,12 +113,14 @@
       </Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>del /f "$(OutDir)*.exe"
-del /f "$(OutDir)*.dll"
+      <Command>
+        del /f "$(OutDir)*.exe"
+        del /f "$(OutDir)*.dll"
 
-type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
-FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
-exit 0</Command>
+        type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
+        FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+        exit 0
+      </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -134,6 +137,7 @@ exit 0</Command>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -150,12 +154,14 @@ exit 0</Command>
       </Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>del /f "$(OutDir)*.exe"
-del /f "$(OutDir)*.dll"
+      <Command>
+        del /f "$(OutDir)*.exe"
+        del /f "$(OutDir)*.dll"
 
-type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
-FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
-exit 0</Command>
+        type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
+        FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+        exit 0
+      </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -173,6 +179,7 @@ exit 0</Command>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -190,12 +197,14 @@ exit 0</Command>
       </Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>del /f "$(OutDir)*.exe"
-del /f "$(OutDir)*.dll"
+      <Command>
+        del /f "$(OutDir)*.exe"
+        del /f "$(OutDir)*.dll"
 
-type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
-FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
-exit 0</Command>
+        type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
+        FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+        exit 0
+      </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -214,7 +223,7 @@ exit 0</Command>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -232,18 +241,18 @@ exit 0</Command>
       </Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>del /f "$(OutDir)*.exe"
-del /f "$(OutDir)*.dll"
+      <Command>
+        del /f "$(OutDir)*.exe"
+        del /f "$(OutDir)*.dll"
 
-type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
-FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
-exit 0</Command>
+        type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
+        FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+        exit 0
+      </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\adl.c">
-      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</WholeProgramOptimization>
-    </ClCompile>
+    <ClCompile Include="..\adl.c" />
     <ClCompile Include="..\algorithm.c" />
     <ClCompile Include="..\animecoin.c" />
     <ClCompile Include="..\api.c" />

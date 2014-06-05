@@ -8357,8 +8357,11 @@ int main(int argc, char *argv[])
     free(cnfbuf);
     cnfbuf = NULL;
   }
-
+#ifdef WIN32
+  strcat(opt_kernel_path, "\\");
+#else
   strcat(opt_kernel_path, "/");
+#endif
 
   if (want_per_device_stats)
     opt_log_output = true;
