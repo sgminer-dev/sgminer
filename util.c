@@ -1218,6 +1218,13 @@ bool extract_sockaddr(char *url, char **sockaddr_url, char **sockaddr_port)
 
 	if (url_len < 1)
 		return false;
+	
+	if (url_len >= sizeof(url_address))
+	{
+		applog(LOG_WARNING, "%s: Truncating overflowed address '%.*s'",
+		       __func__, url_len, url_begin);
+		url_len = sizeof(url_address) - 1;
+	}
 
 	sprintf(url_address, "%.*s", url_len, url_begin);
 
@@ -1592,17 +1599,23 @@ static bool parse_notify(struct pool *pool, json_t *val)
 		pool->swork.nbit,
 		"00000000", /* nonce */
 		workpadding);
-	if (unlikely(!hex2bin(pool->header_bin, header, 128)))
-		quit(1, "Failed to convert header to header_bin in parse_notify");
+	if (unlikely(!hex2bin(pool->header_bin, header, 128))) {
+		applog(LOG_WARNING, "%s: Failed to convert header to header_bin, got %s", __func__, header);
+		pool_failed(pool);
+		// TODO: memory leaks? goto out, clean up there?
+		return false;
+	}
 
 	cb1 = (unsigned char *)calloc(cb1_len, 1);
 	if (unlikely(!cb1))
 		quithere(1, "Failed to calloc cb1 in parse_notify");
 	hex2bin(cb1, coinbase1, cb1_len);
+
 	cb2 = (unsigned char *)calloc(cb2_len, 1);
 	if (unlikely(!cb2))
 		quithere(1, "Failed to calloc cb2 in parse_notify");
 	hex2bin(cb2, coinbase2, cb2_len);
+
 	free(pool->coinbase);
 	align_len(&alloc_len);
 	pool->coinbase = (unsigned char *)calloc(alloc_len, 1);
@@ -1610,6 +1623,7 @@ static bool parse_notify(struct pool *pool, json_t *val)
 		quit(1, "Failed to calloc pool coinbase in parse_notify");
 	memcpy(pool->coinbase, cb1, cb1_len);
 	memcpy(pool->coinbase + cb1_len, pool->nonce1bin, pool->n1_len);
+	// NOTE: gap for nonce2, filled at work generation time
 	memcpy(pool->coinbase + cb1_len + pool->n1_len + pool->n2size, cb2, cb2_len);
 	cg_wunlock(&pool->data_lock);
 
@@ -1675,15 +1689,14 @@ static void __suspend_stratum(struct pool *pool)
 
 static bool parse_reconnect(struct pool *pool, json_t *val)
 {
-	char *sockaddr_url, *stratum_port, *tmp;
-	char *url, *port, address[256];
-
 	if (opt_disable_client_reconnect) {
-		applog(LOG_WARNING, "Stratum client.reconnect forbidden, aborting.");
+		applog(LOG_WARNING, "Stratum client.reconnect received but is disabled, not reconnecting.");
 		return false;
 	}
 
-	memset(address, 0, 255);
+	char *url, *port, address[256];
+	char *sockaddr_url, *stratum_port, *tmp; /* Tempvars. */
+
 	url = (char *)json_string_value(json_array_get(val, 0));
 	if (!url)
 		url = pool->sockaddr_url;
@@ -1692,8 +1705,7 @@ static bool parse_reconnect(struct pool *pool, json_t *val)
 	if (!port)
 		port = pool->stratum_port;
 
-	sprintf(address, "%s:%s", url, port);
-
+	snprintf(address, sizeof(address), "%s:%s", url, port);
 	if (!extract_sockaddr(address, &sockaddr_url, &stratum_port))
 		return false;
 
@@ -2392,7 +2404,8 @@ resend:
 		goto out;
 	}
 	n2size = json_integer_value(json_array_get(res_val, 2));
-	if (!n2size) {
+	if (n2size < 1)
+	{
 		applog(LOG_INFO, "Failed to get n2size in initiate_stratum");
 		free(sessionid);
 		free(nonce1);
