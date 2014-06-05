@@ -3,7 +3,7 @@
 ## Core
 
 * Multiple algorithms and switching: Jan Berdajs <mrbrdo at mrbrdo dot net> 15bULC8snaKAMeFb3xBmmhbWj1xyTmBUfm
-* Scrypt-only refactor: Noel Maersk <veox at wemakethings dot net> LfxRFgXzA13TSTxgFGUFEtumv5ShGzAmLw
+* Historical scrypt-only refactor: Noel Maersk <veox at wemakethings dot net> 12jF1VExtmmMu8D36vo4Y4CYqLK5yCtLC4
 * Core: Martin Danielsen <kalroth {at} gmail _dot_ com> 1DNBcSEENBwDKrcTyTW61ezWhzsPy5imkn
 * Core: Con Kolivas <kernel [at] kolivas {dot} org> 15qSxP1SQcUX3o4nhkfdbgyoWEFMomJ4rZ
 * Core: Luke Dashjr <luke-jr+cgminer @at@ utopios .dot. org> 1QATWksNFGeUJCWBrN4g6hGM178Lovm7Wh
@@ -33,7 +33,6 @@ updated by many others.
 
 ## Testing, bug fixes, improvements
 
-* Hot-switching OpenCL kernel (N-Factor): Jan Berdajs <mrbrdo>
 * Michael Fiano <mfiano>
 * Gabriel Devenyi <gdevenyi>
 * Benjamin Herrenschmidt <ozbenh>
