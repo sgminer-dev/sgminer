@@ -7272,7 +7272,9 @@ static void *longpoll_thread(void __maybe_unused *userdata)
 
 void reinit_device(struct cgpu_info *cgpu)
 {
+  mutex_lock(&algo_switch_lock);
   cgpu->drv->reinit_device(cgpu);
+  mutex_unlock(&algo_switch_lock);
 }
 
 static struct timeval rotate_tv;
