@@ -1682,15 +1682,14 @@ static void __suspend_stratum(struct pool *pool)
 
 static bool parse_reconnect(struct pool *pool, json_t *val)
 {
-	char *sockaddr_url, *stratum_port, *tmp;
-	char *url, *port, address[256];
-
 	if (opt_disable_client_reconnect) {
-		applog(LOG_WARNING, "Stratum client.reconnect forbidden, aborting.");
+		applog(LOG_WARNING, "Stratum client.reconnect received but is disabled, not reconnecting.");
 		return false;
 	}
 
-	memset(address, 0, 255);
+	char *url, *port, address[256];
+	char *sockaddr_url, *stratum_port, *tmp; /* Tempvars. */
+
 	url = (char *)json_string_value(json_array_get(val, 0));
 	if (!url)
 		url = pool->sockaddr_url;
@@ -1699,8 +1698,7 @@ static bool parse_reconnect(struct pool *pool, json_t *val)
 	if (!port)
 		port = pool->stratum_port;
 
-	sprintf(address, "%s:%s", url, port);
-
+	snprintf(address, sizeof(address), "%s:%s", url, port);
 	if (!extract_sockaddr(address, &sockaddr_url, &stratum_port))
 		return false;
 
