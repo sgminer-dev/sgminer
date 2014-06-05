@@ -1599,17 +1599,23 @@ static bool parse_notify(struct pool *pool, json_t *val)
 		pool->swork.nbit,
 		"00000000", /* nonce */
 		workpadding);
-	if (unlikely(!hex2bin(pool->header_bin, header, 128)))
-		quit(1, "Failed to convert header to header_bin in parse_notify");
+	if (unlikely(!hex2bin(pool->header_bin, header, 128))) {
+		applog(LOG_WARNING, "%s: Failed to convert header to header_bin, got %s", __func__, header);
+		pool_failed(pool);
+		// TODO: memory leaks? goto out, clean up there?
+		return false;
+	}
 
 	cb1 = (unsigned char *)calloc(cb1_len, 1);
 	if (unlikely(!cb1))
 		quithere(1, "Failed to calloc cb1 in parse_notify");
 	hex2bin(cb1, coinbase1, cb1_len);
+
 	cb2 = (unsigned char *)calloc(cb2_len, 1);
 	if (unlikely(!cb2))
 		quithere(1, "Failed to calloc cb2 in parse_notify");
 	hex2bin(cb2, coinbase2, cb2_len);
+
 	free(pool->coinbase);
 	align_len(&alloc_len);
 	pool->coinbase = (unsigned char *)calloc(alloc_len, 1);
@@ -1617,6 +1623,7 @@ static bool parse_notify(struct pool *pool, json_t *val)
 		quit(1, "Failed to calloc pool coinbase in parse_notify");
 	memcpy(pool->coinbase, cb1, cb1_len);
 	memcpy(pool->coinbase + cb1_len, pool->nonce1bin, pool->n1_len);
+	// NOTE: gap for nonce2, filled at work generation time
 	memcpy(pool->coinbase + cb1_len + pool->n1_len + pool->n2size, cb2, cb2_len);
 	cg_wunlock(&pool->data_lock);
 
