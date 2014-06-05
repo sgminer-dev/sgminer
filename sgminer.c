@@ -5187,8 +5187,8 @@ static void *api_thread(void *userdata)
  * only across get_work. */
 static void thread_reportin(struct thr_info *thr)
 {
-  thr->getwork = false;
   cgtime(&thr->last);
+  thr->getwork = false;
   thr->cgpu->status = LIFE_WELL;
   thr->cgpu->device_last_well = time(NULL);
 }
@@ -5197,8 +5197,8 @@ static void thread_reportin(struct thr_info *thr)
  * be restarted */
 static void thread_reportout(struct thr_info *thr)
 {
-  thr->getwork = true;
   cgtime(&thr->last);
+  thr->getwork = true;
   thr->cgpu->status = LIFE_WELL;
   thr->cgpu->device_last_well = time(NULL);
 }
@@ -5220,7 +5220,7 @@ static void hashmeter(int thr_id, struct timeval *diff,
   /* Update the last time this thread reported in */
   if (thr_id >= 0) {
     thr = get_thread(thr_id);
-    cgtime(&(thr->last));
+    cgtime(&thr->last);
     thr->cgpu->device_last_well = time(NULL);
   }
 
