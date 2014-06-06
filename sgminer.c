@@ -8376,7 +8376,7 @@ int main(int argc, char *argv[])
     free(cnfbuf);
     cnfbuf = NULL;
   }
-#ifdef WIN32
+#ifdef _MSC_VER
   strcat(opt_kernel_path, "\\");
 #else
   strcat(opt_kernel_path, "/");
