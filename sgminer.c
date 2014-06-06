@@ -207,7 +207,7 @@ pthread_cond_t gws_cond;
 
 double total_rolling;
 double total_mhashes_done;
-static struct timeval total_tv_start, total_tv_end;
+static struct timeval total_tv_start, total_tv_end, launch_time;
 
 cglock_t control_lock;
 pthread_mutex_t stats_lock;
@@ -2377,14 +2377,14 @@ static bool shared_strategy(void)
 } while (0)
 
 /* Must be called with curses mutex lock held and curses_active */
-static void curses_print_uptime(void)
+static void curses_print_uptime(struct timeval *start_time)
 {
   struct timeval now, tv;
   unsigned int days, hours;
   div_t d;
 
   cgtime(&now);
-  timersub(&now, &total_tv_start, &tv);
+  timersub(&now, start_time, &tv);
   d = div((int)tv.tv_sec, 86400);
   days = d.quot;
   d = div(d.rem, 3600);
@@ -2408,7 +2408,7 @@ static void curses_print_status(void)
 
   wattron(statuswin, A_BOLD);
   cg_mvwprintw(statuswin, line, 0, PACKAGE " " VERSION " - Started: %s", datestamp);
-  curses_print_uptime();
+  curses_print_uptime(&launch_time);
   wattroff(statuswin, A_BOLD);
 
   mvwhline(statuswin, ++line, 0, '-', 80);
@@ -8566,6 +8566,7 @@ begin_bench:
   cgtime(&total_tv_start);
   cgtime(&total_tv_end);
   get_datestamp(datestamp, sizeof(datestamp), &total_tv_start);
+  launch_time = total_tv_start;
 
   watchpool_thr_id = 2;
   thr = &control_thr[watchpool_thr_id];
