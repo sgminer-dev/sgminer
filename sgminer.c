@@ -2306,7 +2306,7 @@ static void suffix_string(uint64_t val, char *buf, size_t bufsiz, int sigdigits)
 static void suffix_string_double(double val, char *buf, size_t bufsiz, int sigdigits)
 {
   if (val < 10) {
-    snprintf(buf, bufsiz, "%.3lf", val);
+    snprintf(buf, bufsiz, "%.3f", val);
   } else {
     return suffix_string(val, buf, bufsiz, sigdigits);
   }
