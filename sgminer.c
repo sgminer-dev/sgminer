@@ -6280,9 +6280,13 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
     if (!soft_restart) {
       unsigned int n_threads = 0;
       pthread_t restart_thr;
-      set_gpu_threads(work->pool->gpu_threads);
-      for (i = 0; i < total_devices; ++i)
-        n_threads += devices[i]->threads;
+      #ifdef HAVE_ADL
+        set_gpu_threads(work->pool->gpu_threads);
+        for (i = 0; i < total_devices; ++i)
+          n_threads += devices[i]->threads;
+      #else
+        n_threads = mining_threads;
+      #endif
 
       if (unlikely(pthread_create(&restart_thr, NULL, restart_mining_threads_thread, (void *)n_threads)))
         quit(1, "restart_mining_threads create thread failed");
