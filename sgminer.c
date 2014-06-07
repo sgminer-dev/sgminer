@@ -1352,6 +1352,9 @@ static struct opt_table opt_config_table[] = {
       opt_set_bool, &opt_incognito,
       "Do not display user name in status window"),
 #endif
+  OPT_WITHOUT_ARG("--more-notices",
+      opt_set_bool, &opt_morenotices,
+      "Shows work restart and new block notices, hidden by default"),
   OPT_WITH_ARG("--intensity|-I",
       set_intensity, NULL, NULL,
       "Intensity of GPU scanning (d or " MIN_INTENSITY_STR
@@ -4192,6 +4195,8 @@ static bool test_work_current(struct work *work)
     }
 
     work->work_block = ++work_block;
+ if (opt_morenotices)
+  {
     if (work->longpoll) {
       if (work->stratum) {
         applog(LOG_NOTICE, "Stratum from %s detected new block", get_pool_name(pool));
@@ -4203,6 +4208,7 @@ static bool test_work_current(struct work *work)
       applog(LOG_NOTICE, "New block detected on network before pool notification");
     else
       applog(LOG_NOTICE, "New block detected on network");
+  }
     restart_threads();
   } else {
     if (memcmp(pool->prev_block, bedata, 32)) {
@@ -4231,11 +4237,12 @@ static bool test_work_current(struct work *work)
     if (work->longpoll) {
       work->work_block = ++work_block;
       if (shared_strategy() || work->pool == current_pool()) {
-        if (work->stratum) {
-          applog(LOG_NOTICE, "Stratum from %s requested work restart", get_pool_name(pool));
-        } else {
-          applog(LOG_NOTICE, "%sLONGPOLL from %s requested work restart", work->gbt ? "GBT " : "", get_pool_name(pool));
-        }
+        if(opt_morenotices)
+         if (work->stratum) {
+            applog(LOG_NOTICE, "Stratum from %s requested work restart", get_pool_name(pool));
+          } else {
+            applog(LOG_NOTICE, "%sLONGPOLL from %s requested work restart", work->gbt ? "GBT " : "", get_pool_name(pool));
+          }
         restart_threads();
       }
     }
@@ -6312,9 +6319,9 @@ static void submit_work_async(struct work *work)
 
   if (stale_work(work, true)) {
     if (opt_submit_stale)
-      applog(LOG_NOTICE, "%s stale share detected, submitting as user requested", get_pool_name(pool));
+      applog(LOG_NOTICE, "%s stale share detected, submitting (user)", get_pool_name(pool));
     else if (pool->submit_old)
-      applog(LOG_NOTICE, "%s stale share detected, submitting as pool requested", get_pool_name(pool));
+      applog(LOG_NOTICE, "%s stale share detected, submitting (pool)", get_pool_name(pool));
     else {
       applog(LOG_NOTICE, "%s stale share detected, discarding", get_pool_name(pool));
       sharelog("discard", work);
