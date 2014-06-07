@@ -133,6 +133,7 @@ bool opt_fail_only;
 int opt_fail_switch_delay = 60;
 static bool opt_fix_protocol;
 static bool opt_lowmem;
+static bool opt_morenotices;
 bool opt_autofan;
 bool opt_autoengine;
 bool opt_noadl;
