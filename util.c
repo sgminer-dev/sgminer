@@ -113,12 +113,10 @@ struct header_info {
 
 static void databuf_free(struct data_buffer *db)
 {
-	if (!db)
-		return;
-
-	free(db->buf);
-
-	memset(db, 0, sizeof(*db));
+	if (db) {
+		if (db->buf) free(db->buf);
+		memset(db, 0, sizeof(*db));
+	}
 }
 
 static size_t all_data_cb(const void *ptr, size_t size, size_t nmemb,
@@ -130,17 +128,19 @@ static size_t all_data_cb(const void *ptr, size_t size, size_t nmemb,
 	void *newmem;
 	static const unsigned char zero = 0;
 
-	oldlen = db->len;
-	newlen = oldlen + len;
+	if (len > 0) {
+		oldlen = db->len;
+		newlen = oldlen + len;
 
-	newmem = realloc(db->buf, newlen + 1);
-	if (!newmem)
-		return 0;
+		newmem = realloc(db->buf, newlen + 1);
+		if (!newmem)
+			return 0;
 
-	db->buf = newmem;
-	db->len = newlen;
-	memcpy((uint8_t*)db->buf + oldlen, ptr, len);
-	memcpy((uint8_t*)db->buf + newlen, &zero, 1);	/* null terminate */
+		db->buf = newmem;
+		db->len = newlen;
+		memcpy((uint8_t*)db->buf + oldlen, ptr, len);
+		memcpy((uint8_t*)db->buf + newlen, &zero, 1);	/* null terminate */
+	}
 
 	return len;
 }
@@ -154,7 +154,7 @@ static size_t upload_data_cb(void *ptr, size_t size, size_t nmemb,
 	if (len > ub->len)
 		len = ub->len;
 
-	if (len) {
+	if (len > 0) {
 		memcpy(ptr, ub->buf, len);
 		ub->buf = (uint8_t*)ub->buf + len;
 		ub->len -= len;
@@ -298,7 +298,7 @@ static int curl_debug_cb(__maybe_unused CURL *handle, curl_infotype type,
 	return 0;
 }
 
-json_t *json_rpc_call(CURL *curl, const char *url,
+json_t *json_rpc_call(CURL *curl, char *curl_err_str, const char *url,
 		      const char *userpass, const char *rpc_req,
 		      bool probe, bool longpoll, int *rolltime,
 		      struct pool *pool, bool share)
@@ -307,7 +307,6 @@ json_t *json_rpc_call(CURL *curl, const char *url,
 	struct data_buffer all_data = {NULL, 0};
 	struct header_info hi = {NULL, 0, NULL, NULL, false, false, false};
 	char len_hdr[64], user_agent_hdr[128];
-	char curl_err_str[CURL_ERROR_SIZE];
 	struct curl_slist *headers = NULL;
 	struct upload_buffer upload_data;
 	json_t *val, *err_val, *res_val;
@@ -1221,7 +1220,7 @@ bool extract_sockaddr(char *url, char **sockaddr_url, char **sockaddr_port)
 
 	if (url_len < 1)
 		return false;
-	
+
 	if (url_len >= sizeof(url_address))
 	{
 		applog(LOG_WARNING, "%s: Truncating overflowed address '%.*s'",

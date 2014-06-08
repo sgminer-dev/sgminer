@@ -1918,12 +1918,13 @@ static void update_gbt(struct pool *pool)
   int rolltime;
   json_t *val;
   CURL *curl;
+  char curl_err_str[CURL_ERROR_SIZE];
 
   curl = curl_easy_init();
   if (unlikely(!curl))
     quit (1, "CURL initialisation failed in update_gbt");
 
-  val = json_rpc_call(curl, pool->rpc_url, pool->rpc_userpass,
+  val = json_rpc_call(curl, curl_err_str, pool->rpc_url, pool->rpc_userpass,
           pool->rpc_req, true, false, &rolltime, pool, false);
 
   if (val) {
@@ -2172,7 +2173,7 @@ out:
 #else /* HAVE_LIBCURL */
 /* Always true with stratum */
 #define pool_localgen(pool) (true)
-#define json_rpc_call(curl, url, userpass, rpc_req, probe, longpoll, rolltime, pool, share) (NULL)
+#define json_rpc_call(curl, curl_err_str, url, userpass, rpc_req, probe, longpoll, rolltime, pool, share) (NULL)
 #define work_decode(pool, work, val) (false)
 #define gen_gbt_work(pool, work) {}
 #endif /* HAVE_LIBCURL */
@@ -2844,7 +2845,7 @@ static void print_status(int thr_id)
     text_print_status(thr_id);
 }
 
-static bool submit_upstream_work(struct work *work, CURL *curl, bool resubmit)
+static bool submit_upstream_work(struct work *work, CURL *curl, char *curl_err_str, bool resubmit)
 {
   char *hexstr = NULL;
   json_t *val, *res, *err;
@@ -2913,7 +2914,7 @@ static bool submit_upstream_work(struct work *work, CURL *curl, bool resubmit)
 
   cgtime(&tv_submit);
   /* issue JSON-RPC request */
-  val = json_rpc_call(curl, pool->rpc_url, pool->rpc_userpass, s, false, false, &rolltime, pool, true);
+  val = json_rpc_call(curl, curl_err_str, pool->rpc_url, pool->rpc_userpass, s, false, false, &rolltime, pool, true);
   cgtime(&tv_submit_reply);
   free(s);
 
@@ -3015,7 +3016,7 @@ out:
   return rc;
 }
 
-static bool get_upstream_work(struct work *work, CURL *curl)
+static bool get_upstream_work(struct work *work, CURL *curl, char *curl_err_str)
 {
   struct pool *pool = work->pool;
   struct sgminer_pool_stats *pool_stats = &(pool->sgminer_pool_stats);
@@ -3030,7 +3031,7 @@ static bool get_upstream_work(struct work *work, CURL *curl)
 
   cgtime(&work->tv_getwork);
 
-  val = json_rpc_call(curl, url, pool->rpc_userpass, pool->rpc_req, false,
+  val = json_rpc_call(curl, curl_err_str, url, pool->rpc_userpass, pool->rpc_req, false,
           false, &work->rolltime, pool, false);
   pool_stats->getwork_attempts++;
 
@@ -3571,7 +3572,7 @@ static void *submit_work_thread(void *userdata)
 
   ce = pop_curl_entry(pool);
   /* submit solution to bitcoin via JSON-RPC */
-  while (!submit_upstream_work(work, ce->curl, resubmit)) {
+  while (!submit_upstream_work(work, ce->curl, ce->curl_err_str, resubmit)) {
     if (opt_lowmem) {
       applog(LOG_NOTICE, "%s share being discarded to minimise memory cache", get_pool_name(pool));
       break;
@@ -5779,6 +5780,7 @@ static bool pool_active(struct pool *pool, bool pinging)
   bool ret = false;
   json_t *val;
   CURL *curl;
+  char curl_err_str[CURL_ERROR_SIZE];
   int rolltime = 0;
 
   if (pool->has_gbt)
@@ -5816,7 +5818,7 @@ retry_stratum:
   /* Probe for GBT support on first pass */
   if (!pool->probed) {
     applog(LOG_DEBUG, "Probing for GBT support");
-    val = json_rpc_call(curl, pool->rpc_url, pool->rpc_userpass,
+    val = json_rpc_call(curl, curl_err_str, pool->rpc_url, pool->rpc_userpass,
             gbt_req, true, false, &rolltime, pool, false);
     if (val) {
       bool append = false, submit = false;
@@ -5861,7 +5863,7 @@ retry_stratum:
   }
 
   cgtime(&tv_getwork);
-  val = json_rpc_call(curl, pool->rpc_url, pool->rpc_userpass,
+  val = json_rpc_call(curl, curl_err_str, pool->rpc_url, pool->rpc_userpass,
           pool->rpc_req, true, false, &rolltime, pool, false);
   cgtime(&tv_getwork_reply);
 
@@ -5927,7 +5929,7 @@ retry_stratum:
         pool->lp_url = (char *)malloc(siz);
         if (!pool->lp_url) {
           applog(LOG_ERR, "Malloc failure in pool_active");
-          return false;
+          goto out;
         }
 
         snprintf(pool->lp_url, siz, "%s%s%s", pool->rpc_url, need_slash ? "/" : "", copy_start);
@@ -6753,6 +6755,7 @@ static void *longpoll_thread(void *userdata)
   struct pool *pool = NULL;
   char threadname[16];
   CURL *curl = NULL;
+  char curl_err_str[CURL_ERROR_SIZE];
   int failures = 0;
   char lpreq[1024];
   char *lp_url;
@@ -6824,7 +6827,7 @@ retry_pool:
      * so always establish a fresh connection instead of relying on
      * a persistent one. */
     curl_easy_setopt(curl, CURLOPT_FRESH_CONNECT, 1);
-    val = json_rpc_call(curl, lp_url, pool->rpc_userpass,
+    val = json_rpc_call(curl, curl_err_str, lp_url, pool->rpc_userpass,
             lpreq, false, true, &rolltime, pool, false);
 
     cgtime(&reply);
@@ -8326,7 +8329,7 @@ retry:
     work->pool = pool;
     ce = pop_curl_entry(pool);
     /* obtain new work from bitcoin via JSON-RPC */
-    if (!get_upstream_work(work, ce->curl)) {
+    if (!get_upstream_work(work, ce->curl, ce->curl_err_str)) {
       applog(LOG_DEBUG, "%s json_rpc_call failed on get work, retrying in 5s", get_pool_name(pool));
       /* Make sure the pool just hasn't stopped serving
        * requests but is up as we'll keep hammering it */

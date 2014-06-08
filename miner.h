@@ -966,7 +966,7 @@ extern pthread_rwlock_t netacc_lock;
 
 extern const uint32_t sha256_init_state[];
 #ifdef HAVE_LIBCURL
-extern json_t *json_rpc_call(CURL *curl, const char *url, const char *userpass,
+extern json_t *json_rpc_call(CURL *curl, char *curl_err_str, const char *url, const char *userpass,
 			     const char *rpc_req, bool, bool, int *,
 			     struct pool *pool, bool);
 #endif
@@ -1110,6 +1110,7 @@ typedef struct _dev_blk_ctx {
 
 struct curl_ent {
 	CURL *curl;
+	char curl_err_str[CURL_ERROR_SIZE];
 	struct list_head node;
 	struct timeval tv;
 };
