@@ -418,5 +418,3 @@ void scrypt_regenhash(struct work *work)
 	scrypt_n_1_1_256_sp(data, scratchbuf, ohash, work->pool->algorithm.n);
 	flip32(ohash, ohash);
 }
-
-static const uint32_t diff1targ = 0x0000ffff;

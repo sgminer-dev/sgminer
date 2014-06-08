@@ -100,7 +100,6 @@ int opt_expiry = 28;
 
 algorithm_t *opt_algorithm;
 
-static const bool opt_time = true;
 unsigned long long global_hashrate;
 unsigned long global_quota_gcd = 1;
 bool opt_show_coindiff = false;
@@ -117,7 +116,6 @@ static int opt_devs_enabled;
 static bool opt_display_devs;
 static bool opt_removedisabled;
 int total_devices;
-int zombie_devs;
 static int most_devices;
 struct cgpu_info **devices;
 int mining_threads;
@@ -816,6 +814,7 @@ static char *set_pool_thread_concurrency(const char *arg)
   return NULL;
 }
 
+#ifdef HAVE_ADL
 static char *set_pool_gpu_engine(const char *arg)
 {
   struct pool *pool = get_current_pool();
@@ -843,6 +842,7 @@ static char *set_pool_gpu_fan(const char *arg)
   pool->gpu_fan = arg;
   return NULL;
 }
+#endif
 
 static char *set_pool_nfactor(const char *arg)
 {
@@ -3736,17 +3736,6 @@ static void _copy_work(struct work *work, const struct work *base_work, int noff
     work->coinbase = strdup(base_work->coinbase);
 }
 
-void set_work_ntime(struct work *work, int ntime)
-{
-  uint32_t *work_ntime = (uint32_t *)(work->data + 68);
-
-  *work_ntime = htobe32(ntime);
-  if (work->ntime) {
-    free(work->ntime);
-    work->ntime = bin2hex((unsigned char *)work_ntime, 4);
-  }
-}
-
 /* Generates a copy of an existing work struct, creating fresh heap allocations
  * for all dynamically allocated arrays within the struct. noffset is used for
  * when a driver has internally rolled the ntime, noffset is a relative value.
@@ -4035,34 +4024,6 @@ static void discard_stale(void)
     applog(LOG_DEBUG, "Discarded %d stales that didn't match current hash", stale);
 }
 
-/* A generic wait function for threads that poll that will wait a specified
- * time tdiff waiting on the pthread conditional that is broadcast when a
- * work restart is required. Returns the value of pthread_cond_timedwait
- * which is zero if the condition was met or ETIMEDOUT if not.
- */
-int restart_wait(struct thr_info *thr, unsigned int mstime)
-{
-  struct timeval now, then, tdiff;
-  struct timespec abstime;
-  int rc;
-
-  tdiff.tv_sec = mstime / 1000;
-  tdiff.tv_usec = mstime * 1000 - (tdiff.tv_sec * 1000000);
-  cgtime(&now);
-  timeradd(&now, &tdiff, &then);
-  abstime.tv_sec = then.tv_sec;
-  abstime.tv_nsec = then.tv_usec * 1000;
-
-  mutex_lock(&restart_lock);
-  if (thr->work_restart)
-    rc = 0;
-  else
-    rc = pthread_cond_timedwait(&restart_cond, &restart_lock, &abstime);
-  mutex_unlock(&restart_lock);
-
-  return rc;
-}
-
 static void *restart_thread(void __maybe_unused *arg)
 {
   struct pool *cp = current_pool();
@@ -4089,7 +4050,6 @@ static void *restart_thread(void __maybe_unused *arg)
     if (cgpu->deven != DEV_ENABLED)
       continue;
     mining_thr[i]->work_restart = true;
-    flush_queue(cgpu);
     cgpu->drv->flush_work(cgpu);
   }
 
@@ -4155,17 +4115,6 @@ static bool block_exists(char *hexstr)
   if (s)
     return true;
   return false;
-}
-
-/* Tests if this work is from a block that has been seen before */
-static inline bool from_existing_block(struct work *work)
-{
-  char *hexstr = bin2hex(work->data + 8, 18);
-  bool ret;
-
-  ret = block_exists(hexstr);
-  free(hexstr);
-  return ret;
 }
 
 static int block_sort(struct block *blocka, struct block *blockb)
@@ -4475,7 +4424,10 @@ void write_config(FILE *fcfg)
   if (nDevs) {
     fputs(",\n\"intensity\" : \"", fcfg);
     for(i = 0; i < nDevs; i++)
-      fprintf(fcfg, gpus[i].dynamic ? "%sd" : "%s%d", i > 0 ? "," : "", gpus[i].intensity);
+      if (gpus[i].dynamic)
+        fprintf(fcfg, "%sd", i > 0 ? "," : "");
+      else
+        fprintf(fcfg, "%s%d", i > 0 ? "," : "", gpus[i].intensity);
 
     fputs("\",\n\"xintensity\" : \"", fcfg);
     for(i = 0; i < nDevs; i++)
@@ -6288,7 +6240,7 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
         n_threads = mining_threads;
       #endif
 
-      if (unlikely(pthread_create(&restart_thr, NULL, restart_mining_threads_thread, (void *)n_threads)))
+      if (unlikely(pthread_create(&restart_thr, NULL, restart_mining_threads_thread, (void *) (intptr_t) n_threads)))
         quit(1, "restart_mining_threads create thread failed");
       sleep(60);
       quit(1, "thread was not cancelled in 60 seconds after restart_mining_threads");
@@ -6422,18 +6374,6 @@ bool test_nonce(struct work *work, uint32_t nonce)
   return (le32toh(*hash_32) <= diff1targ);
 }
 
-/* For testing a nonce against an arbitrary diff */
-bool test_nonce_diff(struct work *work, uint32_t nonce, double diff)
-{
-  uint64_t *hash64 = (uint64_t *)(work->hash + 24), diff64;
-
-  rebuild_nonce(work, nonce);
-  diff64 = work->pool->algorithm.diff_nonce;
-  diff64 /= diff;
-
-  return (le64toh(*hash64) <= diff64);
-}
-
 static void update_work_stats(struct thr_info *thr, struct work *work)
 {
   double test_diff = current_diff;
@@ -6487,36 +6427,6 @@ bool submit_nonce(struct thr_info *thr, struct work *work, uint32_t nonce)
   }
 
   return true;
-}
-
-/* Allows drivers to submit work items where the driver has changed the ntime
- * value by noffset. Must be only used with a work protocol that does not ntime
- * roll itself intrinsically to generate work (eg stratum). We do not touch
- * the original work struct, but the copy of it only. */
-bool submit_noffset_nonce(struct thr_info *thr, struct work *work_in, uint32_t nonce,
-        int noffset)
-{
-  struct work *work = make_work();
-  bool ret = false;
-
-  _copy_work(work, work_in, noffset);
-  if (!test_nonce(work, nonce)) {
-    inc_hw_errors(thr);
-    goto out;
-  }
-  ret = true;
-  update_work_stats(thr, work);
-  if (!fulltest(work->hash, work->target)) {
-    applog(LOG_INFO, "%s %d: Share above target", thr->cgpu->drv->name,
-           thr->cgpu->device_id);
-    goto  out;
-  }
-  submit_work_async(work);
-
-out:
-  if (!ret)
-    free_work(work);
-  return ret;
 }
 
 static inline bool abandon_work(struct work *work, struct timeval *wdiff, uint64_t hashes)
@@ -6704,315 +6614,6 @@ static void hash_sole_work(struct thr_info *mythr)
       sdiff.tv_sec = sdiff.tv_usec = 0;
     } while (!abandon_work(work, &wdiff, cgpu->max_hashes));
     free_work(work);
-  }
-  cgpu->deven = DEV_DISABLED;
-}
-
-/* Put a new unqueued work item in cgpu->unqueued_work under cgpu->qlock till
- * the driver tells us it's full so that it may extract the work item using
- * the get_queued() function which adds it to the hashtable on
- * cgpu->queued_work. */
-static void fill_queue(struct thr_info *mythr, struct cgpu_info *cgpu, struct device_drv *drv, const int thr_id)
-{
-  do {
-    bool need_work;
-
-    /* Do this lockless just to know if we need more unqueued work. */
-    need_work = (!cgpu->unqueued_work);
-
-    /* get_work is a blocking function so do it outside of lock
-     * to prevent deadlocks with other locks. */
-    if (need_work) {
-      struct work *work = get_work(mythr, thr_id);
-
-      wr_lock(&cgpu->qlock);
-      /* Check we haven't grabbed work somehow between
-       * checking and picking up the lock. */
-      if (likely(!cgpu->unqueued_work))
-        cgpu->unqueued_work = work;
-      else
-        need_work = false;
-      wr_unlock(&cgpu->qlock);
-
-      if (unlikely(!need_work))
-        discard_work(work);
-    }
-    /* The queue_full function should be used by the driver to
-     * actually place work items on the physical device if it
-     * does have a queue. */
-  } while (!drv->queue_full(cgpu));
-}
-
-/* Add a work item to a cgpu's queued hashlist */
-void __add_queued(struct cgpu_info *cgpu, struct work *work)
-{
-  cgpu->queued_count++;
-  HASH_ADD_INT(cgpu->queued_work, id, work);
-}
-
-/* This function is for retrieving one work item from the unqueued pointer and
- * adding it to the hashtable of queued work. Code using this function must be
- * able to handle NULL as a return which implies there is no work available. */
-struct work *get_queued(struct cgpu_info *cgpu)
-{
-  struct work *work = NULL;
-
-  wr_lock(&cgpu->qlock);
-  if (cgpu->unqueued_work) {
-    work = cgpu->unqueued_work;
-    if (unlikely(stale_work(work, false))) {
-      discard_work(work);
-      work = NULL;
-      wake_gws();
-    } else
-      __add_queued(cgpu, work);
-    cgpu->unqueued_work = NULL;
-  }
-  wr_unlock(&cgpu->qlock);
-
-  return work;
-}
-
-void add_queued(struct cgpu_info *cgpu, struct work *work)
-{
-  wr_lock(&cgpu->qlock);
-  __add_queued(cgpu, work);
-  wr_unlock(&cgpu->qlock);
-}
-
-/* Get fresh work and add it to cgpu's queued hashlist */
-struct work *get_queue_work(struct thr_info *thr, struct cgpu_info *cgpu, int thr_id)
-{
-  struct work *work = get_work(thr, thr_id);
-
-  add_queued(cgpu, work);
-  return work;
-}
-
-/* This function is for finding an already queued work item in the
- * given que hashtable. Code using this function must be able
- * to handle NULL as a return which implies there is no matching work.
- * The calling function must lock access to the que if it is required.
- * The common values for midstatelen, offset, datalen are 32, 64, 12 */
-struct work *__find_work_bymidstate(struct work *que, char *midstate, size_t midstatelen, char *data, int offset, size_t datalen)
-{
-  struct work *work, *tmp, *ret = NULL;
-
-  HASH_ITER(hh, que, work, tmp) {
-    if (memcmp(work->midstate, midstate, midstatelen) == 0 &&
-        memcmp(work->data + offset, data, datalen) == 0) {
-      ret = work;
-      break;
-    }
-  }
-
-  return ret;
-}
-
-/* This function is for finding an already queued work item in the
- * device's queued_work hashtable. Code using this function must be able
- * to handle NULL as a return which implies there is no matching work.
- * The common values for midstatelen, offset, datalen are 32, 64, 12 */
-struct work *find_queued_work_bymidstate(struct cgpu_info *cgpu, char *midstate, size_t midstatelen, char *data, int offset, size_t datalen)
-{
-  struct work *ret;
-
-  rd_lock(&cgpu->qlock);
-  ret = __find_work_bymidstate(cgpu->queued_work, midstate, midstatelen, data, offset, datalen);
-  rd_unlock(&cgpu->qlock);
-
-  return ret;
-}
-
-struct work *clone_queued_work_bymidstate(struct cgpu_info *cgpu, char *midstate, size_t midstatelen, char *data, int offset, size_t datalen)
-{
-  struct work *work, *ret = NULL;
-
-  rd_lock(&cgpu->qlock);
-  work = __find_work_bymidstate(cgpu->queued_work, midstate, midstatelen, data, offset, datalen);
-  if (work)
-    ret = copy_work(work);
-  rd_unlock(&cgpu->qlock);
-
-  return ret;
-}
-
-void __work_completed(struct cgpu_info *cgpu, struct work *work)
-{
-  cgpu->queued_count--;
-  HASH_DEL(cgpu->queued_work, work);
-}
-
-/* This iterates over a queued hashlist finding work started more than secs
- * seconds ago and discards the work as completed. The driver must set the
- * work->tv_work_start value appropriately. Returns the number of items aged. */
-int age_queued_work(struct cgpu_info *cgpu, double secs)
-{
-  struct work *work, *tmp;
-  struct timeval tv_now;
-  int aged = 0;
-
-  cgtime(&tv_now);
-
-  wr_lock(&cgpu->qlock);
-  HASH_ITER(hh, cgpu->queued_work, work, tmp) {
-    if (tdiff(&tv_now, &work->tv_work_start) > secs) {
-      __work_completed(cgpu, work);
-      aged++;
-    }
-  }
-  wr_unlock(&cgpu->qlock);
-
-  return aged;
-}
-
-/* This function should be used by queued device drivers when they're sure
- * the work struct is no longer in use. */
-void work_completed(struct cgpu_info *cgpu, struct work *work)
-{
-  wr_lock(&cgpu->qlock);
-  __work_completed(cgpu, work);
-  wr_unlock(&cgpu->qlock);
-
-  free_work(work);
-}
-
-/* Combines find_queued_work_bymidstate and work_completed in one function
- * withOUT destroying the work so the driver must free it. */
-struct work *take_queued_work_bymidstate(struct cgpu_info *cgpu, char *midstate, size_t midstatelen, char *data, int offset, size_t datalen)
-{
-  struct work *work;
-
-  wr_lock(&cgpu->qlock);
-  work = __find_work_bymidstate(cgpu->queued_work, midstate, midstatelen, data, offset, datalen);
-  if (work)
-    __work_completed(cgpu, work);
-  wr_unlock(&cgpu->qlock);
-
-  return work;
-}
-
-void flush_queue(struct cgpu_info *cgpu)
-{
-  struct work *work = NULL;
-
-  if (unlikely(!cgpu))
-    return;
-
-  /* Use only a trylock in case we get into a deadlock with a queueing
-   * function holding the read lock when we're called. */
-  if (wr_trylock(&cgpu->qlock))
-    return;
-  work = cgpu->unqueued_work;
-  cgpu->unqueued_work = NULL;
-  wr_unlock(&cgpu->qlock);
-
-  if (work) {
-    free_work(work);
-    applog(LOG_DEBUG, "Discarded queued work item");
-  }
-}
-
-/* This version of hash work is for devices that are fast enough to always
- * perform a full nonce range and need a queue to maintain the device busy.
- * Work creation and destruction is not done from within this function
- * directly. */
-void hash_queued_work(struct thr_info *mythr)
-{
-  struct timeval tv_start = {0, 0}, tv_end;
-  struct cgpu_info *cgpu = mythr->cgpu;
-  struct device_drv *drv = cgpu->drv;
-  const int thr_id = mythr->id;
-  int64_t hashes_done = 0;
-
-  while (likely(!cgpu->shutdown)) {
-    struct timeval diff;
-    int64_t hashes;
-
-    mythr->work_update = false;
-
-    fill_queue(mythr, cgpu, drv, thr_id);
-
-    hashes = drv->scanwork(mythr);
-
-    /* Reset the bool here in case the driver looks for it
-     * synchronously in the scanwork loop. */
-    mythr->work_restart = false;
-
-    if (unlikely(hashes == -1 )) {
-      applog(LOG_ERR, "%s %d failure, disabling!", drv->name, cgpu->device_id);
-      cgpu->deven = DEV_DISABLED;
-      dev_error(cgpu, REASON_THREAD_ZERO_HASH);
-      break;
-    }
-
-    hashes_done += hashes;
-    cgtime(&tv_end);
-    timersub(&tv_end, &tv_start, &diff);
-    /* Update the hashmeter at most 5 times per second */
-    if ((hashes_done && (diff.tv_sec > 0 || diff.tv_usec > 200000)) ||
-        diff.tv_sec >= opt_log_interval) {
-      hashmeter(thr_id, &diff, hashes_done);
-      hashes_done = 0;
-      copy_time(&tv_start, &tv_end);
-    }
-
-    if (unlikely(mythr->pause || cgpu->deven != DEV_ENABLED))
-      mt_disable(mythr, thr_id, drv);
-
-    if (mythr->work_update)
-      drv->update_work(cgpu);
-  }
-  cgpu->deven = DEV_DISABLED;
-}
-
-/* This version of hash_work is for devices drivers that want to do their own
- * work management entirely, usually by using get_work(). Note that get_work
- * is a blocking function and will wait indefinitely if no work is available
- * so this must be taken into consideration in the driver. */
-void hash_driver_work(struct thr_info *mythr)
-{
-  struct timeval tv_start = {0, 0}, tv_end;
-  struct cgpu_info *cgpu = mythr->cgpu;
-  struct device_drv *drv = cgpu->drv;
-  const int thr_id = mythr->id;
-  int64_t hashes_done = 0;
-
-  while (likely(!cgpu->shutdown)) {
-    struct timeval diff;
-    int64_t hashes;
-
-    mythr->work_update = false;
-
-    hashes = drv->scanwork(mythr);
-
-    /* Reset the bool here in case the driver looks for it
-     * synchronously in the scanwork loop. */
-    mythr->work_restart = false;
-
-    if (unlikely(hashes == -1 )) {
-      applog(LOG_ERR, "%s %d failure, disabling!", drv->name, cgpu->device_id);
-      cgpu->deven = DEV_DISABLED;
-      dev_error(cgpu, REASON_THREAD_ZERO_HASH);
-      break;
-    }
-
-    hashes_done += hashes;
-    cgtime(&tv_end);
-    timersub(&tv_end, &tv_start, &diff);
-    /* Update the hashmeter at most 5 times per second */
-    if ((hashes_done && (diff.tv_sec > 0 || diff.tv_usec > 200000)) ||
-        diff.tv_sec >= opt_log_interval) {
-      hashmeter(thr_id, &diff, hashes_done);
-      hashes_done = 0;
-      copy_time(&tv_start, &tv_end);
-    }
-
-    if (unlikely(mythr->pause || cgpu->deven != DEV_ENABLED))
-      mt_disable(mythr, thr_id, drv);
-
-    if (mythr->work_update)
-      drv->update_work(cgpu);
   }
   cgpu->deven = DEV_DISABLED;
 }
@@ -8055,9 +7656,6 @@ void enable_device(struct cgpu_info *cgpu)
 #ifdef HAVE_CURSES
   adj_width(mining_threads, &dev_width);
 #endif
-
-  rwlock_init(&cgpu->qlock);
-  cgpu->queued_work = NULL;
 }
 
 struct _cgpu_devid_counter {
@@ -8068,8 +7666,8 @@ struct _cgpu_devid_counter {
 
 static void adjust_mostdevs(void)
 {
-  if (total_devices - zombie_devs > most_devices)
-    most_devices = total_devices - zombie_devs;
+  if (total_devices > most_devices)
+    most_devices = total_devices;
 }
 
 bool add_cgpu(struct cgpu_info *cgpu)
@@ -8202,7 +7800,7 @@ static void restart_mining_threads(unsigned int new_n_threads)
 
 static void *restart_mining_threads_thread(void *userdata)
 {
-  restart_mining_threads((unsigned int) userdata);
+  restart_mining_threads((unsigned int) (intptr_t) userdata);
 
   return NULL;
 }

@@ -522,11 +522,6 @@ struct cgpu_info {
 
 	struct sgminer_stats sgminer_stats;
 
-	pthread_rwlock_t qlock;
-	struct work *queued_work;
-	struct work *unqueued_work;
-	unsigned int queued_count;
-
 	bool shutdown;
 
 	struct timeval dev_start_tv;
@@ -1009,7 +1004,6 @@ extern pthread_cond_t restart_cond;
 extern void clear_stratum_shares(struct pool *pool);
 extern void clear_pool_work(struct pool *pool);
 extern void set_target(unsigned char *dest_target, double diff, double diff_multiplier2);
-extern int restart_wait(struct thr_info *thr, unsigned int mstime);
 
 extern void kill_work(void);
 
@@ -1061,7 +1055,6 @@ extern struct cgpu_info gpus[MAX_GPUDEVICES];
 extern double total_secs;
 extern int mining_threads;
 extern int total_devices;
-extern int zombie_devs;
 extern struct cgpu_info **devices;
 extern int total_pools;
 extern struct pool **pools;
@@ -1368,26 +1361,9 @@ struct work {
 extern void get_datestamp(char *, size_t, struct timeval *);
 extern void inc_hw_errors(struct thr_info *thr);
 extern bool test_nonce(struct work *work, uint32_t nonce);
-extern bool test_nonce_diff(struct work *work, uint32_t nonce, double diff);
 extern bool submit_tested_work(struct thr_info *thr, struct work *work);
 extern bool submit_nonce(struct thr_info *thr, struct work *work, uint32_t nonce);
-extern bool submit_noffset_nonce(struct thr_info *thr, struct work *work, uint32_t nonce,
-			  int noffset);
 extern struct work *get_work(struct thr_info *thr, const int thr_id);
-extern void __add_queued(struct cgpu_info *cgpu, struct work *work);
-extern struct work *get_queued(struct cgpu_info *cgpu);
-extern void add_queued(struct cgpu_info *cgpu, struct work *work);
-extern struct work *get_queue_work(struct thr_info *thr, struct cgpu_info *cgpu, int thr_id);
-extern struct work *__find_work_bymidstate(struct work *que, char *midstate, size_t midstatelen, char *data, int offset, size_t datalen);
-extern struct work *find_queued_work_bymidstate(struct cgpu_info *cgpu, char *midstate, size_t midstatelen, char *data, int offset, size_t datalen);
-extern struct work *clone_queued_work_bymidstate(struct cgpu_info *cgpu, char *midstate, size_t midstatelen, char *data, int offset, size_t datalen);
-extern void __work_completed(struct cgpu_info *cgpu, struct work *work);
-extern int age_queued_work(struct cgpu_info *cgpu, double secs);
-extern void work_completed(struct cgpu_info *cgpu, struct work *work);
-extern struct work *take_queued_work_bymidstate(struct cgpu_info *cgpu, char *midstate, size_t midstatelen, char *data, int offset, size_t datalen);
-extern void flush_queue(struct cgpu_info *cgpu);
-extern void hash_driver_work(struct thr_info *mythr);
-extern void hash_queued_work(struct thr_info *mythr);
 extern void _wlog(const char *str);
 extern void _wlogprint(const char *str);
 extern int curses_int(const char *query);
@@ -1416,7 +1392,6 @@ extern void adl(void);
 extern void app_restart(void);
 extern void clean_work(struct work *work);
 extern void free_work(struct work *work);
-extern void set_work_ntime(struct work *work, int ntime);
 extern struct work *copy_work_noffset(struct work *base_work, int noffset);
 #define copy_work(work_in) copy_work_noffset(work_in, 0)
 extern struct thr_info *get_thread(int thr_id);

@@ -52,8 +52,10 @@ bool successful_connect = false;
 static void keep_sockalive(SOCKETTYPE fd)
 {
 	const int tcp_one = 1;
+#ifdef __linux
+  const int tcp_keepidle = 45;
+#endif
 #ifndef WIN32
-	const int tcp_keepidle = 45;
 	const int tcp_keepintvl = 30;
 	int flags = fcntl(fd, F_GETFL, 0);
 
