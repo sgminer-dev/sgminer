@@ -229,7 +229,7 @@
     <ClInclude Include="..\ocl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\scrypt.h">
+    <ClInclude Include="..\algorithm\scrypt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\sha2.h">

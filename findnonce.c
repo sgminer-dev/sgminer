@@ -15,7 +15,7 @@
 #include <string.h>
 
 #include "findnonce.h"
-#include "scrypt.h"
+#include "algorithm/scrypt.h"
 
 const uint32_t SHA256_K[64] = {
 	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
