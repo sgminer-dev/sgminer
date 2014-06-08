@@ -107,6 +107,16 @@ void append_scrypt_compiler_options(build_kernel_data *data, int lookup_gap, uns
   strcat(data->compiler_options, buf);
 }
 
+// TODO: move away, specific
+void append_hamsi_compiler_options(build_kernel_data *data, int expand_big)
+{
+  char buf[255];
+  sprintf(buf, " -D SPH_HAMSI_EXPAND_BIG=%d",
+      expand_big);
+
+  strcat(data->compiler_options, buf);
+}
+
 cl_program build_opencl_kernel(build_kernel_data *data, const char *filename)
 {
   int pl;

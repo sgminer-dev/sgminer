@@ -396,7 +396,8 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
 	  build_data->patch_bfi = needs_bfi_patch(build_data);
 
 	  set_base_compiler_options(build_data);
-	  append_scrypt_compiler_options(build_data, cgpu->lookup_gap, cgpu->thread_concurrency, algorithm->nfactor);
+    append_scrypt_compiler_options(build_data, cgpu->lookup_gap, cgpu->thread_concurrency, algorithm->nfactor);
+    append_hamsi_compiler_options(build_data, opt_hamsi_expand_big);
 
 		if (!(clState->program = build_opencl_kernel(build_data, filename)))
 			return NULL;

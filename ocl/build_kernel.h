@@ -27,5 +27,6 @@ cl_program build_opencl_kernel(build_kernel_data *data, const char *filename);
 bool save_opencl_kernel(build_kernel_data *data, cl_program program);
 void set_base_compiler_options(build_kernel_data *data);
 void append_scrypt_compiler_options(build_kernel_data *data, int lookup_gap, unsigned int thread_concurrency, unsigned int nfactor);
+void append_hamsi_compiler_options(build_kernel_data *data, int expand_big);
 
 #endif /* BUILD_KERNEL_H */

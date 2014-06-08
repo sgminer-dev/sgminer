@@ -74,7 +74,9 @@ typedef long sph_s64;
 #define SPH_GROESTL_BIG_ENDIAN 0
 #define SPH_CUBEHASH_UNROLL 0
 #define SPH_KECCAK_UNROLL   0
-#define SPH_HAMSI_EXPAND_BIG 1
+#if !defined SPH_HAMSI_EXPAND_BIG
+#define SPH_HAMSI_EXPAND_BIG 4
+#endif
 
 #include "blake.cl"
 #include "bmw.cl"
