@@ -38,6 +38,15 @@ option for that pool only. Otherwise sets the default.
 
 *Default:* depends on `algorithm`; otherwise `10`.
 
+### hamsi-expand-big
+
+Sets SPH_HAMSI_EXPAND_BIG for X13 algorithms. Values `"4"` and `"1"` are
+commonly used. Changing this may improve hashrate. Which value is better
+depends on GPU type and even manufacturer (i.e. exact GPU model).
+
+*Argument:* `"4"` or `"1"`
+*Default:* `"4"`
+
 ## Pool-specific configuration
 
 If you use any of these options for a pool, then **you must** set that option
