@@ -43,16 +43,12 @@
 
 int opt_platform_id = -1;
 
-int clDevicesNum(void) {
+bool get_opencl_platform(int preferred_platform_id, cl_platform_id *platform) {
 	cl_int status;
-	char pbuff[256];
-	cl_uint numDevices;
 	cl_uint numPlatforms;
-	int most_devices = -1;
 	cl_platform_id *platforms = NULL;
-	cl_platform_id platform = NULL;
-	unsigned int i, mdplatform = 0;
-	int ret = -1;
+	unsigned int i;
+	bool ret = false;
 
 	status = clGetPlatformIDs(0, NULL, &numPlatforms);
 	/* If this fails, assume no GPUs. */
@@ -66,6 +62,11 @@ int clDevicesNum(void) {
 		goto out;
 	}
 
+	if (preferred_platform_id >= (int)numPlatforms) {
+		applog(LOG_ERR, "Specified platform that does not exist");
+		goto out;
+	}
+
 	platforms = (cl_platform_id *)malloc(numPlatforms*sizeof(cl_platform_id));
 	status = clGetPlatformIDs(numPlatforms, platforms, NULL);
 	if (status != CL_SUCCESS) {
@@ -74,52 +75,83 @@ int clDevicesNum(void) {
 	}
 
 	for (i = 0; i < numPlatforms; i++) {
-		if (opt_platform_id >= 0 && (int)i != opt_platform_id)
+		if (preferred_platform_id >= 0 && (int)i != preferred_platform_id)
 			continue;
 
-		status = clGetPlatformInfo( platforms[i], CL_PLATFORM_VENDOR, sizeof(pbuff), pbuff, NULL);
-		if (status != CL_SUCCESS) {
-			applog(LOG_ERR, "Error %d: Getting Platform Info. (clGetPlatformInfo)", status);
-			goto out;
-		}
-		platform = platforms[i];
-		applog(LOG_INFO, "CL Platform %d vendor: %s", i, pbuff);
-		status = clGetPlatformInfo(platform, CL_PLATFORM_NAME, sizeof(pbuff), pbuff, NULL);
-		if (status == CL_SUCCESS)
-			applog(LOG_INFO, "CL Platform %d name: %s", i, pbuff);
-		status = clGetPlatformInfo(platform, CL_PLATFORM_VERSION, sizeof(pbuff), pbuff, NULL);
-		if (status == CL_SUCCESS)
-			applog(LOG_INFO, "CL Platform %d version: %s", i, pbuff);
-		status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);
-		if (status != CL_SUCCESS) {
-			applog(LOG_INFO, "Error %d: Getting Device IDs (num)", status);
-			continue;
-		}
-		applog(LOG_INFO, "Platform %d devices: %d", i, numDevices);
-		if ((int)numDevices > most_devices) {
-			most_devices = numDevices;
-			mdplatform = i;
-		}
-		if (numDevices) {
-			unsigned int j;
-			cl_device_id *devices = (cl_device_id *)malloc(numDevices*sizeof(cl_device_id));
-
-			clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices, NULL);
-			for (j = 0; j < numDevices; j++) {
-				clGetDeviceInfo(devices[j], CL_DEVICE_NAME, sizeof(pbuff), pbuff, NULL);
-				applog(LOG_INFO, "\t%i\t%s", j, pbuff);
-			}
-			free(devices);
-		}
+		*platform = platforms[i];
+		ret = true;
+		break;
 	}
-
-	if (opt_platform_id < 0)
-		opt_platform_id = mdplatform;;
-
-	ret = most_devices;
 out:
 	if (platforms) free(platforms);
 	return ret;
+}
+
+
+int clDevicesNum(void) {
+	cl_int status;
+	char pbuff[256];
+	cl_uint numDevices;
+	cl_platform_id platform = NULL;
+	int ret = -1;
+
+	if (!get_opencl_platform(opt_platform_id, &platform)) {
+		goto out;
+	}
+
+	status = clGetPlatformInfo(platform, CL_PLATFORM_VENDOR, sizeof(pbuff), pbuff, NULL);
+	if (status != CL_SUCCESS) {
+		applog(LOG_ERR, "Error %d: Getting Platform Info. (clGetPlatformInfo)", status);
+		goto out;
+	}
+
+	applog(LOG_INFO, "CL Platform vendor: %s", pbuff);
+	status = clGetPlatformInfo(platform, CL_PLATFORM_NAME, sizeof(pbuff), pbuff, NULL);
+	if (status == CL_SUCCESS)
+		applog(LOG_INFO, "CL Platform name: %s", pbuff);
+	status = clGetPlatformInfo(platform, CL_PLATFORM_VERSION, sizeof(pbuff), pbuff, NULL);
+	if (status == CL_SUCCESS)
+		applog(LOG_INFO, "CL Platform version: %s", pbuff);
+	status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);
+	if (status != CL_SUCCESS) {
+		applog(LOG_INFO, "Error %d: Getting Device IDs (num)", status);
+		goto out;
+	}
+	applog(LOG_INFO, "Platform devices: %d", numDevices);
+	if (numDevices) {
+		unsigned int j;
+		cl_device_id *devices = (cl_device_id *)malloc(numDevices*sizeof(cl_device_id));
+
+		clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices, NULL);
+		for (j = 0; j < numDevices; j++) {
+			clGetDeviceInfo(devices[j], CL_DEVICE_NAME, sizeof(pbuff), pbuff, NULL);
+			applog(LOG_INFO, "\t%i\t%s", j, pbuff);
+		}
+		free(devices);
+	}
+
+	ret = numDevices;
+out:
+	return ret;
+}
+
+static cl_int create_opencl_context(cl_context *context, cl_platform_id *platform)
+{
+	cl_context_properties cps[3] = { CL_CONTEXT_PLATFORM, (cl_context_properties)*platform, 0 };
+	cl_int status;
+
+	*context = clCreateContextFromType(cps, CL_DEVICE_TYPE_GPU, NULL, NULL, &status);
+	return status;
+}
+
+static cl_int create_opencl_command_queue(cl_command_queue *command_queue, cl_context *context, cl_device_id *device, cl_command_queue_properties cq_properties)
+{
+	cl_int status;
+	*command_queue = clCreateCommandQueue(*context, *device,
+		cq_properties, &status);
+	if (status != CL_SUCCESS) /* Try again without OOE enable */
+		*command_queue = clCreateCommandQueue(*context, *device, 0, &status);
+	return status;
 }
 
 static float get_opencl_version(cl_device_id device)
@@ -144,138 +176,87 @@ static float get_opencl_version(cl_device_id device)
   return version;
 }
 
+static bool get_opencl_bit_align_support(cl_device_id *device)
+{
+	char extensions[1024];
+	const char * camo = "cl_amd_media_ops";
+	char *find;
+	cl_int status;
+
+	status = clGetDeviceInfo(*device, CL_DEVICE_EXTENSIONS, 1024, (void *)extensions, NULL);
+	if (status != CL_SUCCESS) {
+		return false;
+	}
+	find = strstr(extensions, camo);
+	return !!find;
+}
+
 _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *algorithm)
 {
 	_clState *clState = (_clState *)calloc(1, sizeof(_clState));
 	struct cgpu_info *cgpu = &gpus[gpu];
 	cl_platform_id platform = NULL;
-	char pbuff[256], vbuff[255];
+	char pbuff[256];
 	build_kernel_data *build_data = (build_kernel_data *) alloca(sizeof(struct _build_kernel_data));
-	cl_platform_id* platforms;
 	cl_uint preferred_vwidth;
 	cl_device_id *devices;
-	cl_uint numPlatforms;
 	cl_uint numDevices;
 	cl_int status;
 
-	status = clGetPlatformIDs(0, NULL, &numPlatforms);
+	if (!get_opencl_platform(opt_platform_id, &platform)) {
+		return NULL;
+	}
+
+	numDevices = clDevicesNum();
+
+	if (numDevices <= 0 ) return NULL;
+
+	devices = (cl_device_id *)alloca(numDevices*sizeof(cl_device_id));
+
+	/* Now, get the device list data */
+
+	status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices, NULL);
 	if (status != CL_SUCCESS) {
-		applog(LOG_ERR, "Error %d: Getting Platforms. (clGetPlatformsIDs)", status);
+		applog(LOG_ERR, "Error %d: Getting Device IDs (list)", status);
 		return NULL;
 	}
 
-	platforms = (cl_platform_id *)alloca(numPlatforms*sizeof(cl_platform_id));
-	status = clGetPlatformIDs(numPlatforms, platforms, NULL);
-	if (status != CL_SUCCESS) {
-		applog(LOG_ERR, "Error %d: Getting Platform Ids. (clGetPlatformsIDs)", status);
-		return NULL;
-	}
+	applog(LOG_INFO, "List of devices:");
 
-	if (opt_platform_id >= (int)numPlatforms) {
-		applog(LOG_ERR, "Specified platform that does not exist");
-		return NULL;
-	}
-
-	status = clGetPlatformInfo(platforms[opt_platform_id], CL_PLATFORM_VENDOR, sizeof(pbuff), pbuff, NULL);
-	if (status != CL_SUCCESS) {
-		applog(LOG_ERR, "Error %d: Getting Platform Info. (clGetPlatformInfo)", status);
-		return NULL;
-	}
-	platform = platforms[opt_platform_id];
-
-	if (platform == NULL) {
-		perror("NULL platform found!\n");
-		return NULL;
-	}
-
-	applog(LOG_INFO, "CL Platform vendor: %s", pbuff);
-	status = clGetPlatformInfo(platform, CL_PLATFORM_NAME, sizeof(pbuff), pbuff, NULL);
-	if (status == CL_SUCCESS)
-		applog(LOG_INFO, "CL Platform name: %s", pbuff);
-	status = clGetPlatformInfo(platform, CL_PLATFORM_VERSION, sizeof(vbuff), vbuff, NULL);
-	if (status == CL_SUCCESS)
-		applog(LOG_INFO, "CL Platform version: %s", vbuff);
-
-	status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);
-	if (status != CL_SUCCESS) {
-		applog(LOG_ERR, "Error %d: Getting Device IDs (num)", status);
-		return NULL;
-	}
-
-	if (numDevices > 0 ) {
-		devices = (cl_device_id *)alloca(numDevices*sizeof(cl_device_id));
-
-		/* Now, get the device list data */
-
-		status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, numDevices, devices, NULL);
+	unsigned int i;
+	for (i = 0; i < numDevices; i++) {
+		status = clGetDeviceInfo(devices[i], CL_DEVICE_NAME, sizeof(pbuff), pbuff, NULL);
 		if (status != CL_SUCCESS) {
-			applog(LOG_ERR, "Error %d: Getting Device IDs (list)", status);
+			applog(LOG_ERR, "Error %d: Getting Device Info", status);
 			return NULL;
 		}
 
-		applog(LOG_INFO, "List of devices:");
+		applog(LOG_INFO, "\t%i\t%s", i, pbuff);
 
-		unsigned int i;
-		for (i = 0; i < numDevices; i++) {
-			status = clGetDeviceInfo(devices[i], CL_DEVICE_NAME, sizeof(pbuff), pbuff, NULL);
-			if (status != CL_SUCCESS) {
-				applog(LOG_ERR, "Error %d: Getting Device Info", status);
-				return NULL;
-			}
-
-			applog(LOG_INFO, "\t%i\t%s", i, pbuff);
-		}
-
-		if (gpu < numDevices) {
-			status = clGetDeviceInfo(devices[gpu], CL_DEVICE_NAME, sizeof(pbuff), pbuff, NULL);
-			if (status != CL_SUCCESS) {
-				applog(LOG_ERR, "Error %d: Getting Device Info", status);
-				return NULL;
-			}
-
+		if (i == gpu) {
 			applog(LOG_INFO, "Selected %i: %s", gpu, pbuff);
 			strncpy(name, pbuff, nameSize);
-		} else {
-			applog(LOG_ERR, "Invalid GPU %i", gpu);
-			return NULL;
 		}
+	}
 
-	} else return NULL;
+	if (gpu >= numDevices) {
+		applog(LOG_ERR, "Invalid GPU %i", gpu);
+		return NULL;
+	}
 
-	cl_context_properties cps[3] = { CL_CONTEXT_PLATFORM, (cl_context_properties)platform, 0 };
-
-	clState->context = clCreateContextFromType(cps, CL_DEVICE_TYPE_GPU, NULL, NULL, &status);
+	status = create_opencl_context(&clState->context, &platform);
 	if (status != CL_SUCCESS) {
 		applog(LOG_ERR, "Error %d: Creating Context. (clCreateContextFromType)", status);
 		return NULL;
 	}
 
-	/////////////////////////////////////////////////////////////////
-	// Create an OpenCL command queue
-	/////////////////////////////////////////////////////////////////
-	clState->commandQueue = clCreateCommandQueue(clState->context, devices[gpu],
-						     cgpu->algorithm.cq_properties, &status);
-	if (status != CL_SUCCESS) /* Try again without OOE enable */
-		clState->commandQueue = clCreateCommandQueue(clState->context, devices[gpu], 0 , &status);
+	status = create_opencl_command_queue(&clState->commandQueue, &clState->context, &devices[gpu], cgpu->algorithm.cq_properties);
 	if (status != CL_SUCCESS) {
 		applog(LOG_ERR, "Error %d: Creating Command Queue. (clCreateCommandQueue)", status);
 		return NULL;
 	}
 
-	/* Check for BFI INT support. Hopefully people don't mix devices with
-	 * and without it! */
-	char extensions[1024];
-	const char * camo = "cl_amd_media_ops";
-	char *find;
-
-	status = clGetDeviceInfo(devices[gpu], CL_DEVICE_EXTENSIONS, 1024, (void *)extensions, NULL);
-	if (status != CL_SUCCESS) {
-		applog(LOG_ERR, "Error %d: Failed to clGetDeviceInfo when trying to get CL_DEVICE_EXTENSIONS", status);
-		return NULL;
-	}
-	find = strstr(extensions, camo);
-	if (find)
-		clState->hasBitAlign = true;
+	clState->hasBitAlign = get_opencl_bit_align_support(&devices[gpu]);
 
 	status = clGetDeviceInfo(devices[gpu], CL_DEVICE_PREFERRED_VECTOR_WIDTH_INT, sizeof(cl_uint), (void *)&preferred_vwidth, NULL);
 	if (status != CL_SUCCESS) {
