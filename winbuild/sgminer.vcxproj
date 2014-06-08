@@ -308,6 +308,9 @@
     <ClCompile Include="..\sph\simd.c" />
     <ClCompile Include="..\sph\skein.c" />
     <ClCompile Include="..\algorithm\twecoin.c" />
+    <ClInclude Include="..\ocl\binary_kernel.c" />
+    <ClInclude Include="..\ocl\build_kernel.c" />
+    <ClInclude Include="..\ocl\patch_kernel.c" />
     <ClCompile Include="..\util.c" />
   </ItemGroup>
   <ItemGroup>
@@ -359,6 +362,9 @@
     <ClInclude Include="..\sph\sph_skein.h" />
     <ClInclude Include="..\sph\sph_types.h" />
     <ClInclude Include="..\algorithm\twecoin.h" />
+    <ClInclude Include="..\ocl\binary_kernel.h" />
+    <ClInclude Include="..\ocl\build_kernel.h" />
+    <ClInclude Include="..\ocl\patch_kernel.h" />
     <ClInclude Include="..\uthash.h" />
     <ClInclude Include="..\util.h" />
     <ClInclude Include="..\warn-on-use.h" />
