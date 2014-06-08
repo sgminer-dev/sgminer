@@ -14,6 +14,8 @@ extern void gen_hash(const unsigned char *data, unsigned int len, unsigned char 
 
 struct __clState;
 struct _dev_blk_ctx;
+struct _build_kernel_data;
+struct cgpu_info;
 struct work;
 
 /* Describes the Scrypt parameters and hashing functions used to mine
@@ -38,6 +40,7 @@ typedef struct _algorithm_t {
     void     (*regenhash)(struct work *);
     cl_int   (*queue_kernel)(struct __clState *, struct _dev_blk_ctx *, cl_uint);
     void     (*gen_hash)(const unsigned char *, unsigned int, unsigned char *);
+    void     (*set_compile_options)(struct _build_kernel_data *, struct cgpu_info *, struct _algorithm_t *);
 } algorithm_t;
 
 /* Set default parameters based on name. */

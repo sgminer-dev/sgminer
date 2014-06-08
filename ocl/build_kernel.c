@@ -48,10 +48,13 @@ static char *file_contents(const char *filename, int *length)
 
 void set_base_compiler_options(build_kernel_data *data)
 {
+  char buf[255];
   sprintf(data->compiler_options, "-I \"%s\" -I \"%skernel\" -I \".\" -D WORKSIZE=%d",
       data->sgminer_path, data->sgminer_path, (int)data->work_size);
-
   applog(LOG_DEBUG, "Setting worksize to %d", (int)(data->work_size));
+
+  sprintf(buf, "w%dl%d", (int)data->work_size, (int)sizeof(long));
+  strcat(data->binary_filename, buf);
 
   if (data->has_bit_align) {
     strcat(data->compiler_options, " -D BITALIGN");
@@ -95,26 +98,6 @@ bool needs_bfi_patch(build_kernel_data *data)
     return true;
   else
     return false;
-}
-
-// TODO: move away, specific
-void append_scrypt_compiler_options(build_kernel_data *data, int lookup_gap, unsigned int thread_concurrency, unsigned int nfactor)
-{
-  char buf[255];
-  sprintf(buf, " -D LOOKUP_GAP=%d -D CONCURRENT_THREADS=%d -D NFACTOR=%d",
-      lookup_gap, thread_concurrency, nfactor);
-
-  strcat(data->compiler_options, buf);
-}
-
-// TODO: move away, specific
-void append_hamsi_compiler_options(build_kernel_data *data, int expand_big)
-{
-  char buf[255];
-  sprintf(buf, " -D SPH_HAMSI_EXPAND_BIG=%d",
-      expand_big);
-
-  strcat(data->compiler_options, buf);
 }
 
 cl_program build_opencl_kernel(build_kernel_data *data, const char *filename)

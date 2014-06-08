@@ -295,13 +295,11 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
 	 * would have otherwise created. The filename is:
 	 * name + g + lg + lookup_gap + tc + thread_concurrency + nf + nfactor + w + work_size + l + sizeof(long) + .bin
 	 */
-	char binaryfilename[255];
 	char filename[255];
 	char strbuf[32];
 
 	sprintf(strbuf, "%s.cl", cgpu->algorithm.name);
 	strcpy(filename, strbuf);
-	strcpy(binaryfilename, cgpu->algorithm.name);
 
 	/* For some reason 2 vectors is still better even if the card says
 	 * otherwise, and many cards lie about their max so use 256 as max
@@ -364,40 +362,36 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
 
 	slot = cpnd = 0;
 
-	strcat(binaryfilename, name);
-	if (clState->goffset)
-		strcat(binaryfilename, "g");
-
-	sprintf(strbuf, "lg%utc%unf%u", cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, algorithm->nfactor);
-	strcat(binaryfilename, strbuf);
-
-	sprintf(strbuf, "w%d", (int)clState->wsize);
-	strcat(binaryfilename, strbuf);
-	sprintf(strbuf, "l%d", (int)sizeof(long));
-	strcat(binaryfilename, strbuf);
-	strcat(binaryfilename, ".bin");
-
-	strcpy(build_data->binary_filename, binaryfilename);
 	build_data->context = clState->context;
 	build_data->device = &devices[gpu];
+
+	// Build information
+  strcpy(build_data->source_filename, filename);
+  strcpy(build_data->platform, name);
+  strcpy(build_data->sgminer_path, sgminer_path);
+  if (opt_kernel_path && *opt_kernel_path)
+  	build_data->kernel_path = opt_kernel_path;
+
+  build_data->work_size = clState->wsize;
+  build_data->has_bit_align = clState->hasBitAlign;
+
+  build_data->opencl_version = get_opencl_version(devices[gpu]);
+  build_data->patch_bfi = needs_bfi_patch(build_data);
+
+	strcpy(build_data->binary_filename, cgpu->algorithm.name);
+	strcat(build_data->binary_filename, name);
+	if (clState->goffset)
+		strcat(build_data->binary_filename, "g");
+
+  set_base_compiler_options(build_data);
+  if (algorithm->set_compile_options)
+  	algorithm->set_compile_options(build_data, cgpu, algorithm);
+
+	strcat(build_data->binary_filename, ".bin");
+
+	// Load program from file or build it if it doesn't exist
 	if (!(clState->program = load_opencl_binary_kernel(build_data))) {
-	  applog(LOG_NOTICE, "Building binary %s", binaryfilename);
-
-	  strcpy(build_data->source_filename, filename);
-	  strcpy(build_data->platform, name);
-	  strcpy(build_data->sgminer_path, sgminer_path);
-	  if (opt_kernel_path && *opt_kernel_path)
-	  	build_data->kernel_path = opt_kernel_path;
-
-	  build_data->work_size = clState->wsize;
-	  build_data->has_bit_align = clState->hasBitAlign;
-
-	  build_data->opencl_version = get_opencl_version(devices[gpu]);
-	  build_data->patch_bfi = needs_bfi_patch(build_data);
-
-	  set_base_compiler_options(build_data);
-    append_scrypt_compiler_options(build_data, cgpu->lookup_gap, cgpu->thread_concurrency, algorithm->nfactor);
-    append_hamsi_compiler_options(build_data, opt_hamsi_expand_big);
+	  applog(LOG_NOTICE, "Building binary %s", build_data->binary_filename);
 
 		if (!(clState->program = build_opencl_kernel(build_data, filename)))
 			return NULL;
@@ -414,6 +408,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
     }
 	}
 
+	// Load kernels
 	applog(LOG_NOTICE, "Initialising kernel %s with%s bitalign, %spatched BFI, nfactor %d, n %d",
 	       filename, clState->hasBitAlign ? "" : "out", build_data->patch_bfi ? "" : "un",
 	       algorithm->nfactor, algorithm->n);
