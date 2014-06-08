@@ -21,6 +21,18 @@
     <Filter Include="Source Files\sph">
       <UniqueIdentifier>{7bfc5c04-e7b8-4d6c-973c-2a0ed07b2a54}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ocl">
+      <UniqueIdentifier>{ab693ca5-5746-44aa-8fd8-5291a2b5a766}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ocl">
+      <UniqueIdentifier>{bd01bdbc-b9ea-446c-93d5-b5199bf47835}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\algorithm">
+      <UniqueIdentifier>{ab073c91-df9c-4d43-86e8-1469a8ff1571}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\algorithm">
+      <UniqueIdentifier>{8cc454ef-b019-4f41-bb22-2dd8941888c8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\adl.c">
@@ -42,9 +54,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\ocl.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\scrypt.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\sgminer.c">
@@ -104,42 +113,6 @@
     <ClCompile Include="..\algorithm.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\animecoin.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\darkcoin.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\fuguecoin.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\groestlcoin.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\inkcoin.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\marucoin.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\maxcoin.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\myriadcoin-groestl.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\quarkcoin.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\qubitcoin.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\sifcoin.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\twecoin.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\sph\aes_helper.c">
       <Filter>Source Files\sph</Filter>
     </ClCompile>
@@ -194,6 +167,54 @@
     <ClCompile Include="..\sph\skein.c">
       <Filter>Source Files\sph</Filter>
     </ClCompile>
+    <ClCompile Include="..\ocl\binary_kernel.c">
+      <Filter>Source Files\ocl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ocl\build_kernel.c">
+      <Filter>Source Files\ocl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ocl\patch_kernel.c">
+      <Filter>Source Files\ocl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\animecoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\darkcoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\fuguecoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\groestlcoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\inkcoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\marucoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\maxcoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\myriadcoin-groestl.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\quarkcoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\qubitcoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\scrypt.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\sifcoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\twecoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\adl.h">
@@ -227,9 +248,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\ocl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\algorithm\scrypt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\sha2.h">
@@ -269,42 +287,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\algorithm.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\animecoin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\darkcoin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\fuguecoin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\groestlcoin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\inkcoin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\marucoin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\maxcoin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\myriadcoin-groestl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\quarkcoin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\qubitcoin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\sifcoin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\twecoin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\sph\sph_types.h">
@@ -354,6 +336,54 @@
     </ClInclude>
     <ClInclude Include="..\sph\sph_blake.h">
       <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ocl\binary_kernel.h">
+      <Filter>Header Files\ocl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ocl\build_kernel.h">
+      <Filter>Header Files\ocl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ocl\patch_kernel.h">
+      <Filter>Header Files\ocl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\animecoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\darkcoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\fuguecoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\groestlcoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\inkcoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\marucoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\maxcoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\myriadcoin-groestl.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\quarkcoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\qubitcoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\scrypt.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\sifcoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\twecoin.h">
+      <Filter>Header Files\algorithm</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
