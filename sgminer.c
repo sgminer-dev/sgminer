@@ -6231,8 +6231,10 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
     for (i = 0; i < mining_threads; i++) {
       struct thr_info *thr = mining_thr[i];
       thr->cgpu->algorithm = work->pool->algorithm;
-      if (soft_restart)
+      if (soft_restart) {
         thr->cgpu->drv->thread_prepare(thr);
+        thr->cgpu->drv->thread_init(thr);
+      }
 
       // Necessary because algorithms can have dramatically different diffs
       thr->cgpu->drv->working_diff = 1;
@@ -7815,6 +7817,8 @@ static void restart_mining_threads(unsigned int new_n_threads)
 
 static void *restart_mining_threads_thread(void *userdata)
 {
+  pthread_detach(pthread_self());
+  
   restart_mining_threads((unsigned int) (intptr_t) userdata);
 
   return NULL;
@@ -7993,11 +7997,18 @@ int main(int argc, char *argv[])
     free(cnfbuf);
     cnfbuf = NULL;
   }
-#ifdef _MSC_VER
-  strcat(opt_kernel_path, "\\");
-#else
-  strcat(opt_kernel_path, "/");
-#endif
+
+  if (opt_kernel_path) {
+    char *old_path = opt_kernel_path;
+    opt_kernel_path = (char *)alloca(PATH_MAX);
+    strcpy(opt_kernel_path, old_path);
+    #ifdef _MSC_VER
+      strcat(opt_kernel_path, "\\");
+    #else
+      strcat(opt_kernel_path, "/");
+    #endif
+  }
+
 
   if (want_per_device_stats)
     opt_log_output = true;
