@@ -403,27 +403,15 @@ static void applog_and_exit(const char *fmt, ...)
 static pthread_mutex_t sharelog_lock;
 static FILE *sharelog_file = NULL;
 
-static struct thr_info *__get_thread(int thr_id)
-{
-  return mining_thr[thr_id];
-}
-
-struct thr_info *get_thread(int thr_id)
-{
-  struct thr_info *thr;
-
-  rd_lock(&mining_thr_lock);
-  thr = __get_thread(thr_id);
-  rd_unlock(&mining_thr_lock);
-
-  return thr;
-}
-
 static struct cgpu_info *get_thr_cgpu(int thr_id)
 {
-  struct thr_info *thr = get_thread(thr_id);
+  struct thr_info *thr;
+  rd_lock(&mining_thr_lock);
+  if (thr_id < mining_threads)
+    thr = mining_thr[thr_id];
+  rd_unlock(&mining_thr_lock);
 
-  return thr->cgpu;
+  return thr ? thr->cgpu : NULL;
 }
 
 struct cgpu_info *get_devices(int id)
@@ -3342,10 +3330,11 @@ static void kill_mining(void)
 
   forcelog(LOG_DEBUG, "Killing off mining threads");
   /* Kill the mining threads*/
+  rd_lock(&mining_thr_lock);
   for (i = 0; i < mining_threads; i++) {
     pthread_t *pth = NULL;
 
-    thr = get_thread(i);
+    thr = mining_thr[i];
     if (thr && PTH(thr) != 0L)
       pth = &thr->pth;
     thr_info_cancel(thr);
@@ -3357,6 +3346,7 @@ static void kill_mining(void)
       pthread_join(*pth, NULL);
 #endif
   }
+  rd_unlock(&mining_thr_lock);
 }
 
 static void __kill_work(void)
@@ -3380,10 +3370,11 @@ static void __kill_work(void)
   kill_timeout(thr);
 
   forcelog(LOG_DEBUG, "Shutting down mining threads");
+  rd_lock(&mining_thr_lock);
   for (i = 0; i < mining_threads; i++) {
     struct cgpu_info *cgpu;
 
-    thr = get_thread(i);
+    thr = mining_thr[i];
     if (!thr)
       continue;
     cgpu = thr->cgpu;
@@ -3392,6 +3383,7 @@ static void __kill_work(void)
 
     cgpu->shutdown = true;
   }
+  rd_unlock(&mining_thr_lock);
 
   sleep(1);
 
@@ -4049,10 +4041,7 @@ static void *restart_thread(void __maybe_unused *arg)
   discard_stale();
 
   rd_lock(&mining_thr_lock);
-  mt = mining_threads;
-  rd_unlock(&mining_thr_lock);
-
-  for (i = 0; i < mt; i++) {
+  for (i = 0; i < mining_threads; i++) {
     cgpu = mining_thr[i]->cgpu;
     if (unlikely(!cgpu))
       continue;
@@ -4061,6 +4050,7 @@ static void *restart_thread(void __maybe_unused *arg)
     mining_thr[i]->work_restart = true;
     cgpu->drv->flush_work(cgpu);
   }
+  rd_unlock(&mining_thr_lock);
 
   mutex_lock(&restart_lock);
   pthread_cond_broadcast(&restart_cond);
@@ -5179,20 +5169,22 @@ static void hashmeter(int thr_id, struct timeval *diff,
   bool showlog = false;
   char displayed_hashes[16], displayed_rolling[16];
   uint64_t dh64, dr64;
-  struct thr_info *thr;
+  struct thr_info *thr = NULL;
 
   local_mhashes = (double)hashes_done / 1000000.0;
   /* Update the last time this thread reported in */
-  if (thr_id >= 0) {
-    thr = get_thread(thr_id);
+  rd_lock(&mining_thr_lock);
+  if (thr_id >= 0 && thr_id < mining_threads) {
+    thr = mining_thr[thr_id];
     cgtime(&thr->last);
     thr->cgpu->device_last_well = time(NULL);
   }
+  rd_unlock(&mining_thr_lock);
 
   secs = (double)diff->tv_sec + ((double)diff->tv_usec / 1000000.0);
 
   /* So we can call hashmeter from a non worker thread */
-  if (thr_id >= 0) {
+  if (thr) {
     struct cgpu_info *cgpu = thr->cgpu;
     double thread_rolling = 0.0;
     int i;
@@ -7087,7 +7079,7 @@ static void *watchdog_thread(void __maybe_unused *userdata)
       for (i = 0; i < mining_threads; i++) {
         struct thr_info *thr;
 
-        thr = get_thread(i);
+        thr = mining_thr[i];
 
         /* Don't touch disabled devices */
         if (thr->cgpu->deven == DEV_DISABLED)
@@ -7733,15 +7725,20 @@ static void restart_mining_threads(unsigned int new_n_threads)
 
   // Stop and free threads
   if (mining_thr) {
+    rd_lock(&mining_thr_lock);
     for (i = 0; i < mining_threads; i++) {
       mining_thr[i]->cgpu->shutdown = true;
     }
+    rd_unlock(&mining_thr_lock);
+    // kill_mining will rd lock mining_thr_lock
     kill_mining();
+    rd_lock(&mining_thr_lock);
     for (i = 0; i < mining_threads; i++) {
       thr = mining_thr[i];
       thr->cgpu->drv->thread_shutdown(thr);
       thr->cgpu->shutdown = false;
     }
+    rd_unlock(&mining_thr_lock);
   }
 
   wr_lock(&mining_thr_lock);
@@ -7779,7 +7776,7 @@ static void restart_mining_threads(unsigned int new_n_threads)
     cgpu->status = LIFE_INIT;
 
     for (j = 0; j < cgpu->threads; ++j, ++k) {
-      thr = get_thread(k);
+      thr = mining_thr[k];
       thr->id = k;
       thr->cgpu = cgpu;
       thr->device_thread = j;

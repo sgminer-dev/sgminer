@@ -1972,8 +1972,9 @@ static void gpuenable(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char
 		return;
 	}
 
+  rd_lock(&mining_thr_lock);
 	for (i = 0; i < mining_threads; i++) {
-		thr = get_thread(i);
+		thr = mining_thr[i];
 		gpu = thr->cgpu->device_id;
 		if (gpu == id) {
 			if (thr->cgpu->status != LIFE_WELL) {
@@ -1985,6 +1986,7 @@ static void gpuenable(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char
 			cgsem_post(&thr->sem);
 		}
 	}
+  rd_unlock(&mining_thr_lock);
 
 	message(io_data, MSG_GPUREN, id, NULL, isjson);
 }

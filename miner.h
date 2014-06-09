@@ -1396,7 +1396,6 @@ extern void clean_work(struct work *work);
 extern void free_work(struct work *work);
 extern struct work *copy_work_noffset(struct work *base_work, int noffset);
 #define copy_work(work_in) copy_work_noffset(work_in, 0)
-extern struct thr_info *get_thread(int thr_id);
 extern struct cgpu_info *get_devices(int id);
 
 enum api_data_type {

@@ -679,10 +679,11 @@ void pause_dynamic_threads(int gpu)
 	struct cgpu_info *cgpu = &gpus[gpu];
 	int i;
 
+  rd_lock(&mining_thr_lock);
 	for (i = 1; i < cgpu->threads; i++) {
 		struct thr_info *thr;
 
-		thr = get_thread(i);
+		thr = mining_thr[i];
 		if (!thr->pause && cgpu->dynamic) {
 			applog(LOG_WARNING, "Disabling extra threads due to dynamic mode.");
 			applog(LOG_WARNING, "Tune dynamic intensity with --gpu-dyninterval");
@@ -692,6 +693,7 @@ void pause_dynamic_threads(int gpu)
 		if (!cgpu->dynamic && cgpu->deven != DEV_DISABLED)
 			cgsem_post(&thr->sem);
 	}
+  rd_unlock(&mining_thr_lock);
 }
 
 #if defined(HAVE_CURSES)
@@ -764,8 +766,10 @@ retry: // TODO: refactor
 		}
 #endif
 		wlog("Last initialised: %s\n", cgpu->init);
+
+    rd_lock(&mining_thr_lock);
 		for (i = 0; i < mining_threads; i++) {
-			thr = get_thread(i);
+			thr = mining_thr[i];
 			if (thr->cgpu != cgpu)
 				continue;
 			get_datestamp(checkin, sizeof(checkin), &thr->last);
@@ -793,6 +797,8 @@ retry: // TODO: refactor
 				wlog(" paused");
 			wlog("\n");
 		}
+    rd_unlock(&mining_thr_lock);
+
 		wlog("\n");
 	}
 
@@ -821,8 +827,9 @@ retry: // TODO: refactor
 			goto retry;
 		}
 		gpus[selected].deven = DEV_ENABLED;
+    rd_lock(&mining_thr_lock);
 		for (i = 0; i < mining_threads; ++i) {
-			thr = get_thread(i);
+			thr = mining_thr[i];
 			cgpu = thr->cgpu;
 			if (cgpu->drv->drv_id != DRIVER_opencl)
 				continue;
@@ -836,6 +843,7 @@ retry: // TODO: refactor
 
 			cgsem_post(&thr->sem);
 		}
+    rd_unlock(&mining_thr_lock);
 		goto retry;
 	} else if (!strncasecmp(&input, "d", 1)) {
 		if (selected)
@@ -1036,19 +1044,14 @@ select_cgpu:
 
 	gpu = cgpu->device_id;
 
+  rd_lock(&mining_thr_lock);
 	for (thr_id = 0; thr_id < mining_threads; ++thr_id) {
-		thr = get_thread(thr_id);
+		thr = mining_thr[thr_id];
 		cgpu = thr->cgpu;
 		if (cgpu->drv->drv_id != DRIVER_opencl)
 			continue;
 		if (dev_from_id(thr_id) != gpu)
 			continue;
-
-		thr = get_thread(thr_id);
-		if (!thr) {
-			applog(LOG_WARNING, "No reference to thread %d exists", thr_id);
-			continue;
-		}
 
 		thr->rolling = thr->cgpu->rolling = 0;
 		/* Reports the last time we tried to revive a sick GPU */
@@ -1060,11 +1063,13 @@ select_cgpu:
 		} else
 			applog(LOG_WARNING, "Thread %d no longer exists", thr_id);
 	}
+  rd_unlock(&mining_thr_lock);
 
+  rd_lock(&mining_thr_lock);
 	for (thr_id = 0; thr_id < mining_threads; ++thr_id) {
 		int virtual_gpu;
 
-		thr = get_thread(thr_id);
+		thr = mining_thr[thr_id];
 		cgpu = thr->cgpu;
 		if (cgpu->drv->drv_id != DRIVER_opencl)
 			continue;
@@ -1096,12 +1101,14 @@ select_cgpu:
 		}
 		applog(LOG_WARNING, "Thread %d restarted", thr_id);
 	}
+  rd_unlock(&mining_thr_lock);
 
 	cgtime(&now);
 	get_datestamp(cgpu->init, sizeof(cgpu->init), &now);
 
+  rd_lock(&mining_thr_lock);
 	for (thr_id = 0; thr_id < mining_threads; ++thr_id) {
-		thr = get_thread(thr_id);
+		thr = mining_thr[thr_id];
 		cgpu = thr->cgpu;
 		if (cgpu->drv->drv_id != DRIVER_opencl)
 			continue;
@@ -1110,6 +1117,7 @@ select_cgpu:
 
 		cgsem_post(&thr->sem);
 	}
+  rd_unlock(&mining_thr_lock);
 
 	goto select_cgpu;
 out:
