@@ -1310,6 +1310,7 @@ void gpu_autotune(int gpu, enum dev_enable *denable)
 	bool fan_optimal = true, fan_window = true;
 	struct cgpu_info *cgpu;
 	struct gpu_adl *ga;
+  unsigned int i;
 
 	cgpu = &gpus[gpu];
 	ga = &cgpu->adl;
@@ -1373,6 +1374,8 @@ void gpu_autotune(int gpu, enum dev_enable *denable)
 		} else if (temp < ga->targettemp && *denable == DEV_RECOVER && opt_restart) {
 			applog(LOG_NOTICE, "Device recovered to temperature below target, re-enabling");
 			*denable = DEV_ENABLED;
+      for (i = 0; i < cgpu->threads; i++)
+        cgsem_post(&cgpu->thr[i]->sem);
 		}
 
 		if (newengine > ga->maxspeed)
