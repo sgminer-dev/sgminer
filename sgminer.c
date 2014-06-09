@@ -4238,12 +4238,12 @@ static bool test_work_current(struct work *work)
     if (work->longpoll) {
       work->work_block = ++work_block;
       if (shared_strategy() || work->pool == current_pool()) {
-        if(opt_morenotices)
-         if (work->stratum) {
+        if(opt_morenotices) {
+          if (work->stratum)
             applog(LOG_NOTICE, "Stratum from %s requested work restart", get_pool_name(pool));
-          } else {
+          else
             applog(LOG_NOTICE, "%sLONGPOLL from %s requested work restart", work->gbt ? "GBT " : "", get_pool_name(pool));
-          }
+        }
         restart_threads();
       }
     }
