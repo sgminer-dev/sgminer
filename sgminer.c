@@ -7074,10 +7074,8 @@ static void *watchdog_thread(void __maybe_unused *userdata)
              schedstart.tm.tm_hour, schedstart.tm.tm_min);
       sched_paused = true;
 
-      rd_lock(&mining_thr_lock);
       for (i = 0; i < mining_threads; i++)
         mining_thr[i]->pause = true;
-      rd_unlock(&mining_thr_lock);
     } else if (sched_paused && should_run()) {
       applog(LOG_WARNING, "Restarting execution as per start time %02d:%02d scheduled",
         schedstart.tm.tm_hour, schedstart.tm.tm_min);
@@ -7786,7 +7784,6 @@ static void restart_mining_threads(unsigned int new_n_threads)
       thr->device_thread = j;
 
       cgtime(&thr->last);
-
       cgpu->thr[j] = thr;
     }
   }
