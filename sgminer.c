@@ -7744,7 +7744,8 @@ static void restart_mining_threads(unsigned int new_n_threads)
     }
   }
 
-  rd_lock(&mining_thr_lock);
+  wr_lock(&mining_thr_lock);
+
   if (mining_thr) {
     for (i = 0; i < total_devices; ++i) {
       free(devices[i]->thr);
@@ -7785,19 +7786,19 @@ static void restart_mining_threads(unsigned int new_n_threads)
 
       cgtime(&thr->last);
       cgpu->thr[j] = thr;
+
+      if (!cgpu->drv->thread_prepare(thr))
+        continue;
     }
   }
 
-  rd_unlock(&mining_thr_lock);
+  wr_unlock(&mining_thr_lock);
 
   for (i = 0; i < total_devices; ++i) {
     struct cgpu_info *cgpu = devices[i];
 
     for (j = 0; j < cgpu->threads; ++j) {
       thr = cgpu->thr[j];
-
-      if (!cgpu->drv->thread_prepare(thr))
-        continue;
 
       if (unlikely(thr_info_create(thr, NULL, miner_thread, thr)))
         quit(1, "thread %d create failed", thr->id);
