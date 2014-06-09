@@ -1218,7 +1218,6 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 	char name[256];
 	struct timeval now;
 	struct cgpu_info *cgpu = thr->cgpu;
-	struct opencl_thread_data *thrdata = (struct opencl_thread_data *)thr->cgpu_data;
 	int gpu = cgpu->device_id;
 	int virtual_gpu = cgpu->virtual_gpu;
 	int i = thr->id;

@@ -405,7 +405,7 @@ static FILE *sharelog_file = NULL;
 
 static struct cgpu_info *get_thr_cgpu(int thr_id)
 {
-  struct thr_info *thr;
+  struct thr_info *thr = NULL;
   rd_lock(&mining_thr_lock);
   if (thr_id < mining_threads)
     thr = mining_thr[thr_id];
@@ -4029,7 +4029,7 @@ static void *restart_thread(void __maybe_unused *arg)
 {
   struct pool *cp = current_pool();
   struct cgpu_info *cgpu;
-  int i, mt;
+  int i;
 
   pthread_detach(pthread_self());
 
@@ -7767,6 +7767,7 @@ static void restart_mining_threads(unsigned int new_n_threads)
       quit(1, "Failed to calloc mining_thr[%d]", i);
   }
 
+  rd_lock(&devices_lock);
   // Start threads
   k = 0;
   for (i = 0; i < total_devices; ++i) {
@@ -7788,9 +7789,10 @@ static void restart_mining_threads(unsigned int new_n_threads)
         continue;
     }
   }
-
+  rd_unlock(&devices_lock);
   wr_unlock(&mining_thr_lock);
 
+  rd_lock(&devices_lock);
   for (i = 0; i < total_devices; ++i) {
     struct cgpu_info *cgpu = devices[i];
 
@@ -7808,6 +7810,7 @@ static void restart_mining_threads(unsigned int new_n_threads)
       }
     }
   }
+  rd_unlock(&devices_lock);
 }
 
 static void *restart_mining_threads_thread(void *userdata)
