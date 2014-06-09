@@ -6170,7 +6170,7 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
 
 static void *restart_mining_threads_thread(void *userdata);
 
-static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
+static bool get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 {
   int i;
 
@@ -6180,7 +6180,7 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
   if (cmp_algorithm(&work->pool->algorithm, &mythr->cgpu->algorithm) && (algo_switch_n == 0)) {
     mutex_unlock(&algo_switch_lock);
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-    return;
+    return false;
   }
 
   algo_switch_n++;
@@ -6231,8 +6231,10 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
     for (i = 0; i < mining_threads; i++) {
       struct thr_info *thr = mining_thr[i];
       thr->cgpu->algorithm = work->pool->algorithm;
-      if (soft_restart)
+      if (soft_restart) {
         thr->cgpu->drv->thread_prepare(thr);
+        thr->cgpu->drv->thread_init(thr);
+      }
 
       // Necessary because algorithms can have dramatically different diffs
       thr->cgpu->drv->working_diff = 1;
@@ -6256,13 +6258,13 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 
       if (unlikely(pthread_create(&restart_thr, NULL, restart_mining_threads_thread, (void *) (intptr_t) n_threads)))
         quit(1, "restart_mining_threads create thread failed");
-      sleep(60);
-      quit(1, "thread was not cancelled in 60 seconds after restart_mining_threads");
+      return true;
+    } else {
+      // Signal other threads to start working now
+      mutex_lock(&algo_switch_wait_lock);
+      pthread_cond_broadcast(&algo_switch_wait_cond);
+      mutex_unlock(&algo_switch_wait_lock);
     }
-    // Signal other threads to start working now
-    mutex_lock(&algo_switch_wait_lock);
-    pthread_cond_broadcast(&algo_switch_wait_cond);
-    mutex_unlock(&algo_switch_wait_lock);
   // Not all threads are waiting, join the waiting list
   } else {
     mutex_unlock(&algo_switch_lock);
@@ -6272,6 +6274,8 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
     pthread_cond_wait(&algo_switch_wait_cond, &algo_switch_wait_lock);
     mutex_unlock(&algo_switch_wait_lock);
   }
+
+  return mythr->cgpu->shutdown;
 }
 
 struct work *get_work(struct thr_info *thr, const int thr_id)
@@ -6290,8 +6294,6 @@ struct work *get_work(struct thr_info *thr, const int thr_id)
       wake_gws();
     }
   }
-
-  get_work_prepare_thread(thr, work);
 
   diff_t = time(NULL) - diff_t;
   /* Since this is a blocking function, we need to add grace time to
@@ -6492,6 +6494,12 @@ static void hash_sole_work(struct thr_info *mythr)
   while (likely(!cgpu->shutdown)) {
     struct work *work = get_work(mythr, thr_id);
     int64_t hashes;
+
+    if (get_work_prepare_thread(mythr, work)) {
+      // Return work to queue and finish (but don't disable device)
+      hash_push(work);
+      return;
+    }
 
     mythr->work_restart = false;
     cgpu->new_work = true;
@@ -7730,16 +7738,34 @@ static void restart_mining_threads(unsigned int new_n_threads)
 {
   struct thr_info *thr;
   unsigned int i, j, k;
+  struct timeval now;
 
   // Stop and free threads
   if (mining_thr) {
     for (i = 0; i < mining_threads; i++) {
       mining_thr[i]->cgpu->shutdown = true;
     }
-    kill_mining();
+    // Signal other threads to start working now
+    // (will shut down the threads in hash_sole_work)
+    mutex_lock(&algo_switch_wait_lock);
+    pthread_cond_broadcast(&algo_switch_wait_cond);
+    mutex_unlock(&algo_switch_wait_lock);
+    // Wait for threads to finish
+    for (i = 0; i < mining_threads; i++) {
+      pthread_t *pth = NULL;
+
+      thr = get_thread(i);
+      if (thr && PTH(thr) != 0L)
+        pth = &thr->pth;
+      #ifndef WIN32
+        if (pth && *pth)
+      #else
+        if (pth && pth->p)
+      #endif
+          pthread_join(*pth, NULL);
+    }
     for (i = 0; i < mining_threads; i++) {
       thr = mining_thr[i];
-      thr->cgpu->drv->thread_shutdown(thr);
       thr->cgpu->shutdown = false;
     }
   }
@@ -7776,12 +7802,16 @@ static void restart_mining_threads(unsigned int new_n_threads)
     cgpu->thr = (struct thr_info **)malloc(sizeof(*cgpu->thr) * (cgpu->threads+1));
     cgpu->thr[cgpu->threads] = NULL;
     cgpu->status = LIFE_INIT;
+    cgpu->rolling = 0;
+    cgtime(&now);
+    get_datestamp(cgpu->init, sizeof(cgpu->init), &now);
 
     for (j = 0; j < cgpu->threads; ++j, ++k) {
       thr = get_thread(k);
       thr->id = k;
       thr->cgpu = cgpu;
       thr->device_thread = j;
+      thr->rolling = 0;
 
       cgtime(&thr->last);
 
@@ -7802,9 +7832,16 @@ static void restart_mining_threads(unsigned int new_n_threads)
 
       if (unlikely(thr_info_create(thr, NULL, miner_thread, thr)))
         quit(1, "thread %d create failed", thr->id);
+    }
+  }
 
-      /* Enable threads for devices set not to mine but disable
-       * their queue in case we wish to enable them later */
+  /* Enable threads for devices set not to mine but disable
+   * their queue in case we wish to enable them later */
+  for (i = 0; i < total_devices; ++i) {
+    struct cgpu_info *cgpu = devices[i];
+
+    for (j = 0; j < cgpu->threads; ++j) {
+      thr = cgpu->thr[j];
       if (cgpu->deven != DEV_DISABLED) {
         applog(LOG_DEBUG, "Pushing sem post to thread %d", thr->id);
         cgsem_post(&thr->sem);
@@ -7815,6 +7852,8 @@ static void restart_mining_threads(unsigned int new_n_threads)
 
 static void *restart_mining_threads_thread(void *userdata)
 {
+  pthread_detach(pthread_self());
+
   restart_mining_threads((unsigned int) (intptr_t) userdata);
 
   return NULL;

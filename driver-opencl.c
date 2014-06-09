@@ -1226,8 +1226,6 @@ static bool opencl_thread_prepare(struct thr_info *thr)
 
 	strcpy(name, "");
 	applog(LOG_INFO, "Init GPU thread %i GPU %i virtual GPU %i", i, gpu, virtual_gpu);
-	if (thrdata)
-		thrdata->queue_kernel_parameters = cgpu->algorithm.queue_kernel;
 
 	clStates[i] = initCl(virtual_gpu, name, sizeof(name), &cgpu->algorithm);
 	if (!clStates[i]) {
@@ -1440,6 +1438,8 @@ static void opencl_thread_shutdown(struct thr_info *thr)
 			free(clState->extra_kernels);
 		free(clState);
 	}
+  free(((struct opencl_thread_data *)thr->cgpu_data)->res);
+  free(thr->cgpu_data);
 }
 
 struct device_drv opencl_drv = {
