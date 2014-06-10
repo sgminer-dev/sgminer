@@ -70,7 +70,7 @@ void vapplogsiz(int prio, int size, const char* fmt, va_list args)
 {
   if (opt_debug || prio != LOG_DEBUG) {
     if (use_syslog || opt_log_output || prio <= opt_log_level) {
-      char *tmp42 = (char *)calloc(size, 1);
+      char *tmp42 = (char *)calloc(size + 1, 1);
       vsnprintf(tmp42, size, fmt, args);
       _applog(prio, tmp42, false);
       free(tmp42);
