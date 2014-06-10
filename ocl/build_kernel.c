@@ -20,7 +20,7 @@ static char *file_contents(const char *filename, int *length)
   if (!f) {
     /* Then from `pwd`/kernel/ */
     strcpy(fullpath, sgminer_path);
-    strcat(fullpath, "kernel/");
+    strcat(fullpath, "/kernel/");
     strcat(fullpath, filename);
     f = fopen(fullpath, "rb");
   }
@@ -49,7 +49,7 @@ static char *file_contents(const char *filename, int *length)
 void set_base_compiler_options(build_kernel_data *data)
 {
   char buf[255];
-  sprintf(data->compiler_options, "-I \"%s\" -I \"%skernel\" -I \".\" -D WORKSIZE=%d",
+  sprintf(data->compiler_options, "-I \"%s\" -I \"%s\\kernel\" -I \".\" -D WORKSIZE=%d",
       data->sgminer_path, data->sgminer_path, (int)data->work_size);
   applog(LOG_DEBUG, "Setting worksize to %d", (int)(data->work_size));
 
@@ -61,7 +61,7 @@ void set_base_compiler_options(build_kernel_data *data)
     applog(LOG_DEBUG, "cl_amd_media_ops found, setting BITALIGN");
   } else
     applog(LOG_DEBUG, "cl_amd_media_ops not found, will not set BITALIGN");
-
+  
   if (data->kernel_path) {
     strcat(data->compiler_options, " -I \"");
     strcat(data->compiler_options, data->kernel_path);
@@ -126,10 +126,9 @@ cl_program build_opencl_kernel(build_kernel_data *data, const char *filename)
     applog(LOG_ERR, "Error %d: Building Program (clBuildProgram)", status);
     status = clGetProgramBuildInfo(program, *data->device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
 
-    char *sz_log = (char *)malloc(log_size + 1);
+    char *sz_log = (char *)malloc(log_size);
     status = clGetProgramBuildInfo(program, *data->device, CL_PROGRAM_BUILD_LOG, log_size, sz_log, NULL);
-    sz_log[log_size] = '\0';
-    applog(LOG_ERR, "%s", sz_log);
+    applogsiz(LOG_ERR, log_size, "%s", sz_log);
     free(sz_log);
     goto out;
   }

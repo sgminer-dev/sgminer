@@ -369,8 +369,12 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
   strcpy(build_data->source_filename, filename);
   strcpy(build_data->platform, name);
   strcpy(build_data->sgminer_path, sgminer_path);
-  if (opt_kernel_path && *opt_kernel_path)
+  if (opt_kernel_path && *opt_kernel_path) {
     build_data->kernel_path = opt_kernel_path;
+  }
+  else {
+    build_data->kernel_path = NULL;
+  }
 
   build_data->work_size = clState->wsize;
   build_data->has_bit_align = clState->hasBitAlign;

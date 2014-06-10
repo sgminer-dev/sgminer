@@ -7913,10 +7913,8 @@ int main(int argc, char *argv[])
   s = strdup(argv[0]);
   strcpy(sgminer_path, dirname(s));
   free(s);
-  strcat(sgminer_path, "/");
 #else
   GetCurrentDirectory(PATH_MAX - 1, sgminer_path);
-  strcat(sgminer_path, "\\");
 #endif
 
   /* Default algorithm specified in algorithm.c ATM */
@@ -8001,11 +7999,6 @@ int main(int argc, char *argv[])
     char *old_path = opt_kernel_path;
     opt_kernel_path = (char *)alloca(PATH_MAX);
     strcpy(opt_kernel_path, old_path);
-    #ifdef _MSC_VER
-      strcat(opt_kernel_path, "\\");
-    #else
-      strcat(opt_kernel_path, "/");
-    #endif
   }
 
 
