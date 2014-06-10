@@ -102,35 +102,35 @@ void _applog(int prio, const char *str, bool force)
 
     /* Day changed. */
     if (opt_log_show_date && (last_date_output_day != tm->tm_mday)) {
-	    last_date_output_day = tm->tm_mday;
-	    char date_output_str[64];
-	    snprintf(date_output_str, sizeof(date_output_str), "Log date is now %d-%02d-%02d",
-		    tm->tm_year + 1900,
-		    tm->tm_mon + 1,
-		    tm->tm_mday);
-	    _applog(prio, date_output_str, force);
+      last_date_output_day = tm->tm_mday;
+      char date_output_str[64];
+      snprintf(date_output_str, sizeof(date_output_str), "Log date is now %d-%02d-%02d",
+        tm->tm_year + 1900,
+        tm->tm_mon + 1,
+        tm->tm_mday);
+      _applog(prio, date_output_str, force);
     }
 
     if (opt_log_show_date) {
       snprintf(datetime, sizeof(datetime), "[%d-%02d-%02d %02d:%02d:%02d] ",
-		    tm->tm_year + 1900,
-		    tm->tm_mon + 1,
-		    tm->tm_mday,
-		    tm->tm_hour,
-		    tm->tm_min,
-		    tm->tm_sec);
+        tm->tm_year + 1900,
+        tm->tm_mon + 1,
+        tm->tm_mday,
+        tm->tm_hour,
+        tm->tm_min,
+        tm->tm_sec);
     }
     else {
-	    snprintf(datetime, sizeof(datetime), "[%02d:%02d:%02d] ",
-		    tm->tm_hour,
-		    tm->tm_min,
-		    tm->tm_sec);
+      snprintf(datetime, sizeof(datetime), "[%02d:%02d:%02d] ",
+        tm->tm_hour,
+        tm->tm_min,
+        tm->tm_sec);
     }
-	  
+
     /* Only output to stderr if it's not going to the screen as well */
     if (!isatty(fileno((FILE *)stderr))) {
-	    fprintf(stderr, "%s%s\n", datetime, str);	/* atomic write to stderr */
-	    fflush(stderr);
+      fprintf(stderr, "%s%s\n", datetime, str); /* atomic write to stderr */
+      fflush(stderr);
     }
     
     my_log_curses(prio, datetime, str, force);
