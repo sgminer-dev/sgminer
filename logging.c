@@ -47,79 +47,92 @@ static void my_log_curses(int prio, const char *datetime, const char *str, bool 
 	}
 }
 
-/* high-level logging function, based on global opt_log_level */
-void applog(int prio, const char* fmt, ...) {
-	va_list args;
+void applog(int prio, const char* fmt, ...) 
+{
+  va_list args;
 
-	if (opt_debug || prio != LOG_DEBUG) {
-		if (use_syslog || opt_log_output || prio <= opt_log_level) {
-			char tmp42[LOGBUFSIZ];
-			va_start(args, fmt);
-			vsnprintf(tmp42, sizeof(tmp42), fmt, args);
-			va_end(args);
-			_applog(prio, tmp42, false);
-		}
-	}
+  va_start(args, fmt);
+  vapplogsiz(prio, LOGBUFSIZ, fmt, args);
+  va_end(args);
 }
+
+void applogsiz(int prio, int size, const char* fmt, ...) 
+{
+  va_list args;
+
+  va_start(args, fmt);
+  vapplogsiz(prio, size, fmt, args);
+  va_end(args);
+}
+
+/* high-level logging function, based on global opt_log_level */
+void vapplogsiz(int prio, int size, const char* fmt, va_list args) 
+{
+  if (opt_debug || prio != LOG_DEBUG) {
+    if (use_syslog || opt_log_output || prio <= opt_log_level) {
+      char *tmp42 = (char *)calloc(size, 1);
+      vsnprintf(tmp42, size, fmt, args);
+      _applog(prio, tmp42, false);
+      free(tmp42);
+    }
+  }
+}
+
 /*
  * log function
  */
 void _applog(int prio, const char *str, bool force)
 {
 #ifdef HAVE_SYSLOG_H
-	if (use_syslog) {
-		syslog(prio, "%s", str);
-	}
+  if (use_syslog) {
+    syslog(prio, "%s", str);
+  }
 #else
-	if (0) {}
+  if (0) {}
 #endif
-	else {
-		char datetime[64];
-		struct timeval tv = {0, 0};
-		struct tm *tm;
+  else {
+    char datetime[64];
+    struct timeval tv = {0, 0};
+    struct tm *tm;
 
-		cgtime(&tv);
+    cgtime(&tv);
 
-		const time_t tmp_time = tv.tv_sec;
-		tm = localtime(&tmp_time);
+    const time_t tmp_time = tv.tv_sec;
+    tm = localtime(&tmp_time);
 
-		/* Day changed. */
-		if (opt_log_show_date && (last_date_output_day != tm->tm_mday))
-		{
-			last_date_output_day = tm->tm_mday;
-			char date_output_str[64];
-			snprintf(date_output_str, sizeof(date_output_str), "Log date is now %d-%02d-%02d",
-				tm->tm_year + 1900,
-				tm->tm_mon + 1,
-				tm->tm_mday);
-			_applog(prio, date_output_str, force);
-			
-		}
+    /* Day changed. */
+    if (opt_log_show_date && (last_date_output_day != tm->tm_mday)) {
+	    last_date_output_day = tm->tm_mday;
+	    char date_output_str[64];
+	    snprintf(date_output_str, sizeof(date_output_str), "Log date is now %d-%02d-%02d",
+		    tm->tm_year + 1900,
+		    tm->tm_mon + 1,
+		    tm->tm_mday);
+	    _applog(prio, date_output_str, force);
+    }
 
-		if (opt_log_show_date)
-		{
-			snprintf(datetime, sizeof(datetime), "[%d-%02d-%02d %02d:%02d:%02d] ",
-				tm->tm_year + 1900,
-				tm->tm_mon + 1,
-				tm->tm_mday,
-				tm->tm_hour,
-				tm->tm_min,
-				tm->tm_sec);
-		}
-		else
-		{
-			snprintf(datetime, sizeof(datetime), "[%02d:%02d:%02d] ",
-				tm->tm_hour,
-				tm->tm_min,
-				tm->tm_sec);
-		}
-
-		/* Only output to stderr if it's not going to the screen as well */
-		if (!isatty(fileno((FILE *)stderr))) {
-			fprintf(stderr, "%s%s\n", datetime, str);	/* atomic write to stderr */
-			fflush(stderr);
-		}
-
-		my_log_curses(prio, datetime, str, force);
-	}
+    if (opt_log_show_date) {
+      snprintf(datetime, sizeof(datetime), "[%d-%02d-%02d %02d:%02d:%02d] ",
+		    tm->tm_year + 1900,
+		    tm->tm_mon + 1,
+		    tm->tm_mday,
+		    tm->tm_hour,
+		    tm->tm_min,
+		    tm->tm_sec);
+    }
+    else {
+	    snprintf(datetime, sizeof(datetime), "[%02d:%02d:%02d] ",
+		    tm->tm_hour,
+		    tm->tm_min,
+		    tm->tm_sec);
+    }
+	  
+    /* Only output to stderr if it's not going to the screen as well */
+    if (!isatty(fileno((FILE *)stderr))) {
+	    fprintf(stderr, "%s%s\n", datetime, str);	/* atomic write to stderr */
+	    fflush(stderr);
+    }
+    
+    my_log_curses(prio, datetime, str, force);
+  }
 }
