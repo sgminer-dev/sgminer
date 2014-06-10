@@ -7995,13 +7995,6 @@ int main(int argc, char *argv[])
     cnfbuf = NULL;
   }
 
-  if (opt_kernel_path) {
-    char *old_path = opt_kernel_path;
-    opt_kernel_path = (char *)alloca(PATH_MAX);
-    strcpy(opt_kernel_path, old_path);
-  }
-
-
   if (want_per_device_stats)
     opt_log_output = true;
 
