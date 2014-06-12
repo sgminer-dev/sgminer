@@ -105,7 +105,9 @@
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <OptimizeReferences>false</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>
+      </LinkTimeCodeGeneration>
+      <IgnoreSpecificDefaultLibraries>MSVCRT;LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -146,7 +148,9 @@
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <OptimizeReferences>false</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>
+      </LinkTimeCodeGeneration>
+      <IgnoreSpecificDefaultLibraries>MSVCRT;LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -188,8 +192,9 @@
       <OptimizeReferences>false</OptimizeReferences>
       <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x86</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <IgnoreSpecificDefaultLibraries>MSVCRT;LIBCMT</IgnoreSpecificDefaultLibraries>
+      <LinkTimeCodeGeneration>
+      </LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -232,8 +237,9 @@
       <OptimizeReferences>false</OptimizeReferences>
       <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x64</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <IgnoreSpecificDefaultLibraries>MSVCRT;LIBCMT</IgnoreSpecificDefaultLibraries>
+      <LinkTimeCodeGeneration>
+      </LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -290,7 +296,6 @@
     <ClCompile Include="..\algorithm\qubitcoin.c" />
     <ClCompile Include="..\algorithm\scrypt.c" />
     <ClCompile Include="..\sgminer.c" />
-    <ClCompile Include="..\sha2.c" />
     <ClCompile Include="..\algorithm\sifcoin.c" />
     <ClCompile Include="..\sph\aes_helper.c" />
     <ClCompile Include="..\sph\blake.c" />
@@ -346,7 +351,6 @@
     <ClInclude Include="..\algorithm\quarkcoin.h" />
     <ClInclude Include="..\algorithm\qubitcoin.h" />
     <ClInclude Include="..\algorithm\scrypt.h" />
-    <ClInclude Include="..\sha2.h" />
     <ClInclude Include="..\algorithm\sifcoin.h" />
     <ClInclude Include="..\sph\sph_blake.h" />
     <ClInclude Include="..\sph\sph_bmw.h" />

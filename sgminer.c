@@ -47,7 +47,7 @@
 char *curly = ":D";
 #endif
 #include <libgen.h>
-#include <sha2.h>
+#include "sph/sph_sha2.h"
 
 #include "compat.h"
 #include "miner.h"
@@ -1777,12 +1777,12 @@ static void calc_midstate(struct work *work)
 {
   unsigned char data[64];
   uint32_t *data32 = (uint32_t *)data;
-  sha256_ctx ctx;
+  sph_sha256_context ctx;
 
   flip64(data32, work->data);
-  sha256_init(&ctx);
-  sha256_update(&ctx, data, 64);
-  memcpy(work->midstate, ctx.h, 32);
+  sph_sha256_init(&ctx);
+  sph_sha256(&ctx, data, 64);
+  memcpy(work->midstate, ctx.val, 32);
   endian_flip32(work->midstate, work->midstate);
 }
 

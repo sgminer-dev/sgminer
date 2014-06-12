@@ -8,7 +8,7 @@
  */
 
 #include "algorithm.h"
-#include "sha2.h"
+#include "sph/sph_sha2.h"
 #include "ocl.h"
 #include "ocl/build_kernel.h"
 
@@ -30,13 +30,25 @@
 
 #include <inttypes.h>
 #include <string.h>
+void sha256(const unsigned char *message, unsigned int len, unsigned char *digest)
+{
+  sph_sha256_context ctx_sha2;
+
+  sph_sha256_init(&ctx_sha2);
+  sph_sha256(&ctx_sha2, message, len);
+  sph_sha256_close(&ctx_sha2, (void*)digest);
+}
 
 void gen_hash(const unsigned char *data, unsigned int len, unsigned char *hash)
 {
     unsigned char hash1[32];
+    sph_sha256_context ctx_sha2;
 
-    sha256(data, len, hash1);
-    sha256(hash1, 32, hash);
+    sph_sha256_init(&ctx_sha2);
+    sph_sha256(&ctx_sha2, data, len);
+    sph_sha256_close(&ctx_sha2, hash1);
+    sph_sha256(&ctx_sha2, hash1, 32);
+    sph_sha256_close(&ctx_sha2, hash);
 }
 
 #define CL_SET_BLKARG(blkvar) status |= clSetKernelArg(*kernel, num++, sizeof(uint), (void *)&blk->blkvar)

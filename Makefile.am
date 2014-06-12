@@ -35,7 +35,6 @@ sgminer_SOURCES := sgminer.c
 sgminer_SOURCES	+= api.c
 sgminer_SOURCES	+= elist.h miner.h compat.h bench_block.h
 sgminer_SOURCES	+= util.c util.h uthash.h
-sgminer_SOURCES	+= sha2.c sha2.h
 sgminer_SOURCES	+= logging.c logging.h
 sgminer_SOURCES += driver-opencl.c driver-opencl.h
 sgminer_SOURCES += ocl.c ocl.h

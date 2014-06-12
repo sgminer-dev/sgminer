@@ -59,9 +59,6 @@
     <ClCompile Include="..\sgminer.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\sha2.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\util.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -248,9 +245,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\ocl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\sha2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\uthash.h">
