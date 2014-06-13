@@ -22,25 +22,25 @@ struct work;
  * a specific coin.
  */
 typedef struct _algorithm_t {
-    char     name[20]; /* Human-readable identifier */
-    uint32_t n;        /* N (CPU/Memory tradeoff parameter) */
-    uint8_t  nfactor;  /* Factor of N above (n = 2^nfactor) */
-    double   diff_multiplier1;
-    double   diff_multiplier2;
-    double   share_diff_multiplier;
-    uint32_t xintensity_shift;
-    uint32_t intensity_shift;
-    uint32_t found_idx;
-    unsigned long long   diff_nonce;
-    unsigned long long   diff_numerator;
-    uint32_t diff1targ;
-    size_t n_extra_kernels;
-    long rw_buffer_size;
-    cl_command_queue_properties cq_properties;
-    void     (*regenhash)(struct work *);
-    cl_int   (*queue_kernel)(struct __clState *, struct _dev_blk_ctx *, cl_uint);
-    void     (*gen_hash)(const unsigned char *, unsigned int, unsigned char *);
-    void     (*set_compile_options)(struct _build_kernel_data *, struct cgpu_info *, struct _algorithm_t *);
+  char     name[20]; /* Human-readable identifier */
+  uint32_t n;        /* N (CPU/Memory tradeoff parameter) */
+  uint8_t  nfactor;  /* Factor of N above (n = 2^nfactor) */
+  double   diff_multiplier1;
+  double   diff_multiplier2;
+  double   share_diff_multiplier;
+  uint32_t xintensity_shift;
+  uint32_t intensity_shift;
+  uint32_t found_idx;
+  unsigned long long   diff_nonce;
+  unsigned long long   diff_numerator;
+  uint32_t diff1targ;
+  size_t n_extra_kernels;
+  long rw_buffer_size;
+  cl_command_queue_properties cq_properties;
+  void     (*regenhash)(struct work *);
+  cl_int   (*queue_kernel)(struct __clState *, struct _dev_blk_ctx *, cl_uint);
+  void     (*gen_hash)(const unsigned char *, unsigned int, unsigned char *);
+  void     (*set_compile_options)(struct _build_kernel_data *, struct cgpu_info *, struct _algorithm_t *);
 } algorithm_t;
 
 /* Set default parameters based on name. */
