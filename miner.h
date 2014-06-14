@@ -124,6 +124,8 @@ static inline int fsync (int fd)
  #include "ADL_SDK/adl_sdk.h"
 #endif
 
+#include <ccan/opt/opt.h>
+
 #if (!defined(WIN32) && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3))) \
     || (defined(WIN32) && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)))
 #ifndef bswap_16
@@ -1081,6 +1083,9 @@ extern double best_diff;
 extern struct timeval block_timeval;
 extern char *workpadding;
 
+//config options table
+extern struct opt_table opt_config_table[];
+
 typedef struct _dev_blk_ctx {
   cl_uint ctx_a; cl_uint ctx_b; cl_uint ctx_c; cl_uint ctx_d;
   cl_uint ctx_e; cl_uint ctx_f; cl_uint ctx_g; cl_uint ctx_h;
@@ -1192,6 +1197,7 @@ struct pool {
   proxytypes_t rpc_proxytype;
   char *rpc_proxy;
 
+  char *profile;
   algorithm_t algorithm;
   const char *intensity;
   const char *xintensity;

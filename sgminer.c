@@ -58,6 +58,7 @@ char *curly = ":D";
 
 #include "algorithm.h"
 #include "pool.h"
+#include "config_parser.h"
 
 #if defined(unix) || defined(__APPLE__)
   #include <errno.h>
@@ -233,9 +234,6 @@ enum pool_strategy pool_strategy = POOL_FAILOVER;
 int opt_rotate_period;
 static int total_urls;
 
-/* Used in config parsing, e.g. pool array. */
-static int json_array_index = -1;
-
 static
 #ifndef HAVE_CURSES
 const
@@ -279,16 +277,6 @@ struct stratum_share {
 static struct stratum_share *stratum_shares = NULL;
 
 char *opt_socks_proxy = NULL;
-
-static const char def_conf[] = "sgminer.conf";
-static char *default_config;
-static bool config_loaded;
-static int include_count;
-#define JSON_INCLUDE_CONF "include"
-#define JSON_LOAD_ERROR "JSON decode of file '%s' failed\n %s"
-#define JSON_LOAD_ERROR_LEN strlen(JSON_LOAD_ERROR)
-#define JSON_MAX_DEPTH 10
-#define JSON_MAX_DEPTH_ERR "Too many levels of JSON includes (limit 10) or a loop"
 
 #if defined(unix) || defined(__APPLE__)
   static char *opt_stderr_cmd = NULL;
@@ -526,6 +514,7 @@ struct pool *add_pool(void)
   char buf[32];
   buf[0] = '\0';
   pool->name = strdup(buf);
+  pool->profile = strdup(buf);	//profile blank by default
 
   /* Algorithm */
   pool->algorithm = opt_algorithm;
@@ -850,6 +839,16 @@ static char *set_pool_name(char *arg)
 
   applog(LOG_DEBUG, "Setting pool %i name to %s", pool->pool_no, arg);
   opt_set_charp(arg, &pool->name);
+
+  return NULL;
+}
+
+static char *set_pool_profile(char *arg)
+{
+  struct pool *pool = get_current_pool();
+
+  applog(LOG_DEBUG, "Setting pool %i profile to %s", pool->pool_no, arg);
+  opt_set_charp(arg, &pool->profile);
 
   return NULL;
 }
@@ -1198,7 +1197,7 @@ char *set_difficulty_multiplier(char *arg)
 }
 
 /* These options are available from config file or commandline */
-static struct opt_table opt_config_table[] = {
+struct opt_table opt_config_table[] = {
   OPT_WITH_ARG("--algorithm",
          set_algo, NULL, NULL,
          "Set mining algorithm and most common defaults, default: scrypt"),
@@ -1257,6 +1256,9 @@ static struct opt_table opt_config_table[] = {
   OPT_WITHOUT_ARG("--debug|-D",
       enable_debug, &opt_debug,
       "Enable debug output"),
+  OPT_WITH_ARG("--default-profile",
+      set_default_profile, NULL, NULL,
+      "Set Default Profile"),
   OPT_WITH_ARG("--description",
       set_pool_description, NULL, NULL,
       "Pool description"),
@@ -1291,19 +1293,23 @@ static struct opt_table opt_config_table[] = {
       "Number of threads per GPU (1 - 10)"),
 #else
   OPT_WITH_ARG("--gpu-threads|-g",
-      set_gpu_threads, NULL, NULL,
+//      set_gpu_threads, NULL, NULL,
+      set_default_gpu_threads, NULL, NULL,
       "Number of threads per GPU - one value or comma separated list (e.g. 1,2,1)"),
   OPT_WITH_ARG("--gpu-engine",
-      set_gpu_engine, NULL, NULL,
+//      set_gpu_engine, NULL, NULL,
+      set_default_gpu_engine, NULL, NULL,
       "GPU engine (over)clock range in Mhz - one value, range and/or comma separated list (e.g. 850-900,900,750-850)"),
   OPT_WITH_ARG("--gpu-fan",
-      set_gpu_fan, NULL, NULL,
+//      set_gpu_fan, NULL, NULL,
+      set_default_gpu_fan, NULL, NULL,
       "GPU fan percentage range - one value, range and/or comma separated list (e.g. 0-85,85,65)"),
   OPT_WITH_ARG("--gpu-map",
       set_gpu_map, NULL, NULL,
       "Map OpenCL to ADL device order manually, paired CSV (e.g. 1:0,2:1 maps OpenCL 1 to ADL 0, 2 to 1)"),
   OPT_WITH_ARG("--gpu-memclock",
-      set_gpu_memclock, NULL, NULL,
+//      set_gpu_memclock, NULL, NULL,
+      set_default_gpu_memclock, NULL, NULL, 
       "Set the GPU memory (over)clock in Mhz - one value for all or separate by commas for per card"),
   OPT_WITH_ARG("--gpu-memdiff",
       set_gpu_memdiff, NULL, NULL,
@@ -1317,18 +1323,6 @@ static struct opt_table opt_config_table[] = {
   OPT_WITH_ARG("--gpu-vddc",
       set_gpu_vddc, NULL, NULL,
       "Set the GPU voltage in Volts - one value for all or separate by commas for per card"),
-  OPT_WITH_ARG("--pool-gpu-engine",
-      set_pool_gpu_engine, NULL, NULL,
-      "GPU engine (over)clock range in Mhz - one value, range and/or comma separated list (e.g. 850-900,900,750-850)"),
-  OPT_WITH_ARG("--pool-gpu-memclock",
-      set_pool_gpu_memclock, NULL, NULL,
-      "Set the GPU memory (over)clock in Mhz - one value for all or separate by commas for per card"),
-  OPT_WITH_ARG("--pool-gpu-threads",
-      set_pool_gpu_threads, NULL, NULL,
-      "Number of threads per GPU for pool"),
-  OPT_WITH_ARG("--pool-gpu-fan",
-      set_pool_gpu_fan, NULL, NULL,
-      "GPU fan for pool"),
 #endif
   OPT_WITH_ARG("--lookup-gap",
       set_lookup_gap, NULL, NULL,
@@ -1344,28 +1338,16 @@ static struct opt_table opt_config_table[] = {
   OPT_WITHOUT_ARG("--more-notices",
       opt_set_bool, &opt_morenotices,
       "Shows work restart and new block notices, hidden by default"),
-  OPT_WITH_ARG("--intensity|-I",
-      set_intensity, NULL, NULL,
-      "Intensity of GPU scanning (d or " MIN_INTENSITY_STR
-      " -> " MAX_INTENSITY_STR
-      ",default: d to maintain desktop interactivity), overridden by --xintensity or --rawintensity."),
   OPT_WITH_ARG("--xintensity|-X",
-      set_xintensity, NULL, NULL,
+//      set_xintensity, NULL, NULL,
+      set_default_xintensity, NULL, NULL, 
       "Shader based intensity of GPU scanning (" MIN_XINTENSITY_STR " to "
         MAX_XINTENSITY_STR "), overrides --intensity|-I, overridden by --rawintensity."),
   OPT_WITH_ARG("--rawintensity",
-      set_rawintensity, NULL, NULL,
+//      set_rawintensity, NULL, NULL,
+      set_default_rawintensity, NULL, NULL, 
       "Raw intensity of GPU scanning (" MIN_RAWINTENSITY_STR " to "
         MAX_RAWINTENSITY_STR "), overrides --intensity|-I and --xintensity|-X."),
-  OPT_WITH_ARG("--pool-intensity",
-      set_pool_intensity, NULL, NULL,
-      "Intensity of GPU scanning (pool-specific)"),
-  OPT_WITH_ARG("--pool-xintensity",
-      set_pool_xintensity, NULL, NULL,
-      "Shader based intensity of GPU scanning (pool-specific)"),
-  OPT_WITH_ARG("--pool-rawintensity",
-      set_pool_rawintensity, NULL, NULL,
-      "Raw intensity of GPU scanning (pool-specific)"),
   OPT_WITH_ARG("--kernel-path|-K",
       opt_set_charp, opt_show_charp, &opt_kernel_path,
       "Specify a path to where kernel files are"),
@@ -1386,7 +1368,7 @@ static struct opt_table opt_config_table[] = {
       opt_set_charp, NULL, &opt_stderr_cmd,
       "Use custom pipe cmd for output messages"),
 #endif // defined(unix)
-  OPT_WITH_ARG("--name",
+  OPT_WITH_ARG("--name|--pool-name",
       set_pool_name, NULL, NULL,
       "Name of pool"),
   OPT_WITHOUT_ARG("--net-delay",
@@ -1418,18 +1400,92 @@ static struct opt_table opt_config_table[] = {
   OPT_WITHOUT_ARG("--no-extranonce-subscribe",
       set_no_extranonce_subscribe, NULL,
       "Disable 'extranonce' stratum subscribe for pool"),
-  OPT_WITH_ARG("--pass|-p",
+  OPT_WITH_ARG("--pass|--pool-pass|-p",
       set_pass, NULL, NULL,
       "Password for bitcoin JSON-RPC server"),
   OPT_WITHOUT_ARG("--per-device-stats",
       opt_set_bool, &want_per_device_stats,
       "Force verbose mode and output per-device statistics"),
+	  
   OPT_WITH_ARG("--poolname", /* TODO: Backward compatibility, to be removed. */
       set_poolname_deprecated, NULL, NULL,
       opt_hidden),
-  OPT_WITH_ARG("--priority",
+  OPT_WITH_ARG("--pool-algorithm",
+      set_pool_algorithm, NULL, NULL,
+      "Set algorithm for pool"),
+#ifdef HAVE_ADL
+  OPT_WITH_ARG("--pool-gpu-engine",
+      set_pool_gpu_engine, NULL, NULL,
+      "Pool GPU engine (over)clock range in Mhz - one value, range and/or comma separated list (e.g. 850-900,900,750-850)"),
+  OPT_WITH_ARG("--pool-gpu-fan",
+      set_pool_gpu_fan, NULL, NULL,
+      "GPU fan for pool"),
+  OPT_WITH_ARG("--pool-gpu-memclock",
+      set_pool_gpu_memclock, NULL, NULL,
+      "Set the Pool GPU memory (over)clock in Mhz - one value for all or separate by commas for per card"),
+  OPT_WITH_ARG("--pool-gpu-threads",
+      set_pool_gpu_threads, NULL, NULL,
+      "Number of threads per GPU for pool"),
+#endif
+  OPT_WITH_ARG("--pool-intensity",
+      set_pool_intensity, NULL, NULL,
+      "Intensity of GPU scanning (pool-specific)"),
+  OPT_WITH_ARG("--pool-nfactor",
+      set_pool_nfactor, NULL, NULL,
+      "Set N-factor for pool"),	  
+  OPT_WITH_ARG("--pool-profile",
+      set_pool_profile, NULL, NULL,
+      "Profile to use with the pool"),
+  OPT_WITH_ARG("--pool-rawintensity",
+      set_pool_rawintensity, NULL, NULL,
+      "Raw intensity of GPU scanning (pool-specific)"),
+  OPT_WITH_ARG("--pool-thread-concurrency",
+      set_pool_thread_concurrency, NULL, NULL,
+      "Set thread concurrency for pool"),
+  OPT_WITH_ARG("--pool-xintensity",
+      set_pool_xintensity, NULL, NULL,
+      "Shader based intensity of GPU scanning (pool-specific)"),
+	  
+  OPT_WITH_ARG("--priority|--pool-priority",
        set_pool_priority, NULL, NULL,
        "Pool priority"),
+	   
+  OPT_WITH_ARG("--profile-algorithm",
+      set_profile_algorithm, NULL, NULL,
+      "Set algorithm for profile"),
+#ifdef HAVE_ADL
+  OPT_WITH_ARG("--profile-gpu-engine",
+      set_profile_gpu_engine, NULL, NULL,
+      "Profile GPU engine (over)clock range in Mhz - one value, range and/or comma separated list (e.g. 850-900,900,750-850)"),
+  OPT_WITH_ARG("--profile-gpu-fan",
+      set_profile_gpu_fan, NULL, NULL,
+      "GPU fan for profile"),
+  OPT_WITH_ARG("--profile-gpu-memclock",
+      set_profile_gpu_memclock, NULL, NULL,
+      "Set the Profile GPU memory (over)clock in Mhz - one value for all or separate by commas for per card"),
+  OPT_WITH_ARG("--profile-gpu-threads",
+      set_profile_gpu_threads, NULL, NULL,
+      "Number of threads per GPU for profile"),
+#endif
+  OPT_WITH_ARG("--profile-intensity",
+      set_profile_intensity, NULL, NULL,
+      "Intensity of GPU scanning (profile-specific)"),
+  OPT_WITH_ARG("--profile-name",
+      set_profile_name, NULL, NULL,
+      "Profile Name"),
+  OPT_WITH_ARG("--profile-nfactor",
+      set_profile_nfactor, NULL, NULL,
+      "Set N-factor for profile"),
+  OPT_WITH_ARG("--profile-rawintensity",
+      set_profile_rawintensity, NULL, NULL,
+      "Raw intensity of GPU scanning (profile-specific)"),
+  OPT_WITH_ARG("--profile-thread-concurrency",
+      set_profile_thread_concurrency, NULL, NULL,
+      "Set thread concurrency for profile"),
+  OPT_WITH_ARG("--profile-xintensity",
+      set_profile_xintensity, NULL, NULL,
+      "Shader based intensity of GPU scanning (profile-specific)"),
+	  
   OPT_WITHOUT_ARG("--protocol-dump|-P",
       opt_set_bool, &opt_protocol,
       "Verbose dump of protocol-level activities"),
@@ -1439,7 +1495,7 @@ static struct opt_table opt_config_table[] = {
   OPT_WITHOUT_ARG("--quiet|-q",
       opt_set_bool, &opt_quiet,
       "Disable logging output, display status and errors"),
-  OPT_WITH_ARG("--quota|-U",
+  OPT_WITH_ARG("--quota|--pool-quota|-U",
       set_quota, NULL, NULL,
       "quota;URL combination for server with load-balance strategy quotas"),
   OPT_WITHOUT_ARG("--real-quiet",
@@ -1525,21 +1581,13 @@ static struct opt_table opt_config_table[] = {
       opt_hidden),
 #endif
   OPT_WITH_ARG("--thread-concurrency",
-      set_thread_concurrency, NULL, NULL,
+//      set_thread_concurrency, NULL, NULL,
+      set_default_thread_concurrency, NULL, NULL, 
       "Set GPU thread concurrency for scrypt mining, comma separated"),
-  OPT_WITH_ARG("--url|-o",
+  OPT_WITH_ARG("--url|--pool-url|-o",
       set_url, NULL, NULL,
       "URL for bitcoin JSON-RPC server"),
-  OPT_WITH_ARG("--pool-algorithm",
-      set_pool_algorithm, NULL, NULL,
-      "Set algorithm for pool"),
-  OPT_WITH_ARG("--pool-nfactor",
-      set_pool_nfactor, NULL, NULL,
-      "Set N-factor for pool"),
-  OPT_WITH_ARG("--pool-thread-concurrency",
-      set_pool_thread_concurrency, NULL, NULL,
-      "Set thread concurrency for pool"),
-  OPT_WITH_ARG("--user|-u",
+  OPT_WITH_ARG("--user|--pool-user|-u",
       set_user, NULL, NULL,
       "Username for bitcoin JSON-RPC server"),
   OPT_WITH_ARG("--vectors",
@@ -1561,152 +1609,15 @@ static struct opt_table opt_config_table[] = {
       "Display extra work time debug information"),
   OPT_WITH_ARG("--pools",
       opt_set_bool, NULL, NULL, opt_hidden),
+  OPT_WITH_ARG("--profiles",
+      opt_set_bool, NULL, NULL, opt_hidden),
   OPT_WITH_ARG("--difficulty-multiplier",
       set_difficulty_multiplier, NULL, NULL,
       "Difficulty multiplier for jobs received from stratum pools"),
   OPT_ENDTABLE
 };
 
-static char *load_config(const char *arg, void __maybe_unused *unused);
-
-static int fileconf_load;
-
-static char *parse_config(json_t *config, bool fileconf, int parent_iteration)
-{
-  static char err_buf[200];
-  struct opt_table *opt;
-  json_t *val;
-
-  json_array_index = parent_iteration;
-
-  if (fileconf && !fileconf_load)
-    fileconf_load = 1;
-
-  for (opt = opt_config_table; opt->type != OPT_END; opt++) {
-    char *p, *name;
-
-    /* We don't handle subtables. */
-    assert(!(opt->type & OPT_SUBTABLE));
-
-    if (!opt->names)
-      continue;
-
-    /* Pull apart the option name(s). */
-    name = strdup(opt->names);
-    for (p = strtok(name, "|"); p; p = strtok(NULL, "|")) {
-      char *err = NULL;
-
-      /* Ignore short options. */
-      if (p[1] != '-')
-        continue;
-
-      val = json_object_get(config, p+2);
-      if (!val)
-        continue;
-
-      if ((opt->type & OPT_HASARG) && json_is_string(val)) {
-        err = opt->cb_arg(json_string_value(val),
-              opt->u.arg);
-      } else if ((opt->type & OPT_HASARG) && json_is_array(val)) {
-        size_t n, size = json_array_size(val);
-
-        for (n = 0; n < size && !err; n++) {
-          if (json_is_string(json_array_get(val, n)))
-            err = opt->cb_arg(json_string_value(json_array_get(val, n)), opt->u.arg);
-          else if (json_is_object(json_array_get(val, n)))
-          {
-            err = parse_config(json_array_get(val, n), false, n);
-          }
-        }
-      } else if ((opt->type & OPT_NOARG) && json_is_true(val))
-        err = opt->cb(opt->u.arg);
-      else
-        err = "Invalid value";
-
-      if (err) {
-        /* Allow invalid values to be in configuration
-         * file, just skipping over them provided the
-         * JSON is still valid after that. */
-        if (fileconf) {
-          applog(LOG_WARNING, "Skipping config option %s: %s", p, err);
-          fileconf_load = -1;
-        } else {
-          snprintf(err_buf, sizeof(err_buf), "Error parsing JSON option %s: %s",
-            p, err);
-          return err_buf;
-        }
-      }
-    }
-    free(name);
-  }
-
-  val = json_object_get(config, JSON_INCLUDE_CONF);
-  if (val && json_is_string(val))
-    return load_config(json_string_value(val), NULL);
-
-  return NULL;
-}
-
-char *cnfbuf = NULL;
-
-static char *load_config(const char *arg, void __maybe_unused *unused)
-{
-  json_error_t err;
-  json_t *config;
-  char *json_error;
-  size_t siz;
-
-  if (!cnfbuf)
-    cnfbuf = strdup(arg);
-
-  if (++include_count > JSON_MAX_DEPTH)
-    return JSON_MAX_DEPTH_ERR;
-
-#if JANSSON_MAJOR_VERSION > 1
-  config = json_load_file(arg, 0, &err);
-#else
-  config = json_load_file(arg, &err);
-#endif
-  if (!json_is_object(config)) {
-    siz = JSON_LOAD_ERROR_LEN + strlen(arg) + strlen(err.text);
-    // TODO: memory leak
-    json_error = (char *)malloc(siz);
-    if (!json_error)
-      quit(1, "Malloc failure in json error");
-
-    snprintf(json_error, siz, JSON_LOAD_ERROR, arg, err.text);
-    return json_error;
-  }
-
-  config_loaded = true;
-
-  /* Parse the config now, so we can override it.  That can keep pointers
-   * so don't free config object. */
-  return parse_config(config, true, -1);
-}
-
-static char *set_default_config(const char *arg)
-{
-  opt_set_charp(arg, &default_config);
-
-  return NULL;
-}
-
 void default_save_file(char *filename);
-
-static void load_default_config(void)
-{
-  cnfbuf = (char *)malloc(PATH_MAX);
-
-  default_save_file(cnfbuf);
-
-  if (!access(cnfbuf, R_OK))
-    load_config(cnfbuf, NULL);
-  else {
-    free(cnfbuf);
-    cnfbuf = NULL;
-  }
-}
 
 extern const char *opt_argv0;
 
@@ -6195,32 +6106,49 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
     // Apply other pool-specific settings
     // TODO: when config parser is improved, add else statements and set
     //       to default intensity
-    if (work->pool->intensity)
+    if(!empty_string(work->pool->intensity))
       set_intensity(work->pool->intensity);
-    if (work->pool->xintensity)
+	else if(!empty_string(default_profile.intensity))
+      set_intensity(default_profile.intensity);
+	
+    if (!empty_string(work->pool->xintensity))
       set_xintensity(work->pool->xintensity);
-    if (work->pool->rawintensity)
+	else if(!empty_string(default_profile.xintensity))
+      set_xintensity(default_profile.xintensity);
+ 
+    if (!empty_string(work->pool->rawintensity))
       set_rawintensity(work->pool->rawintensity);
-    if (work->pool->thread_concurrency)
+	else if(!empty_string(default_profile.rawintensity))
+      set_rawintensity(default_profile.rawintensity);
+ 
+    if (!empty_string(work->pool->thread_concurrency))
       set_thread_concurrency(work->pool->thread_concurrency);
-    #ifdef HAVE_ADL
-      if (work->pool->gpu_engine) {
+ 	else if(!empty_string(default_profile.thread_concurrency))
+      set_thread_concurrency(default_profile.thread_concurrency);
+
+#ifdef HAVE_ADL
+      if(!empty_string(work->pool->gpu_engine))
+	  {
         set_gpu_engine(work->pool->gpu_engine);
         for (i = 0; i < nDevs; i++)
           set_engineclock(i, gpus[i].min_engine);
       }
-      if (work->pool->gpu_memclock) {
+	  
+      if(!empty_string(work->pool->gpu_memclock))
+	  {
         set_gpu_memclock(work->pool->gpu_memclock);
         for (i = 0; i < nDevs; i++)
           set_memoryclock(i, gpus[i].gpu_memclock);
       }
-      if (work->pool->gpu_fan) {
+	  
+      if(!empty_string(work->pool->gpu_fan))
+	  {
         set_gpu_fan(work->pool->gpu_fan);
         for (i = 0; i < nDevs; i++)
           if (gpus[i].min_fan == gpus[i].gpu_fan)
             set_fanspeed(i, gpus[i].gpu_fan);
       }
-    #endif
+#endif
     // Change algorithm for each thread (thread_prepare calls initCl)
     for (i = 0; i < mining_threads; i++) {
       struct thr_info *thr = mining_thr[i];
@@ -7951,6 +7879,15 @@ int main(int argc, char *argv[])
 
   if (!config_loaded)
     load_default_config();
+
+  //load default profile if specified in config
+  load_default_profile();
+
+  //apply default settings
+  apply_defaults();
+
+  //apply pool-specific config from profiles
+  apply_pool_profiles();
 
   if (opt_benchmark) {
     struct pool *pool;
