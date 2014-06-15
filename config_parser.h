@@ -13,18 +13,18 @@
 
 //profile structure
 struct profile {
-	int profile_no;
-	char *name;
+    int profile_no;
+    char *name;
 
-	algorithm_t algorithm;
-	const char *intensity;
-	const char *xintensity;
-	const char *rawintensity;
-	const char *thread_concurrency;
-	const char *gpu_engine;
-	const char *gpu_memclock;
-	const char *gpu_threads;
-	const char *gpu_fan;
+    algorithm_t algorithm;
+    const char *intensity;
+    const char *xintensity;
+    const char *rawintensity;
+    const char *thread_concurrency;
+    const char *gpu_engine;
+    const char *gpu_memclock;
+    const char *gpu_threads;
+    const char *gpu_fan;
 };
 
 /* globals needed outside */
@@ -44,9 +44,9 @@ extern char *set_default_xintensity(const char *arg);
 extern char *set_default_rawintensity(const char *arg);
 extern char *set_default_thread_concurrency(const char *arg);
 #ifdef HAVE_ADL
-	extern char *set_default_gpu_engine(const char *arg);
-	extern char *set_default_gpu_memclock(const char *arg);
-	extern char *set_default_gpu_threads(const char *arg);
+    extern char *set_default_gpu_engine(const char *arg);
+    extern char *set_default_gpu_memclock(const char *arg);
+    extern char *set_default_gpu_threads(const char *arg);
     extern char *set_default_gpu_fan(const char *arg);
 #endif
 extern char *set_default_profile(char *arg);
@@ -58,7 +58,7 @@ extern char *set_profile_xintensity(const char *arg);
 extern char *set_profile_rawintensity(const char *arg);
 extern char *set_profile_thread_concurrency(const char *arg);
 #ifdef HAVE_ADL
-	extern char *set_profile_gpu_engine(const char *arg);
+    extern char *set_profile_gpu_engine(const char *arg);
     extern char *set_profile_gpu_memclock(const char *arg);
     extern char *set_profile_gpu_threads(const char *arg);
     extern char *set_profile_gpu_fan(const char *arg);
