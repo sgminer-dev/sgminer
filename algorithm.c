@@ -25,6 +25,7 @@
 #include "algorithm/twecoin.h"
 #include "algorithm/marucoin.h"
 #include "algorithm/maxcoin.h"
+#include "algorithm/talkcoin.h"
 
 #include "compat.h"
 
@@ -326,6 +327,44 @@ static cl_int queue_marucoin_mod_old_kernel(struct __clState *clState, struct _d
   return status;
 }
 
+static cl_int queue_talkcoin_mod_kernel(struct __clState *clState, struct _dev_blk_ctx *blk, __maybe_unused cl_uint threads)
+{
+  cl_kernel *kernel;
+  unsigned int num;
+  cl_ulong le_target;
+  cl_int status = 0;
+
+  le_target = *(cl_ulong *)(blk->work->device_target + 24);
+  flip80(clState->cldata, blk->work->data);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+
+  // blake - search
+  kernel = &clState->kernel;
+  num = 0;
+  CL_SET_ARG(clState->CLbuffer0);
+  CL_SET_ARG(clState->padbuffer8);
+  // groestl - search1
+  kernel = clState->extra_kernels;
+  num = 0;
+  CL_SET_ARG(clState->padbuffer8);
+  // jh - search2
+  kernel++;
+  num = 0;
+  CL_SET_ARG(clState->padbuffer8);
+  // keccak - search3
+  kernel++;
+  num = 0;
+  CL_SET_ARG(clState->padbuffer8);
+  // skein - search4
+  kernel++;
+  num = 0;
+  CL_SET_ARG(clState->padbuffer8);
+  CL_SET_ARG(clState->outputBuffer);
+  CL_SET_ARG(le_target);
+
+  return status;
+}
+
 typedef struct _algorithm_settings_t {
   const char *name; /* Human-readable identifier */
   double   diff_multiplier1;
@@ -382,6 +421,8 @@ static algorithm_settings_t algos[] = {
   { "marucoin", 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, marucoin_regenhash, queue_sph_kernel, gen_hash, append_hamsi_compiler_options},
   { "marucoin-mod", 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 12, 8 * 16 * 4194304, 0, marucoin_regenhash, queue_marucoin_mod_kernel, gen_hash, append_hamsi_compiler_options},
   { "marucoin-modold", 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, marucoin_regenhash, queue_marucoin_mod_old_kernel, gen_hash, append_hamsi_compiler_options},
+
+  { "talkcoin-mod", 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 4,  8 * 16 * 4194304, 0, talkcoin_regenhash, queue_talkcoin_mod_kernel, gen_hash, NULL},
 
   // kernels starting from this will have difficulty calculated by using fuguecoin algorithm
 #define A_FUGUE(a, b) \
