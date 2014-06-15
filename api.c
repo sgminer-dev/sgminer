@@ -1218,10 +1218,10 @@ static LOCKLIST *newlock(void *lock, enum cglock_typ typ, const char *file, cons
 {
   LOCKLIST *list;
 
-  list = calloc(1, sizeof(*list));
+  list = (LOCKLIST *)calloc(1, sizeof(*list));
   if (!list)
     quithere(1, "OOM list");
-  list->info = calloc(1, sizeof(*(list->info)));
+  list->info = (LOCKINFO *)calloc(1, sizeof(*(list->info)));
   if (!list->info)
     quithere(1, "OOM info");
   list->next = lockhead;
@@ -1258,10 +1258,10 @@ static void addgettry(LOCKINFO *info, uint64_t id, const char *file, const char 
   LOCKSTAT *stat;
   LOCKLINE *line;
 
-  stat = calloc(1, sizeof(*stat));
+  stat = (LOCKSTAT *)calloc(1, sizeof(*stat));
   if (!stat)
     quithere(1, "OOM stat");
-  line = calloc(1, sizeof(*line));
+  line = (LOCKLINE *)calloc(1, sizeof(*line));
   if (!line)
     quithere(1, "OOM line");
 
