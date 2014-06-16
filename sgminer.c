@@ -2731,15 +2731,10 @@ share_result(json_t *val, json_t *res, json_t *err, const struct work *work,
 
     applog(LOG_DEBUG, "PROOF OF WORK RESULT: false (booooo)");
     if (!QUIET) {
-      char where[20];
       char disposition[36] = "reject";
       char reason[32];
 
       strcpy(reason, "");
-      if (total_pools > 1)
-        snprintf(where, sizeof(where), "%s", get_pool_name(pool));
-      else
-        strcpy(where, "");
 
       if (!work->gbt)
         res = json_object_get(val, "reject-reason");
@@ -2765,7 +2760,12 @@ share_result(json_t *val, json_t *res, json_t *err, const struct work *work,
       }
 
       applog(LOG_NOTICE, "Rejected %s %s %d %s%s %s%s",
-             hashshow, cgpu->drv->name, cgpu->device_id, where, reason, resubmit ? "(resubmit)" : "", worktime);
+             hashshow, 
+             cgpu->drv->name, 
+             cgpu->device_id, 
+             (total_pools > 1) ? get_pool_name(pool) : "", 
+             reason, resubmit ? "(resubmit)" : "", 
+             worktime);
       sharelog(disposition, work);
     }
 
