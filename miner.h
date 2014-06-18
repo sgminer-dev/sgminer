@@ -1039,6 +1039,7 @@ extern void api(int thr_id);
 extern struct pool *current_pool(void);
 extern int enabled_pools;
 extern void get_intrange(char *arg, int *val1, int *val2);
+extern char *set_devices(char *arg);
 extern bool detect_stratum(struct pool *pool, char *url);
 extern void print_summary(void);
 extern void adjust_quota_gcd(void);
@@ -1216,14 +1217,20 @@ struct pool {
 
   char *profile;
   algorithm_t algorithm;
-  const char *intensity;
-  const char *xintensity;
-  const char *rawintensity;
-  const char *thread_concurrency;
-  const char *gpu_engine;
-  const char *gpu_memclock;
-  const char *gpu_threads;
-  const char *gpu_fan;
+    const char *devices;
+    const char *intensity;
+    const char *xintensity;
+    const char *rawintensity;
+    const char *lookup_gap;
+    const char *gpu_engine;
+    const char *gpu_memclock;
+    const char *gpu_threads;
+    const char *gpu_fan;
+    const char *gpu_powertune;
+    const char *gpu_vddc;
+    const char *shaders;
+    const char *thread_concurrency;
+    const char *worksize;
 
   pthread_mutex_t pool_lock;
   cglock_t data_lock;

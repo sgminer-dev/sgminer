@@ -121,6 +121,18 @@ static struct profile *get_profile(char *name)
 }
 
 /******* Default profile functions used during config parsing *****/
+char *set_default_devices(const char *arg)
+{
+    default_profile.devices = arg;
+    return NULL;
+}
+
+char *set_default_lookup_gap(const char *arg)
+{
+    default_profile.lookup_gap = arg;
+    return NULL;
+}
+
 char *set_default_intensity(const char *arg)
 {
     default_profile.intensity = arg;
@@ -171,6 +183,18 @@ char *set_default_thread_concurrency(const char *arg)
         return NULL;
     }
 
+    char *set_default_gpu_powertune(const char *arg)
+    {
+        default_profile.gpu_powertune = arg;
+        return NULL;
+    }
+
+    char *set_default_gpu_vddc(const char *arg)
+    {
+        default_profile.gpu_vddc = arg;
+        return NULL;
+    }
+
 #endif
 
 char *set_default_profile(char *arg)
@@ -179,8 +203,20 @@ char *set_default_profile(char *arg)
     return NULL;
 }
 
+char *set_default_shaders(const char *arg)
+{
+    default_profile.shaders = arg;
+    return NULL;
+}
+
+char *set_default_worksize(const char *arg)
+{
+    default_profile.worksize = arg;
+    return NULL;
+}
+
 /****** Profile functions used in during config parsing ********/
-char *set_profile_name(char *arg)
+char *set_profile_name(const char *arg)
 {
     struct profile *profile = get_current_profile();
 
@@ -197,6 +233,20 @@ char *set_profile_algorithm(const char *arg)
     //applog(LOG_DEBUG, "Setting profile %s algorithm to %s", profile->name, arg);
     set_algorithm(&profile->algorithm, arg);
 
+    return NULL;
+}
+
+char *set_profile_devices(const char *arg)
+{
+    struct profile *profile = get_current_profile();
+    profile->devices = arg;
+    return NULL;
+}
+
+char *set_profile_lookup_gap(const char *arg)
+{
+    struct profile *profile = get_current_profile();
+    profile->lookup_gap = arg;
     return NULL;
 }
 
@@ -258,6 +308,20 @@ char *set_profile_thread_concurrency(const char *arg)
         return NULL;
     }
 
+    char *set_profile_gpu_powertune(const char *arg)
+    {
+        struct profile *profile = get_current_profile();
+        profile->gpu_powertune = arg;
+        return NULL;
+    }
+
+    char *set_profile_gpu_vddc(const char *arg)
+    {
+        struct profile *profile = get_current_profile();
+        profile->gpu_vddc = arg;
+        return NULL;
+    }
+
 #endif
 
 char *set_profile_nfactor(const char *arg)
@@ -267,6 +331,20 @@ char *set_profile_nfactor(const char *arg)
     applog(LOG_DEBUG, "Setting profile %s N-factor to %s", profile->name, arg);
     set_algorithm_nfactor(&profile->algorithm, (const uint8_t) atoi(arg));
 
+    return NULL;
+}
+
+char *set_profile_shaders(const char *arg)
+{
+    struct profile *profile = get_current_profile();
+    profile->shaders = arg;
+    return NULL;
+}
+
+char *set_profile_worksize(const char *arg)
+{
+    struct profile *profile = get_current_profile();
+    profile->worksize = arg;
     return NULL;
 }
 
@@ -562,6 +640,8 @@ void load_default_profile()
         if((profile = get_profile(default_profile.name)))
         {
             default_profile.algorithm = profile->algorithm;
+            default_profile.devices = profile->devices;
+            default_profile.lookup_gap = profile->lookup_gap;
             default_profile.intensity = profile->intensity;
             default_profile.xintensity = profile->xintensity;
             default_profile.rawintensity = profile->rawintensity;
@@ -571,7 +651,11 @@ void load_default_profile()
             default_profile.gpu_memclock = profile->gpu_memclock;
             default_profile.gpu_threads = profile->gpu_threads;
             default_profile.gpu_fan = profile->gpu_fan;
+            default_profile.gpu_powertune = profile->gpu_powertune;
+            default_profile.gpu_vddc = profile->gpu_vddc;
 #endif
+            default_profile.shaders = profile->shaders;
+            default_profile.worksize = profile->worksize;
         }
     }
 }
@@ -581,31 +665,49 @@ void apply_defaults()
 {
     set_algorithm(opt_algorithm, default_profile.algorithm.name);
 
+    if(!empty_string(default_profile.devices))
+        set_devices((char *)default_profile.devices);
+
     if(!empty_string(default_profile.intensity))
         set_intensity(default_profile.intensity);
 
-        if(!empty_string(default_profile.xintensity))
-                set_xintensity(default_profile.xintensity);
+    if(!empty_string(default_profile.xintensity))
+        set_xintensity(default_profile.xintensity);
 
-        if(!empty_string(default_profile.rawintensity))
-                set_rawintensity(default_profile.rawintensity);
+    if(!empty_string(default_profile.rawintensity))
+        set_rawintensity(default_profile.rawintensity);
 
-        if(!empty_string(default_profile.thread_concurrency))
-                set_thread_concurrency(default_profile.thread_concurrency);
+    if(!empty_string(default_profile.lookup_gap))
+        set_lookup_gap((char *)default_profile.lookup_gap);
+
+    if(!empty_string(default_profile.thread_concurrency))
+        set_thread_concurrency(default_profile.thread_concurrency);
 
 #ifdef HAVE_ADL
-        if(!empty_string(default_profile.gpu_engine))
-                set_gpu_engine(default_profile.gpu_engine);
+    if(!empty_string(default_profile.gpu_engine))
+        set_gpu_engine(default_profile.gpu_engine);
 
-        if(!empty_string(default_profile.gpu_memclock))
-                set_gpu_memclock(default_profile.gpu_memclock);
+    if(!empty_string(default_profile.gpu_memclock))
+        set_gpu_memclock(default_profile.gpu_memclock);
 
-        if(!empty_string(default_profile.gpu_threads))
-                set_gpu_threads(default_profile.gpu_threads);
+    if(!empty_string(default_profile.gpu_threads))
+        set_gpu_threads(default_profile.gpu_threads);
 
-        if(!empty_string(default_profile.gpu_fan))
-                set_gpu_fan(default_profile.gpu_fan);
+    if(!empty_string(default_profile.gpu_fan))
+        set_gpu_fan(default_profile.gpu_fan);
+
+    if(!empty_string(default_profile.gpu_powertune))
+        set_gpu_powertune((char *)default_profile.gpu_powertune);
+
+    if(!empty_string(default_profile.gpu_vddc))
+        set_gpu_vddc((char *)default_profile.gpu_vddc);
 #endif
+
+    if(!empty_string(default_profile.shaders))
+        set_shaders((char *)default_profile.shaders);
+
+    if(!empty_string(default_profile.worksize))
+        set_worksize((char *)default_profile.worksize);
 }
 
 //apply profile settings to pools
@@ -626,6 +728,18 @@ void apply_pool_profiles()
             {
                 pools[i]->algorithm = profile->algorithm;
                 applog(LOG_DEBUG, "Pool %i Algorithm set to \"%s\"", pools[i]->pool_no, pools[i]->algorithm.name);
+
+                if(!empty_string(profile->devices))
+                {
+                    pools[i]->devices = profile->devices;
+                    applog(LOG_DEBUG, "Pool %i devices set to \"%s\"", pools[i]->pool_no, pools[i]->devices);
+                }
+
+                if(!empty_string(profile->lookup_gap))
+                {
+                    pools[i]->lookup_gap = profile->lookup_gap;
+                    applog(LOG_DEBUG, "Pool %i lookup gap set to \"%s\"", pools[i]->pool_no, pools[i]->lookup_gap);
+                }
 
                 if(!empty_string(profile->intensity))
                 {
@@ -675,7 +789,31 @@ void apply_pool_profiles()
                     pools[i]->gpu_fan = profile->gpu_fan;
                     applog(LOG_DEBUG, "Pool %i GPU Fan set to \"%s\"", pools[i]->pool_no, pools[i]->gpu_fan);
                 }
+
+                if(!empty_string(profile->gpu_powertune))
+                {
+                    pools[i]->gpu_powertune = profile->gpu_powertune;
+                    applog(LOG_DEBUG, "Pool %i GPU Powertune set to \"%s\"", pools[i]->pool_no, pools[i]->gpu_powertune);
+                }
+
+                if(!empty_string(profile->gpu_vddc))
+                {
+                    pools[i]->gpu_vddc = profile->gpu_vddc;
+                    applog(LOG_DEBUG, "Pool %i GPU Vddc set to \"%s\"", pools[i]->pool_no, pools[i]->gpu_vddc);
+                }
 #endif
+
+                if(!empty_string(profile->shaders))
+                {
+                    pools[i]->shaders = profile->shaders;
+                    applog(LOG_DEBUG, "Pool %i Shaders set to \"%s\"", pools[i]->pool_no, pools[i]->shaders);
+                }
+
+                if(!empty_string(profile->worksize))
+                {
+                    pools[i]->worksize = profile->worksize;
+                    applog(LOG_DEBUG, "Pool %i Worksize set to \"%s\"", pools[i]->pool_no, pools[i]->worksize);
+                }
             }
             else
                 applog(LOG_DEBUG, "Profile load failed for pool %i: profile %s not found.", pools[i]->pool_no, pools[i]->profile);
@@ -823,6 +961,32 @@ json_t *build_pool_json()
         }
 
         //if pool and profile value doesn't match below, add it
+        //devices
+        if(!empty_string(pool->devices))
+        {
+            if(strcmp(pool->devices, profile->devices))
+            {
+                if(json_object_set(obj, "devices", json_string(pool->devices)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on pool(%d):device", pool->pool_no);
+                    return NULL;
+                }
+            }
+        }
+
+        //lookup-gap
+        if(!empty_string(pool->lookup_gap))
+        {
+            if(strcmp(pool->lookup_gap, profile->lookup_gap))
+            {
+                if(json_object_set(obj, "lookup-gap", json_string(pool->lookup_gap)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on pool(%d):lookup-gap", pool->pool_no);
+                    return NULL;
+                }
+            }
+        }
+
         //intensity
         if(!empty_string(pool->intensity))
         {
@@ -862,28 +1026,53 @@ json_t *build_pool_json()
             }
         }
             
-        //thread_concurrency
-        if(!empty_string(pool->thread_concurrency))
+        //shaders
+        if(!empty_string(pool->shaders))
         {
-            if(strcmp(pool->thread_concurrency, profile->thread_concurrency) != 0)
+            if(strcmp(pool->shaders, profile->shaders) != 0)
             {
-                if(json_object_set(obj, "thread_concurrency", json_string(pool->thread_concurrency)) == -1)
+                if(json_object_set(obj, "shaders", json_string(pool->shaders)) == -1)
                 {
-                    set_last_json_error("json_object_set() failed on pool(%d):thread_concurrency", pool->pool_no);
+                    set_last_json_error("json_object_set() failed on pool(%d):shaders", pool->pool_no);
                     return NULL;
                 }
             }
         }
 
+        //thread_concurrency
+        if(!empty_string(pool->thread_concurrency))
+        {
+            if(strcmp(pool->thread_concurrency, profile->thread_concurrency) != 0)
+            {
+                if(json_object_set(obj, "thread-concurrency", json_string(pool->thread_concurrency)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on pool(%d):thread-concurrency", pool->pool_no);
+                    return NULL;
+                }
+            }
+        }
+
+        //worksize
+        if(!empty_string(pool->worksize))
+        {
+            if(strcmp(pool->worksize, profile->worksize) != 0)
+            {
+                if(json_object_set(obj, "worksize", json_string(pool->worksize)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on pool(%d):worksize", pool->pool_no);
+                    return NULL;
+                }
+            }
+        }
 #ifdef HAVE_ADL            
         //gpu_engine
         if(!empty_string(pool->gpu_engine))
         {
             if(strcmp(pool->gpu_engine, profile->gpu_engine) != 0)
             {
-                if(json_object_set(obj, "gpu_engine", json_string(pool->gpu_engine)) == -1)
+                if(json_object_set(obj, "gpu-engine", json_string(pool->gpu_engine)) == -1)
                 {
-                    set_last_json_error("json_object_set() failed on pool(%d):gpu_engine", pool->pool_no);
+                    set_last_json_error("json_object_set() failed on pool(%d):gpu-engine", pool->pool_no);
                     return NULL;
                 }
             }
@@ -894,9 +1083,9 @@ json_t *build_pool_json()
         {
             if(strcmp(pool->gpu_memclock, profile->gpu_memclock) != 0)
             {
-                if(json_object_set(obj, "gpu_memclock", json_string(pool->gpu_memclock)) == -1)
+                if(json_object_set(obj, "gpu-memclock", json_string(pool->gpu_memclock)) == -1)
                 {
-                    set_last_json_error("json_object_set() failed on pool(%d):gpu_memclock", pool->pool_no);
+                    set_last_json_error("json_object_set() failed on pool(%d):gpu-memclock", pool->pool_no);
                     return NULL;
                 }
             }
@@ -907,9 +1096,9 @@ json_t *build_pool_json()
         {
             if(strcmp(pool->gpu_threads, profile->gpu_threads) != 0)
             {
-                if(json_object_set(obj, "gpu_threads", json_string(pool->gpu_threads)) == -1)
+                if(json_object_set(obj, "gpu-threads", json_string(pool->gpu_threads)) == -1)
                 {
-                    set_last_json_error("json_object_set() failed on pool(%d):gpu_threads", pool->pool_no);
+                    set_last_json_error("json_object_set() failed on pool(%d):gpu-threads", pool->pool_no);
                     return NULL;
                 }
             }
@@ -920,9 +1109,35 @@ json_t *build_pool_json()
         {
             if(strcmp(pool->gpu_fan, profile->gpu_fan) != 0)
             {
-                if(json_object_set(obj, "gpu_fan", json_string(pool->gpu_fan)) == -1)
+                if(json_object_set(obj, "gpu-fan", json_string(pool->gpu_fan)) == -1)
                 {
-                    set_last_json_error("json_object_set() failed on pool(%d):gpu_fan", pool->pool_no);
+                    set_last_json_error("json_object_set() failed on pool(%d):gpu-fan", pool->pool_no);
+                    return NULL;
+                }
+            }
+        }
+
+        //gpu-powertune
+        if(!empty_string(pool->gpu_powertune))
+        {
+            if(strcmp(pool->gpu_powertune, profile->gpu_powertune) != 0)
+            {
+                if(json_object_set(obj, "gpu-powertune", json_string(pool->gpu_powertune)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on pool(%d):gpu-powertune", pool->pool_no);
+                    return NULL;
+                }
+            }
+        }
+
+        //gpu-vddc
+        if(!empty_string(pool->gpu_vddc))
+        {
+            if(strcmp(pool->gpu_vddc, profile->gpu_vddc) != 0)
+            {
+                if(json_object_set(obj, "gpu-vddc", json_string(pool->gpu_vddc)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on pool(%d):gpu-vddc", pool->pool_no);
                     return NULL;
                 }
             }
@@ -976,8 +1191,8 @@ json_t *build_profile_json()
             }
         }
         
-        //if algorithm is different than profile, add it
-        if(!cmp_algorithm(&default_profile.algorithm, &profile->algorithm)) 
+        //if algorithm is different than profile, add it - if default profile is the current profile, always add
+        if(!cmp_algorithm(&default_profile.algorithm, &profile->algorithm) || !strcasecmp(default_profile.name, profile->name)) 
         {
             //save algorithm name
             if(json_object_set(obj, "algorithm", json_string(profile->algorithm.name)) == -1)
@@ -990,10 +1205,39 @@ json_t *build_profile_json()
         }
 
         //if pool and profile value doesn't match below, add it
+        //devices
+        if(!empty_string(profile->devices))
+        {
+            //always add if default profile is this profile
+            if(strcmp(default_profile.devices, profile->devices) != 0 || !strcasecmp(default_profile.name, profile->name))
+            {
+                if(json_object_set(obj, "devices", json_string(profile->devices)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on profile(%d):device", profile->profile_no);
+                    return NULL;
+                }
+            }
+        }
+
+        //lookup-gap
+        if(!empty_string(profile->lookup_gap))
+        {
+            //always add if default profile is this profile
+            if(strcmp(default_profile.lookup_gap, profile->lookup_gap) != 0 || !strcasecmp(default_profile.name, profile->name))
+            {
+                if(json_object_set(obj, "lookup-gap", json_string(profile->lookup_gap)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on profile(%d):lookup-gap", profile->profile_no);
+                    return NULL;
+                }
+            }
+        }
+
         //intensity
         if(!empty_string(profile->intensity))
         {
-            if(strcmp(default_profile.intensity, profile->intensity) != 0)
+            //always add if default profile is this profile
+            if(strcmp(default_profile.intensity, profile->intensity) != 0 || !strcasecmp(default_profile.name, profile->name))
             {
                 if(json_object_set(obj, "intensity", json_string(profile->intensity)) == -1)
                 {
@@ -1006,7 +1250,7 @@ json_t *build_profile_json()
         //xintensity
         if(!empty_string(profile->xintensity))
         {
-            if(strcmp(default_profile.xintensity, profile->xintensity) != 0)
+            if(strcmp(default_profile.xintensity, profile->xintensity) != 0 || !strcasecmp(default_profile.name, profile->name))
             {
                 if(json_object_set(obj, "xintensity", json_string(profile->xintensity)) == -1)
                 {
@@ -1019,7 +1263,7 @@ json_t *build_profile_json()
         //rawintensity
         if(!empty_string(profile->rawintensity))
         {
-            if(strcmp(default_profile.rawintensity, profile->rawintensity) != 0)
+            if(strcmp(default_profile.rawintensity, profile->rawintensity) != 0 || !strcasecmp(default_profile.name, profile->name))
             {
                 if(json_object_set(obj, "rawintensity", json_string(profile->rawintensity)) == -1)
                 {
@@ -1029,14 +1273,40 @@ json_t *build_profile_json()
             }
         }
             
+        //shaders
+        if(!empty_string(profile->shaders))
+        {
+            if(strcmp(default_profile.shaders, profile->shaders) != 0 || !strcasecmp(default_profile.name, profile->name))
+            {
+                if(json_object_set(obj, "shaders", json_string(profile->shaders)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on profile(%d):shaders", profile->profile_no);
+                    return NULL;
+                }
+            }
+        }
+
         //thread_concurrency
         if(!empty_string(profile->thread_concurrency))
         {
-            if(strcmp(default_profile.thread_concurrency, profile->thread_concurrency) != 0)
+            if(strcmp(default_profile.thread_concurrency, profile->thread_concurrency) != 0 || !strcasecmp(default_profile.name, profile->name))
             {
-                if(json_object_set(obj, "thread_concurrency", json_string(profile->thread_concurrency)) == -1)
+                if(json_object_set(obj, "thread-concurrency", json_string(profile->thread_concurrency)) == -1)
                 {
                     set_last_json_error("json_object_set() failed on profile(%d):thread_concurrency", profile->profile_no);
+                    return NULL;
+                }
+            }
+        }
+
+        //worksize
+        if(!empty_string(profile->worksize))
+        {
+            if(strcmp(default_profile.worksize, profile->worksize) != 0 || !strcasecmp(default_profile.name, profile->name))
+            {
+                if(json_object_set(obj, "worksize", json_string(profile->worksize)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on profile(%d):worksize", profile->profile_no);
                     return NULL;
                 }
             }
@@ -1046,11 +1316,11 @@ json_t *build_profile_json()
         //gpu_engine
         if(!empty_string(profile->gpu_engine))
         {
-            if(strcmp(default_profile.gpu_engine, profile->gpu_engine) != 0)
+            if(strcmp(default_profile.gpu_engine, profile->gpu_engine) != 0 || !strcasecmp(default_profile.name, profile->name))
             {
-                if(json_object_set(obj, "gpu_engine", json_string(profile->gpu_engine)) == -1)
+                if(json_object_set(obj, "gpu-engine", json_string(profile->gpu_engine)) == -1)
                 {
-                    set_last_json_error("json_object_set() failed on profile(%d):gpu_engine", profile->profile_no);
+                    set_last_json_error("json_object_set() failed on profile(%d):gpu-engine", profile->profile_no);
                     return NULL;
                 }
             }
@@ -1059,11 +1329,11 @@ json_t *build_profile_json()
         //gpu_memclock
         if(!empty_string(profile->gpu_memclock))
         {
-            if(strcmp(default_profile.gpu_memclock, profile->gpu_memclock) != 0)
+            if(strcmp(default_profile.gpu_memclock, profile->gpu_memclock) != 0 || !strcasecmp(default_profile.name, profile->name))
             {
-                if(json_object_set(obj, "gpu_memclock", json_string(profile->gpu_memclock)) == -1)
+                if(json_object_set(obj, "gpu-memclock", json_string(profile->gpu_memclock)) == -1)
                 {
-                    set_last_json_error("json_object_set() failed on profile(%d):gpu_memclock", profile->profile_no);
+                    set_last_json_error("json_object_set() failed on profile(%d):gpu-memclock", profile->profile_no);
                     return NULL;
                 }
             }
@@ -1072,11 +1342,11 @@ json_t *build_profile_json()
         //gpu_threads
         if(!empty_string(profile->gpu_threads))
         {
-            if(strcmp(default_profile.gpu_threads, profile->gpu_threads) != 0)
+            if(strcmp(default_profile.gpu_threads, profile->gpu_threads) != 0 || !strcasecmp(default_profile.name, profile->name))
             {
-                if(json_object_set(obj, "gpu_threads", json_string(profile->gpu_threads)) == -1)
+                if(json_object_set(obj, "gpu-threads", json_string(profile->gpu_threads)) == -1)
                 {
-                    set_last_json_error("json_object_set() failed on profile(%d):gpu_threads", profile->profile_no);
+                    set_last_json_error("json_object_set() failed on profile(%d):gpu-threads", profile->profile_no);
                     return NULL;
                 }
             }
@@ -1085,11 +1355,37 @@ json_t *build_profile_json()
         //gpu_fan
         if(!empty_string(profile->gpu_fan))
         {
-            if(strcmp(default_profile.gpu_fan, profile->gpu_fan) != 0)
+            if(strcmp(default_profile.gpu_fan, profile->gpu_fan) != 0 || !strcasecmp(default_profile.name, profile->name))
             {
-                if(json_object_set(obj, "gpu_fan", json_string(profile->gpu_fan)) == -1)
+                if(json_object_set(obj, "gpu-fan", json_string(profile->gpu_fan)) == -1)
                 {
-                    set_last_json_error("json_object_set() failed on profile(%d):gpu_fan", profile->profile_no);
+                    set_last_json_error("json_object_set() failed on profile(%d):gpu-fan", profile->profile_no);
+                    return NULL;
+                }
+            }
+        }
+
+        //gpu-powertune
+        if(!empty_string(profile->gpu_powertune))
+        {
+            if(strcmp(default_profile.gpu_powertune, profile->gpu_powertune) != 0 || !strcasecmp(default_profile.name, profile->name))
+            {
+                if(json_object_set(obj, "gpu-powertune", json_string(profile->gpu_powertune)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on profile(%d):gpu-powertune", profile->profile_no);
+                    return NULL;
+                }
+            }
+        }
+
+        //gpu-vddc
+        if(!empty_string(profile->gpu_vddc))
+        {
+            if(strcmp(default_profile.gpu_vddc, profile->gpu_vddc) != 0 || !strcasecmp(default_profile.name, profile->name))
+            {
+                if(json_object_set(obj, "gpu-vddc", json_string(profile->gpu_vddc)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on profile(%d):gpu-vddc", profile->profile_no);
                     return NULL;
                 }
             }
@@ -1192,7 +1488,7 @@ void write_config(const char *filename)
     //if using a specific profile as default, set it
     if(!empty_string(default_profile.name))
     {
-        if(json_object_set(config, "default_profile", json_string(default_profile.name)) == -1)
+        if(json_object_set(config, "default-profile", json_string(default_profile.name)) == -1)
         {
             applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on default_profile");
             return;
@@ -1208,6 +1504,26 @@ void write_config(const char *filename)
             return;
         }
         //TODO: add other options like nfactor etc...
+
+        //devices
+        if(!empty_string(default_profile.devices))
+        {
+            if(json_object_set(config, "devices", json_string(default_profile.devices)) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on devices");
+                return;
+            }
+        }
+
+        //lookup-gap
+        if(!empty_string(default_profile.lookup_gap))
+        {
+            if(json_object_set(config, "lookup-gap", json_string(default_profile.lookup_gap)) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on lookup-gap");
+                return;
+            }
+        }
 
         //intensity
         if(!empty_string(default_profile.intensity))
@@ -1239,12 +1555,32 @@ void write_config(const char *filename)
             }
         }
             
+        //shaders
+        if(!empty_string(default_profile.shaders))
+        {
+            if(json_object_set(config, "shaders", json_string(default_profile.shaders)) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on shaders");
+                return;
+            }
+        }
+
         //thread_concurrency
         if(!empty_string(default_profile.thread_concurrency))
         {
-            if(json_object_set(config, "thread_concurrency", json_string(default_profile.thread_concurrency)) == -1)
+            if(json_object_set(config, "thread-concurrency", json_string(default_profile.thread_concurrency)) == -1)
             {
                 applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on thread_concurrency");
+                return;
+            }
+        }
+
+        //worksize
+        if(!empty_string(default_profile.worksize))
+        {
+            if(json_object_set(config, "worksize", json_string(default_profile.worksize)) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on worksize");
                 return;
             }
         }
@@ -1253,9 +1589,9 @@ void write_config(const char *filename)
         //gpu_engine
         if(!empty_string(default_profile.gpu_engine))
         {
-            if(json_object_set(config, "gpu_engine", json_string(default_profile.gpu_engine)) == -1)
+            if(json_object_set(config, "gpu-engine", json_string(default_profile.gpu_engine)) == -1)
             {
-                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu_engine");
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-engine");
                 return;
             }
         }
@@ -1263,9 +1599,9 @@ void write_config(const char *filename)
         //gpu_memclock
         if(!empty_string(default_profile.gpu_memclock))
         {
-            if(json_object_set(config, "gpu_memclock", json_string(default_profile.gpu_memclock)) == -1)
+            if(json_object_set(config, "gpu-memclock", json_string(default_profile.gpu_memclock)) == -1)
             {
-                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu_memclock");
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-memclock");
                 return;
             }
         }
@@ -1273,9 +1609,9 @@ void write_config(const char *filename)
         //gpu_threads
         if(!empty_string(default_profile.gpu_threads))
         {
-            if(json_object_set(config, "gpu_threads", json_string(default_profile.gpu_threads)) == -1)
+            if(json_object_set(config, "gpu-threads", json_string(default_profile.gpu_threads)) == -1)
             {
-                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu_threads");
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-threads");
                 return;
             }
         }
@@ -1283,9 +1619,29 @@ void write_config(const char *filename)
         //gpu_fan
         if(!empty_string(default_profile.gpu_fan))
         {
-            if(json_object_set(config, "gpu_fan", json_string(default_profile.gpu_fan)) == -1)
+            if(json_object_set(config, "gpu-fan", json_string(default_profile.gpu_fan)) == -1)
             {
-                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu_fan");
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-fan");
+                return;
+            }
+        }
+
+        //gpu-powertune
+        if(!empty_string(default_profile.gpu_powertune))
+        {
+            if(json_object_set(config, "gpu-powertune", json_string(default_profile.gpu_powertune)) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-powertune");
+                return;
+            }
+        }
+
+        //gpu-vddc
+        if(!empty_string(default_profile.gpu_vddc))
+        {
+            if(json_object_set(config, "gpu-vddc", json_string(default_profile.gpu_vddc)) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-vddc");
                 return;
             }
         }
@@ -1293,7 +1649,7 @@ void write_config(const char *filename)
     }
 
     //devices
-    if(opt_devs_enabled) 
+    /*if(opt_devs_enabled) 
     {
         bool extra_devs = false;
         obj = json_string("");
@@ -1321,7 +1677,7 @@ void write_config(const char *filename)
             applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on devices");
             return;
         }        
-    }
+    }*/
     
     //remove-disabled
     if(opt_removedisabled)
@@ -1378,40 +1734,6 @@ void write_config(const char *filename)
                 return;
             }
         }
-#endif
-
-        //lookup-gap
-        for(i = 0;i < nDevs; i++)
-            obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), (int)gpus[i].opt_lg);
-            
-        if(json_object_set(config, "lookup-gap", obj) == -1)
-        {
-            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on lookup-gap");
-            return;
-        }
-        
-        //TODO: move the below into profiles/algorithm switching
-        //worksize
-        for(i = 0;i < nDevs; i++)
-            obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), (int)gpus[i].work_size);
-            
-        if(json_object_set(config, "worksize", obj) == -1)
-        {
-            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on worksize");
-            return;
-        }
-        
-        //shaders
-        for(i = 0;i < nDevs; i++)
-            obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), (int)gpus[i].shaders);
-            
-        if(json_object_set(config, "shaders", obj) == -1)
-        {
-            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on shaders");
-            return;
-        }
-
-#ifdef HAVE_ADL
 
         //gpu-memdiff
         for(i = 0;i < nDevs; i++)
@@ -1420,26 +1742,6 @@ void write_config(const char *filename)
         if(json_object_set(config, "gpu-memdiff", obj) == -1)
         {
             applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-memdiff");
-            return;
-        }
-
-        //gpu-powertune
-        for(i = 0;i < nDevs; i++)
-            obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), gpus[i].gpu_powertune);
-            
-        if(json_object_set(config, "gpu-powertune", obj) == -1)
-        {
-            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-powertune");
-            return;
-        }
-
-        //gpu-vdcc
-        for(i = 0;i < nDevs; i++)
-            obj = json_sprintf("%s%s%1.3f", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), gpus[i].gpu_vddc);
-            
-        if(json_object_set(config, "gpu-vddc", obj) == -1)
-        {
-            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-vddc");
             return;
         }
 #endif
