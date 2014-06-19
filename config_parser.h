@@ -4,6 +4,7 @@
 #include "config.h"
 
 #include "miner.h"
+#include "api.h"
 #include "algorithm.h"
 
 //helper to check for empty or NULL strings
@@ -20,6 +21,7 @@
 struct profile {
   int profile_no;
   char *name;
+  bool removed;
 
   algorithm_t algorithm;
   const char *devices;
@@ -48,6 +50,8 @@ extern bool config_loaded;
 extern int json_array_index;
 
 extern struct profile default_profile;
+extern struct profile **profiles;
+extern int total_profiles;
 
 /* option parser functions */
 extern char *set_default_devices(const char *arg);
@@ -102,5 +106,10 @@ extern void apply_pool_profile(struct pool *pool);
 
 /* config writer */
 extern void write_config(const char *filename);
+
+/* API functions */
+extern void api_profile_list(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group);
+extern void api_profile_add(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group);
+extern void api_profile_remove(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group);
 
 #endif // CONFIG_PARSER_H

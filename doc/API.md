@@ -234,7 +234,7 @@ The list of requests - a (*) means it requires privileged access - and replies:
                               stating the results of removing pool N
                               The Msg includes the pool URL
                               N.B. all details for the pool will be lost
-
+ 
  changestrategy|STRAT,INT (*)
                none           There is no reply section just the STATUS section
                               stating the results of changing multipool strategy
@@ -242,7 +242,23 @@ The list of requests - a (*) means it requires privileged access - and replies:
                               the interval INT must be specified as a number
                               between 0 and 9999 seconds. INT is not required
                               otherwise.
- gpuenable|N (*)
+addprofile|NAME:ALGORITHM:NFACTOR:LOOKUPGAP:DEVICE:INTENSITY:XINTENSITY:RAWINTENSITY:GPUENGINE:GPUMEMCLOCK
+            :GPUTHREADS:GPUFAN:GPUPOWERTUNE:GPUVDDC:SHADERS:THREADCONCURRENCY:WORKSIZE (*)
+            none              There is no reply section just the STATUS section
+                              stating the results of attempting to add profile NAME
+                              The Msg includes the profile NAME. Parameters NAME and
+                              ALGORITHM are required. Everything else is optional.
+                              Note that these parameters are colon (:) delimited.
+                              
+removeprofile|NAME (*)
+               none           There is no reply section just the STATUS section
+                              stating the results of removing profile NAME.
+                              The Msg includes the profile NAME. The profile NAME
+                              must exist and not be in use by any of the pools or
+                              as default profile.
+                              N.B. all details for the profile will be lost
+                              
+gpuenable|N (*)
                none           There is no reply section just the STATUS section
                               stating the results of the enable request
 
@@ -540,6 +556,19 @@ API V
 
 Modified API commands:
  'version' - add 'Miner'
+
+----------
+
+API V4.0 (sgminer v5.0)
+
+Modified API command:
+  'addpool' - supports profile and algorithm is correctly set to default if none is selected
+Added API commands:
+  'changestrategy' - change multi pool strategy on the fly from API
+  'changepoolprofile' - change pool profile
+  'addprofile' - add a new profile
+  'removeprofile' - removes a profile
+  'profiles' - list profiles
 
 ----------
 

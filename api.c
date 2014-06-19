@@ -53,6 +53,112 @@ char *WSAErrorMsg(void) {
 #endif
 
 
+struct CODES codes[] = {
+ { SEVERITY_ERR,   MSG_INVGPU,  PARAM_GPUMAX, "Invalid GPU id %d - range is 0 - %d" },
+ { SEVERITY_INFO,  MSG_ALRENA,  PARAM_GPU,  "GPU %d already enabled" },
+ { SEVERITY_INFO,  MSG_ALRDIS,  PARAM_GPU,  "GPU %d already disabled" },
+ { SEVERITY_WARN,  MSG_GPUMRE,  PARAM_GPU,  "GPU %d must be restarted first" },
+ { SEVERITY_INFO,  MSG_GPUREN,  PARAM_GPU,  "GPU %d sent enable message" },
+ { SEVERITY_ERR,   MSG_GPUNON,  PARAM_NONE, "No GPUs" },
+ { SEVERITY_SUCC,  MSG_POOL,  PARAM_PMAX, "%d Pool(s)" },
+ { SEVERITY_ERR,   MSG_NOPOOL,  PARAM_NONE, "No pools" },
+
+ { SEVERITY_SUCC,  MSG_DEVS,  PARAM_DMAX,   "%d GPU(s)" },
+ { SEVERITY_ERR,   MSG_NODEVS,  PARAM_NONE, "No GPUs"
+ },
+
+ { SEVERITY_SUCC,  MSG_SUMM,  PARAM_NONE, "Summary" },
+ { SEVERITY_INFO,  MSG_GPUDIS,  PARAM_GPU,  "GPU %d set disable flag" },
+ { SEVERITY_INFO,  MSG_GPUREI,  PARAM_GPU,  "GPU %d restart attempted" },
+ { SEVERITY_ERR,   MSG_INVCMD,  PARAM_NONE, "Invalid command" },
+ { SEVERITY_ERR,   MSG_MISID, PARAM_NONE, "Missing device id parameter" },
+ { SEVERITY_SUCC,  MSG_GPUDEV,  PARAM_GPU,  "GPU%d" },
+ { SEVERITY_SUCC,  MSG_NUMGPU,  PARAM_NONE, "GPU count" },
+ { SEVERITY_SUCC,  MSG_VERSION, PARAM_NONE, "SGMiner versions" },
+ { SEVERITY_ERR,   MSG_INVJSON, PARAM_NONE, "Invalid JSON" },
+ { SEVERITY_ERR,   MSG_MISCMD,  PARAM_CMD,  "Missing JSON '%s'" },
+ { SEVERITY_ERR,   MSG_MISPID,  PARAM_NONE, "Missing pool id parameter" },
+ { SEVERITY_ERR,   MSG_INVPID,  PARAM_POOLMAX,  "Invalid pool id %d - range is 0 - %d" },
+ { SEVERITY_SUCC,  MSG_SWITCHP, PARAM_POOL, "Switching to pool %d:'%s'" },
+ { SEVERITY_ERR,   MSG_MISVAL,  PARAM_NONE, "Missing comma after GPU number" },
+ { SEVERITY_ERR,   MSG_NOADL, PARAM_NONE, "ADL is not available" },
+ { SEVERITY_ERR,   MSG_NOGPUADL,PARAM_GPU,  "GPU %d does not have ADL" },
+ { SEVERITY_ERR,   MSG_INVINT,  PARAM_STR,  "Invalid intensity (%s) - must be '" _DYNAMIC  "' or range " MIN_INTENSITY_STR " - " MAX_INTENSITY_STR },
+ { SEVERITY_INFO,  MSG_GPUINT,  PARAM_BOTH, "GPU %d set new intensity to %s" },
+ { SEVERITY_SUCC,  MSG_MINECONFIG,PARAM_NONE, "sgminer config" },
+ { SEVERITY_ERR,   MSG_GPUMERR, PARAM_BOTH, "Setting GPU %d memoryclock to (%s) reported failure" },
+ { SEVERITY_SUCC,  MSG_GPUMEM,  PARAM_BOTH, "Setting GPU %d memoryclock to (%s) reported success" },
+ { SEVERITY_ERR,   MSG_GPUEERR, PARAM_BOTH, "Setting GPU %d clock to (%s) reported failure" },
+ { SEVERITY_SUCC,  MSG_GPUENG,  PARAM_BOTH, "Setting GPU %d clock to (%s) reported success" },
+ { SEVERITY_ERR,   MSG_GPUVERR, PARAM_BOTH, "Setting GPU %d vddc to (%s) reported failure" },
+ { SEVERITY_SUCC,  MSG_GPUVDDC, PARAM_BOTH, "Setting GPU %d vddc to (%s) reported success" },
+ { SEVERITY_ERR,   MSG_GPUFERR, PARAM_BOTH, "Setting GPU %d fan to (%s) reported failure" },
+ { SEVERITY_SUCC,  MSG_GPUFAN,  PARAM_BOTH, "Setting GPU %d fan to (%s) reported success" },
+ { SEVERITY_ERR,   MSG_MISFN, PARAM_NONE, "Missing save filename parameter" },
+ { SEVERITY_ERR,   MSG_BADFN, PARAM_STR,  "Can't open or create save file '%s'" },
+ { SEVERITY_SUCC,  MSG_SAVED, PARAM_STR,  "Configuration saved to file '%s'" },
+ { SEVERITY_ERR,   MSG_ACCDENY, PARAM_STR,  "Access denied to '%s' command" },
+ { SEVERITY_SUCC,  MSG_ACCOK, PARAM_NONE, "Privileged access OK" },
+ { SEVERITY_SUCC,  MSG_ENAPOOL, PARAM_POOL, "Enabling pool %d:'%s'" },
+ { SEVERITY_SUCC,  MSG_POOLPRIO,PARAM_NONE, "Changed pool priorities" },
+ { SEVERITY_ERR,   MSG_DUPPID,  PARAM_PID,  "Duplicate pool specified %d" },
+ { SEVERITY_SUCC,  MSG_DISPOOL, PARAM_POOL, "Disabling pool %d:'%s'" },
+ { SEVERITY_INFO,  MSG_ALRENAP, PARAM_POOL, "Pool %d:'%s' already enabled" },
+ { SEVERITY_INFO,  MSG_ALRDISP, PARAM_POOL, "Pool %d:'%s' already disabled" },
+ { SEVERITY_ERR,   MSG_MISPDP,  PARAM_NONE, "Missing addpool details" },
+ { SEVERITY_ERR,   MSG_INVPDP,  PARAM_STR,  "Invalid addpool details '%s'" },
+ { SEVERITY_ERR,   MSG_TOOMANYP,PARAM_NONE, "Reached maximum number of pools (%d)" },
+ { SEVERITY_SUCC,  MSG_ADDPOOL, PARAM_STR,  "Added pool '%s'" },
+ { SEVERITY_ERR,   MSG_REMLASTP,PARAM_POOL, "Cannot remove last pool %d:'%s'" },
+ { SEVERITY_ERR,   MSG_ACTPOOL, PARAM_POOL, "Cannot remove active pool %d:'%s'" },
+ { SEVERITY_SUCC,  MSG_REMPOOL, PARAM_BOTH, "Removed pool %d:'%s'" },
+ { SEVERITY_SUCC,  MSG_NOTIFY,  PARAM_NONE, "Notify" },
+ { SEVERITY_SUCC,  MSG_DEVDETAILS,PARAM_NONE, "Device Details" },
+ { SEVERITY_SUCC,  MSG_MINESTATS,PARAM_NONE,  "sgminer stats" },
+ { SEVERITY_ERR,   MSG_MISCHK,  PARAM_NONE, "Missing check cmd" },
+ { SEVERITY_SUCC,  MSG_CHECK, PARAM_NONE, "Check command" },
+ { SEVERITY_ERR,   MSG_MISBOOL, PARAM_NONE, "Missing parameter: true/false" },
+ { SEVERITY_ERR,   MSG_INVBOOL, PARAM_NONE, "Invalid parameter should be true or false" },
+ { SEVERITY_SUCC,  MSG_FOO, PARAM_BOOL, "Failover-Only set to %s" },
+ { SEVERITY_SUCC,  MSG_MINECOIN,PARAM_NONE, "sgminer coin" },
+ { SEVERITY_SUCC,  MSG_DEBUGSET,PARAM_NONE, "Debug settings" },
+ { SEVERITY_SUCC,  MSG_SETCONFIG,PARAM_SET, "Set config '%s' to %d" },
+ { SEVERITY_ERR,   MSG_UNKCON,  PARAM_STR,  "Unknown config '%s'" },
+ { SEVERITY_ERR,   MSG_INVNUM,  PARAM_BOTH, "Invalid number (%d) for '%s' range is 0-9999" },
+ { SEVERITY_ERR,   MSG_INVNEG,  PARAM_BOTH, "Invalid negative number (%d) for '%s'" },
+ { SEVERITY_SUCC,  MSG_SETQUOTA,PARAM_SET,  "Set pool '%s' to quota %d'" },
+ { SEVERITY_ERR,   MSG_CONPAR,  PARAM_NONE, "Missing config parameters 'name,N'" },
+ { SEVERITY_ERR,   MSG_CONVAL,  PARAM_STR,  "Missing config value N for '%s,N'" },
+ { SEVERITY_INFO,  MSG_NOUSTA,  PARAM_NONE, "No USB Statistics" },
+ { SEVERITY_ERR,   MSG_ZERMIS,  PARAM_NONE, "Missing zero parameters" },
+ { SEVERITY_ERR,   MSG_ZERINV,  PARAM_STR,  "Invalid zero parameter '%s'" },
+ { SEVERITY_SUCC,  MSG_ZERSUM,  PARAM_STR,  "Zeroed %s stats with summary" },
+ { SEVERITY_SUCC,  MSG_ZERNOSUM, PARAM_STR, "Zeroed %s stats without summary" },
+ { SEVERITY_SUCC,  MSG_LOCKOK,  PARAM_NONE, "Lock stats created" },
+ { SEVERITY_WARN,  MSG_LOCKDIS, PARAM_NONE, "Lock stats not enabled" },
+ { SEVERITY_SUCC,  MSG_CHSTRAT,  PARAM_STR, "Multipool strategy changed to '%s'" },
+ { SEVERITY_ERR,   MSG_MISSTRAT, PARAM_NONE, "Missing multipool strategy" },
+ { SEVERITY_ERR,   MSG_INVSTRAT, PARAM_NONE, "Invalid multipool strategy %d" },
+ { SEVERITY_ERR,   MSG_MISSTRATINT, PARAM_NONE, "Missing rotate interval" },
+
+ { SEVERITY_SUCC,  MSG_PROFILE,  PARAM_PRMAX, "%d Profile(s)" },
+ { SEVERITY_ERR,   MSG_NOPROFILE,  PARAM_NONE, "No profiles" },
+
+ { SEVERITY_ERR,   MSG_PROFILEEXIST,  PARAM_STR, "Profile '%s' already exists" },
+ { SEVERITY_ERR,   MSG_MISPRD,  PARAM_NONE, "Missing addprofile details" },
+ { SEVERITY_SUCC,  MSG_ADDPROFILE, PARAM_STR,  "Added profile '%s'" },
+
+ { SEVERITY_ERR,   MSG_MISPRID,  PARAM_STR, "Profile name missing" },
+ { SEVERITY_ERR,   MSG_PRNOEXIST,  PARAM_STR, "Profile '%s' doesn't exist" },
+ { SEVERITY_ERR,   MSG_PRISDEFAULT,  PARAM_STR, "Profile '%s' is the default profile" },
+ { SEVERITY_ERR,   MSG_PRINUSE,  PARAM_STR, "Profile '%s' is used by a pool" },
+ { SEVERITY_SUCC,  MSG_REMPROFILE, PARAM_BOTH, "Removed pool %d:'%s'" },
+
+ { SEVERITY_SUCC,  MSG_BYE,   PARAM_STR,  "%s" },
+ { SEVERITY_FAIL, 0, (enum code_parameters)0, NULL }
+};
+
+
 static const char *UNAVAILABLE = " - API will not be available";
 static const char *MUNAVAILABLE = " - API multicast listener will not be available";
 
@@ -154,7 +260,7 @@ static struct io_data *_io_new(size_t initial, bool socket_buf)
   return io_data;
 }
 
-static bool io_add(struct io_data *io_data, char *buf)
+bool io_add(struct io_data *io_data, char *buf)
 {
   size_t len, dif, tot;
 
@@ -180,12 +286,12 @@ static bool io_add(struct io_data *io_data, char *buf)
   return true;
 }
 
-static void io_close(struct io_data *io_data)
+void io_close(struct io_data *io_data)
 {
   io_data->close = true;
 }
 
-static void io_free()
+void io_free()
 {
   struct io_list *io_list, *io_next;
 
@@ -535,7 +641,7 @@ struct api_data *api_add_avg(struct api_data *root, char *name, float *data, boo
   return api_add_data_full(root, name, API_AVG, (void *)data, copy_data);
 }
 
-static struct api_data *print_data(struct api_data *root, char *buf, bool isjson, bool precom)
+struct api_data *print_data(struct api_data *root, char *buf, bool isjson, bool precom)
 {
   struct api_data *tmp;
   bool first = true;
@@ -723,6 +829,9 @@ void message(struct io_data *io_data, int messageid, int paramid, char *param2, 
           break;
         case PARAM_PMAX:
           sprintf(buf, codes[i].description, total_pools);
+          break;
+        case PARAM_PRMAX:
+          sprintf(buf, codes[i].description, total_profiles);
           break;
         case PARAM_POOLMAX:
           sprintf(buf, codes[i].description, paramid, total_pools - 1);
@@ -2725,6 +2834,7 @@ struct CMDS {
   { "config",   minerconfig,  false,  true },
   { "devs",   devstatus,  false,  true },
   { "pools",    poolstatus, false,  true },
+  { "profiles",    api_profile_list, false,  true },
   { "summary",    summary,  false,  true },
   { "gpuenable",          gpuenable,      true, false },
   { "gpudisable",         gpudisable,     true, false },
@@ -2739,6 +2849,8 @@ struct CMDS {
   { "enablepool",   enablepool, true, false },
   { "disablepool",  disablepool,  true, false },
   { "removepool",   removepool, true, false },
+  { "addprofile",    api_profile_add,  true, false },
+  { "removeprofile",    api_profile_remove,  true, false },
   { "gpuintensity",       gpuintensity,   true, false },
   { "gpumem",             gpumem,         true, false },
   { "gpuengine",          gpuengine,      true, false },

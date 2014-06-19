@@ -90,6 +90,31 @@ static struct profile *add_profile()
   return profile;
 }
 
+static void remove_profile(struct profile *profile)
+{
+  int i;
+  int found = 0;
+
+  for(i = 0; i < (total_profiles - 1); i++)
+  {
+    //look for the profile
+    if(profiles[i]->profile_no == profile->profile_no)
+      found = 1;
+    
+    //once we found the profile, change the current index profile to next
+    if(found)
+    {
+      profiles[i] = profiles[i+1];
+      profiles[i]->profile_no = i;
+    }
+  }
+  
+  //give the profile an invalid number and remove
+  profile->profile_no = total_profiles;
+  profile->removed = true;
+  total_profiles--;
+}
+
 //only used while loading config
 static struct profile *get_current_profile()
 {
@@ -1930,4 +1955,251 @@ void write_config(const char *filename)
   } 
   
   json_dump_file(config, filename, JSON_PRESERVE_ORDER|JSON_INDENT(4));
+}
+
+/*********************************************
+ * API functions 
+ * *******************************************/
+//profile parameters
+enum {
+  PR_ALGORITHM,
+  PR_NFACTOR,
+  PR_LOOKUPGAP,
+  PR_DEVICES,
+  PR_INTENSITY,
+  PR_XINTENSITY,
+  PR_RAWINTENSITY,
+  PR_GPUENGINE,
+  PR_GPUMEMCLOCK,
+  PR_GPUTHREADS,
+  PR_GPUFAN,
+  PR_GPUPOWERTUNE,
+  PR_GPUVDDC,
+  PR_SHADERS,
+  PR_TC,
+  PR_WORKSIZE
+};
+
+void api_profile_list(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
+{
+  struct api_data *root = NULL;
+  struct profile *profile;
+  char buf[TMPBUFSIZ];
+  bool io_open = false;
+  bool b;
+  int i;
+
+  if (total_profiles == 0) 
+  {
+    message(io_data, MSG_NOPROFILE, 0, NULL, isjson);
+    return;
+  }
+
+  message(io_data, MSG_PROFILE, 0, NULL, isjson);
+
+  if (isjson)
+    io_open = io_add(io_data, COMSTR JSON_PROFILES);
+
+  for (i = 0; i <= total_profiles; i++) 
+  {
+    //last profile is the default profile
+    if(i == total_profiles)
+      profile = &default_profile;
+    else
+      profile = profiles[i];
+
+    //if default profile name is profile name or loop index is beyond the last profile, then it is the default profile
+    b = (((i == total_profiles) || (!strcasecmp(default_profile.name, profile->name)))?true:false);
+
+    root = api_add_int(root, "PROFILE", &i, false);
+    root = api_add_escape(root, "Name", profile->name, true);
+    root = api_add_bool(root, "IsDefault", &b, false);
+    root = api_add_escape(root, "Algorithm", (char *)profile->algorithm.name, true);
+    root = api_add_int(root, "NFactor", (int *)&profile->algorithm.nfactor, false);
+    root = api_add_escape(root, "LookupGap", (char *)profile->lookup_gap, true);
+    root = api_add_escape(root, "Devices", (char *)profile->devices, true);
+    root = api_add_escape(root, "Intensity", (char *)profile->intensity, true);
+    root = api_add_escape(root, "XIntensity", (char *)profile->xintensity, true);
+    root = api_add_escape(root, "RawIntensity", (char *)profile->rawintensity, true);
+    root = api_add_escape(root, "Gpu Engine", (char *)profile->gpu_engine, true);
+    root = api_add_escape(root, "Gpu MemClock", (char *)profile->gpu_memclock, true);
+    root = api_add_escape(root, "Gpu Threads", (char *)profile->gpu_threads, true);
+    root = api_add_escape(root, "Gpu Fan%", (char *)profile->gpu_fan, true);
+    root = api_add_escape(root, "Gpu Powertune%", (char *)profile->gpu_powertune, true);
+    root = api_add_escape(root, "Gpu Vddc", (char *)profile->gpu_vddc, true);
+    root = api_add_escape(root, "Shaders", (char *)profile->shaders, true);
+    root = api_add_escape(root, "Thread Concurrency", (char *)profile->thread_concurrency, true);
+    root = api_add_escape(root, "Worksize", (char *)profile->worksize, true);
+    
+    root = print_data(root, buf, isjson, isjson && (i > 0));
+    io_add(io_data, buf);
+  }
+
+  if (isjson && io_open)
+    io_close(io_data);
+}
+
+void api_profile_add(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
+{
+  char *p;
+  char *split_str;
+  struct profile *profile;
+  int idx;
+  
+  split_str = strdup(param);
+  
+  //split all params by colon (:) because the comma (,) can be used in some of those parameters
+  if((p = strsep(&split_str, ":")))
+  {
+    //get name first and see if the profile already exists
+    if((profile = get_profile(p)))
+    {
+      message(io_data, MSG_PROFILEEXIST, 0, p, isjson);
+      return;
+    }
+    
+    //doesnt exist, create new profile
+    profile = add_profile();
+    
+    //assign name
+    profile->name = strdup(p);
+    
+    //get other parameters
+    idx = 0;
+    while((p = strsep(&split_str, ":")) != NULL)
+    {
+      switch(idx)
+      {
+        case PR_ALGORITHM:
+          set_algorithm(&profile->algorithm, p);
+          break;
+        case PR_NFACTOR:
+          if(!empty_string(p))
+            set_algorithm_nfactor(&profile->algorithm, (const uint8_t)atoi(p));
+          break;
+        case PR_LOOKUPGAP:
+          if(!empty_string(p))
+            profile->lookup_gap = strdup(p);
+          break;
+        case PR_DEVICES:
+          if(!empty_string(p))
+            profile->devices = strdup(p);
+          break;
+        case PR_INTENSITY:
+          if(!empty_string(p))
+            profile->intensity = strdup(p);
+          break;
+        case PR_XINTENSITY:
+          if(!empty_string(p))
+            profile->xintensity = strdup(p);
+          break;
+        case PR_RAWINTENSITY:
+          if(!empty_string(p))
+            profile->rawintensity = strdup(p);
+          break;
+        case PR_GPUENGINE:
+          if(!empty_string(p))
+            profile->gpu_engine = strdup(p);
+          break;
+        case PR_GPUMEMCLOCK:
+          if(!empty_string(p))
+            profile->gpu_memclock = strdup(p);
+          break;
+        case PR_GPUTHREADS:
+          if(!empty_string(p))
+            profile->gpu_threads = strdup(p);
+          break;
+        case PR_GPUFAN:
+          if(!empty_string(p))
+            profile->gpu_fan = strdup(p);
+          break;
+        case PR_GPUPOWERTUNE:
+          if(!empty_string(p))
+            profile->gpu_powertune = strdup(p);
+          break;
+        case PR_GPUVDDC:
+          if(!empty_string(p))
+            profile->gpu_vddc = strdup(p);
+          break;
+        case PR_SHADERS:
+          if(!empty_string(p))
+            profile->shaders = strdup(p);
+          break;
+        case PR_TC:
+          if(!empty_string(p))
+            profile->thread_concurrency = strdup(p);
+          break;
+        case PR_WORKSIZE:
+          if(!empty_string(p))
+            profile->worksize = strdup(p);
+          break;
+        default:
+          //invalid option ignore
+          break;
+      }
+      
+      idx++;
+    }
+  }
+  else
+  {
+      message(io_data, MSG_MISPRD, 0, NULL, isjson);
+      return;
+  }
+
+  message(io_data, MSG_ADDPROFILE, 0, profile->name, isjson);
+}
+
+void api_profile_remove(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
+{
+  struct profile *profile;
+  struct pool *pool;
+  int i;
+
+  //no profiles, nothing to remove
+  if (total_profiles == 0) 
+  {
+    message(io_data, MSG_NOPROFILE, 0, NULL, isjson);
+    return;
+  }
+
+  //make sure profile name is supplied
+  if(param == NULL || *param == '\0') 
+  {
+    message(io_data, MSG_MISPRID, 0, NULL, isjson);
+    return;
+  }
+
+  //see if the profile exists
+  if(!(profile = get_profile(param)))
+  {
+    message(io_data, MSG_PRNOEXIST, 0, param, isjson);
+    return;
+  }
+
+  //next make sure it's not the default profile
+  if(!strcasecmp(default_profile.name, profile->name))
+  {
+    message(io_data, MSG_PRISDEFAULT, 0, param, isjson);
+    return;
+  }
+
+  //make sure no pools use it
+  for(i = 0;i < total_pools; i++)
+  {
+    pool = pools[i];
+    
+    if(!strcasecmp(pool->profile, profile->name))
+    {
+      message(io_data, MSG_PRINUSE, 0, param, isjson);
+      return;
+    }
+  }
+
+  //all set, delete the profile
+  remove_profile(profile);
+
+  message(io_data, MSG_REMPROFILE, profile->profile_no, profile->name, isjson);
+  
+  free(profile);
 }

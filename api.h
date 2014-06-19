@@ -80,6 +80,7 @@ struct WSAERRORS {
 
 #define _DEVS   "DEVS"
 #define _POOLS    "POOLS"
+#define _PROFILES    "PROFILES"
 #define _SUMMARY  "SUMMARY"
 #define _STATUS   "STATUS"
 #define _VERSION  "VERSION"
@@ -109,6 +110,7 @@ struct WSAERRORS {
 #define JSON_START  JSON0
 #define JSON_DEVS JSON1 _DEVS JSON2
 #define JSON_POOLS  JSON1 _POOLS JSON2
+#define JSON_PROFILES  JSON1 _POOLS JSON2
 #define JSON_SUMMARY  JSON1 _SUMMARY JSON2
 #define JSON_STATUS JSON1 _STATUS JSON2
 #define JSON_VERSION  JSON1 _VERSION JSON2
@@ -223,6 +225,19 @@ struct WSAERRORS {
 #define MSG_INVSTRAT 127
 #define MSG_MISSTRATINT 128
 
+#define MSG_PROFILE 129
+#define MSG_NOPROFILE 130
+
+#define MSG_PROFILEEXIST 131
+#define MSG_MISPRD 132
+#define MSG_ADDPROFILE 133
+
+#define MSG_MISPRID 134
+#define MSG_PRNOEXIST 135
+#define MSG_PRISDEFAULT 136
+#define MSG_PRINUSE 137
+#define MSG_REMPROFILE 138
+
 enum code_severity {
   SEVERITY_ERR,
   SEVERITY_WARN,
@@ -236,6 +251,7 @@ enum code_parameters {
   PARAM_PID,
   PARAM_GPUMAX,
   PARAM_PMAX,
+  PARAM_PRMAX,
   PARAM_POOLMAX,
 
 // Single generic case: have the code resolve it - see below
@@ -256,96 +272,9 @@ struct CODES {
   const int code;
   const enum code_parameters params;
   const char *description;
-} codes[] = {
- { SEVERITY_ERR,   MSG_INVGPU,  PARAM_GPUMAX, "Invalid GPU id %d - range is 0 - %d" },
- { SEVERITY_INFO,  MSG_ALRENA,  PARAM_GPU,  "GPU %d already enabled" },
- { SEVERITY_INFO,  MSG_ALRDIS,  PARAM_GPU,  "GPU %d already disabled" },
- { SEVERITY_WARN,  MSG_GPUMRE,  PARAM_GPU,  "GPU %d must be restarted first" },
- { SEVERITY_INFO,  MSG_GPUREN,  PARAM_GPU,  "GPU %d sent enable message" },
- { SEVERITY_ERR,   MSG_GPUNON,  PARAM_NONE, "No GPUs" },
- { SEVERITY_SUCC,  MSG_POOL,  PARAM_PMAX, "%d Pool(s)" },
- { SEVERITY_ERR,   MSG_NOPOOL,  PARAM_NONE, "No pools" },
-
- { SEVERITY_SUCC,  MSG_DEVS,  PARAM_DMAX,   "%d GPU(s)" },
- { SEVERITY_ERR,   MSG_NODEVS,  PARAM_NONE, "No GPUs"
- },
-
- { SEVERITY_SUCC,  MSG_SUMM,  PARAM_NONE, "Summary" },
- { SEVERITY_INFO,  MSG_GPUDIS,  PARAM_GPU,  "GPU %d set disable flag" },
- { SEVERITY_INFO,  MSG_GPUREI,  PARAM_GPU,  "GPU %d restart attempted" },
- { SEVERITY_ERR,   MSG_INVCMD,  PARAM_NONE, "Invalid command" },
- { SEVERITY_ERR,   MSG_MISID, PARAM_NONE, "Missing device id parameter" },
- { SEVERITY_SUCC,  MSG_GPUDEV,  PARAM_GPU,  "GPU%d" },
- { SEVERITY_SUCC,  MSG_NUMGPU,  PARAM_NONE, "GPU count" },
- { SEVERITY_SUCC,  MSG_VERSION, PARAM_NONE, "SGMiner versions" },
- { SEVERITY_ERR,   MSG_INVJSON, PARAM_NONE, "Invalid JSON" },
- { SEVERITY_ERR,   MSG_MISCMD,  PARAM_CMD,  "Missing JSON '%s'" },
- { SEVERITY_ERR,   MSG_MISPID,  PARAM_NONE, "Missing pool id parameter" },
- { SEVERITY_ERR,   MSG_INVPID,  PARAM_POOLMAX,  "Invalid pool id %d - range is 0 - %d" },
- { SEVERITY_SUCC,  MSG_SWITCHP, PARAM_POOL, "Switching to pool %d:'%s'" },
- { SEVERITY_ERR,   MSG_MISVAL,  PARAM_NONE, "Missing comma after GPU number" },
- { SEVERITY_ERR,   MSG_NOADL, PARAM_NONE, "ADL is not available" },
- { SEVERITY_ERR,   MSG_NOGPUADL,PARAM_GPU,  "GPU %d does not have ADL" },
- { SEVERITY_ERR,   MSG_INVINT,  PARAM_STR,  "Invalid intensity (%s) - must be '" _DYNAMIC  "' or range " MIN_INTENSITY_STR " - " MAX_INTENSITY_STR },
- { SEVERITY_INFO,  MSG_GPUINT,  PARAM_BOTH, "GPU %d set new intensity to %s" },
- { SEVERITY_SUCC,  MSG_MINECONFIG,PARAM_NONE, "sgminer config" },
- { SEVERITY_ERR,   MSG_GPUMERR, PARAM_BOTH, "Setting GPU %d memoryclock to (%s) reported failure" },
- { SEVERITY_SUCC,  MSG_GPUMEM,  PARAM_BOTH, "Setting GPU %d memoryclock to (%s) reported success" },
- { SEVERITY_ERR,   MSG_GPUEERR, PARAM_BOTH, "Setting GPU %d clock to (%s) reported failure" },
- { SEVERITY_SUCC,  MSG_GPUENG,  PARAM_BOTH, "Setting GPU %d clock to (%s) reported success" },
- { SEVERITY_ERR,   MSG_GPUVERR, PARAM_BOTH, "Setting GPU %d vddc to (%s) reported failure" },
- { SEVERITY_SUCC,  MSG_GPUVDDC, PARAM_BOTH, "Setting GPU %d vddc to (%s) reported success" },
- { SEVERITY_ERR,   MSG_GPUFERR, PARAM_BOTH, "Setting GPU %d fan to (%s) reported failure" },
- { SEVERITY_SUCC,  MSG_GPUFAN,  PARAM_BOTH, "Setting GPU %d fan to (%s) reported success" },
- { SEVERITY_ERR,   MSG_MISFN, PARAM_NONE, "Missing save filename parameter" },
- { SEVERITY_ERR,   MSG_BADFN, PARAM_STR,  "Can't open or create save file '%s'" },
- { SEVERITY_SUCC,  MSG_SAVED, PARAM_STR,  "Configuration saved to file '%s'" },
- { SEVERITY_ERR,   MSG_ACCDENY, PARAM_STR,  "Access denied to '%s' command" },
- { SEVERITY_SUCC,  MSG_ACCOK, PARAM_NONE, "Privileged access OK" },
- { SEVERITY_SUCC,  MSG_ENAPOOL, PARAM_POOL, "Enabling pool %d:'%s'" },
- { SEVERITY_SUCC,  MSG_POOLPRIO,PARAM_NONE, "Changed pool priorities" },
- { SEVERITY_ERR,   MSG_DUPPID,  PARAM_PID,  "Duplicate pool specified %d" },
- { SEVERITY_SUCC,  MSG_DISPOOL, PARAM_POOL, "Disabling pool %d:'%s'" },
- { SEVERITY_INFO,  MSG_ALRENAP, PARAM_POOL, "Pool %d:'%s' already enabled" },
- { SEVERITY_INFO,  MSG_ALRDISP, PARAM_POOL, "Pool %d:'%s' already disabled" },
- { SEVERITY_ERR,   MSG_MISPDP,  PARAM_NONE, "Missing addpool details" },
- { SEVERITY_ERR,   MSG_INVPDP,  PARAM_STR,  "Invalid addpool details '%s'" },
- { SEVERITY_ERR,   MSG_TOOMANYP,PARAM_NONE, "Reached maximum number of pools (%d)" },
- { SEVERITY_SUCC,  MSG_ADDPOOL, PARAM_STR,  "Added pool '%s'" },
- { SEVERITY_ERR,   MSG_REMLASTP,PARAM_POOL, "Cannot remove last pool %d:'%s'" },
- { SEVERITY_ERR,   MSG_ACTPOOL, PARAM_POOL, "Cannot remove active pool %d:'%s'" },
- { SEVERITY_SUCC,  MSG_REMPOOL, PARAM_BOTH, "Removed pool %d:'%s'" },
- { SEVERITY_SUCC,  MSG_NOTIFY,  PARAM_NONE, "Notify" },
- { SEVERITY_SUCC,  MSG_DEVDETAILS,PARAM_NONE, "Device Details" },
- { SEVERITY_SUCC,  MSG_MINESTATS,PARAM_NONE,  "sgminer stats" },
- { SEVERITY_ERR,   MSG_MISCHK,  PARAM_NONE, "Missing check cmd" },
- { SEVERITY_SUCC,  MSG_CHECK, PARAM_NONE, "Check command" },
- { SEVERITY_ERR,   MSG_MISBOOL, PARAM_NONE, "Missing parameter: true/false" },
- { SEVERITY_ERR,   MSG_INVBOOL, PARAM_NONE, "Invalid parameter should be true or false" },
- { SEVERITY_SUCC,  MSG_FOO, PARAM_BOOL, "Failover-Only set to %s" },
- { SEVERITY_SUCC,  MSG_MINECOIN,PARAM_NONE, "sgminer coin" },
- { SEVERITY_SUCC,  MSG_DEBUGSET,PARAM_NONE, "Debug settings" },
- { SEVERITY_SUCC,  MSG_SETCONFIG,PARAM_SET, "Set config '%s' to %d" },
- { SEVERITY_ERR,   MSG_UNKCON,  PARAM_STR,  "Unknown config '%s'" },
- { SEVERITY_ERR,   MSG_INVNUM,  PARAM_BOTH, "Invalid number (%d) for '%s' range is 0-9999" },
- { SEVERITY_ERR,   MSG_INVNEG,  PARAM_BOTH, "Invalid negative number (%d) for '%s'" },
- { SEVERITY_SUCC,  MSG_SETQUOTA,PARAM_SET,  "Set pool '%s' to quota %d'" },
- { SEVERITY_ERR,   MSG_CONPAR,  PARAM_NONE, "Missing config parameters 'name,N'" },
- { SEVERITY_ERR,   MSG_CONVAL,  PARAM_STR,  "Missing config value N for '%s,N'" },
- { SEVERITY_INFO,  MSG_NOUSTA,  PARAM_NONE, "No USB Statistics" },
- { SEVERITY_ERR,   MSG_ZERMIS,  PARAM_NONE, "Missing zero parameters" },
- { SEVERITY_ERR,   MSG_ZERINV,  PARAM_STR,  "Invalid zero parameter '%s'" },
- { SEVERITY_SUCC,  MSG_ZERSUM,  PARAM_STR,  "Zeroed %s stats with summary" },
- { SEVERITY_SUCC,  MSG_ZERNOSUM, PARAM_STR, "Zeroed %s stats without summary" },
- { SEVERITY_SUCC,  MSG_LOCKOK,  PARAM_NONE, "Lock stats created" },
- { SEVERITY_WARN,  MSG_LOCKDIS, PARAM_NONE, "Lock stats not enabled" },
- { SEVERITY_SUCC,  MSG_CHSTRAT,  PARAM_STR, "Multipool strategy changed to '%s'" },
- { SEVERITY_ERR,   MSG_MISSTRAT, PARAM_NONE, "Missing multipool strategy" },
- { SEVERITY_ERR,   MSG_INVSTRAT, PARAM_NONE, "Invalid multipool strategy %d" },
- { SEVERITY_ERR,   MSG_MISSTRATINT, PARAM_NONE, "Missing rotate interval" },
- { SEVERITY_SUCC,  MSG_BYE,   PARAM_STR,  "%s" },
- { SEVERITY_FAIL, 0, (enum code_parameters)0, NULL }
 };
+
+extern struct CODES codes[];
 
 struct IP4ACCESS {
   in_addr_t ip;
@@ -382,6 +311,37 @@ struct io_list {
 };
 
 extern void message(struct io_data *io_data, int messageid, int paramid, char *param2, bool isjson);
+extern bool io_add(struct io_data *io_data, char *buf);
+extern void io_close(struct io_data *io_data);
+extern void io_free();
+
+extern struct api_data *api_add_escape(struct api_data *root, char *name, char *data, bool copy_data);
+extern struct api_data *api_add_string(struct api_data *root, char *name, char *data, bool copy_data);
+extern struct api_data *api_add_const(struct api_data *root, char *name, const char *data, bool copy_data);
+extern struct api_data *api_add_uint8(struct api_data *root, char *name, uint8_t *data, bool copy_data);
+extern struct api_data *api_add_uint16(struct api_data *root, char *name, uint16_t *data, bool copy_data);
+extern struct api_data *api_add_int(struct api_data *root, char *name, int *data, bool copy_data);
+extern struct api_data *api_add_uint(struct api_data *root, char *name, unsigned int *data, bool copy_data);
+extern struct api_data *api_add_uint32(struct api_data *root, char *name, uint32_t *data, bool copy_data);
+extern struct api_data *api_add_hex32(struct api_data *root, char *name, uint32_t *data, bool copy_data);
+extern struct api_data *api_add_uint64(struct api_data *root, char *name, uint64_t *data, bool copy_data);
+extern struct api_data *api_add_double(struct api_data *root, char *name, double *data, bool copy_data);
+extern struct api_data *api_add_elapsed(struct api_data *root, char *name, double *data, bool copy_data);
+extern struct api_data *api_add_bool(struct api_data *root, char *name, bool *data, bool copy_data);
+extern struct api_data *api_add_timeval(struct api_data *root, char *name, struct timeval *data, bool copy_data);
+extern struct api_data *api_add_time(struct api_data *root, char *name, time_t *data, bool copy_data);
+extern struct api_data *api_add_mhs(struct api_data *root, char *name, double *data, bool copy_data);
+extern struct api_data *api_add_khs(struct api_data *root, char *name, double *data, bool copy_data);
+extern struct api_data *api_add_mhtotal(struct api_data *root, char *name, double *data, bool copy_data);
+extern struct api_data *api_add_temp(struct api_data *root, char *name, float *data, bool copy_data);
+extern struct api_data *api_add_utility(struct api_data *root, char *name, double *data, bool copy_data);
+extern struct api_data *api_add_freq(struct api_data *root, char *name, double *data, bool copy_data);
+extern struct api_data *api_add_volts(struct api_data *root, char *name, float *data, bool copy_data);
+extern struct api_data *api_add_hs(struct api_data *root, char *name, double *data, bool copy_data);
+extern struct api_data *api_add_diff(struct api_data *root, char *name, double *data, bool copy_data);
+extern struct api_data *api_add_percent(struct api_data *root, char *name, double *data, bool copy_data);
+extern struct api_data *api_add_avg(struct api_data *root, char *name, float *data, bool copy_data);
+extern struct api_data *print_data(struct api_data *root, char *buf, bool isjson, bool precom);
 
 #define SOCKBUFALLOCSIZ 65536
 
