@@ -52,8 +52,13 @@ void gen_hash(const unsigned char *data, unsigned int len, unsigned char *hash)
 }
 
 #define CL_SET_BLKARG(blkvar) status |= clSetKernelArg(*kernel, num++, sizeof(uint), (void *)&blk->blkvar)
-#define CL_SET_ARG(var) status |= clSetKernelArg(*kernel, num++, sizeof(var), (void *)&var)
 #define CL_SET_VARG(args, var) status |= clSetKernelArg(*kernel, num++, args * sizeof(uint), (void *)var)
+#define CL_SET_ARG_N(n, var) do { status |= clSetKernelArg(*kernel, n, sizeof(var), (void *)&var); } while (0)
+#define CL_SET_ARG_0(var) CL_SET_ARG_N(0, var)
+#define CL_SET_ARG(var) CL_SET_ARG_N(num++, var)
+#define CL_NEXTKERNEL_SET_ARG_N(n, var) do { kernel++; CL_SET_ARG_N(n, var); } while (0)
+#define CL_NEXTKERNEL_SET_ARG_0(var) CL_NEXTKERNEL_SET_ARG_N(0, var)
+#define CL_NEXTKERNEL_SET_ARG(var) CL_NEXTKERNEL_SET_ARG_N(num++, var)
 
 static void append_scrypt_compiler_options(struct _build_kernel_data *data, struct cgpu_info *cgpu, struct _algorithm_t *algorithm)
 {
@@ -150,44 +155,26 @@ static cl_int queue_darkcoin_mod_kernel(struct __clState *clState, struct _dev_b
   CL_SET_ARG(clState->padbuffer8);
   // bmw - search1
   kernel = clState->extra_kernels;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_SET_ARG_0(clState->padbuffer8);
   // groestl - search2
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // skein - search3
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // jh - search4
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // keccak - search5
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // luffa - search6
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // cubehash - search7
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // shavite - search8
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // simd - search9
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // echo - search10
-  kernel++;
   num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG(clState->padbuffer8);
   CL_SET_ARG(clState->outputBuffer);
   CL_SET_ARG(le_target);
 
@@ -212,52 +199,30 @@ static cl_int queue_marucoin_mod_kernel(struct __clState *clState, struct _dev_b
   CL_SET_ARG(clState->padbuffer8);
   // bmw - search1
   kernel = clState->extra_kernels;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_SET_ARG_0(clState->padbuffer8);
   // groestl - search2
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // skein - search3
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // jh - search4
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // keccak - search5
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // luffa - search6
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // cubehash - search7
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // shavite - search8
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // simd - search9
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // echo - search10
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // hamsi - search11
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // fugue - search12
-  kernel++;
   num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG(clState->padbuffer8);
   CL_SET_ARG(clState->outputBuffer);
   CL_SET_ARG(le_target);
 
@@ -282,44 +247,26 @@ static cl_int queue_marucoin_mod_old_kernel(struct __clState *clState, struct _d
   CL_SET_ARG(clState->padbuffer8);
   // bmw - search1
   kernel = clState->extra_kernels;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_SET_ARG_0(clState->padbuffer8);
   // groestl - search2
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // skein - search3
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // jh - search4
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // keccak - search5
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // luffa - search6
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // cubehash - search7
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // shavite - search8
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // simd - search9
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // combined echo, hamsi, fugue - search10
-  kernel++;
   num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG(clState->padbuffer8);
   CL_SET_ARG(clState->outputBuffer);
   CL_SET_ARG(le_target);
 

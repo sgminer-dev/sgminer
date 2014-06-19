@@ -990,7 +990,7 @@ extern int opt_queue;
 extern int opt_scantime;
 extern int opt_expiry;
 
-extern algorithm_t *opt_algorithm;
+extern algorithm_t opt_algorithm;
 
 extern cglock_t control_lock;
 extern pthread_mutex_t hash_lock;
@@ -1462,11 +1462,5 @@ extern struct api_data *api_add_hs(struct api_data *root, char *name, double *da
 extern struct api_data *api_add_diff(struct api_data *root, char *name, double *data, bool copy_data);
 extern struct api_data *api_add_percent(struct api_data *root, char *name, double *data, bool copy_data);
 extern struct api_data *api_add_avg(struct api_data *root, char *name, float *data, bool copy_data);
-
-enum diff_calc_mode {
-  DM_BITCOIN,
-  DM_QUARKCOIN,
-  DM_LITECOIN,
-};
 
 #endif /* MINER_H */
