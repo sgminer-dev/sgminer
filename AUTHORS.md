@@ -2,12 +2,19 @@
 
 ## Core
 
-* Multiple algorithms and switching: Jan Berdajs <mrbrdo at mrbrdo dot net> 15bULC8snaKAMeFb3xBmmhbWj1xyTmBUfm
-* Historical scrypt-only refactor: Noel Maersk <veox at wemakethings dot net> 12jF1VExtmmMu8D36vo4Y4CYqLK5yCtLC4
-* Core: Martin Danielsen <kalroth {at} gmail _dot_ com> 1DNBcSEENBwDKrcTyTW61ezWhzsPy5imkn
+* Jan Berdajs <mrbrdo at mrbrdo dot net> 15bULC8snaKAMeFb3xBmmhbWj1xyTmBUfm
+* Noel Maersk <veox at wemakethings dot net> 12jF1VExtmmMu8D36vo4Y4CYqLK5yCtLC4
+* troky <troky2001 at yahoo dot com> Letoqz4yEnJxjWw9B7Ysn8h9VDQTMDnT29
+* ystarnaud <**FIXME**>
+* lasybear <**FIXME**>
+* Luke Dashjr <luke-jr+cgminer @at@ utopios .dot. org> 1QATWksNFGeUJCWBrN4g6hGM178Lovm7Wh
+* Andrew Smith <kan0i {at} kano-kun [dot] net> 1Jjk2LmktEQKnv8r2cZ9MvLiZwZ9gxabKm
+
+
+## Core (history)
+
 * Core: Con Kolivas <kernel [at] kolivas {dot} org> 15qSxP1SQcUX3o4nhkfdbgyoWEFMomJ4rZ
-* Core: Luke Dashjr <luke-jr+cgminer @at@ utopios .dot. org> 1QATWksNFGeUJCWBrN4g6hGM178Lovm7Wh
-* API: Andrew Smith <kan0i {at} kano-kun [dot] net> 1Jjk2LmktEQKnv8r2cZ9MvLiZwZ9gxabKm
+* Martin Danielsen <kalroth {at} gmail _dot_ com> 1DNBcSEENBwDKrcTyTW61ezWhzsPy5imkn
 
 
 ## Cross-platform support
@@ -20,6 +27,8 @@
 
 
 ## OpenCL kernels
+
+**FIXME**: this section is outdated.
 
 All current kernels are based on `scrypt`, originally by Colin Percival,
 updated by many others.
