@@ -14,7 +14,7 @@
 The configuration settings in sgminer are applied in this order:
 
 ```
-Command Line > Config File Globals/Default Profile > Pool Specific > Pool Profile
+Command Line > Config File Globals/Default Profile > Pool Profile > Pool Specific
 ```
 
 ---
@@ -2126,7 +2126,7 @@ Displays extra work time debug information.
 
 ## Working with Profiles and Pool Specific Settings
 
-*TODO*
+Profiles are there to assist you in specifying different GPU or algorithm settings that could be (re-)used by one or more pools.
 
 [Top](#configuration-and-command-line-options)
 
@@ -2134,7 +2134,7 @@ Displays extra work time debug information.
 
 ## Includes
 
-Include is a special keyword only available in the configuration file. You can include json-formatted files at any level of the configuration parsing. The values read in the included 
+`Include` is a special keyword only available in the configuration file. You can include json-formatted files at any level of the configuration parsing. The values read in the included 
 files are applied to the current object being parsed.
 
 ```
