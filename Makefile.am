@@ -32,7 +32,7 @@ sgminer_CPPFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
 endif
 
 sgminer_SOURCES := sgminer.c
-sgminer_SOURCES	+= api.c
+sgminer_SOURCES	+= api.c api.h
 sgminer_SOURCES	+= elist.h miner.h compat.h bench_block.h
 sgminer_SOURCES	+= util.c util.h uthash.h
 sgminer_SOURCES	+= logging.c logging.h
@@ -42,6 +42,7 @@ sgminer_SOURCES += findnonce.c findnonce.h
 sgminer_SOURCES += adl.c adl.h adl_functions.h
 sgminer_SOURCES += pool.c pool.h
 sgminer_SOURCES += algorithm.c algorithm.h
+sgminer_SOURCES += config_parser.c config_parser.h
 sgminer_SOURCES += ocl/patch_kernel.c ocl/patch_kernel.h
 sgminer_SOURCES += ocl/build_kernel.c ocl/build_kernel.h
 sgminer_SOURCES += ocl/binary_kernel.c ocl/binary_kernel.h

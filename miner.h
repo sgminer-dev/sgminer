@@ -124,6 +124,8 @@ static inline int fsync (int fd)
  #include "ADL_SDK/adl_sdk.h"
 #endif
 
+#include <ccan/opt/opt.h>
+
 #if (!defined(WIN32) && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3))) \
     || (defined(WIN32) && ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)))
 #ifndef bswap_16
@@ -251,7 +253,6 @@ enum alive {
   LIFE_INIT,
 };
 
-
 enum pool_strategy {
   POOL_FAILOVER,
   POOL_ROUNDROBIN,
@@ -265,6 +266,9 @@ enum pool_strategy {
 struct strategies {
   const char *s;
 };
+
+extern enum pool_strategy pool_strategy;
+extern struct strategies strategies[];
 
 struct cgpu_info;
 
@@ -932,7 +936,21 @@ extern bool opt_protocol;
 extern bool have_longpoll;
 extern char *opt_kernel_path;
 extern char *opt_socks_proxy;
+
+#if defined(unix) || defined(__APPLE__)
+    extern char *opt_stderr_cmd;
+#endif // defined(unix)
+
+struct schedtime {
+  bool enable;
+  struct tm tm;
+};
+
+extern struct schedtime schedstart;
+extern struct schedtime schedstop;
+
 extern char *sgminer_path;
+extern int opt_shares;
 extern bool opt_fail_only;
 extern bool opt_autofan;
 extern bool opt_autoengine;
@@ -1023,11 +1041,12 @@ extern void api(int thr_id);
 extern struct pool *current_pool(void);
 extern int enabled_pools;
 extern void get_intrange(char *arg, int *val1, int *val2);
+extern char *set_devices(char *arg);
 extern bool detect_stratum(struct pool *pool, char *url);
 extern void print_summary(void);
 extern void adjust_quota_gcd(void);
 extern struct pool *add_pool(void);
-extern bool add_pool_details(struct pool *pool, bool live, char *url, char *user, char *pass, char *name, char *desc, char *algo);
+extern bool add_pool_details(struct pool *pool, bool live, char *url, char *user, char *pass, char *name, char *desc, char *profile, char *algo);
 
 #define MAX_GPUDEVICES 16
 #define MAX_DEVICES 4096
@@ -1056,6 +1075,9 @@ extern struct cgpu_info gpus[MAX_GPUDEVICES];
 extern double total_secs;
 extern int mining_threads;
 extern int total_devices;
+extern bool devices_enabled[MAX_DEVICES];
+extern int opt_devs_enabled;
+extern bool opt_removedisabled;
 extern struct cgpu_info **devices;
 extern int total_pools;
 extern struct pool **pools;
@@ -1080,6 +1102,9 @@ extern double current_diff;
 extern double best_diff;
 extern struct timeval block_timeval;
 extern char *workpadding;
+
+//config options table
+extern struct opt_table opt_config_table[];
 
 typedef struct _dev_blk_ctx {
   cl_uint ctx_a; cl_uint ctx_b; cl_uint ctx_c; cl_uint ctx_d;
@@ -1192,15 +1217,22 @@ struct pool {
   proxytypes_t rpc_proxytype;
   char *rpc_proxy;
 
+  char *profile;
   algorithm_t algorithm;
-  const char *intensity;
-  const char *xintensity;
-  const char *rawintensity;
-  const char *thread_concurrency;
-  const char *gpu_engine;
-  const char *gpu_memclock;
-  const char *gpu_threads;
-  const char *gpu_fan;
+    const char *devices;
+    const char *intensity;
+    const char *xintensity;
+    const char *rawintensity;
+    const char *lookup_gap;
+    const char *gpu_engine;
+    const char *gpu_memclock;
+    const char *gpu_threads;
+    const char *gpu_fan;
+    const char *gpu_powertune;
+    const char *gpu_vddc;
+    const char *shaders;
+    const char *thread_concurrency;
+    const char *worksize;
 
   pthread_mutex_t pool_lock;
   cglock_t data_lock;
@@ -1374,7 +1406,7 @@ extern void kill_work(void);
 extern void switch_pools(struct pool *selected);
 extern void discard_work(struct work *work);
 extern void remove_pool(struct pool *pool);
-extern void write_config(FILE *fcfg);
+//extern void write_config(FILE *fcfg);
 extern void zero_bestshare(void);
 extern void zero_stats(void);
 extern void default_save_file(char *filename);
@@ -1397,6 +1429,11 @@ extern void free_work(struct work *work);
 extern struct work *copy_work_noffset(struct work *base_work, int noffset);
 #define copy_work(work_in) copy_work_noffset(work_in, 0)
 extern struct cgpu_info *get_devices(int id);
+
+extern char *set_int_0_to_9999(const char *arg, int *i);
+extern char *set_int_1_to_65535(const char *arg, int *i);
+extern char *set_int_0_to_10(const char *arg, int *i);
+extern char *set_int_1_to_10(const char *arg, int *i);
 
 enum api_data_type {
   API_ESCAPE,

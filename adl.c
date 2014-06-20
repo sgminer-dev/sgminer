@@ -1208,7 +1208,7 @@ int set_fanspeed(int gpu, int iFanSpeed)
 }
 
 #ifdef HAVE_CURSES
-static int set_powertune(int gpu, int iPercentage)
+int set_powertune(int gpu, int iPercentage)
 {
   struct gpu_adl *ga;
   int dummy, ret = 1;

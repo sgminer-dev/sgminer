@@ -1,202 +1,299 @@
 
-This README contains details about the sgminer RPC API
+# sgminer RPC API Documentation
 
-It also includes some detailed information at the end,
-about using miner.php
+*Work in Progress!*
 
+This README contains details about the sgminer RPC API and also includes some detailed information 
+at the end, about using [miner.php](#miner-php).
 
-If you start sgminer with the "--api-listen" option, it will listen on a
-simple TCP/IP socket for single string API requests from the same machine
-running sgminer and reply with a string and then close the socket each time
-If you add the "--api-network" option, it will accept API requests from any
-network attached computer.
+---
 
-You can only access the comands that reply with data in this mode.
-By default, you cannot access any privileged command that affects the miner -
-you will receive an access denied status message see --api-allow below.
+## API Configuration
 
-You can specify IP addresses/prefixes that are only allowed to access the API
-with the "--api-allow" option e.g. --api-allow W:192.168.0.1,10.0.0/24
-will allow 192.168.0.1 or any address matching 10.0.0.*, but nothing else
-IP addresses are automatically padded with extra '.0's as needed
-Without a /prefix is the same as specifying /32
-0/0 means all IP addresses.
-The 'W:' on the front gives that address/subnet privileged access to commands
-that modify sgminer (thus all API commands)
-Without it those commands return an access denied status.
-See --api-groups below to define other groups like W:
-Privileged access is checked in the order the IP addresses were supplied to
-"--api-allow"
-The first match determines the privilege level.
-Using the "--api-allow" option overides the "--api-network" option if they
-are both specified
-With "--api-allow", 127.0.0.1 is not by default given access unless specified
+If you start sgminer with the `--api-listen` option, it will listen on a simple TCP/IP socket for single string API requests from the same machine running sgminer and reply with a string and then close the socket each time If you add the `--api-network` option, it will accept API requests from any network attached computer.
 
-If you start sgminer also with the "--api-mcast" option, it will listen for
-a multicast message and reply to it with a message containing it's API port
-number, but only if the IP address of the sender is allowed API access
+You can only access the comands that reply with data in this mode. By default, you cannot access any privileged command that affects the miner - you will receive an access denied status message see `--api-allow` below.
 
-More groups (like the privileged group W:) can be defined using the
---api-groups command
-Valid groups are only the letters A-Z (except R & W are predefined) and are
-not case sensitive
-The R: group is the same as not privileged access
-The W: group is (as stated) privileged access (thus all API commands)
-To give an IP address/subnet access to a group you use the group letter
-in front of the IP address instead of W: e.g. P:192.168.0/32
-An IP address/subnet can only be a member of one group
-A sample API group would be:
- --api-groups
-        P:switchpool:enablepool:addpool:disablepool:removepool:poolpriority:*
-This would create a group 'P' that can do all current pool commands and all
-non-priviliged commands - the '*' means all non-priviledged commands
-Without the '*' the group would only have access to the pool commands
-Defining multiple groups example:
- --api-groups Q:quit:restart:*,S:save
-This would define 2 groups:
- Q: that can 'quit' and 'restart' as well as all non-priviledged commands
- S: that can only 'save' and no other commands
+You can specify IP addresses/prefixes that are only allowed to access the API with the `--api-allow` option.
+
+```
+--api-allow W:192.168.0.1,10.0.0/24
+```
+
+The example above will allow 192.168.0.1 or any address matching 10.0.0.*, but nothing else. IP addresses are automatically padded with extra '.0's as needed Without a /prefix is the same as specifying /32 0/0 means all IP addresses. The `W:` on the front gives that address/subnet privileged access to commands that modify sgminer (thus all API commands). Without it those commands return an access denied status. See `--api-groups` below to define other groups like `W:`. Privileged access is checked in the order the IP addresses were supplied to `--api-allow`. The first match determines the privilege level. Using the `--api-allow` option overides the `--api-network` option if they are both specified. With `--api-allow`, 127.0.0.1 is not by default given access unless specified.
+
+If you start sgminer also with the `--api-mcast` option, it will listen for a multicast message and reply to it with a message containing it's API port number, but only if the IP address of the sender is allowed API access.
+
+More groups (like the privileged group `W:`) can be defined using the `--api-groups` command. Valid groups are only the letters A-Z (except R & W are predefined) and are not case sensitive. The `R:` group is the same as not privileged access. The `W:` group is (as stated) privileged access (thus all API commands). To give an IP address/subnet access to a group you use the group letter in front of the IP address instead of `W:` e.g. `P:192.168.0/32`. An IP address/subnet can only be a member of one group 
+
+A sample API group would be: 
+
+```
+--api-groups P:switchpool:enablepool:addpool:disablepool:removepool:poolpriority:*
+```
+
+This would create a group `P` that can do all current pool commands and all non-priviliged commands - the asterisk (\*) means all non-priviledged commands. Without the asterisk (\*), the group would only have access to the pool commands.
+
+Defining multiple groups example: 
+
+```
+--api-groups Q:quit:restart:*,S:save 
+```
+
+This would define 2 groups: `Q:`, that can `quit` and `restart` as well as all non-priviledged commands, and `S:`, that can only `save` and no other commands.
+
+For API configuration options, see `doc/configuration.md`.
+
+---
+
+## API Requests
 
 The RPC API request can be either simple text or JSON.
 
-If the request is JSON (starts with '{'), it will reply with a JSON formatted
+If the request is JSON (starts with `{`), it will reply with a JSON formatted
 response, otherwise it replies with text formatted as described further below.
 
-The JSON request format required is '{"command":"CMD","parameter":"PARAM"}'
+The JSON request format required is `{"command":"CMD","parameter":"PARAM"}`
 (though of course parameter is not required for all requests)
 where "CMD" is from the "Request" column below and "PARAM" would be e.g.
 the ASC/GPU number if required.
 
 An example request in both formats to set GPU 0 fan to 80%:
+```
   gpufan|0,80
   {"command":"gpufan","parameter":"0,80"}
+```
 
 The format of each reply (unless stated otherwise) is a STATUS section
 followed by an optional detail section
 
 From API version 1.7 onwards, reply strings in JSON and Text have the
 necessary escaping as required to avoid ambiguity - they didn't before 1.7
-For JSON the 2 characters '"' and '\' are escaped with a '\' before them
-For Text the 4 characters '|' ',' '=' and '\' are escaped the same way
+For JSON the 2 characters `"` and `\` are escaped with a `\` before them
+For Text the 4 characters `|` `,` `=` and `\` are escaped the same way
 
 Only user entered information will contain characters that require being
 escaped, such as Pool URL, User and Password or the Config save filename,
 when they are returned in messages or as their values by the API
 
-For API version 1.4 and later:
+For API version 1.4 and later the STATUS section is: 
 
-The STATUS section is:
+`STATUS=X,When=NNN,Code=N,Msg=string,Description=string|`
 
- STATUS=X,When=NNN,Code=N,Msg=string,Description=string|
+* `STATUS=X` Where X is one of:
+   `W` Warning
+   `I` Informational
+   `S` Success
+   `E` Error
+   `F` Fatal (code bug)
 
-  STATUS=X Where X is one of:
-   W - Warning
-   I - Informational
-   S - Success
-   E - Error
-   F - Fatal (code bug)
-
-  When=NNN
+* `When=NNN`
    Standard long time of request in seconds
 
-  Code=N
-   Each unique reply has a unigue Code (See api.c - #define MSG_NNNNNN)
+* `Code=N`
+   Each unique reply has a unigue Code (See `api.c` and `api.h` - #define MSG_NNNNNN)
 
-  Msg=string
+* `Msg=string`
    Message matching the Code value N
 
-  Description=string
-   This defaults to the sgminer version but is the value of --api-description
+* `Description=string`
+   This defaults to the sgminer version but is the value of `--api-description`
    if it was specified at runtime.
 
 With API V3.1 you can also request multiple report replies in a single command
-request
-e.g. to request both summary and devs, the command would be summary+devs
+request: e.g. to request both `summary` and `devs`, the command would be `summary+devs`
 
-This is only available for report commands that don't need parameters,
-and is not available for commands that change anything
-Any parameters supplied will be ignored
+**Note:** This is only available for report commands that don't need parameters,
+and is not available for commands that change anything. Any parameters supplied will be ignored.
 
-The extra formatting of the result is to have a section for each command
-e.g. CMD=summary|STATUS=....|CMD=devs|STATUS=...
+The extra formatting of the result is to have a section for each command:
+`CMD=summary|STATUS=....|CMD=devs|STATUS=...`
+
 With JSON, each result is within a section of the command name
-e.g. {"summary":{"STATUS":[{"STATUS":"S"...}],"SUMMARY":[...],"id":1},
-      "devs":{"STATUS":[{"STATUS:"S"...}],"DEVS":[...],"id":1},"id":1}
+```
+{
+	"summary":{
+		"STATUS":[
+			{"STATUS":"S"...}
+		],
+		"SUMMARY":[...],
+		"id":1
+	},
+	"devs":{
+		"STATUS":[
+			{"STATUS:"S"...}
+		],
+		"DEVS":[...],
+		"id":1
+	},
+	"id":1
+}
+````
 
-As before, if you supply bad JSON you'll just get a single 'E' STATUS section
+As before, if you supply bad JSON you'll just get a single `E` STATUS section
 in the old format, since it doesn't switch to using the new format until it
-correctly processes the JSON and can match a '+' in the command
+correctly processes the JSON and can match a `+` in the command.
 
-If you request a command multiple times, e.g. devs+devs
-you'll just get it once
+If you request a command multiple times, e.g. `devs+devs`, you'll just get it once.
 If this results in only one command, it will still use the new layout
 with just the one command
 
 If you request a command that can't be used due to requiring parameters,
-a command that isn't a report, or an invalid command, you'll get an 'E' STATUS
+a command that isn't a report, or an invalid command, you'll get an `E` STATUS
 for that one but it will still attempt to process all other commands supplied
 
-Blank/missing commands are ignore e.g. +devs++
-will just show 'devs' using the new layout
+Blank/missing commands are ignored. `+devs++` will just show `devs` using the new 
+layout.
 
-For API version 1.10 and later:
+---
 
-The list of requests - a (*) means it requires privileged access - and replies:
+## API Commands
 
- Request       Reply Section  Details
- -------       -------------  -------
- version       VERSION        Miner="sgminer " sgminer version
-                              CGMiner=sgminer version
-                              API=API version
+### version
 
- config        CONFIG         Some miner configuration information:
-                              GPU Count=N, <- the number of GPUs
-                              ASC Count=N, <- the number of ASCs
-                              PGA Count=N, <- the number of PGAs
-                              Pool Count=N, <- the number of Pools
-                              ADL=X, <- Y or N if ADL is compiled in the code
-                              ADL in use=X, <- Y or N if any GPU has ADL
-                              Strategy=Name, <- the current pool strategy
-                              Log Interval=N, <- log interval (--log N)
-                              Device Code=GPU ICA , <- spaced list of compiled
-                                                       device drivers
-                              OS=Linux/Apple/..., <- operating System
-                              Failover-Only=true/false, <- failover-only setting
-                              ScanTime=N, <- --scan-time setting
-                              Queue=N, <- --queue setting
-                              Expiry=N| <- --expiry setting
+Returns the version information of sgminer.
 
- summary       SUMMARY        The status summary of the miner
-                              e.g. Elapsed=NNN,Found Blocks=N,Getworks=N,...|
+*Syntax:* `version`
 
- pools         POOLS          The status of each pool e.g.
-                              Pool=0,URL=http://pool.com:6311,Status=Alive,...|
+*Arguments:* None
 
- devs          DEVS           Each available GPU, PGA and ASC with their details
-                              e.g. GPU=0,Accepted=NN,MHS av=NNN,...,Intensity=D|
-                              Last Share Time=NNN, <- standand long time in sec
-                               (or 0 if none) of last accepted share
-                              Last Share Pool=N, <- pool number (or -1 if none)
-                              Last Valid Work=NNN, <- standand long time in sec
-                               of last work returned that wasn't an HW:
-                              Will not report PGAs if PGA mining is disabled
-                              Will not report ASCs if ASC mining is disabled
+*Access*: `Non-priviledged`
 
- gpu|N         GPU            The details of a single GPU number N in the same
-                              format and details as for DEVS
+*Returns:*
+```
+	Miner="sgminer " <sgminer version>
+	CGMiner=<sgminer version>
+	API=<API version>
+```
 
- pga|N         PGA            The details of a single PGA number N in the same
-                              format and details as for DEVS
-                              This is only available if PGA mining is enabled
-                              Use 'pgacount' or 'config' first to see if there
-                              are any
+### config
 
- gpucount      GPUS           Count=N| <- the number of GPUs
+Returns some miner configuration information
 
- pgacount      PGAS           Count=N| <- the number of PGAs
-                              Always returns 0 if PGA mining is disabled
+*Syntax:* `config`
 
- switchpool|N (*)
+*Arguments:* None
+
+*Access*: `Non-priviledged`
+
+*Returns:*
+```
+	GPU Count=N, <- the number of GPUs
+	ASC Count=N, <- the number of ASCs
+	PGA Count=N, <- the number of PGAs
+	Pool Count=N, <- the number of Pools
+	ADL=X, <- Y or N if ADL is compiled in the code
+	ADL in use=X, <- Y or N if any GPU has ADL
+	Strategy=Name, <- the current pool strategy
+	Log Interval=N, <- log interval (--log N)
+	Device Code=GPU ICA, <- spaced list of compiled device drivers
+	OS=Linux/Apple/..., <- operating System
+	Failover-Only=true/false, <- failover-only setting
+	ScanTime=N, <- --scan-time setting
+	Queue=N, <- --queue setting
+	Expiry=N| <- --expiry setting
+```
+
+### summary
+
+Returns the status summary of the miner
+
+*Syntax:* `summary`
+
+*Arguments:* None
+
+*Access*: `Non-priviledged`
+
+*Returns:* `Elapsed=NNN,Found Blocks=N,Getworks=N,...|`
+
+### devs
+
+Returns each available GPU, PGA and ASC with their details. **Note** that this will not return PGAs or ASCs if PGA or ASC mining is not enabled.
+
+*Syntax:* `devs`
+
+*Arguments:* None
+
+*Access*: `Non-priviledged`
+
+*Returns:* 
+```
+GPU=0,Accepted=NN,MHS av=NNN,...,Intensity=D|
+Last Share Time=NNN, <- standand long time in sec (or 0 if none) of last accepted share
+Last Share Pool=N, <- pool number (or -1 if none)
+Last Valid Work=NNN, <- standand long time in sec of last work returned that wasn't an HW
+```
+
+### gpu
+
+Returns the details of a single GPU in the same format and details as [devs](#devs).
+
+*Syntax:* `gpu|<N>`
+
+*Arguments:* `number` GPU Number
+
+*Access*: `Non-priviledged`
+
+*Returns:* 
+```
+GPU=0,Accepted=NN,MHS av=NNN,...,Intensity=D|
+Last Share Time=NNN, <- standand long time in sec (or 0 if none) of last accepted share
+Last Share Pool=N, <- pool number (or -1 if none)
+Last Valid Work=NNN, <- standand long time in sec of last work returned that wasn't an HW
+```
+
+### pga
+
+Returns the details of a single PGA in the same format and details as [devs](#devs). **Note** that this is only available if PGA mining is enabled. Use [pgacount](#pgacount) or [config](#config) first to see if there are any PGA devices.
+
+*Syntax:* `pga|<N>`
+
+*Arguments:* `number` PGA Number
+
+*Access*: `Non-priviledged`
+
+*Returns:* 
+```
+PGA=0,Accepted=NN,MHS av=NNN,...,Intensity=D|
+Last Share Time=NNN, <- standand long time in sec (or 0 if none) of last accepted share
+Last Share Pool=N, <- pool number (or -1 if none)
+Last Valid Work=NNN, <- standand long time in sec of last work returned that wasn't an HW
+```
+
+### gpucount
+
+Returns the number of GPU devices.
+
+*Syntax:* `gpucount`
+
+*Arguments:* None
+
+*Access*: `Non-priviledged`
+
+*Returns:* 
+```
+Count=N| <- number of GPUs
+```
+
+### pgacount
+
+Returns the number of PGA devices.
+
+*Syntax:* `pgacount`
+
+*Arguments:* None
+
+*Access*: `Non-priviledged`
+
+*Returns:* 
+```
+Count=N| <- number of PGAs
+```
+
+---
+
+```
+switchpool|N (*)
                none           There is no reply section just the STATUS section
                               stating the results of switching pool N to the
                               highest priority (the pool is also enabled)
@@ -207,13 +304,13 @@ The list of requests - a (*) means it requires privileged access - and replies:
                               stating the results of enabling pool N
                               The Msg includes the pool URL
 
- addpool|URL,USR,PASS[,NAME,DESC,ALGO] (*)
+ addpool|URL,USR,PASS[,NAME,DESC,PROFILE,ALGO] (*)
                none           There is no reply section just the STATUS section
                               stating the results of attempting to add pool N
                               The Msg includes the pool URL
                               Use '\\' to get a '\' and '\,' to include a comma
                               inside URL, USR or PASS
-			      Name, description and algorithm are optional
+			      Name, description, profile and algorithm are optional
 
  poolpriority|N,... (*)
                none           There is no reply section just the STATUS section
@@ -234,8 +331,37 @@ The list of requests - a (*) means it requires privileged access - and replies:
                               stating the results of removing pool N
                               The Msg includes the pool URL
                               N.B. all details for the pool will be lost
+ 
+ changestrategy|STRAT,INT (*)
+               none           There is no reply section just the STATUS section
+                              stating the results of changing multipool strategy
+                              to STRAT. If the strategy requested is "rotate",
+                              the interval INT must be specified as a number
+                              between 0 and 9999 seconds. INT is not required
+                              otherwise.
 
- gpuenable|N (*)
+ changepoolprofile|N,NAME (*)
+               none           There is no reply section just the STATUS section
+                              stating the results of changing the profile of
+                              pool N to profile NAME.
+
+addprofile|NAME:ALGORITHM:NFACTOR:LOOKUPGAP:DEVICE:INTENSITY:XINTENSITY:RAWINTENSITY:GPUENGINE:GPUMEMCLOCK
+            :GPUTHREADS:GPUFAN:GPUPOWERTUNE:GPUVDDC:SHADERS:THREADCONCURRENCY:WORKSIZE (*)
+            none              There is no reply section just the STATUS section
+                              stating the results of attempting to add profile NAME
+                              The Msg includes the profile NAME. Parameters NAME and
+                              ALGORITHM are required. Everything else is optional.
+                              Note that these parameters are colon (:) delimited.
+                              
+removeprofile|NAME (*)
+               none           There is no reply section just the STATUS section
+                              stating the results of removing profile NAME.
+                              The Msg includes the profile NAME. The profile NAME
+                              must exist and not be in use by any of the pools or
+                              as default profile.
+                              N.B. all details for the profile will be lost
+                              
+gpuenable|N (*)
                none           There is no reply section just the STATUS section
                               stating the results of the enable request
 
@@ -474,6 +600,7 @@ The list of requests - a (*) means it requires privileged access - and replies:
                               A warning reply means lock stats are not compiled
                               into sgminer
                               The API writes all the lock stats to stderr
+```
 
 When you enable, disable or restart a GPU, PGA or ASC, you will also get
 Thread messages in the sgminer status window
@@ -524,15 +651,18 @@ miner.php - an example web page to access the API
  See the end of this API readme for details of how to tune the display
  and also to use the option to display a multi-rig summary
 
-----------
+## API Version History
 
-Feature Changelog for external applications using the API:
+API V4.0 (sgminer v5.0)
 
-
-API V
-
-Modified API commands:
- 'version' - add 'Miner'
+Modified API command:
+  'addpool' - supports profile and algorithm is correctly set to default if none is selected
+Added API commands:
+  'changestrategy' - change multi pool strategy on the fly from API
+  'changepoolprofile' - change pool profile
+  'addprofile' - add a new profile
+  'removeprofile' - removes a profile
+  'profiles' - list profiles
 
 ----------
 
@@ -957,8 +1087,8 @@ Commands:
 
 ----------------------------------------
 
-miner.php
-=========
+## miner.php
+
 
 miner.php is a PHP based interface to the sgminer RPC API
 (referred to simply as the API below)
