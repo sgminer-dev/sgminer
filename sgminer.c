@@ -4774,7 +4774,6 @@ retry:
     opt_expiry = selected;
     goto retry;
   } else if  (!strncasecmp(&input, "w", 1)) {
-    FILE *fcfg;
     char *str, filename[PATH_MAX], prompt[PATH_MAX + 50];
 
     default_save_file(filename);
@@ -4794,13 +4793,9 @@ retry:
     }
     else
       free(str);
-    /*fcfg = fopen(filename, "w");
-    if (!fcfg) {
-      wlogprint("Cannot open or create file\n");
-      goto retry;
-    }*/
+
     write_config(filename);
-    //fclose(fcfg);
+
     goto retry;
 
   } else if (!strncasecmp(&input, "r", 1)) {
