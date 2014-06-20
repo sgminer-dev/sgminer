@@ -656,42 +656,41 @@ void load_default_config(void)
 // assign default settings from default profile if set
 void load_default_profile()
 {
-  struct profile *profile;
-
-  if(empty_string(default_profile.name))
+  applog(LOG_DEBUG, "default_profile.name is %s", default_profile.name);
+  if (empty_string(default_profile.name))
   {
-    applog(LOG_WARNING, "Default profile name not set.");
+    applog(LOG_WARNING, "Default profile name is not set.");
     return;
   }
-  else
-  {
-    // find profile ...
-    profile = get_profile(default_profile.name);
-    if (!profile) {
-      applog(LOG_WARNING, "Could not load default profile %s",
-	     default_profile.name);
-      return;
-    }
 
-    // ... and copy settings
-    default_profile.algorithm = profile->algorithm;
-    default_profile.devices = profile->devices;
-    default_profile.lookup_gap = profile->lookup_gap;
-    default_profile.intensity = profile->intensity;
-    default_profile.xintensity = profile->xintensity;
-    default_profile.rawintensity = profile->rawintensity;
-    default_profile.thread_concurrency = profile->thread_concurrency;
-#ifdef HAVE_ADL
-    default_profile.gpu_engine = profile->gpu_engine;
-    default_profile.gpu_memclock = profile->gpu_memclock;
-    default_profile.gpu_threads = profile->gpu_threads;
-    default_profile.gpu_fan = profile->gpu_fan;
-    default_profile.gpu_powertune = profile->gpu_powertune;
-    default_profile.gpu_vddc = profile->gpu_vddc;
-#endif
-    default_profile.shaders = profile->shaders;
-    default_profile.worksize = profile->worksize;
+  struct profile *profile;
+
+  // find profile ...
+  profile = get_profile(default_profile.name);
+  if (!profile) {
+    applog(LOG_WARNING, "Could not load default profile %s",
+	   default_profile.name);
+    return;
   }
+
+  // ... and copy settings
+  default_profile.algorithm = profile->algorithm;
+  default_profile.devices = profile->devices;
+  default_profile.lookup_gap = profile->lookup_gap;
+  default_profile.intensity = profile->intensity;
+  default_profile.xintensity = profile->xintensity;
+  default_profile.rawintensity = profile->rawintensity;
+  default_profile.thread_concurrency = profile->thread_concurrency;
+#ifdef HAVE_ADL
+  default_profile.gpu_engine = profile->gpu_engine;
+  default_profile.gpu_memclock = profile->gpu_memclock;
+  default_profile.gpu_threads = profile->gpu_threads;
+  default_profile.gpu_fan = profile->gpu_fan;
+  default_profile.gpu_powertune = profile->gpu_powertune;
+  default_profile.gpu_vddc = profile->gpu_vddc;
+#endif
+  default_profile.shaders = profile->shaders;
+  default_profile.worksize = profile->worksize;
 }
 
 //apply default settings
@@ -699,48 +698,48 @@ void apply_defaults()
 {
   set_algorithm(&opt_algorithm, default_profile.algorithm.name);
 
-  if(!empty_string(default_profile.devices))
+  if (!empty_string(default_profile.devices))
     set_devices((char *)default_profile.devices);
 
-  if(!empty_string(default_profile.intensity))
+  if (!empty_string(default_profile.intensity))
     set_intensity(default_profile.intensity);
 
-  if(!empty_string(default_profile.xintensity))
+  if (!empty_string(default_profile.xintensity))
     set_xintensity(default_profile.xintensity);
 
-  if(!empty_string(default_profile.rawintensity))
+  if (!empty_string(default_profile.rawintensity))
     set_rawintensity(default_profile.rawintensity);
 
-  if(!empty_string(default_profile.lookup_gap))
+  if (!empty_string(default_profile.lookup_gap))
     set_lookup_gap((char *)default_profile.lookup_gap);
 
-  if(!empty_string(default_profile.thread_concurrency))
+  if (!empty_string(default_profile.thread_concurrency))
     set_thread_concurrency(default_profile.thread_concurrency);
 
 #ifdef HAVE_ADL
-  if(!empty_string(default_profile.gpu_engine))
+  if (!empty_string(default_profile.gpu_engine))
     set_gpu_engine(default_profile.gpu_engine);
 
-  if(!empty_string(default_profile.gpu_memclock))
+  if (!empty_string(default_profile.gpu_memclock))
     set_gpu_memclock(default_profile.gpu_memclock);
 
-  if(!empty_string(default_profile.gpu_threads))
+  if (!empty_string(default_profile.gpu_threads))
     set_gpu_threads(default_profile.gpu_threads);
 
-  if(!empty_string(default_profile.gpu_fan))
+  if (!empty_string(default_profile.gpu_fan))
     set_gpu_fan(default_profile.gpu_fan);
 
-  if(!empty_string(default_profile.gpu_powertune))
+  if (!empty_string(default_profile.gpu_powertune))
     set_gpu_powertune((char *)default_profile.gpu_powertune);
 
-  if(!empty_string(default_profile.gpu_vddc))
+  if (!empty_string(default_profile.gpu_vddc))
     set_gpu_vddc((char *)default_profile.gpu_vddc);
 #endif
 
-  if(!empty_string(default_profile.shaders))
+  if (!empty_string(default_profile.shaders))
     set_shaders((char *)default_profile.shaders);
 
-  if(!empty_string(default_profile.worksize))
+  if (!empty_string(default_profile.worksize))
     set_worksize((char *)default_profile.worksize);
 }
 
@@ -749,7 +748,7 @@ void apply_pool_profiles()
 {
   int i;
 
-  for(i=total_pools;i--;)
+  for (i=total_pools; i--;)
   {
     apply_pool_profile(pools[i]);
   }
