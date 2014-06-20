@@ -313,7 +313,11 @@ Description placed in the API status header.
 
 ### api-groups
 
-Sets API groups which restrict group members to only a certain set of commands. The list of groups is comma(,) delimited and each entry has its parameters colon(:) delimited. The first parameter of an entry is always the Group Identifier, which consists of one letter.
+Sets API groups which restrict group members to only a certain set of commands. The list of groups is comma(,) delimited and each entry has its parameters colon(:) delimited. The first parameter of an entry is always the Group Identifier, which consists of one letter. When defining a group, you can use the asterisk (*) to refer to all non-priviledged functions.
+
+Two groups are pre-defined and may not be used with this option:
+* `R` Access to all non-priviledged functions
+* `W` Access to all priviledged and non-priviledged functions
 
 Group Members are specified in [api-allow](#api-allow) where they are associated with a group by their IP address.
 
@@ -323,16 +327,19 @@ Group Members are specified in [api-allow](#api-allow) where they are associated
 
 *Command Line Syntax:* `--api-groups "<value>"`
 
-*Argument:* `comma (,) delimited list` Format: `<Group ID>:<command>:<command>[:...][,...]`
+*Argument:* `comma (,) delimited list` Format: `<Group ID>:<command>:<command>[:*][:...][,...]`
 
-*Default:* `"R"` access read-only commands `"W"` accesses all commands
+*Default:* `R` Access to all non-priviledged functions `W` Access to all functions
 
 *Example:*
 
 ```
-"api-groups":"A:version:devs:summary,B:addpool:removepool:switchpool:gpurestart:gpuenable:gpudisable:save:quit",
+"api-groups":"A:addpool:*,B:addpool:removepool:switchpool:gpurestart:gpuenable:gpudisable:save:quit",
 "api-allow":"A:192.168.0.10,B:127.0.0.1"
 ```
+
+The above example grants users of group A access to the addpool function as well as all non-priviledged functions.
+Group B users only have access to the following functions: addpool, removepool, switchpool, gpurestart, gpuenable, gpudisable, save, quit.
 
 [Top](#configuration-and-command-line-options) :: [Config-file and CLI options](#config-file-and-cli-options) :: [API Options](#api-options)
 
