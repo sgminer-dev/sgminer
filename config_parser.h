@@ -8,34 +8,34 @@
 
 //helper to check for empty or NULL strings
 #ifndef empty_string
-    #define empty_string(str) ((str && str[0] != '\0')?0:1)
+  #define empty_string(str) ((str && str[0] != '\0')?0:1)
 #endif
 
 //helper function to get a gpu option value
 #ifndef gpu_opt
-    #define gpu_opt(i,optname) gpus[i].optname
+  #define gpu_opt(i,optname) gpus[i].optname
 #endif
 
 //profile structure
 struct profile {
-    int profile_no;
-    char *name;
+  int profile_no;
+  char *name;
 
-    algorithm_t algorithm;
-    const char *devices;
-    const char *intensity;
-    const char *xintensity;
-    const char *rawintensity;
-    const char *lookup_gap;
-    const char *gpu_engine;
-    const char *gpu_memclock;
-    const char *gpu_threads;
-    const char *gpu_fan;
-    const char *gpu_powertune;
-    const char *gpu_vddc;
-    const char *shaders;
-    const char *thread_concurrency;
-    const char *worksize;
+  algorithm_t algorithm;
+  const char *devices;
+  const char *intensity;
+  const char *xintensity;
+  const char *rawintensity;
+  const char *lookup_gap;
+  const char *gpu_engine;
+  const char *gpu_memclock;
+  const char *gpu_threads;
+  const char *gpu_fan;
+  const char *gpu_powertune;
+  const char *gpu_vddc;
+  const char *shaders;
+  const char *thread_concurrency;
+  const char *worksize;
 };
 
 /* globals needed outside */
@@ -57,12 +57,12 @@ extern char *set_default_xintensity(const char *arg);
 extern char *set_default_rawintensity(const char *arg);
 extern char *set_default_thread_concurrency(const char *arg);
 #ifdef HAVE_ADL
-    extern char *set_default_gpu_engine(const char *arg);
-    extern char *set_default_gpu_memclock(const char *arg);
-    extern char *set_default_gpu_threads(const char *arg);
-    extern char *set_default_gpu_fan(const char *arg);
-    extern char *set_default_gpu_powertune(const char *arg);
-    extern char *set_default_gpu_vddc(const char *arg);
+  extern char *set_default_gpu_engine(const char *arg);
+  extern char *set_default_gpu_memclock(const char *arg);
+  extern char *set_default_gpu_threads(const char *arg);
+  extern char *set_default_gpu_fan(const char *arg);
+  extern char *set_default_gpu_powertune(const char *arg);
+  extern char *set_default_gpu_vddc(const char *arg);
 #endif
 extern char *set_default_profile(char *arg);
 extern char *set_default_shaders(const char *arg);
@@ -77,12 +77,12 @@ extern char *set_profile_xintensity(const char *arg);
 extern char *set_profile_rawintensity(const char *arg);
 extern char *set_profile_thread_concurrency(const char *arg);
 #ifdef HAVE_ADL
-    extern char *set_profile_gpu_engine(const char *arg);
-    extern char *set_profile_gpu_memclock(const char *arg);
-    extern char *set_profile_gpu_threads(const char *arg);
-    extern char *set_profile_gpu_fan(const char *arg);
-    extern char *set_profile_gpu_powertune(const char *arg);
-    extern char *set_profile_gpu_vddc(const char *arg);
+  extern char *set_profile_gpu_engine(const char *arg);
+  extern char *set_profile_gpu_memclock(const char *arg);
+  extern char *set_profile_gpu_threads(const char *arg);
+  extern char *set_profile_gpu_fan(const char *arg);
+  extern char *set_profile_gpu_powertune(const char *arg);
+  extern char *set_profile_gpu_vddc(const char *arg);
 #endif
 extern char *set_profile_nfactor(const char *arg);
 extern char *set_profile_shaders(const char *arg);
@@ -98,6 +98,7 @@ extern void load_default_config(void);
 extern void load_default_profile();
 extern void apply_defaults();
 extern void apply_pool_profiles();
+extern void apply_pool_profile(struct pool *pool);
 
 /* config writer */
 extern void write_config(const char *filename);

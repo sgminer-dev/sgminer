@@ -207,13 +207,13 @@ The list of requests - a (*) means it requires privileged access - and replies:
                               stating the results of enabling pool N
                               The Msg includes the pool URL
 
- addpool|URL,USR,PASS[,NAME,DESC,ALGO] (*)
+ addpool|URL,USR,PASS[,NAME,DESC,PROFILE,ALGO] (*)
                none           There is no reply section just the STATUS section
                               stating the results of attempting to add pool N
                               The Msg includes the pool URL
                               Use '\\' to get a '\' and '\,' to include a comma
                               inside URL, USR or PASS
-			      Name, description and algorithm are optional
+			      Name, description, profile and algorithm are optional
 
  poolpriority|N,... (*)
                none           There is no reply section just the STATUS section
@@ -235,6 +235,13 @@ The list of requests - a (*) means it requires privileged access - and replies:
                               The Msg includes the pool URL
                               N.B. all details for the pool will be lost
 
+ changestrategy|STRAT,INT (*)
+               none           There is no reply section just the STATUS section
+                              stating the results of changing multipool strategy
+                              to STRAT. If the strategy requested is "rotate",
+                              the interval INT must be specified as a number
+                              between 0 and 9999 seconds. INT is not required
+                              otherwise.
  gpuenable|N (*)
                none           There is no reply section just the STATUS section
                               stating the results of the enable request

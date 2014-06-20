@@ -71,14 +71,6 @@ char *curly = ":D";
 #define VERSION GIT_VERSION
 #endif
 
-struct strategies strategies[] = {
-  { "Failover" },
-  { "Round Robin" },
-  { "Rotate" },
-  { "Load Balance" },
-  { "Balance" },
-};
-
 static char packagename[256];
 
 bool opt_work_update;
@@ -229,6 +221,14 @@ unsigned int total_go, total_ro;
 
 struct pool **pools;
 static struct pool *currentpool = NULL;
+
+struct strategies strategies[] = {
+  { "Failover" },
+  { "Round Robin" },
+  { "Rotate" },
+  { "Load Balance" },
+  { "Balance" },
+};
 
 int total_pools, enabled_pools;
 enum pool_strategy pool_strategy = POOL_FAILOVER;
@@ -1390,6 +1390,16 @@ struct opt_table opt_config_table[] = {
   OPT_WITHOUT_ARG("--more-notices",
       opt_set_bool, &opt_morenotices,
       "Shows work restart and new block notices, hidden by default"),
+  OPT_WITH_ARG("--intensity|-I",
+      set_default_intensity, NULL, NULL,
+      "Intensity of GPU scanning (d or " MIN_INTENSITY_STR
+      " -> " MAX_INTENSITY_STR
+      ",default: d to maintain desktop interactivity), overridden by --xintensity or --rawintensity."),
+  OPT_WITH_ARG("--xintensity|-X",
+//      set_xintensity, NULL, NULL,
+      set_default_xintensity, NULL, NULL, 
+      "Shader based intensity of GPU scanning (" MIN_XINTENSITY_STR " to "
+        MAX_XINTENSITY_STR "), overridden --xintensity|-X and --rawintensity."),
   OPT_WITH_ARG("--xintensity|-X",
 //      set_xintensity, NULL, NULL,
       set_default_xintensity, NULL, NULL, 
@@ -1449,7 +1459,7 @@ struct opt_table opt_config_table[] = {
   OPT_WITHOUT_ARG("--no-submit-stale",
       opt_set_invbool, &opt_submit_stale,
       "Don't submit shares if they are detected as stale"),
-  OPT_WITHOUT_ARG("--no-extranonce-subscribe",
+  OPT_WITHOUT_ARG("--no-extranonce|--pool-no-extranonce",
       set_no_extranonce_subscribe, NULL,
       "Disable 'extranonce' stratum subscribe for pool"),
   OPT_WITH_ARG("--pass|--pool-pass|-p",
@@ -1628,7 +1638,7 @@ struct opt_table opt_config_table[] = {
   OPT_WITHOUT_ARG("--show-coindiff",
       opt_set_bool, &opt_show_coindiff,
       "Show coin difficulty rather than hash value of a share"),
-  OPT_WITH_ARG("--state",
+  OPT_WITH_ARG("--state|--pool-state",
       set_pool_state, NULL, NULL,
       "Specify pool state at startup (default: enabled)"),
 #ifdef HAVE_SYSLOG_H
@@ -1689,7 +1699,7 @@ struct opt_table opt_config_table[] = {
   OPT_WITH_ARG("--worksize|-w",
       set_default_worksize, NULL, NULL,
       "Override detected optimal worksize - one value or comma separated list"),
-  OPT_WITH_ARG("--userpass|-O",
+  OPT_WITH_ARG("--userpass|--pool-userpass|-O",
       set_userpass, NULL, NULL,
       "Username:Password pair for bitcoin JSON-RPC server"),
   OPT_WITHOUT_ARG("--worktime",
@@ -7200,7 +7210,7 @@ static void *test_pool_thread(void *arg)
 /* Always returns true that the pool details were added unless we are not
  * live, implying this is the only pool being added, so if no pools are
  * active it returns false. */
-bool add_pool_details(struct pool *pool, bool live, char *url, char *user, char *pass, char *name, char *desc, char *algo)
+bool add_pool_details(struct pool *pool, bool live, char *url, char *user, char *pass, char *name, char *desc, char *profile, char *algo)
 {
   size_t siz;
 
@@ -7211,7 +7221,20 @@ bool add_pool_details(struct pool *pool, bool live, char *url, char *user, char 
   pool->rpc_pass = pass;
   pool->name = name;
   pool->description = desc;
-  set_algorithm(&pool->algorithm, algo);
+  pool->profile = profile;
+  
+    //if a profile was supplied, apply pool properties from profile
+    if(!empty_string(profile))
+        apply_pool_profile(pool);    //remove profile if was invalid
+  
+    //if profile is empty, assign algorithm or default algorithm 
+    if(empty_string(pool->profile))
+    {
+        if(!empty_string(algo))
+            set_algorithm(&pool->algorithm, algo);
+        else
+            set_algorithm(&pool->algorithm, default_profile.algorithm.name);
+    }
 
   siz = strlen(pool->rpc_user) + strlen(pool->rpc_pass) + 2;
   pool->rpc_userpass = (char *)malloc(siz);
@@ -7236,7 +7259,7 @@ bool add_pool_details(struct pool *pool, bool live, char *url, char *user, char 
 static bool input_pool(bool live)
 {
   char *url = NULL, *user = NULL, *pass = NULL;
-  char *name = NULL, *desc = NULL, *algo = NULL;
+  char *name = NULL, *desc = NULL, *profile = NULL, *algo = NULL;
   struct pool *pool;
   bool ret = false;
 
@@ -7254,8 +7277,10 @@ static bool input_pool(bool live)
   if (strcmp(name, "-1") == 0) strcpy(name, "");
   desc = curses_input("Description (optional)");
   if (strcmp(desc, "-1") == 0) strcpy(desc, "");
+  algo = curses_input("Profile (optional)");
+  if (strcmp(profile, "-1") == 0) profile[0] = '\0';
   algo = curses_input("Algorithm (optional)");
-  if (strcmp(algo, "-1") == 0) strcpy(algo, opt_algorithm.name);
+  if (strcmp(algo, "-1") == 0) algo[0] = '\0';
 
   pool = add_pool();
 
@@ -7273,7 +7298,7 @@ static bool input_pool(bool live)
   }
 
   ret = add_pool_details(pool, live, url, user, pass,
-             name, desc, algo);
+             name, desc, profile, algo);
 out:
   immedok(logwin, false);
 

@@ -32,7 +32,7 @@ sgminer_CPPFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
 endif
 
 sgminer_SOURCES := sgminer.c
-sgminer_SOURCES	+= api.c
+sgminer_SOURCES	+= api.c api.h
 sgminer_SOURCES	+= elist.h miner.h compat.h bench_block.h
 sgminer_SOURCES	+= util.c util.h uthash.h
 sgminer_SOURCES	+= logging.c logging.h

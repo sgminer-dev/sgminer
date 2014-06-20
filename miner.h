@@ -253,7 +253,6 @@ enum alive {
   LIFE_INIT,
 };
 
-
 enum pool_strategy {
   POOL_FAILOVER,
   POOL_ROUNDROBIN,
@@ -267,6 +266,9 @@ enum pool_strategy {
 struct strategies {
   const char *s;
 };
+
+extern enum pool_strategy pool_strategy;
+extern struct strategies strategies[];
 
 struct cgpu_info;
 
@@ -1044,7 +1046,7 @@ extern bool detect_stratum(struct pool *pool, char *url);
 extern void print_summary(void);
 extern void adjust_quota_gcd(void);
 extern struct pool *add_pool(void);
-extern bool add_pool_details(struct pool *pool, bool live, char *url, char *user, char *pass, char *name, char *desc, char *algo);
+extern bool add_pool_details(struct pool *pool, bool live, char *url, char *user, char *pass, char *name, char *desc, char *profile, char *algo);
 
 #define MAX_GPUDEVICES 16
 #define MAX_DEVICES 4096
