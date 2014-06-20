@@ -7827,16 +7827,6 @@ int main(int argc, char *argv[])
   //apply pool-specific config from profiles
   apply_pool_profiles();
 
-  /*FILE *fcfg = fopen("testconf_test.conf", "w");
-    if (!fcfg) {
-      wlogprint("Cannot open or create file\n");
-      quit(1,"");
-    }*/
-    //write_config("./testconf_test.conf");
-    //fclose(fcfg);
-    //quit(1,"file saved.");
-
-
   if (opt_benchmark) {
     struct pool *pool;
 
