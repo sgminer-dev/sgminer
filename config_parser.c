@@ -688,7 +688,7 @@ void load_default_profile()
 //apply default settings
 void apply_defaults()
 {
-  set_algorithm(opt_algorithm, default_profile.algorithm.name);
+  set_algorithm(&opt_algorithm, default_profile.algorithm.name);
 
   if(!empty_string(default_profile.devices))
     set_devices((char *)default_profile.devices);
@@ -1283,7 +1283,7 @@ void write_config(const char *filename)
   else
   {
     //save algorithm name
-    if(json_object_set(config, "algorithm", json_string(opt_algorithm->name)) == -1)
+    if(json_object_set(config, "algorithm", json_string(opt_algorithm.name)) == -1)
     {
       applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on algorithm");
       return;
