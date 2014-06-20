@@ -11,6 +11,11 @@
     #define empty_string(str) ((str && str[0] != '\0')?0:1)
 #endif
 
+//helper function to get a gpu option value
+#define gpu_opt
+    #define gpu_opt(i,optname) gpus[i].optname
+#endif
+
 //profile structure
 struct profile {
     int profile_no;
@@ -65,24 +70,18 @@ extern char *set_profile_thread_concurrency(const char *arg);
 #endif
 extern char *set_profile_nfactor(const char *arg);
 
-/* helpers */
-//void set_last_json_error(const char *fmt, ...);
-//struct opt_table *opt_find(struct opt_table *tbl, char *optname);
-
 /* config parser functions */
-//void parse_config_object(json_t *obj, const char *parentkey, bool fileconf, int parent_iteration);
-//char *parse_config_array(json_t *obj, char *parentkey, bool fileconf);
 extern char *parse_config(json_t *val, const char *key, const char *parentkey, bool fileconf, int parent_iteration);
 extern char *load_config(const char *arg, const char *parentkey, void __maybe_unused *unused);
 extern char *set_default_config(const char *arg);
 extern void load_default_config(void);
 
-/*struct profile *add_profile();
-struct profile *get_current_profile();
-struct profile *get_profile(char *name);*/
-
+/* startup functions */
 extern void load_default_profile();
 extern void apply_defaults();
 extern void apply_pool_profiles();
+
+/* config writer */
+extern void write_config(const char *filename);
 
 #endif // CONFIG_PARSER_H

@@ -934,7 +934,21 @@ extern bool opt_protocol;
 extern bool have_longpoll;
 extern char *opt_kernel_path;
 extern char *opt_socks_proxy;
+
+#if defined(unix) || defined(__APPLE__)
+    extern char *opt_stderr_cmd;
+#endif // defined(unix)
+
+struct schedtime {
+  bool enable;
+  struct tm tm;
+};
+
+extern struct schedtime schedstart;
+extern struct schedtime schedstop;
+
 extern char *sgminer_path;
+extern int opt_shares;
 extern bool opt_fail_only;
 extern bool opt_autofan;
 extern bool opt_autoengine;
@@ -1058,6 +1072,9 @@ extern struct cgpu_info gpus[MAX_GPUDEVICES];
 extern double total_secs;
 extern int mining_threads;
 extern int total_devices;
+extern bool devices_enabled[MAX_DEVICES];
+extern int opt_devs_enabled;
+extern bool opt_removedisabled;
 extern struct cgpu_info **devices;
 extern int total_pools;
 extern struct pool **pools;
@@ -1380,7 +1397,7 @@ extern void kill_work(void);
 extern void switch_pools(struct pool *selected);
 extern void discard_work(struct work *work);
 extern void remove_pool(struct pool *pool);
-extern void write_config(FILE *fcfg);
+//extern void write_config(FILE *fcfg);
 extern void zero_bestshare(void);
 extern void zero_stats(void);
 extern void default_save_file(char *filename);
@@ -1403,6 +1420,11 @@ extern void free_work(struct work *work);
 extern struct work *copy_work_noffset(struct work *base_work, int noffset);
 #define copy_work(work_in) copy_work_noffset(work_in, 0)
 extern struct cgpu_info *get_devices(int id);
+
+extern char *set_int_0_to_9999(const char *arg, int *i);
+extern char *set_int_1_to_65535(const char *arg, int *i);
+extern char *set_int_0_to_10(const char *arg, int *i);
+extern char *set_int_1_to_10(const char *arg, int *i);
 
 enum api_data_type {
   API_ESCAPE,

@@ -42,6 +42,10 @@
 #include "algorithm.h"
 #include "pool.h"
 
+#ifdef HAVE_ADL
+#include "adl.h"
+#endif
+
 #if defined(unix) || defined(__APPLE__)
     #include <errno.h>
     #include <fcntl.h>
@@ -57,9 +61,6 @@ bool config_loaded;
 
 int json_array_index = -1;    //current array index being parsed
 char *last_json_error = NULL;    //last json_error
-//#define JSON_INCLUDE_CONF "include"
-#define JSON_LOAD_ERROR "JSON decode of file '%s' failed\n %s"
-#define JSON_LOAD_ERROR_LEN strlen(JSON_LOAD_ERROR)
 /*#define JSON_MAX_DEPTH 10
 #define JSON_MAX_DEPTH_ERR "Too many levels of JSON includes (limit 10) or a loop"*/
 
@@ -272,8 +273,35 @@ char *set_profile_nfactor(const char *arg)
 /***************************************
 * Helper Functions
 ****************************************/
+json_t *json_sprintf(const char *fmt, ...)
+{
+    va_list args;
+    char *buf;
+    size_t bufsize;
+    
+    //build args
+    va_start(args, fmt);
+    //get final string buffer size
+    bufsize = vsnprintf(NULL, 0, fmt, args);
+    va_end(args);
+    
+    if(!(buf = (char *)malloc(++bufsize)))
+        quit(1, "Malloc failure in config_parser::json_sprintf().");
+
+    //zero out buffer
+    memset(buf, '\0', bufsize);
+
+    //get args again
+    va_start(args, fmt);
+    vsnprintf(buf, bufsize, fmt, args);
+    va_end(args);
+
+    //return json string
+    return json_string(buf);
+}
+
 //set last json error
-void set_last_json_error(const char *fmt, ...)
+char *set_last_json_error(const char *fmt, ...)
 {
     va_list args;
     size_t bufsize;
@@ -281,28 +309,30 @@ void set_last_json_error(const char *fmt, ...)
     //build args
     va_start(args, fmt);
     //get final string buffer size
-    bufsize = vsnprintf(NULL, 0, JSON_LOAD_ERROR, args);
+    bufsize = vsnprintf(NULL, 0, fmt, args);
     va_end(args);
 
     //if NULL allocate memory... otherwise reallocate
     if(!last_json_error)
     {
-        if(!(last_json_error = (char *)malloc(bufsize+1)))
-            quit(1, "Malloc failure in json error");
+        if(!(last_json_error = (char *)malloc(++bufsize)))
+            quit(1, "Malloc failure in config_parser::set_last_json_error().");
     }
     else
     {
-        if(!(last_json_error = (char *)realloc(last_json_error, bufsize+1)))
-            quit(1, "Realloc failure in json error");
+        if(!(last_json_error = (char *)realloc(last_json_error, ++bufsize)))
+            quit(1, "Realloc failure in config_parser::set_last_json_error().");
     }
 
     //zero out buffer
-    memset(last_json_error, '\0', bufsize+1);
+    memset(last_json_error, '\0', bufsize);
 
     //get args again
     va_start(args, fmt);
-    vsnprintf(last_json_error, bufsize, JSON_LOAD_ERROR, args);
+    vsnprintf(last_json_error, bufsize, fmt, args);
     va_end(args);
+    
+    return last_json_error;
 }
 
 //find opt by name in an opt table
@@ -487,10 +517,7 @@ char *load_config(const char *arg, const char *parentkey, void __maybe_unused *u
 
     //if json root is not an object, error out
     if(!json_is_object(config))
-    {
-        set_last_json_error(JSON_LOAD_ERROR, arg, err.text);
-        return last_json_error;
-    }
+        return set_last_json_error("Error: JSON decode of file \"%s\" failed:\n %s", arg, err.text);
 
     config_loaded = true;
 
@@ -654,4 +681,941 @@ void apply_pool_profiles()
                 applog(LOG_DEBUG, "Profile load failed for pool %i: profile %s not found.", pools[i]->pool_no, pools[i]->profile);
         }
     }
+}
+
+//builds the "pools" json array for config file
+json_t *build_pool_json()
+{
+    json_t *pool_array, *obj;
+    struct pool *pool;
+    struct profile *profile;
+    int i;
+    
+    //create the "pools" array
+    if(!(pool_array = json_array()))
+    {
+        set_last_json_error("json_array() failed on pools");
+        return NULL;
+    }
+    
+    //process pool entries
+    for(i=0;i<total_pools;i++)
+    {
+        pool = pools[i];
+
+        //create a new object
+        if(!(obj = json_object()))
+        {
+            set_last_json_error("json_object() failed on pool %d", pool->pool_no);
+            return NULL;
+        }
+
+        //pool name
+        if(!empty_string(pool->name))
+        {
+            if(json_object_set(obj, "name", json_string(pool->name)) == -1)
+            {
+                set_last_json_error("json_object_set() failed on pool(%d):name", pool->pool_no);
+                return NULL;
+            }
+        }
+        
+        //add quota/url
+        if(pool->quota != 1)
+        {
+            if(json_object_set(obj, "quota", json_sprintf("%s%s%s%d;%s",
+                ((pool->rpc_proxy)?(char *)proxytype(pool->rpc_proxytype):""),
+                ((pool->rpc_proxy)?pool->rpc_proxy:""),
+                ((pool->rpc_proxy)?"|":""),
+                pool->quota,
+                pool->rpc_url)) == -1)
+            {
+                set_last_json_error("json_object_set() failed on pool(%d):quota", pool->pool_no);
+                return NULL;
+            }
+        }
+        else
+        {
+            if(json_object_set(obj, "url", json_sprintf("%s%s%s%s",
+                ((pool->rpc_proxy)?(char *)proxytype(pool->rpc_proxytype):""),
+                ((pool->rpc_proxy)?pool->rpc_proxy:""),
+                ((pool->rpc_proxy)?"|":""),
+                pool->rpc_url)) == -1)
+            {
+                set_last_json_error("json_object_set() failed on pool(%d):url", pool->pool_no);
+                return NULL;
+            }
+        }
+
+        //user
+        if(json_object_set(obj, "user", json_string(pool->rpc_user)) == -1)
+        {
+            set_last_json_error("json_object_set() failed on pool(%d):user", pool->pool_no);
+            return NULL;
+        }
+        
+        //pass
+        if(json_object_set(obj, "pass", json_string(pool->rpc_pass)) == -1)
+        {
+            set_last_json_error("json_object_set() failed on pool(%d):pass", pool->pool_no);
+            return NULL;
+        }
+
+        if(!pool->extranonce_subscribe)
+        {
+            if(json_object_set(obj, "no-extranonce-subscribe", json_true()) == -1)
+            {
+                set_last_json_error("json_object_set() failed on pool(%d):no-extranonce-subscribe", pool->pool_no);
+                return NULL;
+            }
+        }
+        
+        if(!empty_string(pool->description))
+        {
+            if(json_object_set(obj, "description", json_string(pool->description)) == -1)
+            {
+                set_last_json_error("json_object_set() failed on pool(%d):description", pool->pool_no);
+                return NULL;
+            }
+        }
+        
+        //if priority isnt the same as array index, specify it
+        if(pool->prio != i) 
+        {
+            if(json_object_set(obj, "priority", json_sprintf("%d", pool->prio)) == -1)
+            {
+                set_last_json_error("json_object_set() failed on pool(%d):description", pool->pool_no);
+                return NULL;
+            }
+        }
+        
+        //if a profile was specified, add it then compare pool/profile settings to see what we write
+        if(!empty_string(pool->profile))
+        {
+            if((profile = get_profile(pool->profile)))
+            {
+                //save profile name
+                if(json_object_set(obj, "profile", json_string(pool->profile)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on pool(%d):profile", pool->pool_no);
+                    return NULL;
+                }
+            }
+            //profile not found use default profile
+            else
+                profile = &default_profile;
+        }
+        //or select default profile
+        else
+            profile = &default_profile;
+        
+        //if algorithm is different than profile, add it
+        if(!cmp_algorithm(&pool->algorithm, &profile->algorithm)) 
+        {
+            //save algorithm name
+            if(json_object_set(obj, "algorithm", json_string(pool->algorithm.name)) == -1)
+            {
+                set_last_json_error("json_object_set() failed on pool(%d):algorithm", pool->pool_no);
+                return NULL;
+            }
+            
+            //TODO: add other options like nfactor etc...
+        }
+
+        //if pool and profile value doesn't match below, add it
+        //intensity
+        if(!empty_string(pool->intensity))
+        {
+            if(strcmp(pool->intensity, profile->intensity))
+            {
+                if(json_object_set(obj, "intensity", json_string(pool->intensity)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on pool(%d):intensity", pool->pool_no);
+                    return NULL;
+                }
+            }
+        }
+
+        //xintensity
+        if(!empty_string(pool->xintensity))
+        {
+            if(strcmp(pool->xintensity, profile->xintensity) != 0)
+            {
+                if(json_object_set(obj, "xintensity", json_string(pool->xintensity)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on pool(%d):xintensity", pool->pool_no);
+                    return NULL;
+                }
+            }
+        }
+            
+        //rawintensity
+        if(!empty_string(pool->rawintensity))
+        {
+            if(strcmp(pool->rawintensity, profile->rawintensity) != 0)
+            {
+                if(json_object_set(obj, "rawintensity", json_string(pool->rawintensity)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on pool(%d):rawintensity", pool->pool_no);
+                    return NULL;
+                }
+            }
+        }
+            
+        //thread_concurrency
+        if(!empty_string(pool->thread_concurrency))
+        {
+            if(strcmp(pool->thread_concurrency, profile->thread_concurrency) != 0)
+            {
+                if(json_object_set(obj, "thread_concurrency", json_string(pool->thread_concurrency)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on pool(%d):thread_concurrency", pool->pool_no);
+                    return NULL;
+                }
+            }
+        }
+
+#ifdef HAVE_ADL            
+        //gpu_engine
+        if(!empty_string(pool->gpu_engine))
+        {
+            if(strcmp(pool->gpu_engine, profile->gpu_engine) != 0)
+            {
+                if(json_object_set(obj, "gpu_engine", json_string(pool->gpu_engine)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on pool(%d):gpu_engine", pool->pool_no);
+                    return NULL;
+                }
+            }
+        }
+
+        //gpu_memclock
+        if(!empty_string(pool->gpu_memclock))
+        {
+            if(strcmp(pool->gpu_memclock, profile->gpu_memclock) != 0)
+            {
+                if(json_object_set(obj, "gpu_memclock", json_string(pool->gpu_memclock)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on pool(%d):gpu_memclock", pool->pool_no);
+                    return NULL;
+                }
+            }
+        }
+
+        //gpu_threads
+        if(!empty_string(pool->gpu_threads))
+        {
+            if(strcmp(pool->gpu_threads, profile->gpu_threads) != 0)
+            {
+                if(json_object_set(obj, "gpu_threads", json_string(pool->gpu_threads)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on pool(%d):gpu_threads", pool->pool_no);
+                    return NULL;
+                }
+            }
+        }
+
+        //gpu_fan
+        if(!empty_string(pool->gpu_fan))
+        {
+            if(strcmp(pool->gpu_fan, profile->gpu_fan) != 0)
+            {
+                if(json_object_set(obj, "gpu_fan", json_string(pool->gpu_fan)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on pool(%d):gpu_fan", pool->pool_no);
+                    return NULL;
+                }
+            }
+        }
+#endif
+        
+        //all done, add pool to array...
+        if(json_array_append_new(pool_array, obj) == -1)
+        {
+            set_last_json_error("json_array_append() failed on pool %d", pool->pool_no);
+            return NULL;
+        }
+    }
+    
+    return pool_array;
+}
+
+//builds the "profiles" json array for config file
+json_t *build_profile_json()
+{
+    json_t *profile_array, *obj;
+    struct profile *profile;
+    int i;
+    
+    //create the "pools" array
+    if(!(profile_array = json_array()))
+    {
+        set_last_json_error("json_array() failed on profiles");
+        return NULL;
+    }
+    
+    //process pool entries
+    for(i=0;i<total_profiles;i++)
+    {
+        profile = profiles[i];
+
+        //create a new object
+        if(!(obj = json_object()))
+        {
+            set_last_json_error("json_object() failed on profile %d", profile->profile_no);
+            return NULL;
+        }
+
+        //profile name
+        if(!empty_string(profile->name))
+        {
+            if(json_object_set(obj, "name", json_string(profile->name)) == -1)
+            {
+                set_last_json_error("json_object_set() failed on profile(%d):name", profile->profile_no);
+                return NULL;
+            }
+        }
+        
+        //if algorithm is different than profile, add it
+        if(!cmp_algorithm(&default_profile.algorithm, &profile->algorithm)) 
+        {
+            //save algorithm name
+            if(json_object_set(obj, "algorithm", json_string(profile->algorithm.name)) == -1)
+            {
+                set_last_json_error("json_object_set() failed on profile(%d):algorithm", profile->profile_no);
+                return NULL;
+            }
+            
+            //TODO: add other options like nfactor etc...
+        }
+
+        //if pool and profile value doesn't match below, add it
+        //intensity
+        if(!empty_string(profile->intensity))
+        {
+            if(strcmp(default_profile.intensity, profile->intensity) != 0)
+            {
+                if(json_object_set(obj, "intensity", json_string(profile->intensity)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on profile(%d):intensity", profile->profile_no);
+                    return NULL;
+                }
+            }
+        }
+
+        //xintensity
+        if(!empty_string(profile->xintensity))
+        {
+            if(strcmp(default_profile.xintensity, profile->xintensity) != 0)
+            {
+                if(json_object_set(obj, "xintensity", json_string(profile->xintensity)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on profile(%d):xintensity", profile->profile_no);
+                    return NULL;
+                }
+            }
+        }
+            
+        //rawintensity
+        if(!empty_string(profile->rawintensity))
+        {
+            if(strcmp(default_profile.rawintensity, profile->rawintensity) != 0)
+            {
+                if(json_object_set(obj, "rawintensity", json_string(profile->rawintensity)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on profile(%d):rawintensity", profile->profile_no);
+                    return NULL;
+                }
+            }
+        }
+            
+        //thread_concurrency
+        if(!empty_string(profile->thread_concurrency))
+        {
+            if(strcmp(default_profile.thread_concurrency, profile->thread_concurrency) != 0)
+            {
+                if(json_object_set(obj, "thread_concurrency", json_string(profile->thread_concurrency)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on profile(%d):thread_concurrency", profile->profile_no);
+                    return NULL;
+                }
+            }
+        }
+
+#ifdef HAVE_ADL            
+        //gpu_engine
+        if(!empty_string(profile->gpu_engine))
+        {
+            if(strcmp(default_profile.gpu_engine, profile->gpu_engine) != 0)
+            {
+                if(json_object_set(obj, "gpu_engine", json_string(profile->gpu_engine)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on profile(%d):gpu_engine", profile->profile_no);
+                    return NULL;
+                }
+            }
+        }
+
+        //gpu_memclock
+        if(!empty_string(profile->gpu_memclock))
+        {
+            if(strcmp(default_profile.gpu_memclock, profile->gpu_memclock) != 0)
+            {
+                if(json_object_set(obj, "gpu_memclock", json_string(profile->gpu_memclock)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on profile(%d):gpu_memclock", profile->profile_no);
+                    return NULL;
+                }
+            }
+        }
+
+        //gpu_threads
+        if(!empty_string(profile->gpu_threads))
+        {
+            if(strcmp(default_profile.gpu_threads, profile->gpu_threads) != 0)
+            {
+                if(json_object_set(obj, "gpu_threads", json_string(profile->gpu_threads)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on profile(%d):gpu_threads", profile->profile_no);
+                    return NULL;
+                }
+            }
+        }
+
+        //gpu_fan
+        if(!empty_string(profile->gpu_fan))
+        {
+            if(strcmp(default_profile.gpu_fan, profile->gpu_fan) != 0)
+            {
+                if(json_object_set(obj, "gpu_fan", json_string(profile->gpu_fan)) == -1)
+                {
+                    set_last_json_error("json_object_set() failed on profile(%d):gpu_fan", profile->profile_no);
+                    return NULL;
+                }
+            }
+        }
+#endif
+        
+        //all done, add pool to array...
+        if(json_array_append_new(profile_array, obj) == -1)
+        {
+            set_last_json_error("json_array_append() failed on profile %d", profile->profile_no);
+            return NULL;
+        }
+    }
+    
+    return profile_array;
+}
+
+void write_config(const char *filename)
+{
+    json_t *config, *obj;
+    struct opt_table *opt;
+    char *p, *optname;
+    int i;
+    
+    if(!(config = json_object()))
+    {
+        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object() failed on root."); 
+        return;
+    }
+    
+    //build pools
+    if(!(obj = build_pool_json()))
+    {
+        applog(LOG_ERR, "Error: config_parser::write_config():\n %s.", last_json_error); 
+        return;
+    }
+    
+    //add pools to config
+    if(json_object_set(config, "pools", obj) == -1)
+    {
+        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set(pools) failed."); 
+        return;
+    }
+    
+    //build profiles
+    if(!(obj = build_profile_json()))
+    {
+        applog(LOG_ERR, "Error: config_parser::write_config():\n %s.", last_json_error); 
+        return;
+    }
+    
+    //add profiles to config
+    if(json_object_set(config, "profiles", obj) == -1)
+    {
+        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set(profiles) failed."); 
+        return;
+    }
+
+    //pool strategy
+    switch(pool_strategy)
+    {
+        case POOL_BALANCE:
+            if(json_object_set(config, "balance", json_true()) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on balance");
+                return;
+            }
+            break;
+        case POOL_LOADBALANCE:
+            if(json_object_set(config, "load-balance", json_true()) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on load-balance");
+                return;
+            }
+            break;
+        case POOL_ROUNDROBIN:
+            if(json_object_set(config, "round-robin", json_true()) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on round-robin");
+                return;
+            }
+            break;
+        case POOL_ROTATE:
+            if(json_object_set(config, "rotate", json_sprintf("%d", opt_rotate_period)) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on rotate");
+                return;
+            }
+            break;
+        //default failover only
+        default:
+            if(json_object_set(config, "failover-only", json_true()) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on failover-only");
+                return;
+            }
+            break;
+    }
+    
+    //if using a specific profile as default, set it
+    if(!empty_string(default_profile.name))
+    {
+        if(json_object_set(config, "default_profile", json_string(default_profile.name)) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on default_profile");
+            return;
+        }
+    }
+    //otherwise save default profile values
+    else
+    {
+        //save algorithm name
+        if(json_object_set(config, "algorithm", json_string(opt_algorithm->name)) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on algorithm");
+            return;
+        }
+        //TODO: add other options like nfactor etc...
+
+        //intensity
+        if(!empty_string(default_profile.intensity))
+        {
+            if(json_object_set(config, "intensity", json_string(default_profile.intensity)) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on intensity");
+                return;
+            }
+        }
+
+        //xintensity
+        if(!empty_string(default_profile.xintensity))
+        {
+            if(json_object_set(config, "xintensity", json_string(default_profile.xintensity)) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on xintensity");
+                return;
+            }
+        }
+            
+        //rawintensity
+        if(!empty_string(default_profile.rawintensity))
+        {
+            if(json_object_set(config, "rawintensity", json_string(default_profile.rawintensity)) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on rawintensity");
+                return;
+            }
+        }
+            
+        //thread_concurrency
+        if(!empty_string(default_profile.thread_concurrency))
+        {
+            if(json_object_set(config, "thread_concurrency", json_string(default_profile.thread_concurrency)) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on thread_concurrency");
+                return;
+            }
+        }
+
+#ifdef HAVE_ADL            
+        //gpu_engine
+        if(!empty_string(default_profile.gpu_engine))
+        {
+            if(json_object_set(config, "gpu_engine", json_string(default_profile.gpu_engine)) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu_engine");
+                return;
+            }
+        }
+
+        //gpu_memclock
+        if(!empty_string(default_profile.gpu_memclock))
+        {
+            if(json_object_set(config, "gpu_memclock", json_string(default_profile.gpu_memclock)) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu_memclock");
+                return;
+            }
+        }
+
+        //gpu_threads
+        if(!empty_string(default_profile.gpu_threads))
+        {
+            if(json_object_set(config, "gpu_threads", json_string(default_profile.gpu_threads)) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu_threads");
+                return;
+            }
+        }
+
+        //gpu_fan
+        if(!empty_string(default_profile.gpu_fan))
+        {
+            if(json_object_set(config, "gpu_fan", json_string(default_profile.gpu_fan)) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu_fan");
+                return;
+            }
+        }
+#endif
+    }
+
+    //devices
+    if(opt_devs_enabled) 
+    {
+        bool extra_devs = false;
+        obj = json_string("");
+
+        for(i = 0; i < MAX_DEVICES; i++) 
+        {
+            if(devices_enabled[i]) 
+            {
+                int startd = i;
+
+                if(extra_devs)
+                    obj = json_sprintf("%s%s", json_string_value(obj), ",");
+
+                while (i < MAX_DEVICES && devices_enabled[i + 1])
+                    ++i;
+                
+                obj = json_sprintf("%s%d", json_string_value(obj), startd);
+                if(i > startd)
+                    obj = json_sprintf("%s-%d", json_string_value(obj), i);
+            }
+        }
+        
+        if(json_object_set(config, "devices", obj) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on devices");
+            return;
+        }        
+    }
+    
+    //remove-disabled
+    if(opt_removedisabled)
+    {
+        if(json_object_set(config, "remove-disabled", json_true()) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on remove-disabled");
+            return;
+        }        
+        
+    }
+
+    //write gpu settings that aren't part of profiles -- only write if gpus are available
+    if(nDevs)
+    {
+    
+#ifdef HAVE_ADL
+        //temp-cutoff
+        for(i = 0;i < nDevs; i++)
+            obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), gpus[i].cutofftemp);
+            
+        if(json_object_set(config, "temp-cutoff", obj) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on temp-cutoff");
+            return;
+        }
+
+        //temp-overheat
+        for(i = 0;i < nDevs; i++)
+            obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), gpus[i].adl.overtemp);
+            
+        if(json_object_set(config, "temp-overheat", obj) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on temp-overheat");
+            return;
+        }
+
+        //temp-target
+        for(i = 0;i < nDevs; i++)
+            obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), gpus[i].adl.targettemp);
+            
+        if(json_object_set(config, "temp-target", obj) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on temp-target");
+            return;
+        }
+        
+        //reorder gpus
+        if(opt_reorder)
+        {
+            if(json_object_set(config, "gpu-reorder", json_true()) == -1)
+            {
+                applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-reorder");
+                return;
+            }
+        }
+#endif
+
+        //lookup-gap
+        for(i = 0;i < nDevs; i++)
+            obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), (int)gpus[i].opt_lg);
+            
+        if(json_object_set(config, "lookup-gap", obj) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on lookup-gap");
+            return;
+        }
+        
+        //TODO: move the below into profiles/algorithm switching
+        //worksize
+        for(i = 0;i < nDevs; i++)
+            obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), (int)gpus[i].work_size);
+            
+        if(json_object_set(config, "worksize", obj) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on worksize");
+            return;
+        }
+        
+        //shaders
+        for(i = 0;i < nDevs; i++)
+            obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), (int)gpus[i].shaders);
+            
+        if(json_object_set(config, "shaders", obj) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on shaders");
+            return;
+        }
+
+#ifdef HAVE_ADL
+
+        //gpu-memdiff
+        for(i = 0;i < nDevs; i++)
+            obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), (int)gpus[i].gpu_memdiff);
+            
+        if(json_object_set(config, "gpu-memdiff", obj) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-memdiff");
+            return;
+        }
+
+        //gpu-powertune
+        for(i = 0;i < nDevs; i++)
+            obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), gpus[i].gpu_powertune);
+            
+        if(json_object_set(config, "gpu-powertune", obj) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-powertune");
+            return;
+        }
+
+        //gpu-vdcc
+        for(i = 0;i < nDevs; i++)
+            obj = json_sprintf("%s%s%1.3f", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), gpus[i].gpu_vddc);
+            
+        if(json_object_set(config, "gpu-vddc", obj) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-vddc");
+            return;
+        }
+#endif
+    }
+
+    //add other misc options
+    //shares
+    if(json_object_set(config, "shares", json_sprintf("%d", opt_shares)) == -1)
+    {
+        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on shares");
+        return;
+    }
+    
+#if defined(unix) || defined(__APPLE__)
+    //monitor
+    if(opt_stderr_cmd && *opt_stderr_cmd)
+    {
+        if(json_object_set(config, "monitor", json_string(opt_stderr_cmd)) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on monitor");
+            return;
+        }
+    }
+#endif // defined(unix)
+
+    //kernel path
+    if(opt_kernel_path && *opt_kernel_path) 
+    {
+        //strip end /
+        char *kpath = strdup(opt_kernel_path);
+        if(kpath[strlen(kpath)-1] == '/')
+            kpath[strlen(kpath)-1] = 0;
+        
+        if(json_object_set(config, "kernel-path", json_string(kpath)) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on kernel-path");
+            return;
+        }
+    }
+    
+    //sched-time
+    if(schedstart.enable)
+    {
+        if(json_object_set(config, "sched-time", json_sprintf("%d:%d", schedstart.tm.tm_hour, schedstart.tm.tm_min)) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on sched-time");
+            return;
+        }
+    }
+    
+    //stop-time
+    if(schedstop.enable)
+    {
+        if(json_object_set(config, "stop-time", json_sprintf("%d:%d", schedstop.tm.tm_hour, schedstop.tm.tm_min)) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on stop-time");
+            return;
+        }
+    }
+    
+    //socks-proxy
+    if(opt_socks_proxy && *opt_socks_proxy)
+    {
+        if(json_object_set(config, "socks-proxy", json_string(opt_socks_proxy)) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on socks-proxy");
+            return;
+        }
+    }
+  
+  
+    //api stuff
+    //api-allow
+    if(opt_api_allow)
+    {
+        if(json_object_set(config, "api-allow", json_string(opt_api_allow)) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on api-allow");
+            return;
+        }
+    }
+    
+    //api-mcast-addr
+    if(strcmp(opt_api_mcast_addr, API_MCAST_ADDR) != 0)
+    {
+        if(json_object_set(config, "api-mcast-addr", json_string(opt_api_mcast_addr)) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on api-mcast-addr");
+            return;
+        }
+    }
+
+    //api-mcast-code
+    if(strcmp(opt_api_mcast_code, API_MCAST_CODE) != 0)
+    {
+        if(json_object_set(config, "api-mcast-code", json_string(opt_api_mcast_code)) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on api-mcast-code");
+            return;
+        }
+    }
+
+    //api-mcast-des
+    if(*opt_api_mcast_des)
+    {
+        if(json_object_set(config, "api-mcast-des", json_string(opt_api_mcast_des)) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on api-mcast-des");
+            return;
+        }
+    }
+
+    //api-description
+    if(strcmp(opt_api_description, PACKAGE_STRING) != 0)
+    {
+        if(json_object_set(config, "api-description", json_string(opt_api_description)) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on api-description");
+            return;
+        }
+    }
+    
+    //api-groups
+    if(opt_api_groups)
+    {
+        if(json_object_set(config, "api-groups", json_string(opt_api_groups)) == -1)
+        {
+            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on api-groups");
+            return;
+        }
+    }
+
+    //add other misc bool/int options
+    for(opt = opt_config_table; opt->type != OPT_END; opt++) 
+    {
+        optname = strdup(opt->names);
+        
+        //ignore --pool-* and --profile-* options
+        if(!strstr(optname, "--pool-") && !strstr(optname, "--profile-"))
+        {
+            //get first available long form option name
+            for(p = strtok(optname, "|"); p; p = strtok(NULL, "|")) 
+            {
+                //skip short options
+                if(p[1] != '-')
+                    continue;
+
+                //type bool
+                if (opt->type & OPT_NOARG &&
+                    ((void *)opt->cb == (void *)opt_set_bool || (void *)opt->cb == (void *)opt_set_invbool) &&
+                    (*(bool *)opt->u.arg == ((void *)opt->cb == (void *)opt_set_bool)))
+                {
+                    if(json_object_set(config, p+2, json_true()) == -1)
+                    {
+                        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on %s.", p+2); 
+                        return;
+                    }
+                    break;  //exit for loop... so we don't enter a duplicate value if an option has multiple names
+                }
+                //numeric types
+                else if (opt->type & OPT_HASARG &&
+                    ((void *)opt->cb_arg == (void *)set_int_0_to_9999 ||
+                    (void *)opt->cb_arg == (void *)set_int_1_to_65535 ||
+                    (void *)opt->cb_arg == (void *)set_int_0_to_10 ||
+                    (void *)opt->cb_arg == (void *)set_int_1_to_10) && opt->desc != opt_hidden)
+                {
+                    if(json_object_set(config, p+2, json_sprintf("%d", *(int *)opt->u.arg)) == -1)
+                    {
+                        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on %s.", p+2); 
+                        return;
+                    }
+                    break;  //exit for loop... so we don't enter a duplicate value if an option has multiple names
+                }
+            }
+        }
+    } 
+  
+    json_dump_file(config, filename, JSON_PRESERVE_ORDER|JSON_INDENT(4));
 }

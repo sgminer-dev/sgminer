@@ -31,6 +31,8 @@
 #include "util.h"
 #include "pool.h"
 
+#include "config_parser.h"
+
 // BUFSIZ varies on Windows and Linux
 #define TMPBUFSIZ 8192
 
@@ -2735,7 +2737,7 @@ void dosave(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, b
     param = filename;
   }
 
-  fcfg = fopen(param, "w");
+  /*fcfg = fopen(param, "w");
   if (!fcfg) {
     ptr = escape_string(param, isjson);
     message(io_data, MSG_BADFN, 0, ptr, isjson);
@@ -2743,10 +2745,10 @@ void dosave(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, b
       free(ptr);
     ptr = NULL;
     return;
-  }
+  }*/
 
-  write_config(fcfg);
-  fclose(fcfg);
+  write_config(param);
+  //fclose(fcfg);
 
   ptr = escape_string(param, isjson);
   message(io_data, MSG_SAVED, 0, ptr, isjson);
