@@ -11,6 +11,9 @@
 #ifndef empty_string
   #define empty_string(str) ((str && str[0] != '\0')?0:1)
 #endif
+#ifndef safe_cmp
+  #define safe_cmp(val1, val2) (((val1 && strcmp(val1, val2) != 0) || empty_string(val1))?1:0)
+#endif
 
 //helper function to get a gpu option value
 #ifndef gpu_opt
