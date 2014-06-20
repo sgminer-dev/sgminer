@@ -265,30 +265,34 @@ char *set_gpu_engine(const char *_arg)
   char *arg = (char *)alloca(strlen(_arg) + 1);
   strcpy(arg, _arg);
 
-  nextptr = strtok(arg, ",");
-  if (nextptr == NULL)
+  if(!(nextptr = strtok(arg, ",")))
     return "Invalid parameters for set gpu engine";
-  get_intrange(nextptr, &val1, &val2);
-  if (val1 < 0 || val1 > 9999 || val2 < 0 || val2 > 9999)
-    return "Invalid value passed to set_gpu_engine";
-
-  gpus[device].min_engine = val1;
-  gpus[device].gpu_engine = val2;
-  device++;
-
-  while ((nextptr = strtok(NULL, ",")) != NULL) {
+    
+  do {
     get_intrange(nextptr, &val1, &val2);
     if (val1 < 0 || val1 > 9999 || val2 < 0 || val2 > 9999)
       return "Invalid value passed to set_gpu_engine";
+
     gpus[device].min_engine = val1;
     gpus[device].gpu_engine = val2;
+  
+    //also set adl settings otherwise range will never properly be applied
+    //since min_engine/gpu_engine are only called during init_adl() at startup
+    gpus[device].adl.minspeed = val1 * 100;
+    gpus[device].adl.maxspeed = val2 * 100;
+  
     device++;
-  }
+  } while ((nextptr = strtok(NULL, ",")) != NULL);
 
+  //if only 1 range passed, apply to all gpus
   if (device == 1) {
     for (i = 1; i < MAX_GPUDEVICES; i++) {
       gpus[i].min_engine = gpus[0].min_engine;
       gpus[i].gpu_engine = gpus[0].gpu_engine;
+      
+      //set adl values
+      gpus[i].adl.minspeed = val1 * 100;
+      gpus[i].adl.maxspeed = val2 * 100;
     }
   }
 
