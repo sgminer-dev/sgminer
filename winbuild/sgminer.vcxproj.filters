@@ -212,6 +212,9 @@
     <ClCompile Include="..\algorithm\twecoin.c">
       <Filter>Source Files\algorithm</Filter>
     </ClCompile>
+    <ClCompile Include="..\config_parser.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\adl.h">
@@ -378,6 +381,12 @@
     </ClInclude>
     <ClInclude Include="..\algorithm\twecoin.h">
       <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\api.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\config_parser.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

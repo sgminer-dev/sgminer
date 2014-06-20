@@ -273,6 +273,7 @@
     <ClCompile Include="..\compat\jansson-2.5\src\utf.c" />
     <ClCompile Include="..\compat\jansson-2.5\src\value.c" />
     <ClCompile Include="..\algorithm\darkcoin.c" />
+    <ClCompile Include="..\config_parser.c" />
     <ClCompile Include="..\driver-opencl.c" />
     <ClCompile Include="..\findnonce.c" />
     <ClCompile Include="..\algorithm\fuguecoin.c" />
@@ -318,6 +319,7 @@
     <ClInclude Include="..\adl.h" />
     <ClInclude Include="..\algorithm.h" />
     <ClInclude Include="..\algorithm\animecoin.h" />
+    <ClInclude Include="..\api.h" />
     <ClInclude Include="..\arg-nonnull.h" />
     <ClInclude Include="..\bench_block.h" />
     <ClInclude Include="..\c++defs.h" />
@@ -328,6 +330,7 @@
     <ClInclude Include="..\compat\jansson-2.5\src\strbuffer.h" />
     <ClInclude Include="..\compat\jansson-2.5\src\utf.h" />
     <ClInclude Include="..\algorithm\darkcoin.h" />
+    <ClInclude Include="..\config_parser.h" />
     <ClInclude Include="..\driver-opencl.h" />
     <ClInclude Include="..\elist.h" />
     <ClInclude Include="..\findnonce.h" />
