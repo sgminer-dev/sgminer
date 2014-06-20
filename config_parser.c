@@ -653,35 +653,44 @@ void load_default_config(void)
  * Startup functions
  * *****************************************/
 
-//assign default settings from default profile if set
+// assign default settings from default profile if set
 void load_default_profile()
 {
   struct profile *profile;
 
-  //if a default profile name is set
-  if(!empty_string(default_profile.name))
+  if(empty_string(default_profile.name))
   {
-    //find profile and copy settings
-    if((profile = get_profile(default_profile.name)))
-    {
-      default_profile.algorithm = profile->algorithm;
-      default_profile.devices = profile->devices;
-      default_profile.lookup_gap = profile->lookup_gap;
-      default_profile.intensity = profile->intensity;
-      default_profile.xintensity = profile->xintensity;
-      default_profile.rawintensity = profile->rawintensity;
-      default_profile.thread_concurrency = profile->thread_concurrency;
-#ifdef HAVE_ADL
-      default_profile.gpu_engine = profile->gpu_engine;
-      default_profile.gpu_memclock = profile->gpu_memclock;
-      default_profile.gpu_threads = profile->gpu_threads;
-      default_profile.gpu_fan = profile->gpu_fan;
-      default_profile.gpu_powertune = profile->gpu_powertune;
-      default_profile.gpu_vddc = profile->gpu_vddc;
-#endif
-      default_profile.shaders = profile->shaders;
-      default_profile.worksize = profile->worksize;
+    applog(LOG_WARNING, "Default profile name not set.");
+    return;
+  }
+  else
+  {
+    // find profile ...
+    profile = get_profile(default_profile.name);
+    if (!profile) {
+      applog(LOG_WARNING, "Could not load default profile %s",
+	     default_profile.name);
+      return;
     }
+
+    // ... and copy settings
+    default_profile.algorithm = profile->algorithm;
+    default_profile.devices = profile->devices;
+    default_profile.lookup_gap = profile->lookup_gap;
+    default_profile.intensity = profile->intensity;
+    default_profile.xintensity = profile->xintensity;
+    default_profile.rawintensity = profile->rawintensity;
+    default_profile.thread_concurrency = profile->thread_concurrency;
+#ifdef HAVE_ADL
+    default_profile.gpu_engine = profile->gpu_engine;
+    default_profile.gpu_memclock = profile->gpu_memclock;
+    default_profile.gpu_threads = profile->gpu_threads;
+    default_profile.gpu_fan = profile->gpu_fan;
+    default_profile.gpu_powertune = profile->gpu_powertune;
+    default_profile.gpu_vddc = profile->gpu_vddc;
+#endif
+    default_profile.shaders = profile->shaders;
+    default_profile.worksize = profile->worksize;
   }
 }
 
