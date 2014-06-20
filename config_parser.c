@@ -761,91 +761,49 @@ void apply_pool_profile(struct pool *pool)
       pool->algorithm = profile->algorithm;
       applog(LOG_DEBUG, "Pool %i Algorithm set to \"%s\"", pool->pool_no, pool->algorithm.name);
 
-      if(!empty_string(profile->devices))
-      {
-        pool->devices = profile->devices;
-        applog(LOG_DEBUG, "Pool %i devices set to \"%s\"", pool->pool_no, pool->devices);
-      }
+      pool->devices = profile->devices;
+      applog(LOG_DEBUG, "Pool %i devices set to \"%s\"", pool->pool_no, pool->devices);
 
-      if(!empty_string(profile->lookup_gap))
-      {
-        pool->lookup_gap = profile->lookup_gap;
-        applog(LOG_DEBUG, "Pool %i lookup gap set to \"%s\"", pool->pool_no, pool->lookup_gap);
-      }
+      pool->lookup_gap = profile->lookup_gap;
+      applog(LOG_DEBUG, "Pool %i lookup gap set to \"%s\"", pool->pool_no, pool->lookup_gap);
 
-      if(!empty_string(profile->intensity))
-      {
-        pool->intensity = profile->intensity;
-        applog(LOG_DEBUG, "Pool %i Intensity set to \"%s\"", pool->pool_no, pool->intensity);
-      }
+      pool->intensity = profile->intensity;
+      applog(LOG_DEBUG, "Pool %i Intensity set to \"%s\"", pool->pool_no, pool->intensity);
 
-      if(!empty_string(profile->xintensity))
-      {
-        pool->xintensity = profile->xintensity;
-        applog(LOG_DEBUG, "Pool %i XIntensity set to \"%s\"", pool->pool_no, pool->xintensity);
-      }
+      pool->xintensity = profile->xintensity;
+      applog(LOG_DEBUG, "Pool %i XIntensity set to \"%s\"", pool->pool_no, pool->xintensity);
 
-      if(!empty_string(profile->rawintensity))
-      {
-        pool->rawintensity = profile->rawintensity;
-        applog(LOG_DEBUG, "Pool %i Raw Intensity set to \"%s\"", pool->pool_no, pool->rawintensity);
-      }
+      pool->rawintensity = profile->rawintensity;
+      applog(LOG_DEBUG, "Pool %i Raw Intensity set to \"%s\"", pool->pool_no, pool->rawintensity);
 
-      if(!empty_string(profile->thread_concurrency))
-      {
-        pool->thread_concurrency = profile->thread_concurrency;
-        applog(LOG_DEBUG, "Pool %i Thread Concurrency set to \"%s\"", pool->pool_no, pool->thread_concurrency);
-      }
+      pool->thread_concurrency = profile->thread_concurrency;
+      applog(LOG_DEBUG, "Pool %i Thread Concurrency set to \"%s\"", pool->pool_no, pool->thread_concurrency);
 
 #ifdef HAVE_ADL
-      if(!empty_string(profile->gpu_engine))
-      {
-        pool->gpu_engine = profile->gpu_engine;
-        applog(LOG_DEBUG, "Pool %i GPU Clock set to \"%s\"", pool->pool_no, pool->gpu_engine);
-      }
+      pool->gpu_engine = profile->gpu_engine;
+      applog(LOG_DEBUG, "Pool %i GPU Clock set to \"%s\"", pool->pool_no, pool->gpu_engine);
 
-      if(!empty_string(profile->gpu_memclock))
-      {
-        pool->gpu_memclock = profile->gpu_memclock;
-        applog(LOG_DEBUG, "Pool %i GPU Memory clock set to \"%s\"", pool->pool_no, pool->gpu_memclock);
-      }
+      pool->gpu_memclock = profile->gpu_memclock;
+      applog(LOG_DEBUG, "Pool %i GPU Memory clock set to \"%s\"", pool->pool_no, pool->gpu_memclock);
 
-      if(!empty_string(profile->gpu_threads))
-      {
-        pool->gpu_threads = profile->gpu_threads;
-        applog(LOG_DEBUG, "Pool %i GPU Threads set to \"%s\"", pool->pool_no, pool->gpu_threads);
-      }
+      pool->gpu_threads = profile->gpu_threads;
+      applog(LOG_DEBUG, "Pool %i GPU Threads set to \"%s\"", pool->pool_no, pool->gpu_threads);
 
-      if(!empty_string(profile->gpu_fan))
-      {
-        pool->gpu_fan = profile->gpu_fan;
-        applog(LOG_DEBUG, "Pool %i GPU Fan set to \"%s\"", pool->pool_no, pool->gpu_fan);
-      }
+      pool->gpu_fan = profile->gpu_fan;
+      applog(LOG_DEBUG, "Pool %i GPU Fan set to \"%s\"", pool->pool_no, pool->gpu_fan);
 
-      if(!empty_string(profile->gpu_powertune))
-      {
-        pool->gpu_powertune = profile->gpu_powertune;
-        applog(LOG_DEBUG, "Pool %i GPU Powertune set to \"%s\"", pool->pool_no, pool->gpu_powertune);
-      }
+      pool->gpu_powertune = profile->gpu_powertune;
+      applog(LOG_DEBUG, "Pool %i GPU Powertune set to \"%s\"", pool->pool_no, pool->gpu_powertune);
 
-      if(!empty_string(profile->gpu_vddc))
-      {
-        pool->gpu_vddc = profile->gpu_vddc;
-        applog(LOG_DEBUG, "Pool %i GPU Vddc set to \"%s\"", pool->pool_no, pool->gpu_vddc);
-      }
+      pool->gpu_vddc = profile->gpu_vddc;
+      applog(LOG_DEBUG, "Pool %i GPU Vddc set to \"%s\"", pool->pool_no, pool->gpu_vddc);
 #endif
 
-      if(!empty_string(profile->shaders))
-      {
-        pool->shaders = profile->shaders;
-        applog(LOG_DEBUG, "Pool %i Shaders set to \"%s\"", pool->pool_no, pool->shaders);
-      }
+      pool->shaders = profile->shaders;
+      applog(LOG_DEBUG, "Pool %i Shaders set to \"%s\"", pool->pool_no, pool->shaders);
 
-      if(!empty_string(profile->worksize))
-      {
-        pool->worksize = profile->worksize;
-        applog(LOG_DEBUG, "Pool %i Worksize set to \"%s\"", pool->pool_no, pool->worksize);
-      }
+      pool->worksize = profile->worksize;
+      applog(LOG_DEBUG, "Pool %i Worksize set to \"%s\"", pool->pool_no, pool->worksize);
     }
     else
     {
@@ -1746,7 +1704,7 @@ void write_config(const char *filename)
     }
   } 
   
-  json_dump_file(config, filename, JSON_PRESERVE_ORDER|JSON_INDENT(4));
+  json_dump_file(config, filename, JSON_PRESERVE_ORDER|JSON_INDENT(2));
 }
 
 /*********************************************
@@ -1806,22 +1764,22 @@ void api_profile_list(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __ma
     root = api_add_int(root, "PROFILE", &i, false);
     root = api_add_escape(root, "Name", profile->name, true);
     root = api_add_bool(root, "IsDefault", &b, false);
-    root = api_add_escape(root, "Algorithm", (char *)profile->algorithm.name, true);
+    root = api_add_escape(root, "Algorithm", isnull((char *)profile->algorithm.name, ""), true);
     root = api_add_int(root, "NFactor", (int *)&profile->algorithm.nfactor, false);
-    root = api_add_escape(root, "LookupGap", (char *)profile->lookup_gap, true);
-    root = api_add_escape(root, "Devices", (char *)profile->devices, true);
-    root = api_add_escape(root, "Intensity", (char *)profile->intensity, true);
-    root = api_add_escape(root, "XIntensity", (char *)profile->xintensity, true);
-    root = api_add_escape(root, "RawIntensity", (char *)profile->rawintensity, true);
-    root = api_add_escape(root, "Gpu Engine", (char *)profile->gpu_engine, true);
-    root = api_add_escape(root, "Gpu MemClock", (char *)profile->gpu_memclock, true);
-    root = api_add_escape(root, "Gpu Threads", (char *)profile->gpu_threads, true);
-    root = api_add_escape(root, "Gpu Fan%", (char *)profile->gpu_fan, true);
-    root = api_add_escape(root, "Gpu Powertune%", (char *)profile->gpu_powertune, true);
-    root = api_add_escape(root, "Gpu Vddc", (char *)profile->gpu_vddc, true);
-    root = api_add_escape(root, "Shaders", (char *)profile->shaders, true);
-    root = api_add_escape(root, "Thread Concurrency", (char *)profile->thread_concurrency, true);
-    root = api_add_escape(root, "Worksize", (char *)profile->worksize, true);
+    root = api_add_escape(root, "LookupGap", isnull((char *)profile->lookup_gap, ""), true);
+    root = api_add_escape(root, "Devices", isnull((char *)profile->devices, ""), true);
+    root = api_add_escape(root, "Intensity", isnull((char *)profile->intensity, ""), true);
+    root = api_add_escape(root, "XIntensity", isnull((char *)profile->xintensity, ""), true);
+    root = api_add_escape(root, "RawIntensity", isnull((char *)profile->rawintensity, ""), true);
+    root = api_add_escape(root, "Gpu Engine", isnull((char *)profile->gpu_engine, ""), true);
+    root = api_add_escape(root, "Gpu MemClock", isnull((char *)profile->gpu_memclock, ""), true);
+    root = api_add_escape(root, "Gpu Threads", isnull((char *)profile->gpu_threads, ""), true);
+    root = api_add_escape(root, "Gpu Fan%", isnull((char *)profile->gpu_fan, ""), true);
+    root = api_add_escape(root, "Gpu Powertune%", isnull((char *)profile->gpu_powertune, ""), true);
+    root = api_add_escape(root, "Gpu Vddc", isnull((char *)profile->gpu_vddc, ""), true);
+    root = api_add_escape(root, "Shaders", isnull((char *)profile->shaders, ""), true);
+    root = api_add_escape(root, "Thread Concurrency", isnull((char *)profile->thread_concurrency, ""), true);
+    root = api_add_escape(root, "Worksize", isnull((char *)profile->worksize, ""), true);
     
     root = print_data(root, buf, isjson, isjson && (i > 0));
     io_add(io_data, buf);
@@ -1994,4 +1952,78 @@ void api_profile_remove(struct io_data *io_data, __maybe_unused SOCKETTYPE c, ch
   message(io_data, MSG_REMPROFILE, profile->profile_no, profile->name, isjson);
   
   free(profile);
+}
+
+//should move to pool.c with the other pool stuff...
+void api_pool_profile(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
+{
+  struct profile *profile;
+  struct pool *pool;
+  char *p;
+  int i;
+
+  //no pool, nothing to change
+  if (total_pools == 0) 
+  {
+    message(io_data, MSG_NOPOOL, 0, NULL, isjson);
+    return;
+  }
+
+  //no profiles, nothing to change
+  if (total_profiles == 0) 
+  {
+    message(io_data, MSG_NOPROFILE, 0, NULL, isjson);
+    return;
+  }
+
+  //check if parameters were passed
+  if (param == NULL || *param == '\0') 
+  {
+    message(io_data, MSG_MISPID, 0, NULL, isjson);
+    return;
+  }
+
+  //get pool number in parameter 1
+  if(!(p = strtok(param, ",")))
+  {
+    message(io_data, MSG_MISPID, 0, NULL, isjson);
+    return;
+  }
+  
+  //check valid pool id
+  i = atoi(p);
+  
+  if(i < 0 || i >= total_pools)
+  {
+    message(io_data, MSG_INVPID, i, NULL, isjson);
+    return;
+  }
+  
+  //get pool
+  pool = pools[i];
+
+  //get profile name in parameter 2
+  if(!(p = strtok(NULL, ",")))
+  {
+    message(io_data, MSG_MISPRID, 0, NULL, isjson);
+    return;
+  }
+  
+  //see if the profile exists
+  if(!(profile = get_profile(p)))
+  {
+    message(io_data, MSG_PRNOEXIST, 0, p, isjson);
+    return;
+  }
+
+  //set profile
+  pool->profile = strdup(profile->name);
+  //apply settings
+  apply_pool_profile(pool);
+
+  //if current pool restart it
+  if (pool == current_pool())
+    switch_pools(NULL);
+
+  message(io_data, MSG_CHPOOLPR, pool->pool_no, profile->name, isjson);
 }

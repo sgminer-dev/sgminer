@@ -14,6 +14,9 @@
 #ifndef safe_cmp
   #define safe_cmp(val1, val2) (((val1 && strcmp(val1, val2) != 0) || empty_string(val1))?1:0)
 #endif
+#ifndef isnull
+  #define isnull(str, default_str) ((str == NULL)?default_str:str)
+#endif
 
 //helper function to get a gpu option value
 #ifndef gpu_opt
@@ -114,5 +117,6 @@ extern void write_config(const char *filename);
 extern void api_profile_list(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group);
 extern void api_profile_add(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group);
 extern void api_profile_remove(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group);
+extern void api_pool_profile(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group);
 
 #endif // CONFIG_PARSER_H

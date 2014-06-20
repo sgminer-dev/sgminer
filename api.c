@@ -154,6 +154,8 @@ struct CODES codes[] = {
  { SEVERITY_ERR,   MSG_PRINUSE,  PARAM_STR, "Profile '%s' is used by a pool" },
  { SEVERITY_SUCC,  MSG_REMPROFILE, PARAM_BOTH, "Removed pool %d:'%s'" },
 
+ { SEVERITY_SUCC,  MSG_CHPOOLPR, PARAM_BOTH, "Changed pool %d to profile '%s'" },
+
  { SEVERITY_SUCC,  MSG_BYE,   PARAM_STR,  "%s" },
  { SEVERITY_FAIL, 0, (enum code_parameters)0, NULL }
 };
@@ -2849,6 +2851,7 @@ struct CMDS {
   { "enablepool",   enablepool, true, false },
   { "disablepool",  disablepool,  true, false },
   { "removepool",   removepool, true, false },
+  { "changepoolprofile",   api_pool_profile, true, false },
   { "addprofile",    api_profile_add,  true, false },
   { "removeprofile",    api_profile_remove,  true, false },
   { "gpuintensity",       gpuintensity,   true, false },

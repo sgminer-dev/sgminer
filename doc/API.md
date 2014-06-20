@@ -242,6 +242,12 @@ The list of requests - a (*) means it requires privileged access - and replies:
                               the interval INT must be specified as a number
                               between 0 and 9999 seconds. INT is not required
                               otherwise.
+
+ changepoolprofile|N,NAME (*)
+               none           There is no reply section just the STATUS section
+                              stating the results of changing the profile of
+                              pool N to profile NAME.
+
 addprofile|NAME:ALGORITHM:NFACTOR:LOOKUPGAP:DEVICE:INTENSITY:XINTENSITY:RAWINTENSITY:GPUENGINE:GPUMEMCLOCK
             :GPUTHREADS:GPUFAN:GPUPOWERTUNE:GPUVDDC:SHADERS:THREADCONCURRENCY:WORKSIZE (*)
             none              There is no reply section just the STATUS section

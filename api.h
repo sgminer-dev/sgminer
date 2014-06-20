@@ -238,6 +238,8 @@ struct WSAERRORS {
 #define MSG_PRINUSE 137
 #define MSG_REMPROFILE 138
 
+#define MSG_CHPOOLPR 139
+
 enum code_severity {
   SEVERITY_ERR,
   SEVERITY_WARN,
