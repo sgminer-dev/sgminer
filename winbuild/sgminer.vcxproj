@@ -257,6 +257,7 @@
     <ClCompile Include="..\adl.c" />
     <ClCompile Include="..\algorithm.c" />
     <ClCompile Include="..\algorithm\animecoin.c" />
+    <ClCompile Include="..\algorithm\talkcoin.c" />
     <ClCompile Include="..\api.c" />
     <ClCompile Include="..\ccan\opt\helpers.c" />
     <ClCompile Include="..\ccan\opt\opt.c" />
@@ -319,6 +320,7 @@
     <ClInclude Include="..\adl.h" />
     <ClInclude Include="..\algorithm.h" />
     <ClInclude Include="..\algorithm\animecoin.h" />
+    <ClInclude Include="..\algorithm\talkcoin.h" />
     <ClInclude Include="..\api.h" />
     <ClInclude Include="..\arg-nonnull.h" />
     <ClInclude Include="..\bench_block.h" />

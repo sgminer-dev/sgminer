@@ -66,7 +66,7 @@ typedef struct {
     sph_fugue512_context    fugue1;
 } Xhash_context_holder;
 
-Xhash_context_holder base_contexts;
+static Xhash_context_holder base_contexts;
 
 
 void init_Mhash_contexts()
