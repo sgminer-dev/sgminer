@@ -4,18 +4,214 @@
 
 ### Table of contents
 
-* [CLI Only options](#cli-only-options)
-* [Config-file and CLI options](#config-file-and-cli-options)
+* [Configuration Settings Order](#configuration-settings-order)
+* [Globals and the Default Profile](#globals-and-the-default-profile)
 * [Working with Profiles and Pool Specific Settings](#working-with-profiles-and-pool-specific-settings)
 * [Includes](#includes)
+* [CLI Only options](#cli-only-options)
+* [Config-file and CLI options](#config-file-and-cli-options)
 
-### Configuration Settings Order
+---
+
+## Configuration Settings Order
 
 The configuration settings in sgminer are applied in this order:
 
 ```
-Command Line > Config File Globals/Default Profile > Pool Profile > Pool Specific
+Command Line > Config File Globals > Default Profile > Pool's Profile > Pool-Specific Settings
 ```
+
+[Top](#configuration-and-command-line-options)
+
+## Globals and the Default Profile
+
+The default profile contains the settings that are to be used as defaults throughout sgminer. Typically, unless you specify `default-profile`, those settings will be read from the global level of the config file or use sgminer's core defaults if nothing is at the global level. The pool or profile level settings will override the default profile's settings.
+
+The example below has `algorithm` set at the global level. Anytime a pool or profile doesn't specify `algorithm`, "darkcoin-mod" will be used.
+```
+{
+  "pools": [...],
+  "algorithm":"darkcoin-mod",
+  "intensity":"19",
+  ...
+```
+
+In the example below, `algorithm` is not specified at the global level and no profile is used as `default-profile`. This means that the default profile's `algorithm` will be set to sgminer's core default: "scrypt". 
+```
+{
+  "pools": [
+    {
+      "url":"poolA:8334",
+      ...
+      "profile":"A"
+    },
+    {
+      "url":"poolB:8334",
+      ...
+    }
+  ],
+  "profiles":[
+    {
+      "name":"A",
+      "algorithm":"darkcoin-mod"
+    }
+  ],
+  "intensity":"19"
+}
+```
+When using the first pool, Profile A will be applied, so `algorithm` will be set to "darkcoin-mod". When using the second pool, the default profile is applied, and `algorithm` will be set to "scrypt". `intensity`, being set at the global level, will be the default profile's `intensity` value. `intensity` will be set to "19" for both pools, because it is never specified in the pool or profile settings.
+
+When `default-profile` is specified, any settings contained in that profile will override globals. For example:
+```
+  "pools": [
+    {
+      "url":"poolA:8334",
+      ...
+      "profile":"A"
+    },
+    {
+      "url":"poolB:8334",
+      ...
+    }
+  ],
+  "profiles":[
+    {
+      "name":"A",
+      "algorithm":"darkcoin-mod"
+    },
+    {
+      "name":"B",
+      "algorithm":"ckolivas"
+    }
+  ],
+  "default-profile":"B",
+  "algorithm":"marucoin-mod",
+  "intensity":"19"
+}
+```
+Profile B will be used to set the default profile's settings, which means `algorithm` will be set to "ckolivas" and the global value of "marucoin-mod" will be discarded. The first pool will use Profile A's "darkcoin-mod" and the second pool will use the default profile's "ckolivas".
+
+See the [configuration settings order](#configuration-settings-order) for more information about the order in which settings are applied.
+
+[Top](#configuration-and-command-line-options)
+
+## Working with Profiles and Pool Specific Settings
+
+Profiles have been added assist in specifying different GPU and/or algorithm settings that could be (re-)used by one or more pools. Pool-specific settings will override profile settings, and profile settings will override the default profile/globals. 
+
+See the [configuration settings order](#configuration-settings-order) for more information about the order in which settings are applied.
+
+```
+  "pools": [
+    {
+      "url":"poolA:8334",
+      ...
+      "profile":"A"
+    },
+    {
+      "url":"poolB:8334",
+      ...
+      "profile":"A",
+      "gpu-engine":"1000"
+    },
+    {
+      "url":"poolC:8334",
+      ...
+      "intensity":"13"
+    }
+  ],
+  "profiles":[
+    {
+      "name":"A",
+      "algorithm":"darkcoin-mod",
+      "gpu-engine":"1050"
+    },
+    {
+      "name":"B",
+      "algorithm":"ckolivas"
+    }
+  ],
+  "default-profile":"B",
+  "intensity":"19",
+  "gpu-engine":"1100"
+}
+```
+In the example above, when using the second pool, Profile A is applied, which sets the `algorithm` to "darkcoin-mod", but since a `gpu-engine` of "1000" is specified in the pool, the value of "1050" is discarded. 
+
+A similar situation occurs in the third pool. No profile is specified so the default `algorithm` "ckolivas" is set along with the default `gpu-engine` of "1100". Because `intensity` is set to "13" in the pool, the default profile's value of "19" is discarded.
+
+The end result of the above would look like this:
+```
+  "pools": [
+    {
+      "url":"poolA:8334",
+      ...
+      "algorithm":"darkcoin-mod",
+      "intensity":"19",
+      "gpu-engine":"1050"
+    },
+    {
+      "url":"poolB:8334",
+      ...
+      "algorithm":"darkcoin-mod",
+      "intensity":"19",
+      "gpu-engine":"1000"
+    },
+    {
+      "url":"poolC:8334",
+      ...
+      "algorithm":"ckolivas"
+      "intensity":"13"
+      "gpu-engine":"1100"
+    }
+  ]
+}
+```
+
+
+[Top](#configuration-and-command-line-options)
+
+## Includes
+
+`Include` is a special keyword only available in the configuration file. You can include json-formatted files at any level of the configuration parsing. The values read in the included 
+files are applied to the current object being parsed.
+
+```
+/etc/pool.ip.credentials:
+{
+    "user":"user",
+    "pass":"x"
+}
+
+sgminer.conf:
+...
+"pools":[
+    {
+        "url":"stratum+tcp://pool.ip:8334",
+        "include":"/etc/pool.ip.credentials"
+    }
+],
+...
+```
+
+In the example above, the parser will include the contents of the file `/etc/pool.ip.credentials` directly where it was called from. This will produce the following result:
+
+```
+sgminer.conf:
+...
+"pools":[
+    {
+        "url":"stratum+tcp://pool.ip:8334",
+        "user":"user",
+        "pass":"x"
+    }
+],
+...
+```
+
+There is no limit as to how includes can be used as long as they follow proper json syntax.
+
+[Top](#configuration-and-command-line-options)
 
 ---
 
@@ -35,9 +231,9 @@ Load a JSON-formatted configuration file. See `example.conf` for an example conf
 
 Note that the configuration file's settings will override any settings passed via command line. For more information, see [Configuration Settings Order](#configuration-settings-order).
 
-*Syntax:* `--config <filename>` or `-c <filename>`
+*Syntax:* `--config <value>` or `-c <value>`
 
-*Argument:* string
+*Argument:* `string` Filename
 
 *Example:*
 
@@ -51,9 +247,9 @@ Note that the configuration file's settings will override any settings passed vi
 
 Specifies the name of the default configuration file to be loaded at start up and also used to save any settings changes during operation.
 
-*Syntax:* `--default-config <filename>`
+*Syntax:* `--default-config <value>`
 
-*Argument:* string
+*Argument:* `string` Filename
 
 *Example:*
 
@@ -2121,55 +2317,3 @@ Displays extra work time debug information.
 *Default:* `false`
 
 [Top](#configuration-and-command-line-options) :: [Config-file and CLI options](#config-file-and-cli-options) :: [Miscellaneous Options](#miscellaneous-options)
-
----
-
-## Working with Profiles and Pool Specific Settings
-
-Profiles are there to assist you in specifying different GPU or algorithm settings that could be (re-)used by one or more pools.
-
-[Top](#configuration-and-command-line-options)
-
----
-
-## Includes
-
-`Include` is a special keyword only available in the configuration file. You can include json-formatted files at any level of the configuration parsing. The values read in the included 
-files are applied to the current object being parsed.
-
-```
-/etc/pool.ip.credentials:
-{
-    "user":"user",
-    "pass":"x"
-}
-
-sgminer.conf:
-...
-"pools":[
-    {
-        "url":"stratum+tcp://pool.ip:8334",
-        "include":"/etc/pool.ip.credentials"
-    }
-],
-...
-```
-
-In the example above, the parser will include the contents of the file `/etc/pool.ip.credentials` directly where it was called from. This will produce the following result:
-
-```
-sgminer.conf:
-...
-"pools":[
-    {
-        "url":"stratum+tcp://pool.ip:8334",
-        "user":"user",
-        "pass":"x"
-    }
-],
-...
-```
-
-There is no limit as to how includes can be used as long as they follow proper json syntax.
-
-[Top](#configuration-and-command-line-options)
