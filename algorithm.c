@@ -292,20 +292,14 @@ static cl_int queue_talkcoin_mod_kernel(struct __clState *clState, struct _dev_b
   CL_SET_ARG(clState->padbuffer8);
   // groestl - search1
   kernel = clState->extra_kernels;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_SET_ARG_0(clState->padbuffer8);
   // jh - search2
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // keccak - search3
-  kernel++;
-  num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
   // skein - search4
-  kernel++;
   num = 0;
-  CL_SET_ARG(clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG(clState->padbuffer8);
   CL_SET_ARG(clState->outputBuffer);
   CL_SET_ARG(le_target);
 
