@@ -70,24 +70,29 @@ static inline int setpriority(__maybe_unused int which, __maybe_unused int who, 
 	return 0;
 }
 
-//implement strsep() for windows
-static char* strsep(char** stringp, const char* delim)
+#ifndef HAVE_STRSEP
+inline char *strsep(char **stringp, const char *delim)
 {
-  char* start = *stringp;
-  char* p;
+  char *res;
 
-  p = ((start != NULL)?strpbrk(start, delim):NULL);
-
-  if(p == NULL)
-    *stringp = NULL;
-  else
-  {
-    *p = '\0';
-    *stringp = p + 1;
+  if (!stringp || !*stringp || !**stringp) {
+    return NULL;
   }
 
-  return start;
+  res = *stringp;
+  while(**stringp && !strchr(delim, **stringp)) {
+    ++(*stringp);
+  }
+
+  if (**stringp) {
+    **stringp = '\0';
+    ++(*stringp);
+  }
+
+  return res;
 }
+#endif
+
 
 typedef unsigned long int ulong;
 typedef unsigned short int ushort;
