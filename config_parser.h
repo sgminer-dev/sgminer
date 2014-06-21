@@ -12,7 +12,10 @@
   #define empty_string(str) ((str && str[0] != '\0')?0:1)
 #endif
 #ifndef safe_cmp
-  #define safe_cmp(val1, val2) (((val1 && strcmp(val1, val2) != 0) || empty_string(val1))?1:0)
+  #define safe_cmp(val1, val2) (((val1 && strcasecmp(val1, val2) != 0) || empty_string(val1))?1:0)
+#endif
+#ifndef pool_cmp
+  #define pool_cmp(val1, val2) (((val1 && val2 && strcasecmp(val1, val2) == 0) || empty_string(val1))?1:0)
 #endif
 #ifndef isnull
   #define isnull(str, default_str) ((str == NULL)?default_str:str)
@@ -60,6 +63,8 @@ extern struct profile **profiles;
 extern int total_profiles;
 
 /* option parser functions */
+extern char *set_default_algorithm(const char *arg);
+extern char *set_default_nfactor(const char *arg);
 extern char *set_default_devices(const char *arg);
 extern char *set_default_lookup_gap(const char *arg);
 extern char *set_default_intensity(const char *arg);

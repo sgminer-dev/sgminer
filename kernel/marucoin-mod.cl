@@ -203,7 +203,7 @@ __kernel void search1(__global hash_t* hashes)
   mv[12] = 0;
   mv[13] = 0;
   mv[14] = 0;
-  mv[15] = SPH_C64(512)
+  mv[15] = SPH_C64(512);
   
   tmp = (mv[5] ^ BMW_H[5]) - (mv[7] ^ BMW_H[7]) + (mv[10] ^ BMW_H[10]) + (mv[13] ^ BMW_H[13]) + (mv[14] ^ BMW_H[14]);
   q[0] = (SHR(tmp, 1) ^ SHL(tmp, 3) ^ SPH_ROTL64(tmp,  4) ^ SPH_ROTL64(tmp, 37)) + BMW_H[1];
@@ -1234,7 +1234,7 @@ __kernel void search12(__global hash_t* hashes, __global uint* output, const ulo
   hash->h4[14] = SWAP4(S29);
   hash->h4[15] = SWAP4(S30);
 
-  bool result = (hash.h8[3] <= target);
+  bool result = (hash->h8[3] <= target);
   if (result)
     output[atomic_inc(output+0xFF)] = SWAP4(gid);
 

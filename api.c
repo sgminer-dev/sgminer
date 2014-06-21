@@ -3585,7 +3585,7 @@ void api(int api_thr_id)
   struct sockaddr_in cli;
   socklen_t clisiz;
   char cmdbuf[100];
-  char *cmd = NULL, *cmdptr, *cmdsbuf;
+  char *cmd = NULL, *cmdptr, *cmdsbuf = NULL;
   char *param;
   bool addrok;
   char group;
@@ -3593,7 +3593,7 @@ void api(int api_thr_id)
   json_t *json_config = NULL;
   json_t *json_val;
   bool isjson;
-  bool did, isjoin, firstjoin;
+  bool did, isjoin = false, firstjoin;
   int i;
 
   SOCKETTYPE *apisock;

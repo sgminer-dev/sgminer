@@ -28,6 +28,7 @@
 
 #include "compat.h"
 #include "miner.h"
+#include "config_parser.h"
 #include "driver-opencl.h"
 #include "findnonce.h"
 #include "ocl.h"
@@ -1161,7 +1162,7 @@ static void opencl_detect(bool hotplug)
       cgpu->threads = 1;
 #endif
     cgpu->virtual_gpu = i;
-    cgpu->algorithm = opt_algorithm;
+    cgpu->algorithm = default_profile.algorithm;
     add_cgpu(cgpu);
   }
 

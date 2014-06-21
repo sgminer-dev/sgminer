@@ -91,7 +91,7 @@ int opt_queue = 1;
 int opt_scantime = 7;
 int opt_expiry = 28;
 
-algorithm_t opt_algorithm;
+//algorithm_t opt_algorithm;
 
 unsigned long long global_hashrate;
 unsigned long global_quota_gcd = 1;
@@ -513,9 +513,7 @@ struct pool *add_pool(void)
   buf[0] = '\0';
   pool->name = strdup(buf);
   pool->profile = strdup(buf);	//profile blank by default
-
-  /* Algorithm */
-  pool->algorithm = opt_algorithm;
+  pool->algorithm.name[0] = '\0'; //blank algorithm name
 
   pools = (struct pool **)realloc(pools, sizeof(struct pool *) * (total_pools + 2));
   pools[total_pools++] = pool;
@@ -637,25 +635,25 @@ char *set_devices(char *arg)
   int i, val1 = 0, val2 = 0;
   char *nextptr;
 
-    if (*arg) 
+  if(*arg) 
+  {
+    if (*arg == '?') 
     {
-        if (*arg == '?') 
-        {
-            opt_display_devs = true;
-            return NULL;
-        }
-        //all devices enabled
-        else if(*arg == '*')
-        {
-            applog(LOG_DEBUG, "set_devices(%s)", arg);
-            opt_devs_enabled = 0;
-            return NULL;
-        }
-    } 
-    else
-        return "Invalid device parameters";
+        opt_display_devs = true;
+        return NULL;
+    }
+    //all devices enabled
+    else if(*arg == '*' || !strcasecmp(arg, "all"))
+    {
+        applog(LOG_DEBUG, "set_devices(all)");
+        opt_devs_enabled = 0;
+        return NULL;
+    }
+  } 
+  else
+    return "Invalid device parameters";
 
-    applog(LOG_DEBUG, "set_devices(%s)", arg);
+  applog(LOG_DEBUG, "set_devices(%s)", arg);
 
   nextptr = strtok(arg, ",");
   if (nextptr == NULL)
@@ -1165,31 +1163,6 @@ static void load_temp_cutoffs()
   }
 }
 
-static char *set_algo(const char *arg)
-{
-  if ((json_array_index < 0) || (total_pools == 0)) {
-    set_algorithm(&opt_algorithm, arg);
-    applog(LOG_INFO, "Set default algorithm to %s", opt_algorithm.name);
-  } else {
-    set_pool_algorithm(arg);
-  }
-
-  return NULL;
-}
-
-static char *set_nfactor(const char *arg)
-{
-  if ((json_array_index < 0) || (total_pools == 0)) {
-    set_algorithm_nfactor(&opt_algorithm, (const uint8_t) atoi(arg));
-    applog(LOG_INFO, "Set algorithm N-factor to %d (N to %d)",
-           opt_algorithm.nfactor, opt_algorithm.n);
-  } else {
-    set_pool_nfactor(arg);
-  }
-
-  return NULL;
-}
-
 static char *set_api_allow(const char *arg)
 {
   opt_set_charp(arg, &opt_api_allow);
@@ -1251,7 +1224,7 @@ char *set_difficulty_multiplier(char *arg)
 /* These options are available from config file or commandline */
 struct opt_table opt_config_table[] = {
   OPT_WITH_ARG("--algorithm",
-         set_algo, NULL, NULL,
+         set_default_algorithm, NULL, NULL,
          "Set mining algorithm and most common defaults, default: scrypt"),
   OPT_WITH_ARG("--api-allow",
          set_api_allow, NULL, NULL,
@@ -1437,7 +1410,7 @@ struct opt_table opt_config_table[] = {
       opt_set_bool, &opt_delaynet,
       "Impose small delays in networking to not overload slow routers"),
   OPT_WITH_ARG("--nfactor",
-      set_nfactor, NULL, NULL,
+      set_default_nfactor, NULL, NULL,
       "Override default scrypt N-factor parameter."),
 #ifdef HAVE_ADL
   OPT_WITHOUT_ARG("--no-adl",
@@ -5907,26 +5880,28 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 
   algo_switch_n++;
   
-    //get the number of active threads to know when to switch... if we only check total threads, we may wait for ever on a disabled GPU
-    active_threads = 0;
-    for(i = 0; i < mining_threads; i++)
-    {
-        struct thr_info *thr = mining_thr[i];
-        
-        if(thr->cgpu->deven != DEV_DISABLED)
-            active_threads ++;
-    }
+  //get the number of active threads to know when to switch... if we only check total threads, we may wait for ever on a disabled GPU
+  active_threads = 0;
+  for(i = 0; i < mining_threads; i++)
+  {
+    struct thr_info *thr = mining_thr[i];
+    
+    if(thr->cgpu->deven != DEV_DISABLED)
+      active_threads ++;
+  }
 
   // If all threads are waiting now
   if (algo_switch_n >= active_threads) 
   {
-      start_threads = mining_threads;   //use start_threads below 
+    start_threads = mining_threads;   //use start_threads below 
       
     bool soft_restart = !work->pool->gpu_threads;
     rd_lock(&mining_thr_lock);
     // Shutdown all threads first (necessary)
-    if (soft_restart) {
-      for (i = 0; i < start_threads; i++) {
+    if (soft_restart) 
+    {
+      for (i = 0; i < start_threads; i++) 
+      {
         struct thr_info *thr = mining_thr[i];
         thr->cgpu->drv->thread_shutdown(thr);
       }
@@ -5952,87 +5927,103 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
     //lookup gap
     if(!empty_string(work->pool->lookup_gap))
       set_lookup_gap((char *)work->pool->lookup_gap);
-	else if(!empty_string(default_profile.lookup_gap))
+    else if(!empty_string(default_profile.lookup_gap))
       set_lookup_gap((char *)default_profile.lookup_gap);
 	
-    //intensity
-    if(!empty_string(work->pool->intensity))
-      set_intensity(work->pool->intensity);
-	else if(!empty_string(default_profile.intensity))
-      set_intensity(default_profile.intensity);
-	
-    //xintensity
-    if (!empty_string(work->pool->xintensity))
-      set_xintensity(work->pool->xintensity);
-	else if(!empty_string(default_profile.xintensity))
-      set_xintensity(default_profile.xintensity);
- 
-    //raw intensity
+    //raw intensity from pool
     if (!empty_string(work->pool->rawintensity))
       set_rawintensity(work->pool->rawintensity);
-	else if(!empty_string(default_profile.rawintensity))
+    //raw intensity from default profile
+    else if(!empty_string(default_profile.rawintensity))
       set_rawintensity(default_profile.rawintensity);
+    //if no rawintensity is set try xintensity
+    else
+    {
+      //xintensity from pool
+      if (!empty_string(work->pool->xintensity))
+        set_xintensity(work->pool->xintensity);
+      //xintensity from default profile
+      else if(!empty_string(default_profile.xintensity))
+        set_xintensity(default_profile.xintensity);
+      //no xintensity set try intensity
+      else
+      {
+        //intensity from pool
+        if(!empty_string(work->pool->intensity))
+          set_intensity(work->pool->intensity);
+        //intensity from defaults
+        else if(!empty_string(default_profile.intensity))
+          set_intensity(default_profile.intensity);
+        //nothing set anywhere, use 8
+        else
+        {
+          default_profile.intensity = strdup("8");
+          set_intensity(default_profile.intensity);
+        }
+      }
+    }
  
     //shaders
     if (!empty_string(work->pool->shaders))
       set_shaders((char *)work->pool->shaders);
- 	else if(!empty_string(default_profile.shaders))
+    else if(!empty_string(default_profile.shaders))
       set_shaders((char *)default_profile.shaders);
 
     //worksize
     if (!empty_string(work->pool->worksize))
       set_worksize((char *)work->pool->worksize);
- 	else if(!empty_string(default_profile.worksize))
+    else if(!empty_string(default_profile.worksize))
       set_worksize((char *)default_profile.worksize);
 
-#ifdef HAVE_ADL
-    //GPU clock
-    if(!empty_string(work->pool->gpu_engine))
+    #ifdef HAVE_ADL
+      //GPU clock
+      if(!empty_string(work->pool->gpu_engine))
         set_gpu_engine(work->pool->gpu_engine);
-    else if(!empty_string(default_profile.gpu_engine))
+      else if(!empty_string(default_profile.gpu_engine))
         set_gpu_engine(default_profile.gpu_engine);
-    
-    //GPU memory clock
-    if(!empty_string(work->pool->gpu_memclock))
+      
+      //GPU memory clock
+      if(!empty_string(work->pool->gpu_memclock))
         set_gpu_memclock(work->pool->gpu_memclock);
-    else if(!empty_string(default_profile.gpu_memclock))
+      else if(!empty_string(default_profile.gpu_memclock))
         set_gpu_memclock(default_profile.gpu_memclock);
 
-    //GPU fans
-    if(!empty_string(work->pool->gpu_fan))
+      //GPU fans
+      if(!empty_string(work->pool->gpu_fan))
         set_gpu_fan(work->pool->gpu_fan);
-    else if(!empty_string(default_profile.gpu_fan))
+      else if(!empty_string(default_profile.gpu_fan))
         set_gpu_fan(default_profile.gpu_fan);
 
-    //GPU powertune
-    if(!empty_string(work->pool->gpu_powertune))
+      //GPU powertune
+      if(!empty_string(work->pool->gpu_powertune))
         set_gpu_powertune((char *)work->pool->gpu_powertune);
-    else if(!empty_string(default_profile.gpu_powertune))
+      else if(!empty_string(default_profile.gpu_powertune))
         set_gpu_powertune((char *)default_profile.gpu_powertune);
 
-    //GPU vddc
-    if(!empty_string(work->pool->gpu_vddc))
+      //GPU vddc
+      if(!empty_string(work->pool->gpu_vddc))
         set_gpu_vddc((char *)work->pool->gpu_vddc);
-    else if(!empty_string(default_profile.gpu_vddc))
+      else if(!empty_string(default_profile.gpu_vddc))
         set_gpu_vddc((char *)default_profile.gpu_vddc);
 
-    //apply gpu settings
-    for (i = 0; i < nDevs; i++)
-    {
+      //apply gpu settings
+      for (i = 0; i < nDevs; i++)
+      {
         set_engineclock(i, gpus[i].min_engine);
         set_memoryclock(i, gpus[i].gpu_memclock);
         set_fanspeed(i, gpus[i].gpu_fan);
         set_powertune(i, gpus[i].gpu_powertune);
         set_vddc(i, gpus[i].gpu_vddc);
-    }
-#endif
+      }
+    #endif
 
     // Change algorithm for each thread (thread_prepare calls initCl)
     for (i = 0; i < start_threads; i++) 
     {
       struct thr_info *thr = mining_thr[i];
       thr->cgpu->algorithm = work->pool->algorithm;
-      if (soft_restart) {
+      if (soft_restart) 
+      {
         thr->cgpu->drv->thread_prepare(thr);
         thr->cgpu->drv->thread_init(thr);
       }
@@ -6040,6 +6031,7 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
       // Necessary because algorithms can have dramatically different diffs
       thr->cgpu->drv->working_diff = 1;
     }
+    
     rd_unlock(&mining_thr_lock);
 
     // Finish switching pools
@@ -6049,37 +6041,37 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
     // Hard restart (when gpu_threads is changed)
     if (!soft_restart) 
     {
-        //enable/disable devices based on profile/pool/defaults
-        sgminer_id_count = 0;   //reset sgminer_ids
-        mining_threads = 0;     //mining threads gets added inside each enable_device() so reset
-        if(opt_devs_enabled)
+      //enable/disable devices based on profile/pool/defaults
+      sgminer_id_count = 0;   //reset sgminer_ids
+      mining_threads = 0;     //mining threads gets added inside each enable_device() so reset
+      if(opt_devs_enabled)
+      {
+        for (i = 0; i < MAX_DEVICES; i++) 
         {
-            for (i = 0; i < MAX_DEVICES; i++) 
-            {
-                //device should be enabled
-                if(devices_enabled[i] && i < total_devices)
-                {
-                    applog(LOG_DEBUG, "Enabling device %d", i);
-                    enable_device(devices[i]);
-                }
-                else if(i < total_devices)
-                {
-                    applog(LOG_DEBUG, "Disabling device %d", i);
-                    //if option is set to not remove disabled, enable device
-                    if(!opt_removedisabled)
-                        enable_device(devices[i]);
-                    
-                    //mark as disabled
-                    devices[i]->deven = DEV_DISABLED;
-                }
-            }
+          //device should be enabled
+          if(devices_enabled[i] && i < total_devices)
+          {
+            applog(LOG_DEBUG, "Enabling device %d", i);
+            enable_device(devices[i]);
+          }
+          else if(i < total_devices)
+          {
+            applog(LOG_DEBUG, "Disabling device %d", i);
+            //if option is set to not remove disabled, enable device
+            if(!opt_removedisabled)
+              enable_device(devices[i]);
+            
+            //mark as disabled
+            devices[i]->deven = DEV_DISABLED;
+          }
         }
-        //enable all devices
-        else
-        {
-            for (i = 0; i < total_devices; ++i)
-                enable_device(devices[i]);
-        }
+      }
+      //enable all devices
+      else
+      {
+        for (i = 0; i < total_devices; ++i)
+          enable_device(devices[i]);
+      }
         
         //devices reset - assign gpu-threads as needed
 
@@ -6087,12 +6079,12 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
       pthread_t restart_thr;
       #ifdef HAVE_ADL
         if(!empty_string(work->pool->gpu_threads))
-            set_gpu_threads(work->pool->gpu_threads);
+          set_gpu_threads(work->pool->gpu_threads);
         else if(!empty_string(default_profile.gpu_threads))
-            set_gpu_threads(default_profile.gpu_threads);
+          set_gpu_threads(default_profile.gpu_threads);
             
         for (i = 0; i < total_devices; ++i)
-            n_threads += devices[i]->threads;
+          n_threads += devices[i]->threads;
       #else
         n_threads = mining_threads;
       #endif
@@ -6111,7 +6103,9 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
     pthread_cond_broadcast(&algo_switch_wait_cond);
     mutex_unlock(&algo_switch_wait_lock);
   // Not all threads are waiting, join the waiting list
-  } else {
+  } 
+  else 
+  {
     mutex_unlock(&algo_switch_lock);
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     // Wait for signal to start working again
@@ -7785,7 +7779,7 @@ int main(int argc, char *argv[])
 #endif
 
   /* Default algorithm specified in algorithm.c ATM */
-  set_algorithm(&opt_algorithm, "scrypt");
+  set_algorithm(&default_profile.algorithm, "scrypt");
 
   devcursor = 8;
   logstart = devcursor + 1;
