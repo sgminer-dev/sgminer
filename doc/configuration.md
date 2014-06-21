@@ -63,6 +63,7 @@ When using the first pool, Profile A will be applied, so `algorithm` will be set
 
 When `default-profile` is specified, any settings contained in that profile will override globals. For example:
 ```
+{
   "pools": [
     {
       "url":"poolA:8334",
@@ -102,6 +103,7 @@ Profiles have been added assist in specifying different GPU and/or algorithm set
 See the [configuration settings order](#configuration-settings-order) for more information about the order in which settings are applied.
 
 ```
+{
   "pools": [
     {
       "url":"poolA:8334",
@@ -142,6 +144,7 @@ A similar situation occurs in the third pool. No profile is specified so the def
 
 The end result of the above would look like this:
 ```
+{
   "pools": [
     {
       "url":"poolA:8334",
@@ -167,7 +170,6 @@ The end result of the above would look like this:
   ]
 }
 ```
-
 
 [Top](#configuration-and-command-line-options)
 
