@@ -30,7 +30,7 @@
  */
 
 #ifdef __ECLIPSE_EDITOR__
-#include "OpenCLKernel.hpp"
+  #include "OpenCLKernel.hpp"
 #endif
 
 #ifndef DARKCOIN_MOD_CL
@@ -58,13 +58,13 @@
   #define SPH_64_TRUE 1
 
   #define SPH_C32(x) ((sph_u32)(x ## U))
-  #define SPH_T32(x) (as_uint(x) & SPH_C32(0xFFFFFFFF))
-  #define SPH_ROTL32(x, n) SPH_T32(as_uint(x), as_uint(n))
+  #define SPH_T32(x) (as_uint(x))
+  #define SPH_ROTL32(x, n) rotate(as_uint(x), as_uint(n))
   #define SPH_ROTR32(x, n) SPH_ROTL32(x, (32 - (n)))
 
   #define SPH_C64(x) ((sph_u64)(x ## UL))
-  #define SPH_T64(x) (as_ulong(x) & SPH_C64(0xFFFFFFFFFFFFFFFF))
-  #define SPH_ROTL64(x, n) SPH_T64(as_ulong(x), (n) & 0xFFFFFFFFFFFFFFFFUL)
+  #define SPH_T64(x) (as_ulong(x))
+  #define SPH_ROTL64(x, n) rotate(as_ulong(x), (n) & 0xFFFFFFFFFFFFFFFFUL)
   #define SPH_ROTR64(x, n) SPH_ROTL64(x, (64 - (n)))
 
   #define SPH_ECHO_64 1
@@ -83,7 +83,7 @@
 #define SPH_CUBEHASH_UNROLL 0
 #define SPH_KECCAK_UNROLL   0
 
-#include "aes_helper.cl"
+//#include "aes_helper.cl"
 #include "blake.cl"
 #include "bmw.cl"
 #include "groestl.cl"
@@ -438,14 +438,15 @@ __kernel void search1(__global hash_t* hashes)
   BMW_H[14] = SPH_ROTL64(BMW_H[2],15) + ( XH64 ^ q[30] ^ mv[14]) + (SHR(XL64,7) ^ q[21] ^ q[14]);
   BMW_H[15] = SPH_ROTL64(BMW_H[3],16) + ( XH64 ^ q[31] ^ mv[15]) + (SHR(XL64,2) ^ q[22] ^ q[15]);
 
-  hash->h8[0] = SWAP8(BMW_h1[8]);
-  hash->h8[1] = SWAP8(BMW_h1[9]);
-  hash->h8[2] = SWAP8(BMW_h1[10]);
-  hash->h8[3] = SWAP8(BMW_h1[11]);
-  hash->h8[4] = SWAP8(BMW_h1[12]);
-  hash->h8[5] = SWAP8(BMW_h1[13]);
-  hash->h8[6] = SWAP8(BMW_h1[14]);
-  hash->h8[7] = SWAP8(BMW_h1[15]);
+  hash->h8[0] = SWAP8(BMW_H[8]);
+  hash->h8[1] = SWAP8(BMW_H[9]);
+  hash->h8[2] = SWAP8(BMW_H[10]);
+  hash->h8[3] = SWAP8(BMW_H[11]);
+  hash->h8[4] = SWAP8(BMW_H[12]);
+  hash->h8[5] = SWAP8(BMW_H[13]);
+  hash->h8[6] = SWAP8(BMW_H[14]);
+  hash->h8[7] = SWAP8(BMW_H[15]);
+  
   barrier(CLK_GLOBAL_MEM_FENCE);
 }
 
@@ -801,9 +802,10 @@ __kernel void search7(__global hash_t* hashes)
       x5 ^= SWAP4(hash->h4[12]);
       x6 ^= SWAP4(hash->h4[15]);
       x7 ^= SWAP4(hash->h4[14]);
-    } else if(i == 1)
+    } 
+    else if(i == 1)
       x0 ^= 0x80;
-    } else if (i == 2) 
+    else if (i == 2) 
       xv ^= SPH_C32(1);
   }
 
