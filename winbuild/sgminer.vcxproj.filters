@@ -215,6 +215,9 @@
     <ClCompile Include="..\config_parser.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\algorithm\talkcoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\adl.h">
@@ -387,6 +390,9 @@
     </ClInclude>
     <ClInclude Include="..\config_parser.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\talkcoin.h">
+      <Filter>Header Files\algorithm</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
