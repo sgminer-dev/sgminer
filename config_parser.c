@@ -83,6 +83,7 @@ static struct profile *add_profile()
   //default profile name is the profile index
   sprintf(buf, "%d", profile->profile_no);
   profile->name = strdup(buf);
+  profile->algorithm.name[0] = '\0';
 
   profiles = (struct profile **)realloc(profiles, sizeof(struct profile *) * (total_profiles + 2));
   profiles[total_profiles++] = profile;
@@ -146,6 +147,22 @@ static struct profile *get_profile(char *name)
 }
 
 /******* Default profile functions used during config parsing *****/
+char *set_default_algorithm(const char *arg)
+{
+  set_algorithm(&default_profile.algorithm, arg);
+  applog(LOG_INFO, "Set default algorithm to %s", default_profile.algorithm.name);
+
+  return NULL;
+}
+
+char *set_default_nfactor(const char *arg)
+{
+  set_algorithm_nfactor(&default_profile.algorithm, (const uint8_t) atoi(arg));
+  applog(LOG_INFO, "Set algorithm N-factor to %d (N to %d)", default_profile.algorithm.nfactor);
+
+  return NULL;
+}
+
 char *set_default_devices(const char *arg)
 {
   default_profile.devices = arg;
@@ -696,19 +713,24 @@ void load_default_profile()
 //apply default settings
 void apply_defaults()
 {
-  set_algorithm(&opt_algorithm, default_profile.algorithm.name);
+  //if no algorithm specified, use scrypt as default
+  if (empty_string(default_profile.algorithm.name))
+    set_algorithm(&default_profile.algorithm, "scrypt");
 
-  if (!empty_string(default_profile.devices))
-    set_devices((char *)default_profile.devices);
+  //by default all unless specified
+  if (empty_string(default_profile.devices))
+    default_profile.devices = strdup("all");
+  set_devices((char *)default_profile.devices);
 
-  if (!empty_string(default_profile.intensity))
-    set_intensity(default_profile.intensity);
-
-  if (!empty_string(default_profile.xintensity))
-    set_xintensity(default_profile.xintensity);
-
+  //set raw intensity first
   if (!empty_string(default_profile.rawintensity))
     set_rawintensity(default_profile.rawintensity);
+  //then try xintensity
+  else if (!empty_string(default_profile.xintensity))
+    set_xintensity(default_profile.xintensity);
+  //then try intensity
+  else if (!empty_string(default_profile.intensity))
+    set_intensity(default_profile.intensity);
 
   if (!empty_string(default_profile.lookup_gap))
     set_lookup_gap((char *)default_profile.lookup_gap);
@@ -758,68 +780,167 @@ void apply_pool_profile(struct pool *pool)
 {
   struct profile *profile;
   
-  //if the pool has a profile set
+  //if the pool has a profile set load it
   if(!empty_string(pool->profile))
   {
     applog(LOG_DEBUG, "Loading settings from profile \"%s\" for pool %i", pool->profile, pool->pool_no);
 
     //find profile and apply settings to the pool
-    if((profile = get_profile(pool->profile)))
+    if(!(profile = get_profile(pool->profile)))
     {
-      pool->algorithm = profile->algorithm;
-      applog(LOG_DEBUG, "Pool %i Algorithm set to \"%s\"", pool->pool_no, pool->algorithm.name);
-
-      pool->devices = profile->devices;
-      applog(LOG_DEBUG, "Pool %i devices set to \"%s\"", pool->pool_no, pool->devices);
-
-      pool->lookup_gap = profile->lookup_gap;
-      applog(LOG_DEBUG, "Pool %i lookup gap set to \"%s\"", pool->pool_no, pool->lookup_gap);
-
-      pool->intensity = profile->intensity;
-      applog(LOG_DEBUG, "Pool %i Intensity set to \"%s\"", pool->pool_no, pool->intensity);
-
-      pool->xintensity = profile->xintensity;
-      applog(LOG_DEBUG, "Pool %i XIntensity set to \"%s\"", pool->pool_no, pool->xintensity);
-
-      pool->rawintensity = profile->rawintensity;
-      applog(LOG_DEBUG, "Pool %i Raw Intensity set to \"%s\"", pool->pool_no, pool->rawintensity);
-
-      pool->thread_concurrency = profile->thread_concurrency;
-      applog(LOG_DEBUG, "Pool %i Thread Concurrency set to \"%s\"", pool->pool_no, pool->thread_concurrency);
-
-#ifdef HAVE_ADL
-      pool->gpu_engine = profile->gpu_engine;
-      applog(LOG_DEBUG, "Pool %i GPU Clock set to \"%s\"", pool->pool_no, pool->gpu_engine);
-
-      pool->gpu_memclock = profile->gpu_memclock;
-      applog(LOG_DEBUG, "Pool %i GPU Memory clock set to \"%s\"", pool->pool_no, pool->gpu_memclock);
-
-      pool->gpu_threads = profile->gpu_threads;
-      applog(LOG_DEBUG, "Pool %i GPU Threads set to \"%s\"", pool->pool_no, pool->gpu_threads);
-
-      pool->gpu_fan = profile->gpu_fan;
-      applog(LOG_DEBUG, "Pool %i GPU Fan set to \"%s\"", pool->pool_no, pool->gpu_fan);
-
-      pool->gpu_powertune = profile->gpu_powertune;
-      applog(LOG_DEBUG, "Pool %i GPU Powertune set to \"%s\"", pool->pool_no, pool->gpu_powertune);
-
-      pool->gpu_vddc = profile->gpu_vddc;
-      applog(LOG_DEBUG, "Pool %i GPU Vddc set to \"%s\"", pool->pool_no, pool->gpu_vddc);
-#endif
-
-      pool->shaders = profile->shaders;
-      applog(LOG_DEBUG, "Pool %i Shaders set to \"%s\"", pool->pool_no, pool->shaders);
-
-      pool->worksize = profile->worksize;
-      applog(LOG_DEBUG, "Pool %i Worksize set to \"%s\"", pool->pool_no, pool->worksize);
-    }
-    else
-    {
-      applog(LOG_DEBUG, "Profile load failed for pool %i: profile %s not found.", pool->pool_no, pool->profile);
+      //if not found, remove profile name and use default profile.
+      applog(LOG_DEBUG, "Profile load failed for pool %i: profile %s not found. Using default profile.", pool->pool_no, pool->profile);
       //remove profile name
       pool->profile[0] = '\0';
+      
+      profile = &default_profile;
     }
   }
+  //no profile specified in pool, use default profile
+  else
+  {
+    applog(LOG_DEBUG, "Loading settings from default_profile for pool %i", pool->profile, pool->pool_no);
+    profile = &default_profile;
+  }
+
+  //only apply profiles settings not already defined in the pool
+  //if no algorithm is specified, use profile's or default profile's
+  if(empty_string(pool->algorithm.name))
+  {
+    if(!empty_string(profile->algorithm.name))
+        pool->algorithm = profile->algorithm;
+    else 
+        pool->algorithm = default_profile.algorithm;
+  }
+  applog(LOG_DEBUG, "Pool %i Algorithm set to \"%s\"", pool->pool_no, pool->algorithm.name);
+
+  if(pool_cmp(pool->devices, default_profile.devices))
+  {
+    if(!empty_string(profile->devices))
+        pool->devices = profile->devices;
+    else 
+        pool->devices = default_profile.devices;
+  }
+  applog(LOG_DEBUG, "Pool %i devices set to \"%s\"", pool->pool_no, pool->devices);
+
+  if(pool_cmp(pool->lookup_gap, default_profile.lookup_gap))
+  {
+    if(!empty_string(profile->lookup_gap))
+        pool->lookup_gap = profile->lookup_gap;
+    else 
+        pool->lookup_gap = default_profile.lookup_gap;
+  }
+  applog(LOG_DEBUG, "Pool %i lookup gap set to \"%s\"", pool->pool_no, pool->lookup_gap);
+
+  if(pool_cmp(pool->intensity, default_profile.intensity))
+  {
+    if(!empty_string(profile->intensity))
+        pool->intensity = profile->intensity;
+    else 
+        pool->intensity = default_profile.intensity;
+  }
+  applog(LOG_DEBUG, "Pool %i Intensity set to \"%s\"", pool->pool_no, pool->intensity);
+
+  if(pool_cmp(pool->xintensity, default_profile.xintensity))
+  {
+    if(!empty_string(profile->xintensity))
+        pool->xintensity = profile->xintensity;
+    else 
+        pool->xintensity = default_profile.xintensity;
+  }
+  applog(LOG_DEBUG, "Pool %i XIntensity set to \"%s\"", pool->pool_no, pool->xintensity);
+
+  if(pool_cmp(pool->rawintensity, default_profile.rawintensity))
+  {
+    if(!empty_string(profile->rawintensity))
+        pool->rawintensity = profile->rawintensity;
+    else 
+        pool->rawintensity = default_profile.rawintensity;
+  }
+  applog(LOG_DEBUG, "Pool %i Raw Intensity set to \"%s\"", pool->pool_no, pool->rawintensity);
+
+  if(pool_cmp(pool->thread_concurrency, default_profile.thread_concurrency))
+  {
+    if(!empty_string(profile->thread_concurrency))
+        pool->thread_concurrency = profile->thread_concurrency;
+    else 
+        pool->thread_concurrency = default_profile.thread_concurrency;
+  }
+  applog(LOG_DEBUG, "Pool %i Thread Concurrency set to \"%s\"", pool->pool_no, pool->thread_concurrency);
+
+  #ifdef HAVE_ADL
+    if(pool_cmp(pool->gpu_engine, default_profile.gpu_engine))
+    {
+      if(!empty_string(profile->gpu_engine))
+          pool->gpu_engine = profile->gpu_engine;
+      else 
+          pool->gpu_engine = default_profile.gpu_engine;
+    }
+    applog(LOG_DEBUG, "Pool %i GPU Clock set to \"%s\"", pool->pool_no, pool->gpu_engine);
+
+    if(pool_cmp(pool->gpu_memclock, default_profile.gpu_memclock))
+    {
+      if(!empty_string(profile->gpu_memclock))
+          pool->gpu_memclock = profile->gpu_memclock;
+      else 
+          pool->gpu_memclock = default_profile.gpu_memclock;
+    }
+    applog(LOG_DEBUG, "Pool %i GPU Memory clock set to \"%s\"", pool->pool_no, pool->gpu_memclock);
+
+    if(pool_cmp(pool->gpu_threads, default_profile.gpu_threads))
+    {
+      if(!empty_string(profile->gpu_threads))
+          pool->gpu_threads = profile->gpu_threads;
+      else 
+          pool->gpu_threads = default_profile.gpu_threads;
+    }
+    applog(LOG_DEBUG, "Pool %i GPU Threads set to \"%s\"", pool->pool_no, pool->gpu_threads);
+
+    if(pool_cmp(pool->gpu_fan, default_profile.gpu_fan))
+    {
+      if(!empty_string(profile->gpu_fan))
+          pool->gpu_fan = profile->gpu_fan;
+      else 
+          pool->gpu_fan = default_profile.gpu_fan;
+    }
+    applog(LOG_DEBUG, "Pool %i GPU Fan set to \"%s\"", pool->pool_no, pool->gpu_fan);
+
+    if(pool_cmp(pool->gpu_powertune, default_profile.gpu_powertune))
+    {
+      if(!empty_string(profile->gpu_powertune))
+          pool->gpu_powertune = profile->gpu_powertune;
+      else 
+          pool->gpu_powertune = default_profile.gpu_powertune;
+    }
+    applog(LOG_DEBUG, "Pool %i GPU Powertune set to \"%s\"", pool->pool_no, pool->gpu_powertune);
+
+    if(pool_cmp(pool->gpu_vddc, default_profile.gpu_vddc))
+    {
+      if(!empty_string(profile->gpu_vddc))
+          pool->gpu_vddc = profile->gpu_vddc;
+      else 
+          pool->gpu_vddc = default_profile.gpu_vddc;
+    }
+    applog(LOG_DEBUG, "Pool %i GPU Vddc set to \"%s\"", pool->pool_no, pool->gpu_vddc);
+  #endif
+
+  if(pool_cmp(pool->shaders, default_profile.shaders))
+  {
+    if(!empty_string(profile->shaders))
+        pool->shaders = profile->shaders;
+    else 
+        pool->shaders = default_profile.shaders;
+  }
+  applog(LOG_DEBUG, "Pool %i Shaders set to \"%s\"", pool->pool_no, pool->shaders);
+
+  if(pool_cmp(pool->worksize, default_profile.worksize))
+  {
+    if(!empty_string(profile->worksize))
+        pool->worksize = profile->worksize;
+    else 
+        pool->worksize = default_profile.worksize;
+  }
+  applog(LOG_DEBUG, "Pool %i Worksize set to \"%s\"", pool->pool_no, pool->worksize);
 }
 
 //helper function to add json values to pool object
@@ -1291,7 +1412,7 @@ void write_config(const char *filename)
   else
   {
     //save algorithm name
-    if(json_object_set(config, "algorithm", json_string(opt_algorithm.name)) == -1)
+    if(json_object_set(config, "algorithm", json_string(default_profile.algorithm.name)) == -1)
     {
       applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on algorithm");
       return;
