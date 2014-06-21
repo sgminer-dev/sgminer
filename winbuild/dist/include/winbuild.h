@@ -1,6 +1,5 @@
-#ifndef __WINBUILD_H__
-#define __WINBUILD_H__
-#endif
+#ifndef WINBUILD_H
+#define WINBUILD_H
 
 #if defined(_MSC_VER)
 
@@ -131,29 +130,6 @@ inline void* memmem (void* buf, size_t buflen, void* pat, size_t patlen)
 	return 0; 
 }
 
-#ifndef HAVE_STRSEP
-inline char *strsep(char **stringp, const char *delim)
-{
-  char *res;
-
-  if (!stringp || !*stringp || !**stringp) {
-    return NULL;
-  }
-
-  res = *stringp;
-  while(**stringp && !strchr(delim, **stringp)) {
-    ++(*stringp);
-  }
-
-  if (**stringp) {
-    **stringp = '\0';
-    ++(*stringp);
-  }
-
-  return res;
-}
-#endif
-
 #define va_copy(a, b) memcpy(&(a), &(b), sizeof(va_list))
 
 #define usleep(x) Sleep((x)/1000)
@@ -162,5 +138,5 @@ inline char *strsep(char **stringp, const char *delim)
 #define __func__ __FUNCTION__
 #define __attribute__(x)
 
-
-#endif
+#endif /* _MSC_VER */
+#endif /* WINBUILD_H */

@@ -58,13 +58,13 @@ typedef long sph_s64;
 #define SPH_64_TRUE 1
 
 #define SPH_C32(x)    ((sph_u32)(x ## U))
-#define SPH_T32(x)    ((x) & SPH_C32(0xFFFFFFFF))
-#define SPH_ROTL32(x, n)   SPH_T32(((x) << (n)) | ((x) >> (32 - (n))))
+#define SPH_T32(x)    (as_uint(x))
+#define SPH_ROTL32(x, n)   rotate(as_uint(x), as_uint(n))
 #define SPH_ROTR32(x, n)   SPH_ROTL32(x, (32 - (n)))
 
 #define SPH_C64(x)    ((sph_u64)(x ## UL))
-#define SPH_T64(x)    ((x) & SPH_C64(0xFFFFFFFFFFFFFFFF))
-#define SPH_ROTL64(x, n)   SPH_T64(((x) << (n)) | ((x) >> (64 - (n))))
+#define SPH_T64(x)    (as_ulong(x))
+#define SPH_ROTL64(x, n)   rotate(as_ulong(x), (n) & 0xFFFFFFFFFFFFFFFFUL)
 #define SPH_ROTR64(x, n)   SPH_ROTL64(x, (64 - (n)))
 
 #define SPH_ECHO_64 1

@@ -70,6 +70,30 @@ static inline int setpriority(__maybe_unused int which, __maybe_unused int who, 
 	return 0;
 }
 
+#ifndef HAVE_STRSEP
+inline char *strsep(char **stringp, const char *delim)
+{
+  char *res;
+
+  if (!stringp || !*stringp || !**stringp) {
+    return NULL;
+  }
+
+  res = *stringp;
+  while(**stringp && !strchr(delim, **stringp)) {
+    ++(*stringp);
+  }
+
+  if (**stringp) {
+    **stringp = '\0';
+    ++(*stringp);
+  }
+
+  return res;
+}
+#endif
+
+
 typedef unsigned long int ulong;
 typedef unsigned short int ushort;
 typedef unsigned int uint;
