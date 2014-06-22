@@ -71,7 +71,7 @@ static inline int setpriority(__maybe_unused int which, __maybe_unused int who, 
 }
 
 #ifndef HAVE_STRSEP
-inline char *strsep(char **stringp, const char *delim)
+static inline char *strsep(char **stringp, const char *delim)
 {
   char *res;
 
