@@ -51,6 +51,12 @@ everything is installed.
 This will create your user directory for you.
 
 **************************************************************************************
+* Install pthreads                                                                   *
+**************************************************************************************
+Type the lines below to install pthreads:
+mingw-get install pthreads
+
+**************************************************************************************
 * Install libpdcurses                                                                *
 **************************************************************************************
 Type the lines below to install libpdcurses.
