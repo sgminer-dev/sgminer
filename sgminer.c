@@ -71,6 +71,95 @@ char *curly = ":D";
 #define VERSION GIT_VERSION
 #endif
 
+/* Temp fix for 60 second exit after algo switch */
+#ifdef __TEMP_ALGO_SWITCH_FIX__
+  static struct thread_fix *thread_fix_list = NULL, *thread_fix_last = NULL;
+
+  void thread_fix_push(pthread_t thread_id)
+  {
+    struct thread_fix *new_thread;
+    
+    if(!(new_thread = (struct thread_fix *)malloc(sizeof(struct thread_fix))))
+      quit(1, "malloc failed in thread_fix_push()");
+    
+    //apply settings
+    new_thread->thread_id = thread_id;
+    new_thread->prev = new_thread->next = NULL;
+    
+    //empty list add to head and tail
+    if(!thread_fix_list)
+    {
+      thread_fix_list = new_thread;
+      thread_fix_last = new_thread;
+    }
+    else
+    {
+      thread_fix_last->next = new_thread;
+      new_thread->prev = thread_fix_last;
+      thread_fix_last = new_thread;
+    }
+    
+    applog(LOG_DEBUG, "thread_fix_push(%d)", new_thread->thread_id);
+  }
+
+  static struct thread_fix *thread_fix_search(pthread_t thread_id)
+  {
+    struct thread_fix *p;
+    
+    if(!thread_fix_list)
+      return NULL;
+    
+    p = thread_fix_list;
+    while(p != NULL)
+    {
+      if(pthread_equal(p->thread_id, thread_id))
+        return p;
+        
+      p = p->next;
+    }
+    
+    return NULL;
+  }
+
+  void thread_fix_pop(pthread_t thread_id)
+  {
+    struct thread_fix *p;
+    
+    if(!(p = thread_fix_search(thread_id)))
+      return;
+    
+    //only 1 item
+    if((p == thread_fix_list) && (p == thread_fix_last))
+    {
+      thread_fix_list = NULL;
+      thread_fix_last = NULL;
+    }
+    //first item
+    else if(p == thread_fix_list)
+    {
+      p->next->prev = NULL;
+      thread_fix_list = p->next;
+    }
+    //last item
+    else if(p == thread_fix_list)
+    {
+        p->prev->next = NULL;
+        thread_fix_last = p->prev;
+    }
+    //middle
+    else
+    {
+      p->prev->next = p->next;
+      p->next->prev = p->prev;
+    }
+
+    applog(LOG_DEBUG, "thread_fix_pop(%d)", p->thread_id);
+    
+    //free memory
+    free(p);
+  }
+#endif /* __TEMP_ALGO_SWITCH_FIX__ */
+
 static char packagename[256];
 
 bool opt_work_update;
@@ -6096,6 +6185,20 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
       if (unlikely(pthread_create(&restart_thr, NULL, restart_mining_threads_thread, (void *) (intptr_t) n_threads)))
         quit(1, "restart_mining_threads create thread failed");
       sleep(60);
+      
+      #ifdef __TEMP_ALGO_SWITCH_FIX__
+        //if restart thread is done, then abort...
+        if(!thread_fix_search(restart_thr))
+        {
+          applog(LOG_DEBUG, "thread %d not found in fix list, don't exit sgminer", restart_thr);
+          pthread_cancel(restart_thr);
+          mutex_lock(&algo_switch_wait_lock);
+          pthread_cond_broadcast(&algo_switch_wait_cond);
+          mutex_unlock(&algo_switch_wait_lock);
+          return;
+        }
+      #endif /* __TEMP_ALGO_SWITCH_FIX__ */
+      
       quit(1, "thread was not cancelled in 60 seconds after restart_mining_threads");
     }
     // Signal other threads to start working now
@@ -7677,10 +7780,24 @@ static void restart_mining_threads(unsigned int new_n_threads)
 
 static void *restart_mining_threads_thread(void *userdata)
 {
-  pthread_detach(pthread_self());
+  //get thread id
+  pthread_t t = pthread_self();
   
+  //detach
+  pthread_detach(t);
+  
+  #ifdef __TEMP_ALGO_SWITCH_FIX__
+    //put in list of active threads
+    thread_fix_push(t);
+  #endif /* __TEMP_ALGO_SWITCH_FIX__ */
+  
+  //restart mining threads
   restart_mining_threads((unsigned int) (intptr_t) userdata);
 
+  #ifdef __TEMP_ALGO_SWITCH_FIX__
+    //remove from list of active threads
+    thread_fix_pop(t);
+  #endif /* __TEMP_ALGO_SWITCH_FIX__ */
   return NULL;
 }
 
