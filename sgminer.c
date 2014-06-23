@@ -162,6 +162,10 @@ char *curly = ":D";
 
 static char packagename[256];
 
+static bool startup = true; //sgminer is starting up
+static bool gpu_initialized = false;  //gpu initialized
+
+
 bool opt_work_update;
 bool opt_protocol;
 static bool opt_benchmark;
@@ -294,6 +298,10 @@ static struct timeval total_tv_start, total_tv_end, launch_time;
 
 cglock_t control_lock;
 pthread_mutex_t stats_lock;
+
+static void *restart_mining_threads_thread(void *userdata);
+static void apply_initial_gpu_settings(struct pool *pool);
+static void restart_mining_threads(unsigned int new_n_threads);
 
 int hw_errors;
 int total_accepted, total_rejected;
@@ -3985,9 +3993,12 @@ void switch_pools(struct pool *selected)
   pool_no = currentpool->pool_no;
 
   /* If a specific pool was selected, prioritise it over others */
-  if (selected) {
-    if (selected->prio != 0) {
-      for (i = 0; i < total_pools; i++) {
+  if (selected) 
+  {
+    if (selected->prio != 0) 
+    {
+      for (i = 0; i < total_pools; i++) 
+      {
         pool = pools[i];
         if (pool->prio < selected->prio)
           pool->prio++;
@@ -3996,12 +4007,14 @@ void switch_pools(struct pool *selected)
     }
   }
 
-  switch (pool_strategy) {
+  switch (pool_strategy) 
+  {
     /* All of these set to the master pool */
     case POOL_BALANCE:
     case POOL_FAILOVER:
     case POOL_LOADBALANCE:
-      for (i = 0; i < total_pools; i++) {
+      for (i = 0; i < total_pools; i++) 
+      {
         pool = priority_pool(i);
         if (pool_unusable(pool))
           continue;
@@ -4012,19 +4025,27 @@ void switch_pools(struct pool *selected)
     /* Both of these simply increment and cycle */
     case POOL_ROUNDROBIN:
     case POOL_ROTATE:
-      if (selected && !selected->idle) {
+      if (selected && !selected->idle) 
+      {
         pool_no = selected->pool_no;
         break;
       }
+      
       next_pool = pool_no;
+      
       /* Select the next alive pool */
-      for (i = 1; i < total_pools; i++) {
+      for (i = 1; i < total_pools; i++) 
+      {
         next_pool++;
+        
         if (next_pool >= total_pools)
           next_pool = 0;
+          
         pool = pools[next_pool];
+        
         if (pool_unusable(pool))
           continue;
+          
         pool_no = next_pool;
         break;
       }
@@ -4043,17 +4064,32 @@ void switch_pools(struct pool *selected)
   if (opt_fail_only)
     pool_tset(pool, &pool->lagging);
 
-  if (pool != last_pool && pool_strategy != POOL_LOADBALANCE && pool_strategy != POOL_BALANCE) {
-    applog(LOG_WARNING, "Switching to %s", get_pool_name(pool));
-    if (pool_localgen(pool) || opt_fail_only)
-      clear_pool_work(last_pool);
+  if (pool != last_pool && pool_strategy != POOL_LOADBALANCE && pool_strategy != POOL_BALANCE) 
+  {
+    //if the gpus have been initialized or first pool during startup, it's ok to switch...
+    if(gpu_initialized || startup)
+    {
+      applog(LOG_WARNING, "Switching to %s", get_pool_name(pool));
+      if (pool_localgen(pool) || opt_fail_only)
+        clear_pool_work(last_pool);
+    }
+  }
+
+  //if startup, initialize gpus and start mining threads
+  if(startup)
+  {
+    startup = false;  //remove startup flag so we don't enter this block again
+    applog(LOG_NOTICE, "Startup GPU initialization... Using settings from pool %s.", get_pool_name(pool));
+    
+    //apply gpu settings based on first alive pool
+    apply_initial_gpu_settings(pool);
+    gpu_initialized = true; //gpus initialized
   }
 
   mutex_lock(&lp_lock);
   pthread_cond_broadcast(&lp_cond);
   mutex_unlock(&lp_lock);
 }
-
 void discard_work(struct work *work)
 {
   if (!work->clone && !work->rolls && !work->mined) {
@@ -5949,7 +5985,183 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
   cgtime(&work->tv_staged);
 }
 
-static void *restart_mining_threads_thread(void *userdata);
+static void apply_initial_gpu_settings(struct pool *pool)
+{
+  int i;
+  unsigned int start_threads = mining_threads, //initial count of mining threads before we change devices
+    needed_threads = 0; //number of mining threads needed after we change devices
+  
+  //apply gpu settings
+  rd_lock(&mining_thr_lock);
+
+  //reset devices
+  opt_devs_enabled = 0;
+  for (i = 0; i < MAX_DEVICES; i++)
+      devices_enabled[i] = false;
+    
+  //assign pool devices if any
+  if(!empty_string(pool->devices))
+    set_devices((char *)pool->devices);
+  //assign default devices if any
+  else if(!empty_string(default_profile.devices))
+    set_devices((char *)default_profile.devices);
+    
+  //lookup gap
+  if(!empty_string(pool->lookup_gap))
+    set_lookup_gap((char *)pool->lookup_gap);
+  else if(!empty_string(default_profile.lookup_gap))
+    set_lookup_gap((char *)default_profile.lookup_gap);
+
+  //raw intensity from pool
+  if (!empty_string(pool->rawintensity))
+    set_rawintensity(pool->rawintensity);
+  //raw intensity from default profile
+  else if(!empty_string(default_profile.rawintensity))
+    set_rawintensity(default_profile.rawintensity);
+  //if no rawintensity is set try xintensity
+  else
+  {
+    //xintensity from pool
+    if (!empty_string(pool->xintensity))
+      set_xintensity(pool->xintensity);
+    //xintensity from default profile
+    else if(!empty_string(default_profile.xintensity))
+      set_xintensity(default_profile.xintensity);
+    //no xintensity set try intensity
+    else
+    {
+      //intensity from pool
+      if(!empty_string(pool->intensity))
+        set_intensity(pool->intensity);
+      //intensity from defaults
+      else if(!empty_string(default_profile.intensity))
+        set_intensity(default_profile.intensity);
+      //nothing set anywhere, use 8
+      else
+      {
+        default_profile.intensity = strdup("8");
+        set_intensity(default_profile.intensity);
+      }
+    }
+  }
+
+  //shaders
+  if (!empty_string(pool->shaders))
+    set_shaders((char *)pool->shaders);
+  else if(!empty_string(default_profile.shaders))
+    set_shaders((char *)default_profile.shaders);
+
+  //thread-concurrency
+  if (!empty_string(pool->thread_concurrency))
+    set_thread_concurrency((char *)pool->thread_concurrency);
+  else if(!empty_string(default_profile.thread_concurrency))
+    set_thread_concurrency((char *)default_profile.thread_concurrency);
+
+  //worksize
+  if (!empty_string(pool->worksize))
+    set_worksize((char *)pool->worksize);
+  else if(!empty_string(default_profile.worksize))
+    set_worksize((char *)default_profile.worksize);
+
+  //apply algorithm
+  for (i = 0; i < nDevs; i++)
+    gpus[i].algorithm = pool->algorithm;
+
+  #ifdef HAVE_ADL
+    //GPU clock
+    if(!empty_string(pool->gpu_engine))
+      set_gpu_engine(pool->gpu_engine);
+    else if(!empty_string(default_profile.gpu_engine))
+      set_gpu_engine(default_profile.gpu_engine);
+    
+    //GPU memory clock
+    if(!empty_string(pool->gpu_memclock))
+      set_gpu_memclock(pool->gpu_memclock);
+    else if(!empty_string(default_profile.gpu_memclock))
+      set_gpu_memclock(default_profile.gpu_memclock);
+
+    //GPU fans
+    if(!empty_string(pool->gpu_fan))
+      set_gpu_fan(pool->gpu_fan);
+    else if(!empty_string(default_profile.gpu_fan))
+      set_gpu_fan(default_profile.gpu_fan);
+
+    //GPU powertune
+    if(!empty_string(pool->gpu_powertune))
+      set_gpu_powertune((char *)pool->gpu_powertune);
+    else if(!empty_string(default_profile.gpu_powertune))
+      set_gpu_powertune((char *)default_profile.gpu_powertune);
+
+    //GPU vddc
+    if(!empty_string(pool->gpu_vddc))
+      set_gpu_vddc((char *)pool->gpu_vddc);
+    else if(!empty_string(default_profile.gpu_vddc))
+      set_gpu_vddc((char *)default_profile.gpu_vddc);
+
+    //apply gpu settings
+    for (i = 0; i < nDevs; i++)
+    {
+    //  gpus[i].algorithm = pool->algorithm;
+      set_engineclock(i, gpus[i].min_engine);
+      set_memoryclock(i, gpus[i].gpu_memclock);
+      set_fanspeed(i, gpus[i].gpu_fan);
+      set_powertune(i, gpus[i].gpu_powertune);
+      set_vddc(i, gpus[i].gpu_vddc);
+    }
+  #endif
+
+  rd_unlock(&mining_thr_lock);
+  
+  //enable/disable devices as needed
+  sgminer_id_count = 0;   //reset sgminer_ids
+  mining_threads = 0;     //mining threads gets added inside each enable_device() so reset
+  if(opt_devs_enabled)
+  {
+    for (i = 0; i < MAX_DEVICES; i++) 
+    {
+      //device should be enabled
+      if(devices_enabled[i] && i < total_devices)
+        enable_device(devices[i]);
+      else if(i < total_devices)
+      {
+        //if option is set to not remove disabled, enable device
+        if(!opt_removedisabled)
+          enable_device(devices[i]);
+        
+        //mark as disabled
+        devices[i]->deven = DEV_DISABLED;
+      }
+    }
+  }
+  //enable all devices
+  else
+  {
+    for (i = 0; i < total_devices; ++i)
+      enable_device(devices[i]);
+  }
+  
+  //recount the number of needed mining threads
+  #ifdef HAVE_ADL
+    if(!empty_string(pool->gpu_threads))
+      set_gpu_threads(pool->gpu_threads);
+    else if(!empty_string(default_profile.gpu_threads))
+      set_gpu_threads(default_profile.gpu_threads);
+
+    for (i = 0; i < total_devices; i++)
+      needed_threads += devices[i]->threads;
+  #else
+    needed_threads = mining_threads;
+  #endif
+  
+  //revert global mining thread count to start thread count so we don't touch threads outside of count
+  mining_threads = start_threads;
+
+  //bad thread count?
+  if(needed_threads == 0)
+    quit(1, "No GPUs Initialized.");
+    
+  restart_mining_threads(needed_threads);
+}
 
 static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 {
@@ -6057,6 +6269,12 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
       set_shaders((char *)work->pool->shaders);
     else if(!empty_string(default_profile.shaders))
       set_shaders((char *)default_profile.shaders);
+
+    //thread-concurrency
+    if (!empty_string(work->pool->thread_concurrency))
+      set_thread_concurrency((char *)work->pool->thread_concurrency);
+    else if(!empty_string(default_profile.thread_concurrency))
+      set_thread_concurrency((char *)default_profile.thread_concurrency);
 
     //worksize
     if (!empty_string(work->pool->worksize))
@@ -8088,7 +8306,7 @@ int main(int argc, char *argv[])
       fork_monitor();
   #endif // defined(unix)
 
-  restart_mining_threads(mining_threads);
+//  restart_mining_threads(mining_threads);
 
   if (opt_benchmark)
     goto begin_bench;
@@ -8120,8 +8338,8 @@ int main(int argc, char *argv[])
   }
 
   applog(LOG_NOTICE, "Probing for an alive pool");
+  int slept = 0;
   do {
-    int slept = 0;
 
     /* Look for at least one active pool before starting */
     probe_pools();
@@ -8153,6 +8371,16 @@ int main(int argc, char *argv[])
         quit(0, "No servers could be used! Exiting.");
     }
   } while (!pools_active);
+
+  //wait for GPUs to be initialized after first alive pool is found
+  slept = 0;
+  do {
+    sleep(1);
+    slept++;
+  } while (!gpu_initialized && slept < 60);
+  
+  if(slept >= 60)
+    applog(LOG_WARNING, "GPUs did not become initialized in 60 seconds...");
 
 begin_bench:
   total_mhashes_done = 0;
