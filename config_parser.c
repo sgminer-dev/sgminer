@@ -673,41 +673,66 @@ void load_default_config(void)
 // assign default settings from default profile if set
 void load_default_profile()
 {
-  applog(LOG_DEBUG, "default_profile.name is %s", default_profile.name);
-  if (empty_string(default_profile.name))
-  {
-    applog(LOG_WARNING, "Default profile name is not set.");
-    return;
-  }
-
   struct profile *profile;
 
+  if (empty_string(default_profile.name))
+    return;
+    
+  applog(LOG_DEBUG, "default_profile.name is %s", default_profile.name);
+
   // find profile ...
-  profile = get_profile(default_profile.name);
-  if (!profile) {
-    applog(LOG_WARNING, "Could not load default profile %s",
-	   default_profile.name);
+  if(!(profile = get_profile(default_profile.name)))
+  {
+    applog(LOG_WARNING, "Could not load default profile %s", default_profile.name);
     return;
   }
 
   // ... and copy settings
-  default_profile.algorithm = profile->algorithm;
-  default_profile.devices = profile->devices;
-  default_profile.lookup_gap = profile->lookup_gap;
-  default_profile.intensity = profile->intensity;
-  default_profile.xintensity = profile->xintensity;
-  default_profile.rawintensity = profile->rawintensity;
-  default_profile.thread_concurrency = profile->thread_concurrency;
+  if(!empty_string(profile->algorithm.name))
+    set_algorithm(&default_profile.algorithm, profile->algorithm.name);
+    
+  if(!empty_string(profile->devices))
+    default_profile.devices = profile->devices;
+
+  if(!empty_string(profile->lookup_gap))
+    default_profile.lookup_gap = profile->lookup_gap;
+
+  if(!empty_string(profile->intensity))
+    default_profile.intensity = profile->intensity;
+
+  if(!empty_string(profile->xintensity))
+    default_profile.xintensity = profile->xintensity;
+
+  if(!empty_string(profile->rawintensity))
+    default_profile.rawintensity = profile->rawintensity;
+    
+  if(!empty_string(profile->thread_concurrency))
+    default_profile.thread_concurrency = profile->thread_concurrency;
+
 #ifdef HAVE_ADL
-  default_profile.gpu_engine = profile->gpu_engine;
-  default_profile.gpu_memclock = profile->gpu_memclock;
-  default_profile.gpu_threads = profile->gpu_threads;
-  default_profile.gpu_fan = profile->gpu_fan;
-  default_profile.gpu_powertune = profile->gpu_powertune;
-  default_profile.gpu_vddc = profile->gpu_vddc;
+  if(!empty_string(profile->gpu_engine))
+    default_profile.gpu_engine = profile->gpu_engine;
+
+  if(!empty_string(profile->gpu_memclock))
+    default_profile.gpu_memclock = profile->gpu_memclock;
+
+  if(!empty_string(profile->gpu_threads))
+    default_profile.gpu_threads = profile->gpu_threads;
+
+  if(!empty_string(profile->gpu_fan))
+    default_profile.gpu_fan = profile->gpu_fan;
+
+  if(!empty_string(profile->gpu_powertune))
+    default_profile.gpu_powertune = profile->gpu_powertune;
+
+  if(!empty_string(profile->gpu_vddc))
+    default_profile.gpu_vddc = profile->gpu_vddc;
 #endif
-  default_profile.shaders = profile->shaders;
-  default_profile.worksize = profile->worksize;
+  if(!empty_string(profile->shaders))
+    default_profile.shaders = profile->shaders;
+
+  if(!empty_string(profile->worksize))
+    default_profile.worksize = profile->worksize;
 }
 
 //apply default settings
