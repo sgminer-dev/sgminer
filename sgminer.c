@@ -4072,18 +4072,18 @@ void switch_pools(struct pool *selected)
       applog(LOG_WARNING, "Switching to %s", get_pool_name(pool));
       if (pool_localgen(pool) || opt_fail_only)
         clear_pool_work(last_pool);
+        
+      //if startup, initialize gpus and start mining threads
+      if(startup)
+      {
+        startup = false;  //remove startup flag so we don't enter this block again
+        applog(LOG_NOTICE, "Startup GPU initialization... Using settings from pool %s.", get_pool_name(pool));
+        
+        //apply gpu settings based on first alive pool
+        apply_initial_gpu_settings(pool);
+        gpu_initialized = true; //gpus initialized
+      }
     }
-  }
-
-  //if startup, initialize gpus and start mining threads
-  if(startup)
-  {
-    startup = false;  //remove startup flag so we don't enter this block again
-    applog(LOG_NOTICE, "Startup GPU initialization... Using settings from pool %s.", get_pool_name(pool));
-    
-    //apply gpu settings based on first alive pool
-    apply_initial_gpu_settings(pool);
-    gpu_initialized = true; //gpus initialized
   }
 
   mutex_lock(&lp_lock);
