@@ -6483,6 +6483,7 @@ struct work *get_work(struct thr_info *thr, const int thr_id)
   while (!work) {
     work = hash_pop(true);
     if (stale_work(work, false)) {
+      applog(LOG_DEBUG, "Work is stale, discarding");
       discard_work(work);
       work = NULL;
       wake_gws();
@@ -8516,8 +8517,12 @@ begin_bench:
        * used to keep last_getwork incrementing and to see
        * if pools are still alive. */
       work = hash_pop(false);
-      if (work)
+      if (work) {
+        applog(LOG_DEBUG,
+	       "Staged work: total (%d) > max (%d), discarding",
+	       ts, max_staged);
         discard_work(work);
+      }
       continue;
     }
 
