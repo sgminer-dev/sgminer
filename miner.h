@@ -321,6 +321,18 @@ struct gpu_adl {
 };
 #endif
 
+#ifndef opt_isset
+  #define opt_isset(opt, val) (((opt & val) == val)?1:0)
+#endif
+
+enum gpu_adl_options {
+  APPLY_ENGINE = 1,
+  APPLY_MEMCLOCK = 2,
+  APPLY_FANSPEED = 4,
+  APPLY_POWERTUNE = 8,
+  APPLY_VDDC = 16
+};
+
 extern void blank_get_statline_before(char *buf, size_t bufsiz, struct cgpu_info __maybe_unused *cgpu);
 
 struct api_data;
