@@ -5988,6 +5988,7 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
 static void apply_initial_gpu_settings(struct pool *pool)
 {
   int i;
+  unsigned char options;  //gpu adl options to apply
   unsigned int start_threads = mining_threads, //initial count of mining threads before we change devices
     needed_threads = 0; //number of mining threads needed after we change devices
   
@@ -6068,45 +6069,62 @@ static void apply_initial_gpu_settings(struct pool *pool)
     gpus[i].algorithm = pool->algorithm;
 
   #ifdef HAVE_ADL
+    options = APPLY_ENGINE | APPLY_MEMCLOCK | APPLY_FANSPEED | APPLY_POWERTUNE | APPLY_VDDC;
+    
     //GPU clock
     if(!empty_string(pool->gpu_engine))
       set_gpu_engine(pool->gpu_engine);
     else if(!empty_string(default_profile.gpu_engine))
       set_gpu_engine(default_profile.gpu_engine);
+    else
+      options ^= APPLY_ENGINE;
     
     //GPU memory clock
     if(!empty_string(pool->gpu_memclock))
       set_gpu_memclock(pool->gpu_memclock);
     else if(!empty_string(default_profile.gpu_memclock))
       set_gpu_memclock(default_profile.gpu_memclock);
+    else
+      options ^= APPLY_MEMCLOCK;
 
     //GPU fans
     if(!empty_string(pool->gpu_fan))
       set_gpu_fan(pool->gpu_fan);
     else if(!empty_string(default_profile.gpu_fan))
       set_gpu_fan(default_profile.gpu_fan);
+    else
+      options ^= APPLY_FANSPEED;
 
     //GPU powertune
     if(!empty_string(pool->gpu_powertune))
       set_gpu_powertune((char *)pool->gpu_powertune);
     else if(!empty_string(default_profile.gpu_powertune))
       set_gpu_powertune((char *)default_profile.gpu_powertune);
-
+    else
+      options ^= APPLY_POWERTUNE;
+      
     //GPU vddc
     if(!empty_string(pool->gpu_vddc))
       set_gpu_vddc((char *)pool->gpu_vddc);
     else if(!empty_string(default_profile.gpu_vddc))
       set_gpu_vddc((char *)default_profile.gpu_vddc);
-
+    else
+      options ^= APPLY_VDDC;
+      
     //apply gpu settings
     for (i = 0; i < nDevs; i++)
     {
     //  gpus[i].algorithm = pool->algorithm;
-      set_engineclock(i, gpus[i].min_engine);
-      set_memoryclock(i, gpus[i].gpu_memclock);
-      set_fanspeed(i, gpus[i].gpu_fan);
-      set_powertune(i, gpus[i].gpu_powertune);
-      set_vddc(i, gpus[i].gpu_vddc);
+      if(opt_isset(options, APPLY_ENGINE))
+        set_engineclock(i, gpus[i].min_engine);
+      if(opt_isset(options, APPLY_MEMCLOCK))
+        set_memoryclock(i, gpus[i].gpu_memclock);
+      if(opt_isset(options, APPLY_FANSPEED))
+        set_fanspeed(i, gpus[i].min_fan);
+      if(opt_isset(options, APPLY_POWERTUNE))
+        set_powertune(i, gpus[i].gpu_powertune);
+      if(opt_isset(options, APPLY_VDDC))
+        set_vddc(i, gpus[i].gpu_vddc);
     }
   #endif
 
@@ -6168,6 +6186,7 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
   int i;
   int active_threads;   //number of actual active threads
   int start_threads;   //number of threads at start before devices enabled change
+  unsigned char options;  //gpu adl options to apply
 
   pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
   mutex_lock(&algo_switch_lock);
@@ -6283,44 +6302,61 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
       set_worksize((char *)default_profile.worksize);
 
     #ifdef HAVE_ADL
+       options = APPLY_ENGINE | APPLY_MEMCLOCK | APPLY_FANSPEED | APPLY_POWERTUNE | APPLY_VDDC;
+
       //GPU clock
       if(!empty_string(work->pool->gpu_engine))
         set_gpu_engine(work->pool->gpu_engine);
       else if(!empty_string(default_profile.gpu_engine))
         set_gpu_engine(default_profile.gpu_engine);
+      else
+        options ^= APPLY_ENGINE;
       
       //GPU memory clock
       if(!empty_string(work->pool->gpu_memclock))
         set_gpu_memclock(work->pool->gpu_memclock);
       else if(!empty_string(default_profile.gpu_memclock))
         set_gpu_memclock(default_profile.gpu_memclock);
+      else
+        options ^= APPLY_MEMCLOCK;
 
       //GPU fans
       if(!empty_string(work->pool->gpu_fan))
         set_gpu_fan(work->pool->gpu_fan);
       else if(!empty_string(default_profile.gpu_fan))
         set_gpu_fan(default_profile.gpu_fan);
+      else
+        options ^= APPLY_FANSPEED;
 
       //GPU powertune
       if(!empty_string(work->pool->gpu_powertune))
         set_gpu_powertune((char *)work->pool->gpu_powertune);
       else if(!empty_string(default_profile.gpu_powertune))
         set_gpu_powertune((char *)default_profile.gpu_powertune);
+      else
+        options ^= APPLY_POWERTUNE;
 
       //GPU vddc
       if(!empty_string(work->pool->gpu_vddc))
         set_gpu_vddc((char *)work->pool->gpu_vddc);
       else if(!empty_string(default_profile.gpu_vddc))
         set_gpu_vddc((char *)default_profile.gpu_vddc);
+      else
+        options ^= APPLY_VDDC;
 
       //apply gpu settings
       for (i = 0; i < nDevs; i++)
       {
-        set_engineclock(i, gpus[i].min_engine);
-        set_memoryclock(i, gpus[i].gpu_memclock);
-        set_fanspeed(i, gpus[i].gpu_fan);
-        set_powertune(i, gpus[i].gpu_powertune);
-        set_vddc(i, gpus[i].gpu_vddc);
+        if(opt_isset(options, APPLY_ENGINE))
+          set_engineclock(i, gpus[i].min_engine);
+        if(opt_isset(options, APPLY_MEMCLOCK))
+          set_memoryclock(i, gpus[i].gpu_memclock);
+        if(opt_isset(options, APPLY_FANSPEED))
+          set_fanspeed(i, gpus[i].min_fan);
+        if(opt_isset(options, APPLY_POWERTUNE))
+          set_powertune(i, gpus[i].gpu_powertune);
+        if(opt_isset(options, APPLY_VDDC))
+          set_vddc(i, gpus[i].gpu_vddc);
       }
     #endif
 
