@@ -415,25 +415,37 @@ void copy_algorithm_settings(algorithm_t* dest, const char* algo)
 void set_algorithm(algorithm_t* algo, const char* newname_alias)
 {
   const char* newname;
-  uint8_t nfactor = 10;
+  //load previous algorithm nfactor in case nfactor was applied before algorithm... or default to 10
+  uint8_t nfactor = ((algo->nfactor)?algo->nfactor:10); 
 
   // scrypt is default ckolivas kernel
-  if (strcmp(newname_alias, "scrypt") == 0) {
+  if(!strcasecmp(newname_alias, "scrypt"))
+  {
     newname = "ckolivas";
+    nfactor = 10;
   }
   // Adaptive N-factor Scrypt is default ckolivas kernel with nfactor 11
-  else if ((strcmp(newname_alias, "adaptive-n-factor") == 0) ||
-           (strcmp(newname_alias, "adaptive-nfactor") == 0) ||
-           (strcmp(newname_alias, "nscrypt") == 0) ||
-           (strcmp(newname_alias, "adaptive-nscrypt") == 0) ||
-           (strcmp(newname_alias, "adaptive-n-scrypt") == 0)) {
+  else if ((strcasecmp(newname_alias, "adaptive-n-factor") == 0) ||
+           (strcasecmp(newname_alias, "adaptive-nfactor") == 0) ||
+           (strcasecmp(newname_alias, "nscrypt") == 0) ||
+           (strcasecmp(newname_alias, "adaptive-nscrypt") == 0) ||
+           (strcasecmp(newname_alias, "adaptive-n-scrypt") == 0)) 
+  {
     newname = "ckolivas";
     nfactor = 11;
     // Not an alias
-  } 
-  else {
-    newname = newname_alias;
   }
+  //x11mod -> darkcoin-mod
+  else if(!strcasecmp(newname_alias, "x11mod"))
+    newname = "darkcoin-mod";
+  //x13mod -> marucoin-mod
+  else if(!strcasecmp(newname_alias, "x13mod"))
+    newname = "marucoin-mod";
+  //x13modold -> marucoin-modold
+  else if(!strcasecmp(newname_alias, "x13modold"))
+    newname = "marucoin-modold";
+  else
+    newname = newname_alias;
 
   copy_algorithm_settings(algo, newname);
 
