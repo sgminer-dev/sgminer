@@ -824,7 +824,7 @@ void apply_pool_profile(struct pool *pool)
   //no profile specified in pool, use default profile
   else
   {
-    applog(LOG_DEBUG, "Loading settings from default_profile for pool %i", pool->profile, pool->pool_no);
+    applog(LOG_DEBUG, "Loading settings from default_profile for pool %i", pool->pool_no);
     profile = &default_profile;
   }
 
