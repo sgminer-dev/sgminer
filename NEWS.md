@@ -1,5 +1,12 @@
 # Release news
 
+## Version 4.2.2 - 27th June 2014
+
+* Fixes for a few stratum-related security vulnerabilities (reported by
+  _Mick Ayzenberg_ of DejaVu Security).
+* Found blocks calculation fix (by _troky_).
+
+
 ## Version 4.2.1 - 22nd May 2014
 
 * Fixed MSVS building, tested with MSVC++ 2010 and 2013 (by _troky_).
