@@ -1,7 +1,9 @@
-Updated on Fri Jun 27 17:53:59 EEST 2014.
-If working with git, use `` for latest change log.
+Updated on Fri Jun 27 18:24:12 EEST 2014.
+If working with git, use `git log --oneline --decorate` for latest change log.
 ------------------------------------------------------------------------
-5cc43f2 (HEAD, ystarnaud/master, sgminer-dev/master, origin/master, origin/HEAD, master) misc: ChangeLog typo.
+92d2256 (HEAD, tag: 4.2.2, sgminer-dev/master, origin/master, origin/HEAD, master) Bump version to 4.2.2.
+ae94126 tools: update_changelog.sh and entire ChangeLog.
+5cc43f2 (ystarnaud/master) misc: ChangeLog typo.
 411a413 Merge branch 'dejavusec-backport'
 ae7dbca (dejavusec-backport) stratum: parse_notify(): Don't die on malformed bbversion/prev_hash/nbit/ntime.
 cab6e28 stratum: parse_reconnect(): treat pool-sent URL as untrusted.
