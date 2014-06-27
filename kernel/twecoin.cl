@@ -283,53 +283,53 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
 
   // shavite
   {
-  sph_u32 h[] = { SPH_C32(0x49BB3E47), SPH_C32(0x2674860D), SPH_C32(0xA8B392AC), SPH_C32(0x021AC4E6), SPH_C32(0x409283CF), SPH_C32(0x620E5D86), SPH_C32(0x6D929DCB), SPH_C32(0x96CC2A8B) };
-  sph_u32 rk0, rk1, rk2, rk3, rk4, rk5, rk6, rk7;
-  sph_u32 rk8, rk9, rkA, rkB, rkC, rkD, rkE, rkF;
-  sph_u32 count0, count1;
+    sph_u32 h[] = { SPH_C32(0x49BB3E47), SPH_C32(0x2674860D), SPH_C32(0xA8B392AC), SPH_C32(0x021AC4E6), SPH_C32(0x409283CF), SPH_C32(0x620E5D86), SPH_C32(0x6D929DCB), SPH_C32(0x96CC2A8B) };
+    sph_u32 rk0, rk1, rk2, rk3, rk4, rk5, rk6, rk7;
+    sph_u32 rk8, rk9, rkA, rkB, rkC, rkD, rkE, rkF;
+    sph_u32 count0, count1;
 
-  rk0 = sph_dec32le_aligned((const unsigned char *)&hash +  0);
-  rk1 = sph_dec32le_aligned((const unsigned char *)&hash +  4);
-  rk2 = sph_dec32le_aligned((const unsigned char *)&hash +  8);
-  rk3 = sph_dec32le_aligned((const unsigned char *)&hash + 12);
-  rk4 = sph_dec32le_aligned((const unsigned char *)&hash + 16);
-  rk5 = sph_dec32le_aligned((const unsigned char *)&hash + 20);
-  rk6 = sph_dec32le_aligned((const unsigned char *)&hash + 24);
-  rk7 = sph_dec32le_aligned((const unsigned char *)&hash + 28);
-  rk8 = sph_dec32le_aligned((const unsigned char *)&hash + 32);
-  rk9 = sph_dec32le_aligned((const unsigned char *)&hash + 36);
-  rkA = sph_dec32le_aligned((const unsigned char *)&hash + 40);
-  rkB = sph_dec32le_aligned((const unsigned char *)&hash + 44);
-  rkC = sph_dec32le_aligned((const unsigned char *)&hash + 48);
-  rkD = sph_dec32le_aligned((const unsigned char *)&hash + 52);
-  rkE = sph_dec32le_aligned((const unsigned char *)&hash + 56);
-  rkF = sph_dec32le_aligned((const unsigned char *)&hash + 60);
-  count0 = 0x200;
-  count1 = 0;
-  c256(buf);
+    rk0 = sph_dec32le_aligned((const unsigned char *)&hash +  0);
+    rk1 = sph_dec32le_aligned((const unsigned char *)&hash +  4);
+    rk2 = sph_dec32le_aligned((const unsigned char *)&hash +  8);
+    rk3 = sph_dec32le_aligned((const unsigned char *)&hash + 12);
+    rk4 = sph_dec32le_aligned((const unsigned char *)&hash + 16);
+    rk5 = sph_dec32le_aligned((const unsigned char *)&hash + 20);
+    rk6 = sph_dec32le_aligned((const unsigned char *)&hash + 24);
+    rk7 = sph_dec32le_aligned((const unsigned char *)&hash + 28);
+    rk8 = sph_dec32le_aligned((const unsigned char *)&hash + 32);
+    rk9 = sph_dec32le_aligned((const unsigned char *)&hash + 36);
+    rkA = sph_dec32le_aligned((const unsigned char *)&hash + 40);
+    rkB = sph_dec32le_aligned((const unsigned char *)&hash + 44);
+    rkC = sph_dec32le_aligned((const unsigned char *)&hash + 48);
+    rkD = sph_dec32le_aligned((const unsigned char *)&hash + 52);
+    rkE = sph_dec32le_aligned((const unsigned char *)&hash + 56);
+    rkF = sph_dec32le_aligned((const unsigned char *)&hash + 60);
+    count0 = 0x200;
+    count1 = 0;
+    c256(buf);
 
-  rk0 = 0x80;
-  rk1 = 0;
-  rk2 = 0;
-  rk3 = 0;
-  rk4 = 0;
-  rk5 = 0;
-  rk6 = 0;
-  rk7 = 0;
-  rk8 = 0;
-  rk9 = 0;
-  rkA = 0;
-  rkB = 0;
-  rkC = 0;
-  rkD = 0x2000000;
-  rkE = 0;
-  rkF = 0x1000000;
-  count0 = 0;
-  count1 = 0;
-  c256(buf);
+    rk0 = 0x80;
+    rk1 = 0;
+    rk2 = 0;
+    rk3 = 0;
+    rk4 = 0;
+    rk5 = 0;
+    rk6 = 0;
+    rk7 = 0;
+    rk8 = 0;
+    rk9 = 0;
+    rkA = 0;
+    rkB = 0;
+    rkC = 0;
+    rkD = 0x2000000;
+    rkE = 0;
+    rkF = 0x1000000;
+    count0 = 0;
+    count1 = 0;
+    c256(buf);
 
-  for (unsigned u = 0; u < 8; u ++)
-    sph_enc32le((unsigned char *)&hash + (u << 2), h[u]);
+    for (unsigned u = 0; u < 8; u ++)
+      sph_enc32le((unsigned char *)&hash + (u << 2), h[u]);
   }
 
   // hamsi
