@@ -895,7 +895,20 @@ __kernel void search10(__global hash_t* hashes, __global uint* output, const ulo
 
     }
 
-    // fugue
+  //mixtab
+  __local sph_u32 mixtab0[256], mixtab1[256], mixtab2[256], mixtab3[256];
+  init = get_local_id(0);
+  step = get_local_size(0);
+  for (int i = init; i < 256; i += step)
+  {
+    mixtab0[i] = mixtab0_c[i];
+    mixtab1[i] = mixtab1_c[i];
+    mixtab2[i] = mixtab2_c[i];
+    mixtab3[i] = mixtab3_c[i];
+  }
+  barrier(CLK_GLOBAL_MEM_FENCE); 
+
+  // fugue
 
     {
 
