@@ -103,7 +103,16 @@
 #pragma warning (disable: 4146)
 #endif
 
-#include "hamsi_helper.cl"
+//temp fix for shortened implementation of X15
+#ifdef SPH_HAMSI_SHORT
+  #if SPH_HAMSI_EXPAND_BIG == 1
+    #include "hamsi_helper_big.cl"
+  #else
+    #include "hamsi_helper.cl"
+  #endif
+#else
+  #include "hamsi_helper.cl"
+#endif
 
 __constant static const sph_u32 HAMSI_IV224[] = {
 	SPH_C32(0xc3967a67), SPH_C32(0xc3bc6c20), SPH_C32(0x4bc3bcc3),
