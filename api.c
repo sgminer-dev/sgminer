@@ -31,6 +31,7 @@
 #include "pool.h"
 #include "util.h"
 #include "pool.h"
+#include "algorithm.h"
 
 #include "config_parser.h"
 
@@ -1602,8 +1603,14 @@ static void poolstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
     root = api_add_string(root, "Name", get_pool_name(pool), true);
     mutex_unlock(&pool->stratum_lock);
     root = api_add_escape(root, "URL", pool->rpc_url, false);
-    root = api_add_string(root, "Profile", pool->profile, false);
-    root = api_add_string(root, "Algorithm", pool->algorithm.name, false);
+    root = api_add_escape(root, "Profile", pool->profile, false);
+    root = api_add_escape(root, "Algorithm", pool->algorithm.name, false);
+    root = api_add_escape(root, "Algorithm Type", (char *)algorithm_type_str[pool->algorithm.type], false);
+    
+    //show nfactor for nscrypt
+    if(pool->algorithm.type == ALGO_NSCRYPT)
+      root = api_add_int(root, "Algorithm NFactor", (int *)&(pool->algorithm.nfactor), false);
+      
     root = api_add_string(root, "Description", pool->description, false);
     root = api_add_string(root, "Status", status, false);
     root = api_add_int(root, "Priority", &(pool->prio), false);
@@ -1620,6 +1627,7 @@ static void poolstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
     root = api_add_escape(root, "User", pool->rpc_user, false);
     root = api_add_time(root, "Last Share Time", &(pool->last_share_time), false);
     root = api_add_double(root, "Diff1 Shares", &(pool->diff1), false);
+    
     if (pool->rpc_proxy) {
       root = api_add_const(root, "Proxy Type", proxytype(pool->rpc_proxytype), false);
       root = api_add_escape(root, "Proxy", pool->rpc_proxy, false);

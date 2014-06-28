@@ -31,6 +31,21 @@
 
 #include <inttypes.h>
 #include <string.h>
+
+
+const char *algorithm_type_str[] = {
+  "Unknown",
+  "Scrypt",
+  "NScrypt",
+  "X11",
+  "X13",
+  "Keccak",
+  "Quarkcoin",
+  "Twecoin",
+  "Fugue256",
+  "NIST"
+};
+
 void sha256(const unsigned char *message, unsigned int len, unsigned char *digest)
 {
   sph_sha256_context ctx_sha2;
@@ -308,6 +323,7 @@ static cl_int queue_talkcoin_mod_kernel(struct __clState *clState, struct _dev_b
 
 typedef struct _algorithm_settings_t {
   const char *name; /* Human-readable identifier */
+  algorithm_type_t type; //common algorithm type
   double   diff_multiplier1;
   double   diff_multiplier2;
   double   share_diff_multiplier;
@@ -329,7 +345,7 @@ typedef struct _algorithm_settings_t {
 static algorithm_settings_t algos[] = {
   // kernels starting from this will have difficulty calculated by using litecoin algorithm
 #define A_SCRYPT(a) \
-    { a, 1, 65536, 65536, 0, 0, 0xFF, 0x0000ffff00000000ULL, 0xFFFFFFFFULL, 0x0000ffffUL, 0, -1, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, scrypt_regenhash, queue_scrypt_kernel, gen_hash, append_scrypt_compiler_options}
+    { a, ALGO_SCRYPT, 1, 65536, 65536, 0, 0, 0xFF, 0x0000ffff00000000ULL, 0xFFFFFFFFULL, 0x0000ffffUL, 0, -1, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, scrypt_regenhash, queue_scrypt_kernel, gen_hash, append_scrypt_compiler_options}
   A_SCRYPT( "ckolivas" ),
   A_SCRYPT( "alexkarnew" ),
   A_SCRYPT( "alexkarnold" ),
@@ -340,7 +356,7 @@ static algorithm_settings_t algos[] = {
 
   // kernels starting from this will have difficulty calculated by using quarkcoin algorithm
 #define A_QUARK(a, b) \
-    { a, 256, 256, 256, 0, 0, 0xFF, 0x000000ffff000000ULL, 0xFFFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, b, queue_sph_kernel, gen_hash, NULL}
+    { a, ALGO_QUARK, 256, 256, 256, 0, 0, 0xFF, 0x000000ffff000000ULL, 0xFFFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, b, queue_sph_kernel, gen_hash, NULL}
   A_QUARK( "quarkcoin", quarkcoin_regenhash),
   A_QUARK( "qubitcoin", qubitcoin_regenhash),
   A_QUARK( "animecoin", animecoin_regenhash),
@@ -349,31 +365,31 @@ static algorithm_settings_t algos[] = {
 
   // kernels starting from this will have difficulty calculated by using bitcoin algorithm
 #define A_DARK(a, b) \
-    { a, 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, b, queue_sph_kernel, gen_hash, NULL}
+    { a, ALGO_X11, 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, b, queue_sph_kernel, gen_hash, NULL}
   A_DARK( "darkcoin",           darkcoin_regenhash),
   A_DARK( "inkcoin",            inkcoin_regenhash),
   A_DARK( "myriadcoin-groestl", myriadcoin_groestl_regenhash),
 #undef A_DARK
 
-  { "twecoin", 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, twecoin_regenhash, queue_sph_kernel, sha256, NULL},
-  { "maxcoin", 1, 256, 1, 4, 15, 0x0F, 0x00000000ffff0000ULL, 0xFFFFULL, 0x000000ffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, maxcoin_regenhash, queue_maxcoin_kernel, sha256, NULL},
-  { "darkcoin-mod", 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, darkcoin_regenhash, queue_darkcoin_mod_kernel, gen_hash, NULL},
+  { "twecoin", ALGO_TWE, 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, twecoin_regenhash, queue_sph_kernel, sha256, NULL},
+  { "maxcoin", ALGO_KECCAK, 1, 256, 1, 4, 15, 0x0F, 0x00000000ffff0000ULL, 0xFFFFULL, 0x000000ffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, maxcoin_regenhash, queue_maxcoin_kernel, sha256, NULL},
+  { "darkcoin-mod", ALGO_X11, 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, darkcoin_regenhash, queue_darkcoin_mod_kernel, gen_hash, NULL},
 
-  { "marucoin", 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, marucoin_regenhash, queue_sph_kernel, gen_hash, append_hamsi_compiler_options},
-  { "marucoin-mod", 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 12, 8 * 16 * 4194304, 0, marucoin_regenhash, queue_marucoin_mod_kernel, gen_hash, append_hamsi_compiler_options},
-  { "marucoin-modold", 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, marucoin_regenhash, queue_marucoin_mod_old_kernel, gen_hash, append_hamsi_compiler_options},
+  { "marucoin", ALGO_X13, 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, marucoin_regenhash, queue_sph_kernel, gen_hash, append_hamsi_compiler_options},
+  { "marucoin-mod", ALGO_X13, 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 12, 8 * 16 * 4194304, 0, marucoin_regenhash, queue_marucoin_mod_kernel, gen_hash, append_hamsi_compiler_options},
+  { "marucoin-modold", ALGO_X13, 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, marucoin_regenhash, queue_marucoin_mod_old_kernel, gen_hash, append_hamsi_compiler_options},
 
-  { "talkcoin-mod", 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 4,  8 * 16 * 4194304, 0, talkcoin_regenhash, queue_talkcoin_mod_kernel, gen_hash, NULL},
+  { "talkcoin-mod", ALGO_NIST, 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 4,  8 * 16 * 4194304, 0, talkcoin_regenhash, queue_talkcoin_mod_kernel, gen_hash, NULL},
 
   // kernels starting from this will have difficulty calculated by using fuguecoin algorithm
 #define A_FUGUE(a, b) \
-    { a, 1, 256, 256, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, b, queue_sph_kernel, sha256, NULL}
+    { a, ALGO_FUGUE, 1, 256, 256, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, b, queue_sph_kernel, sha256, NULL}
   A_FUGUE( "fuguecoin",   fuguecoin_regenhash),
   A_FUGUE( "groestlcoin", groestlcoin_regenhash),
 #undef A_FUGUE
 
   // Terminator (do not remove)
-  { NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL}
+  { NULL, ALGO_UNK, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL}
 };
 
 void copy_algorithm_settings(algorithm_t* dest, const char* algo)
@@ -381,10 +397,13 @@ void copy_algorithm_settings(algorithm_t* dest, const char* algo)
   algorithm_settings_t* src;
 
   // Find algorithm settings and copy
-  for (src = algos; src->name; src++) {
-    if (strcmp(src->name, algo) == 0) {
+  for (src = algos; src->name; src++) 
+  {
+    if (strcmp(src->name, algo) == 0) 
+    {
       strcpy(dest->name, src->name);
-
+      dest->type = src->type;
+      
       dest->diff_multiplier1 = src->diff_multiplier1;
       dest->diff_multiplier2 = src->diff_multiplier2;
       dest->share_diff_multiplier = src->share_diff_multiplier;
@@ -406,7 +425,8 @@ void copy_algorithm_settings(algorithm_t* dest, const char* algo)
   }
 
   // if not found
-  if (src->name == NULL) {
+  if (src->name == NULL) 
+  {
     applog(LOG_WARNING, "Algorithm %s not found, using %s.", algo, algos->name);
     copy_algorithm_settings(dest, algos->name);
   }
@@ -457,6 +477,25 @@ void set_algorithm_nfactor(algorithm_t* algo, const uint8_t nfactor)
 {
   algo->nfactor = nfactor;
   algo->n = (1 << nfactor);
+  
+  //adjust algo type accordingly
+  switch (algo->type)
+  {
+    case ALGO_SCRYPT:
+      //if nfactor isnt 10, switch to NSCRYPT
+      if(algo->nfactor != 10)
+        algo->type = ALGO_NSCRYPT;
+      break;
+    //nscrypt
+    case ALGO_NSCRYPT:
+      //if nfactor is 10, switch to SCRYPT
+      if(algo->nfactor == 10)
+        algo->type = ALGO_SCRYPT;
+      break;
+    //ignore rest
+    default:
+      break;
+  }
 }
 
 bool cmp_algorithm(algorithm_t* algo1, algorithm_t* algo2)

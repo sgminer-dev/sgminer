@@ -321,9 +321,45 @@ struct gpu_adl {
 };
 #endif
 
+/***********************************
+ * Switcher stuff
+ ****************************************/
 #ifndef opt_isset
   #define opt_isset(opt, val) (((opt & val) == val)?1:0)
 #endif
+#ifndef get_pool_setting
+  #define get_pool_setting(val, default_val) ((!empty_string(val))?val:((!empty_string(default_val))?default_val:""))
+#endif
+
+enum switcher_mode {
+  SWITCH_OFF,
+  SWITCH_ALGO,
+  SWITCH_POOL
+};
+
+extern int opt_switchmode;
+
+enum switcher_options {
+  SWITCHER_APPLY_NONE = 0x00,
+  SWITCHER_APPLY_ALGO = 0x01,
+  SWITCHER_APPLY_DEVICE = 0x02,
+  SWITCHER_APPLY_GT = 0x04,
+  SWITCHER_APPLY_LG = 0x08,
+  SWITCHER_APPLY_RAWINT = 0x10,
+  SWITCHER_APPLY_XINT = 0x20,
+  SWITCHER_APPLY_INT = 0x40,
+  SWITCHER_APPLY_INT8 = 0x80,
+  SWITCHER_APPLY_SHADER = 0x100,
+  SWITCHER_APPLY_TC = 0x200,
+  SWITCHER_APPLY_WORKSIZE = 0x400,
+  SWITCHER_APPLY_GPU_ENGINE = 0x800,
+  SWITCHER_APPLY_GPU_MEMCLOCK = 0x1000,
+  SWITCHER_APPLY_GPU_FAN = 0x2000,
+  SWITCHER_APPLY_GPU_POWERTUNE = 0x4000,
+  SWITCHER_APPLY_GPU_VDDC = 0x8000,
+  SWITCHER_SOFT_RESET = 0x4000000,
+  SWITCHER_HARD_RESET = 0x8000000  
+};
 
 enum gpu_adl_options {
   APPLY_ENGINE = 1,
@@ -572,6 +608,7 @@ struct thr_info {
   struct thread_q *q;
   struct cgpu_info *cgpu;
   void *cgpu_data;
+  int pool_no;
   struct timeval last;
   struct timeval sick;
 

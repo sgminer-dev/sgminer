@@ -1320,6 +1320,7 @@ static bool opencl_thread_init(struct thr_info *thr)
 static bool opencl_prepare_work(struct thr_info __maybe_unused *thr, struct work *work)
 {
   work->blk.work = work;
+  thr->pool_no = work->pool->pool_no;
   return true;
 }
 

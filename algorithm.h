@@ -10,6 +10,21 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+typedef enum {
+  ALGO_UNK,
+  ALGO_SCRYPT,
+  ALGO_NSCRYPT,
+  ALGO_X11,
+  ALGO_X13,
+  ALGO_KECCAK,
+  ALGO_QUARK,
+  ALGO_TWE,
+  ALGO_FUGUE,
+  ALGO_NIST
+} algorithm_type_t;
+
+extern const char *algorithm_type_str[]; 
+
 extern void gen_hash(const unsigned char *data, unsigned int len, unsigned char *hash);
 
 struct __clState;
@@ -23,6 +38,7 @@ struct work;
  */
 typedef struct _algorithm_t {
   char     name[20]; /* Human-readable identifier */
+  algorithm_type_t type; //algorithm type
   uint32_t n;        /* N (CPU/Memory tradeoff parameter) */
   uint8_t  nfactor;  /* Factor of N above (n = 2^nfactor) */
   double   diff_multiplier1;

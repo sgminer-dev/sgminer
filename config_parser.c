@@ -499,7 +499,8 @@ void parse_config_object(json_t *obj, const char *parentkey, bool fileconf, int 
 {
   //char *err = NULL;
   const char *key;
-  json_t *val;
+  size_t idx;
+  json_t *val, *subval;
 
   json_object_foreach(obj, key, val)
   {
@@ -508,6 +509,18 @@ void parse_config_object(json_t *obj, const char *parentkey, bool fileconf, int 
     {
       if(val && json_is_string(val))
         load_config(json_string_value(val), parentkey, NULL);
+    }
+    //process includes - multi include
+    else if(!strcasecmp(key, "includes"))
+    {
+      if(val && json_is_array(val))
+      {
+        json_array_foreach(val, idx, subval)
+        {
+          if(subval && json_is_string(subval))
+            load_config(json_string_value(subval), parentkey, NULL);
+        }
+      }
     }
     else
       parse_config(val, key, parentkey, fileconf, parent_iteration);
@@ -689,7 +702,7 @@ void load_default_profile()
 
   // ... and copy settings
   if(!empty_string(profile->algorithm.name))
-    set_algorithm(&default_profile.algorithm, profile->algorithm.name);
+    default_profile.algorithm = profile->algorithm;
     
   if(!empty_string(profile->devices))
     default_profile.devices = profile->devices;
@@ -743,8 +756,10 @@ void apply_defaults()
     set_algorithm(&default_profile.algorithm, "scrypt");
 
   //by default all unless specified
-  if (empty_string(default_profile.devices))
+  if(empty_string(default_profile.devices))
     default_profile.devices = strdup("all");
+  
+  applog(LOG_DEBUG, "Default Devices = %s", default_profile.devices);
   set_devices((char *)default_profile.devices);
 
   //set raw intensity first
@@ -1919,7 +1934,12 @@ void api_profile_list(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __ma
     root = api_add_escape(root, "Name", profile->name, true);
     root = api_add_bool(root, "IsDefault", &b, false);
     root = api_add_escape(root, "Algorithm", isnull((char *)profile->algorithm.name, ""), true);
-    root = api_add_int(root, "NFactor", (int *)&profile->algorithm.nfactor, false);
+    root = api_add_escape(root, "Algorithm Type", (char *)algorithm_type_str[profile->algorithm.type], false);
+    
+    //show nfactor for nscrypt
+    if(profile->algorithm.type == ALGO_NSCRYPT)
+      root = api_add_int(root, "Algorithm NFactor", (int *)&(profile->algorithm.nfactor), false);
+      
     root = api_add_escape(root, "LookupGap", isnull((char *)profile->lookup_gap, ""), true);
     root = api_add_escape(root, "Devices", isnull((char *)profile->devices, ""), true);
     root = api_add_escape(root, "Intensity", isnull((char *)profile->intensity, ""), true);
