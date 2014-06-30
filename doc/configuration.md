@@ -431,7 +431,6 @@ sgminer 4.2.1-116-g2e8b-dirty
   * [worksize](#worksize)
   * [xintensity](#xintensity)
 * [Miscellaneous Options](#miscellaneous-options)
-  * [benchmark](#benchmark)
   * [compact](#compact)
   * [debug](#debug)
   * [default-profile](#default-profile)
@@ -1708,22 +1707,6 @@ See [xintensity](#xintensity).
 ---
 
 ## Miscellaneous Options
-
-### benchmark
-
-Runs sgminer in benchmark mode. **This does not produce any shares.**
-
-*Available*: Global
-
-*Config File Syntax:* `"benchmark":true`
-
-*Command Line Syntax:* `--benchmark`
-
-*Argument:* None
-
-*Default:* `false`
-
-[Top](#configuration-and-command-line-options) :: [Config-file and CLI options](#config-file-and-cli-options) :: [Miscellaneous Options](#miscellaneous-options)
 
 ### compact
 

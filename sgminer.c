@@ -168,7 +168,6 @@ static int init_pool; //pool used to initialize gpus
 
 bool opt_work_update;
 bool opt_protocol;
-static bool opt_benchmark;
 bool have_longpoll;
 bool want_per_device_stats;
 bool use_syslog;
@@ -1385,9 +1384,6 @@ struct opt_table opt_config_table[] = {
   OPT_WITHOUT_ARG("--balance",
       set_balance, &pool_strategy,
       "Change multipool strategy from failover to even share balance"),
-  OPT_WITHOUT_ARG("--benchmark",
-      opt_set_bool, &opt_benchmark,
-      "Run sgminer in benchmark mode - produces no shares"),
 #ifdef HAVE_CURSES
   OPT_WITHOUT_ARG("--compact",
       opt_set_bool, &opt_compact,
@@ -3352,24 +3348,6 @@ static void calc_diff(struct work *work, double known)
   }
 }
 
-static void get_benchmark_work(struct work *work)
-{
-  // Use a random work block pulled from a pool
-  static uint8_t bench_block[] = { SGMINER_BENCHMARK_BLOCK };
-
-  size_t bench_size = sizeof(*work);
-  size_t work_size = sizeof(bench_block);
-  size_t min_size = (work_size < bench_size ? work_size : bench_size);
-  memset(work, 0, sizeof(*work));
-  memcpy(work, &bench_block, min_size);
-  work->mandatory = true;
-  work->pool = pools[0];
-  cgtime(&work->tv_getwork);
-  copy_time(&work->tv_getwork_reply, &work->tv_getwork);
-  work->getwork_mode = GETWORK_MODE_BENCHMARK;
-  calc_diff(work, 0);
-}
-
 #ifdef HAVE_CURSES
 static void disable_curses_windows(void)
 {
@@ -3880,9 +3858,6 @@ static bool stale_work(struct work *work, bool share)
   time_t work_expiry;
   struct pool *pool;
   int getwork_delay;
-
-  if (opt_benchmark)
-    return false;
 
   if (work->work_block != work_block) {
     applog(LOG_DEBUG, "Work stale due to block mismatch");
@@ -7320,8 +7295,7 @@ static void *watchpool_thread(void __maybe_unused *userdata)
     for (i = 0; i < total_pools; i++) {
       struct pool *pool = pools[i];
 
-      if (!opt_benchmark)
-        reap_curl(pool);
+      reap_curl(pool);
 
       /* Get a rolling utility per pool over 10 mins */
       if (intervals > 19) {
@@ -8386,21 +8360,6 @@ int main(int argc, char *argv[])
   //apply pool-specific config from profiles
   apply_pool_profiles();
 
-  if (opt_benchmark) {
-    struct pool *pool;
-
-    // FIXME: executes always (leftover from SHA256d days)
-    quit(1, "Cannot use benchmark mode with scrypt");
-    pool = add_pool();
-    pool->rpc_url = (char *)malloc(255);
-    strcpy(pool->rpc_url, "Benchmark");
-    pool->rpc_user = pool->rpc_url;
-    pool->rpc_pass = pool->rpc_url;
-    enable_pool(pool);
-    pool->idle = false;
-    successful_connect = true;
-  }
-
 #ifdef HAVE_CURSES
   if (opt_realquiet || opt_display_devs)
     use_curses = false;
@@ -8538,9 +8497,6 @@ int main(int argc, char *argv[])
 
 //  restart_mining_threads(mining_threads);
 
-  if (opt_benchmark)
-    goto begin_bench;
-
   /* Set pool state */
   for (i = 0; i < total_pools; i++) {
     struct pool *pool = pools[i];
@@ -8612,7 +8568,6 @@ int main(int argc, char *argv[])
   if(slept >= 60)
     applog(LOG_WARNING, "GPUs did not become initialized in 60 seconds...");
 
-begin_bench:
   total_mhashes_done = 0;
   for (i = 0; i < total_devices; i++) {
     struct cgpu_info *cgpu = devices[i];
@@ -8742,13 +8697,6 @@ retry:
       }
       gen_stratum_work(pool, work);
       applog(LOG_DEBUG, "Generated stratum work");
-      stage_work(work);
-      continue;
-    }
-
-    if (opt_benchmark) {
-      get_benchmark_work(work);
-      applog(LOG_DEBUG, "Generated benchmark work");
       stage_work(work);
       continue;
     }
