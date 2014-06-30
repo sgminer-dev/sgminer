@@ -6317,14 +6317,17 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
   
   //get the number of active threads to know when to switch... if we only check total threads, we may wait for ever on a disabled GPU
   active_threads = 0;
+  
+  rd_lock(&mining_thr_lock);
   for(i = 0; i < mining_threads; i++)
   {
-    struct thr_info *thr = mining_thr[i];
+    struct cgpu_info *cgpu = mining_thr[i]->cgpu;
     
     //dont count dead/sick GPU threads or we may wait for ever also...
-    if(thr->cgpu->deven != DEV_DISABLED && thr->cgpu->status != LIFE_SICK && thr->cgpu->status != LIFE_DEAD)
+    if(cgpu->deven != DEV_DISABLED && cgpu->status != LIFE_SICK && cgpu->status != LIFE_DEAD)
       active_threads++;
   }
+  rd_unlock(&mining_thr_lock);
 
   // If all threads are waiting now
   if(algo_switch_n >= active_threads) 
