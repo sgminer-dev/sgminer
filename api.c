@@ -1606,11 +1606,11 @@ static void poolstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
     root = api_add_escape(root, "Profile", pool->profile, false);
     root = api_add_escape(root, "Algorithm", pool->algorithm.name, false);
     root = api_add_escape(root, "Algorithm Type", (char *)algorithm_type_str[pool->algorithm.type], false);
-    
+
     //show nfactor for nscrypt
     if(pool->algorithm.type == ALGO_NSCRYPT)
       root = api_add_int(root, "Algorithm NFactor", (int *)&(pool->algorithm.nfactor), false);
-      
+
     root = api_add_string(root, "Description", pool->description, false);
     root = api_add_string(root, "Status", status, false);
     root = api_add_int(root, "Priority", &(pool->prio), false);
@@ -1627,7 +1627,7 @@ static void poolstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
     root = api_add_escape(root, "User", pool->rpc_user, false);
     root = api_add_time(root, "Last Share Time", &(pool->last_share_time), false);
     root = api_add_double(root, "Diff1 Shares", &(pool->diff1), false);
-    
+
     if (pool->rpc_proxy) {
       root = api_add_const(root, "Proxy Type", proxytype(pool->rpc_proxytype), false);
       root = api_add_escape(root, "Proxy", pool->rpc_proxy, false);
@@ -1892,14 +1892,14 @@ static void api_pool_strategy(struct io_data *io_data, __maybe_unused SOCKETTYPE
 {
   char *p;
   int strategy;
-  
-  if (total_pools == 0) 
+
+  if (total_pools == 0)
   {
     message(io_data, MSG_NOPOOL, 0, NULL, isjson);
     return;
   }
 
-  if (param == NULL || *param == '\0') 
+  if (param == NULL || *param == '\0')
   {
     message(io_data, MSG_MISSTRAT, 0, NULL, isjson);
     return;
@@ -1911,7 +1911,7 @@ static void api_pool_strategy(struct io_data *io_data, __maybe_unused SOCKETTYPE
     message(io_data, MSG_MISSTRAT, 0, NULL, isjson);
     return;
   }
-  
+
   strategy = atoi(p);
 
   //invalid strategy
@@ -1920,7 +1920,7 @@ static void api_pool_strategy(struct io_data *io_data, __maybe_unused SOCKETTYPE
     message(io_data, MSG_INVSTRAT, strategy, NULL, isjson);
     return;
   }
-  
+
   //if set to rotate, get second param
   if(strategy == POOL_ROTATE)
   {
@@ -1930,22 +1930,22 @@ static void api_pool_strategy(struct io_data *io_data, __maybe_unused SOCKETTYPE
       message(io_data, MSG_MISSTRATINT, 0, NULL, isjson);
       return;
     }
-    
+
     //get interval in parameter 2
     int interval;
     interval = atoi(p);
-    
+
     //interval can only be between 0 and 9999
     if(interval < 0 || interval > 9999)
     {
       message(io_data, MSG_INVNUM, interval, "interval", isjson);
       return;
     }
-    
+
     //set interval
     opt_rotate_period = interval;
   }
-  
+
   //set pool strategy
   pool_strategy = (enum pool_strategy)strategy;
   //initiate new strategy
