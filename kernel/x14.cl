@@ -80,9 +80,6 @@ typedef int sph_s32;
 #ifndef SPH_HAMSI_EXPAND_BIG
   #define SPH_HAMSI_EXPAND_BIG 1
 #endif
-#ifndef SPH_HAMSI_SHORT
-  #define SPH_HAMSI_SHORT 1
-#endif
 
 #include "blake.cl"
 #include "bmw.cl"
@@ -1107,16 +1104,21 @@ __kernel void search11(__global hash_t* hashes)
 {
   uint gid = get_global_id(0);
   __global hash_t *hash = &(hashes[gid-get_global_offset(0)]);
-  __local sph_u32 T512_L[1024];
-  __constant const sph_u32 *T512_C = &T512[0][0];
+
+  #ifdef INPUT_BIG_LOCAL
+    __local sph_u32 T512_L[1024];
+    __constant const sph_u32 *T512_C = &T512[0][0];
+    
+    int init = get_local_id(0);
+    int step = get_local_size(0);
+    for (int i = init; i < 1024; i += step)
+      T512_L[i] = T512_C[i];
+
+    barrier(CLK_LOCAL_MEM_FENCE);
+  #else
+    #define INPUT_BIG_LOCAL INPUT_BIG
+  #endif
   
-  int init = get_local_id(0);
-  int step = get_local_size(0);
-  for (int i = init; i < 1024; i += step)
-    T512_L[i] = T512_C[i];
-
-  barrier(CLK_LOCAL_MEM_FENCE);
-
   sph_u32 c0 = HAMSI_IV512[0], c1 = HAMSI_IV512[1], c2 = HAMSI_IV512[2], c3 = HAMSI_IV512[3];
   sph_u32 c4 = HAMSI_IV512[4], c5 = HAMSI_IV512[5], c6 = HAMSI_IV512[6], c7 = HAMSI_IV512[7];
   sph_u32 c8 = HAMSI_IV512[8], c9 = HAMSI_IV512[9], cA = HAMSI_IV512[10], cB = HAMSI_IV512[11];
@@ -1127,10 +1129,11 @@ __kernel void search11(__global hash_t* hashes)
 
   #define buf(u) hash->h1[i + u]
   
-  for(int i = 0; i < 64; i += 8) {
-      INPUT_BIG_LOCAL;
-      P_BIG;
-      T_BIG;
+  for(int i = 0; i < 64; i += 8) 
+  {
+    INPUT_BIG_LOCAL;
+    P_BIG;
+    T_BIG;
   }
   
   #undef buf

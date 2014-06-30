@@ -105,7 +105,7 @@
 
 //temp fix for shortened implementation of X15
 #ifdef SPH_HAMSI_SHORT
-  #if SPH_HAMSI_EXPAND_BIG == 1
+  #if SPH_HAMSI_SHORT == 1 && SPH_HAMSI_EXPAND_BIG == 1
     #include "hamsi_helper_big.cl"
   #else
     #include "hamsi_helper.cl"

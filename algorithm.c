@@ -94,8 +94,8 @@ static void append_scrypt_compiler_options(struct _build_kernel_data *data, stru
 static void append_hamsi_compiler_options(struct _build_kernel_data *data, struct cgpu_info *cgpu, struct _algorithm_t *algorithm)
 {
   char buf[255];
-  sprintf(buf, " -D SPH_HAMSI_EXPAND_BIG=%d%s ",
-          opt_hamsi_expand_big, ((opt_hamsi_short)?" -D SPH_HAMSI_SHORT=1 ":""));
+  sprintf(buf, " -D SPH_HAMSI_EXPAND_BIG=%d -D SPH_HAMSI_SHORT=%d ",
+          opt_hamsi_expand_big, ((opt_hamsi_short)?1:0));
   strcat(data->compiler_options, buf);
 
   sprintf(buf, "big%u%s", (unsigned int)opt_hamsi_expand_big, ((opt_hamsi_short)?"hs":""));
