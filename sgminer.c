@@ -183,8 +183,6 @@ int opt_queue = 1;
 int opt_scantime = 7;
 int opt_expiry = 28;
 
-//algorithm_t opt_algorithm;
-
 unsigned long long global_hashrate;
 unsigned long global_quota_gcd = 1;
 bool opt_show_coindiff = false;
@@ -1429,22 +1427,18 @@ struct opt_table opt_config_table[] = {
       "Number of threads per GPU (1 - 10)"),
 #else
   OPT_WITH_ARG("--gpu-threads|-g",
-//      set_gpu_threads, NULL, NULL,
       set_default_gpu_threads, NULL, NULL,
       "Number of threads per GPU - one value or comma separated list (e.g. 1,2,1)"),
   OPT_WITH_ARG("--gpu-engine",
-//      set_gpu_engine, NULL, NULL,
       set_default_gpu_engine, NULL, NULL,
       "GPU engine (over)clock range in Mhz - one value, range and/or comma separated list (e.g. 850-900,900,750-850)"),
   OPT_WITH_ARG("--gpu-fan",
-//      set_gpu_fan, NULL, NULL,
       set_default_gpu_fan, NULL, NULL,
       "GPU fan percentage range - one value, range and/or comma separated list (e.g. 0-85,85,65)"),
   OPT_WITH_ARG("--gpu-map",
       set_gpu_map, NULL, NULL,
       "Map OpenCL to ADL device order manually, paired CSV (e.g. 1:0,2:1 maps OpenCL 1 to ADL 0, 2 to 1)"),
   OPT_WITH_ARG("--gpu-memclock",
-//      set_gpu_memclock, NULL, NULL,
       set_default_gpu_memclock, NULL, NULL, 
       "Set the GPU memory (over)clock in Mhz - one value for all or separate by commas for per card"),
   OPT_WITH_ARG("--gpu-memdiff",
@@ -1480,17 +1474,14 @@ struct opt_table opt_config_table[] = {
       " -> " MAX_INTENSITY_STR
       ",default: d to maintain desktop interactivity), overridden by --xintensity or --rawintensity."),
   OPT_WITH_ARG("--xintensity|-X",
-//      set_xintensity, NULL, NULL,
       set_default_xintensity, NULL, NULL, 
       "Shader based intensity of GPU scanning (" MIN_XINTENSITY_STR " to "
         MAX_XINTENSITY_STR "), overridden --xintensity|-X and --rawintensity."),
   OPT_WITH_ARG("--xintensity|-X",
-//      set_xintensity, NULL, NULL,
       set_default_xintensity, NULL, NULL, 
       "Shader based intensity of GPU scanning (" MIN_XINTENSITY_STR " to "
         MAX_XINTENSITY_STR "), overrides --intensity|-I, overridden by --rawintensity."),
   OPT_WITH_ARG("--rawintensity",
-//      set_rawintensity, NULL, NULL,
       set_default_rawintensity, NULL, NULL, 
       "Raw intensity of GPU scanning (" MIN_RAWINTENSITY_STR " to "
         MAX_RAWINTENSITY_STR "), overrides --intensity|-I and --xintensity|-X."),
@@ -1766,7 +1757,6 @@ struct opt_table opt_config_table[] = {
       opt_hidden),
 #endif
   OPT_WITH_ARG("--thread-concurrency",
-//      set_thread_concurrency, NULL, NULL,
       set_default_thread_concurrency, NULL, NULL, 
       "Set GPU thread concurrency for scrypt mining, comma separated"),
   OPT_WITH_ARG("--url|--pool-url|-o",
@@ -6076,7 +6066,6 @@ static void apply_initial_gpu_settings(struct pool *pool)
     //apply gpu settings
     for (i = 0; i < nDevs; i++)
     {
-    //  gpus[i].algorithm = pool->algorithm;
       if(opt_isset(options, APPLY_ENGINE))
         set_engineclock(i, gpus[i].min_engine);
       if(opt_isset(options, APPLY_MEMCLOCK))
@@ -8494,8 +8483,6 @@ int main(int argc, char *argv[])
     if (opt_stderr_cmd)
       fork_monitor();
   #endif // defined(unix)
-
-//  restart_mining_threads(mining_threads);
 
   /* Set pool state */
   for (i = 0; i < total_pools; i++) {
