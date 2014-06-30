@@ -164,7 +164,7 @@ static char packagename[256];
 
 static bool startup = true; //sgminer is starting up
 static bool gpu_initialized = false;  //gpu initialized
-
+static int init_pool; //pool used to initialize gpus
 
 bool opt_work_update;
 bool opt_protocol;
@@ -2210,18 +2210,18 @@ static bool gbt_decode(struct pool *pool, json_t *res_val)
 static bool getwork_decode(json_t *res_val, struct work *work)
 {
   if (unlikely(!jobj_binary(res_val, "data", work->data, sizeof(work->data), true))) {
-    applog(LOG_ERR, "JSON inval data");
+    applog(LOG_ERR, "%s: JSON inval data", isnull(get_pool_name(work->pool), ""));
     return false;
   }
 
   if (!jobj_binary(res_val, "midstate", work->midstate, sizeof(work->midstate), false)) {
     // Calculate it ourselves
-    applog(LOG_DEBUG, "Calculating midstate locally");
+    applog(LOG_DEBUG, "%s: Calculating midstate locally", isnull(get_pool_name(work->pool), ""));
     calc_midstate(work);
   }
 
   if (unlikely(!jobj_binary(res_val, "target", work->target, sizeof(work->target), true))) {
-    applog(LOG_ERR, "JSON inval target");
+    applog(LOG_ERR, "%s: JSON inval target", isnull(get_pool_name(work->pool), ""));
     return false;
   }
   return true;
@@ -2244,6 +2244,8 @@ static bool work_decode(struct pool *pool, struct work *work, json_t *val)
     goto out;
   }
 
+  work->pool = pool;
+  
   if (pool->has_gbt) {
     if (unlikely(!gbt_decode(pool, res_val)))
       goto out;
@@ -4102,8 +4104,12 @@ void switch_pools(struct pool *selected)
     startup = false;  //remove startup flag so we don't enter this block again
     applog(LOG_NOTICE, "Startup GPU initialization... Using settings from pool %s.", get_pool_name(pool));
     
+    //set initial pool number for restart_mining_threads to prevent mismatched GPU settings
+    init_pool = pool->pool_no;
+
     //apply gpu settings based on first alive pool
     apply_initial_gpu_settings(pool);
+    
     gpu_initialized = true; //gpus initialized
   }
 
@@ -6054,8 +6060,11 @@ static void apply_initial_gpu_settings(struct pool *pool)
 
   //apply algorithm
   for (i = 0; i < nDevs; i++)
+  {
+    applog(LOG_DEBUG, "Set GPU %d to %s", i, isnull(pool->algorithm.name, ""));
     gpus[i].algorithm = pool->algorithm;
-
+  }
+  
   #ifdef HAVE_ADL
     options = APPLY_ENGINE | APPLY_MEMCLOCK | APPLY_FANSPEED | APPLY_POWERTUNE | APPLY_VDDC;
     
@@ -6348,7 +6357,8 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
   {
     struct thr_info *thr = mining_thr[i];
     
-    if(thr->cgpu->deven != DEV_DISABLED)
+    //dont count dead/sick GPU threads or we may wait for ever also...
+    if(thr->cgpu->deven != DEV_DISABLED && thr->cgpu->status != LIFE_SICK && thr->cgpu->status != LIFE_DEAD)
       active_threads++;
   }
 
@@ -6442,13 +6452,6 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
           set_worksize((char *)opt);
       }
 
-      //apply algorithm
-      if(opt_isset(options, SWITCHER_APPLY_ALGO))
-      {
-        for (i = 0; i < nDevs; i++)
-          gpus[i].algorithm = work->pool->algorithm;
-      }
-
       #ifdef HAVE_ADL
         //GPU clock
         if(opt_isset(options, SWITCHER_APPLY_GPU_ENGINE))
@@ -6503,24 +6506,27 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 
       // Change algorithm for each thread (thread_prepare calls initCl)
       if(opt_isset(options, SWITCHER_SOFT_RESET))
-      {
-        struct thr_info *thr;
         applog(LOG_DEBUG, "Soft Reset... Restarting threads...");
+      
+      struct thr_info *thr;
+      
+      for (i = 0; i < start_threads; i++) 
+      {
+        thr = mining_thr[i];
+        thr->pool_no = work->pool->pool_no; //set thread on new pool
         
-        for (i = 0; i < start_threads; i++) 
+        //apply new algorithm if set
+        if(opt_isset(options, SWITCHER_APPLY_ALGO))
+          thr->cgpu->algorithm = work->pool->algorithm;
+        
+        if(opt_isset(options, SWITCHER_SOFT_RESET))
         {
-          thr = mining_thr[i];
-          thr->pool_no = work->pool->pool_no; //set thread on new pool
-          
-          if(opt_isset(options, SWITCHER_SOFT_RESET))
-          {
-            thr->cgpu->drv->thread_prepare(thr);
-            thr->cgpu->drv->thread_init(thr);
-          }
-
-          // Necessary because algorithms can have dramatically different diffs
-          thr->cgpu->drv->working_diff = 1;
+          thr->cgpu->drv->thread_prepare(thr);
+          thr->cgpu->drv->thread_init(thr);
         }
+
+        // Necessary because algorithms can have dramatically different diffs
+        thr->cgpu->drv->working_diff = 1;
       }
       
       rd_unlock(&mining_thr_lock);
@@ -7697,7 +7703,8 @@ static void *test_pool_thread(void *arg)
 {
   struct pool *pool = (struct pool *)arg;
 
-  if (pool_active(pool, false)) {
+  if (pool_active(pool, false)) 
+  {
     pool_tset(pool, &pool->lagging);
     pool_tclear(pool, &pool->idle);
     bool first_pool = false;
@@ -8096,7 +8103,8 @@ static void probe_pools(void)
 {
   int i;
 
-  for (i = 0; i < total_pools; i++) {
+  for (i = 0; i < total_pools; i++) 
+  {
     struct pool *pool = pools[i];
 
     pool->testing = true;
@@ -8164,7 +8172,12 @@ static void restart_mining_threads(unsigned int new_n_threads)
   rd_lock(&devices_lock);
   
   // Start threads
-  struct pool *pool = current_pool();
+  struct pool *pool;
+  
+  if(gpu_initialized)
+    pool = current_pool();
+  else
+    pool = pools[init_pool];
   
   k = 0;
   for (i = 0; i < total_devices; ++i) {
@@ -8178,6 +8191,7 @@ static void restart_mining_threads(unsigned int new_n_threads)
       thr = mining_thr[k];
       thr->id = k;
       thr->pool_no = pool->pool_no;
+      applog(LOG_DEBUG, "Thread %d set pool = %d (%s)", k, thr->pool_no, isnull(get_pool_name(pools[thr->pool_no]), ""));
       thr->cgpu = cgpu;
       thr->device_thread = j;
 

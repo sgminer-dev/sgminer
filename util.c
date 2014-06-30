@@ -2501,7 +2501,7 @@ resend:
     else
       ss = strdup("(unknown reason)");
 
-    applog(LOG_INFO, "JSON-RPC decode failed: %s", ss);
+    applog(LOG_INFO, "Stratum Error: %s", ss);
 
     free(ss);
 
