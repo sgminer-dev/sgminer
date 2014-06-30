@@ -8119,7 +8119,7 @@ static void restart_mining_threads(unsigned int new_n_threads)
   if (!mining_thr)
     quit(1, "Failed to calloc mining_thr");
   for (i = 0; i < mining_threads; i++) {
-    mining_thr[i] = (struct thr_info *)calloc(1, sizeof(*thr));
+    mining_thr[i] = (struct thr_info *)calloc(1, sizeof(struct thr_info));
     if (!mining_thr[i])
       quit(1, "Failed to calloc mining_thr[%d]", i);
   }
@@ -8143,7 +8143,7 @@ static void restart_mining_threads(unsigned int new_n_threads)
       continue;
     }
 
-    cgpu->thr = (struct thr_info **)malloc(sizeof(*cgpu->thr) * (cgpu->threads+1));
+    cgpu->thr = (struct thr_info **)malloc(sizeof(struct thr_info *) * (cgpu->threads+1));
     cgpu->thr[cgpu->threads] = NULL;
     cgpu->status = LIFE_INIT;
 
@@ -8159,8 +8159,10 @@ static void restart_mining_threads(unsigned int new_n_threads)
       cgtime(&thr->last);
       cgpu->thr[j] = thr;
 
-      if (!cgpu->drv->thread_prepare(thr))
+      if (!cgpu->drv->thread_prepare(thr)) {
+        applog(LOG_ERR, "thread_prepare failed for thread %d", thr->id);
         continue;
+      }
     }
   }
   rd_unlock(&devices_lock);
