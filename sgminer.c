@@ -6028,8 +6028,13 @@ static void apply_initial_gpu_settings(struct pool *pool)
       devices_enabled[i] = false;
 
   //assign pool devices if any
-  if(!empty_string((opt = get_pool_setting(pool->devices, ((!empty_string(default_profile.devices))?default_profile.devices:"all")))))
-    set_devices((char *)opt);
+  if(!empty_string((opt = get_pool_setting(pool->devices, ((!empty_string(default_profile.devices))?default_profile.devices:"all"))))) {
+    if (opt_removedisabled) {
+      applog(LOG_ERR, "Changing enabled devices is not possible when remove-disabled is set.");
+    } else {
+      set_devices((char *)opt);
+    }
+  }
 
   //lookup gap
   if(!empty_string((opt = get_pool_setting(pool->lookup_gap, default_profile.lookup_gap))))
@@ -6364,8 +6369,13 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
             devices_enabled[i] = false;
 
         //assign pool devices if any
-        if(!empty_string((opt = get_pool_setting(work->pool->devices, ((!empty_string(default_profile.devices))?default_profile.devices:"all")))))
-          set_devices((char *)opt);
+        if(!empty_string((opt = get_pool_setting(work->pool->devices, ((!empty_string(default_profile.devices))?default_profile.devices:"all"))))) {
+          if (opt_removedisabled) {
+            applog(LOG_ERR, "Changing enabled devices is not possible when remove-disabled is set.");
+          } else {
+            set_devices((char *)opt);
+          }
+        }
       }
 
       //lookup gap
