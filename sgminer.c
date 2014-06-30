@@ -5977,13 +5977,45 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
   cgtime(&work->tv_staged);
 }
 
+static void enable_devices(void)
+{
+  int i;
+
+  //enable/disable devices as needed
+  sgminer_id_count = 0;
+
+  if(opt_devs_enabled)
+  {
+    for (i = 0; i < total_devices; i++)
+    {
+      //device should be enabled
+      if(devices_enabled[i])
+        enable_device(devices[i]);
+      else
+      {
+        //if option is set to not remove disabled, enable device
+        if(!opt_removedisabled)
+          enable_device(devices[i]);
+
+        //mark as disabled
+        devices[i]->deven = DEV_DISABLED;
+      }
+    }
+  }
+  //enable all devices
+  else
+  {
+    for (i = 0; i < total_devices; ++i)
+      enable_device(devices[i]);
+  }
+}
+
 static void apply_initial_gpu_settings(struct pool *pool)
 {
   int i;
   const char *opt;
   unsigned char options;  //gpu adl options to apply
-  unsigned int start_threads = mining_threads, //initial count of mining threads before we change devices
-    needed_threads = 0; //number of mining threads needed after we change devices
+  unsigned int needed_threads = 0; //number of mining threads needed after we change devices
   
   applog(LOG_NOTICE, "Startup Pool No = %d", pool->pool_no);
   
@@ -6082,32 +6114,7 @@ static void apply_initial_gpu_settings(struct pool *pool)
   rd_unlock(&mining_thr_lock);
   
   //enable/disable devices as needed
-  sgminer_id_count = 0;   //reset sgminer_ids
-  mining_threads = 0;     //mining threads gets added inside each enable_device() so reset
-  if(opt_devs_enabled)
-  {
-    for (i = 0; i < MAX_DEVICES; i++) 
-    {
-      //device should be enabled
-      if(devices_enabled[i] && i < total_devices)
-        enable_device(devices[i]);
-      else if(i < total_devices)
-      {
-        //if option is set to not remove disabled, enable device
-        if(!opt_removedisabled)
-          enable_device(devices[i]);
-        
-        //mark as disabled
-        devices[i]->deven = DEV_DISABLED;
-      }
-    }
-  }
-  //enable all devices
-  else
-  {
-    for (i = 0; i < total_devices; ++i)
-      enable_device(devices[i]);
-  }
+  enable_devices();
   
   //recount the number of needed mining threads
   #ifdef HAVE_ADL
@@ -6115,13 +6122,11 @@ static void apply_initial_gpu_settings(struct pool *pool)
       set_gpu_threads((char *)opt);
 
     for (i = 0; i < total_devices; i++)
-      needed_threads += devices[i]->threads;
+      if (!opt_removedisabled || !opt_devs_enabled || devices_enabled[i])
+        needed_threads += devices[i]->threads;
   #else
     needed_threads = mining_threads;
   #endif
-  
-  //revert global mining thread count to start thread count so we don't touch threads outside of count
-  mining_threads = start_threads;
 
   //bad thread count?
   if(needed_threads == 0)
@@ -6281,7 +6286,6 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 {
   int i;
   int active_threads;   //number of actual active threads
-  int start_threads;   //number of threads at start before devices enabled change
   unsigned long options;
   const char *opt;
 
@@ -6332,8 +6336,6 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
   // If all threads are waiting now
   if(algo_switch_n >= active_threads) 
   {
-    start_threads = mining_threads;   //use start_threads below 
-
     //compare pools to figure out what we need to apply, if options is 0, don't change anything...
     if((options = compare_pool_settings(pools[mythr->pool_no], work->pool)))
     {
@@ -6343,7 +6345,7 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
       if(opt_isset(options, SWITCHER_SOFT_RESET)) 
       {
         applog(LOG_DEBUG, "Soft Reset... Shutdown threads...");
-        for (i = 0; i < start_threads; i++) 
+        for (i = 0; i < mining_threads; i++)
         {
           struct thr_info *thr = mining_thr[i];
           thr->cgpu->drv->thread_shutdown(thr);
@@ -6477,7 +6479,7 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
       
       struct thr_info *thr;
       
-      for (i = 0; i < start_threads; i++) 
+      for (i = 0; i < mining_threads; i++)
       {
         thr = mining_thr[i];
         thr->pool_no = work->pool->pool_no; //set thread on new pool
@@ -6511,32 +6513,8 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
         //if devices changed... enable/disable as needed
         if(opt_isset(options, SWITCHER_APPLY_DEVICE))
         {
-          sgminer_id_count = 0;   //reset sgminer_ids
-          mining_threads = 0;     //mining threads gets added inside each enable_device() so reset
-          if(opt_devs_enabled)
-          {
-            for (i = 0; i < MAX_DEVICES; i++) 
-            {
-              //device should be enabled
-              if(devices_enabled[i] && i < total_devices)
-                enable_device(devices[i]);
-              else if(i < total_devices)
-              {
-                //if option is set to not remove disabled, enable device
-                if(!opt_removedisabled)
-                  enable_device(devices[i]);
-                
-                //mark as disabled
-                devices[i]->deven = DEV_DISABLED;
-              }
-            }
-          }
-          //enable all devices
-          else
-          {
-            for (i = 0; i < total_devices; ++i)
-              enable_device(devices[i]);
-          }
+          // reset devices
+          enable_devices();
         }
         
         //figure out how many mining threads we'll need
@@ -6552,14 +6530,11 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
           }
               
           for (i = 0; i < total_devices; i++)
-            n_threads += devices[i]->threads;
+            if (!opt_removedisabled || !opt_devs_enabled || devices_enabled[i])
+              n_threads += devices[i]->threads;
         #else
           n_threads = mining_threads;
         #endif
-      
-        /*use start_threads to close original threads... mining_threads was recounted above and would cause crashes
-        when trying to close a thread index that doesn't exist.*/
-        mining_threads = start_threads;
       
         if (unlikely(pthread_create(&restart_thr, NULL, restart_mining_threads_thread, (void *) (intptr_t) n_threads)))
           quit(1, "restart_mining_threads create thread failed");
@@ -6585,7 +6560,7 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
     else
     {
       //apply new pool_no to all mining threads
-      for (i = 0; i < start_threads; i++) 
+      for (i = 0; i < mining_threads; i++)
       {
         struct thr_info *thr = mining_thr[i];
         thr->pool_no = work->pool->pool_no;
@@ -8017,11 +7992,6 @@ void enable_device(struct cgpu_info *cgpu)
   wr_lock(&devices_lock);
   devices[cgpu->sgminer_id = sgminer_id_count++] = cgpu;
   wr_unlock(&devices_lock);
-
-  mining_threads += cgpu->threads;
-#ifdef HAVE_CURSES
-  adj_width(mining_threads, &dev_width);
-#endif
 }
 
 struct _cgpu_devid_counter {
@@ -8087,7 +8057,7 @@ static void restart_mining_threads(unsigned int new_n_threads)
   if (mining_thr) 
   {
     rd_lock(&mining_thr_lock);
-    for (i = 0; i < mining_threads; i++) 
+    for (i = 0; i < mining_threads; i++)
     {
         applog(LOG_DEBUG, "Shutting down thread %d", i);
          mining_thr[i]->cgpu->shutdown = true;
@@ -8097,7 +8067,7 @@ static void restart_mining_threads(unsigned int new_n_threads)
     // kill_mining will rd lock mining_thr_lock
     kill_mining();
     rd_lock(&mining_thr_lock);
-    for (i = 0; i < mining_threads; i++) 
+    for (i = 0; i < mining_threads; i++)
     {
         thr = mining_thr[i];
         thr->cgpu->drv->thread_shutdown(thr);
@@ -8111,7 +8081,7 @@ static void restart_mining_threads(unsigned int new_n_threads)
   if (mining_thr) 
   {
     for (i = 0; i < total_devices; i++) {
-      free(devices[i]->thr);
+      if (devices[i]->thr) free(devices[i]->thr);
     }
     
     for (i = 0; i < mining_threads; i++) {
@@ -8148,6 +8118,12 @@ static void restart_mining_threads(unsigned int new_n_threads)
   k = 0;
   for (i = 0; i < total_devices; ++i) {
     struct cgpu_info *cgpu = devices[i];
+
+    if (cgpu->deven == DEV_DISABLED && opt_removedisabled) {
+      cgpu->threads = 0;
+      continue;
+    }
+
     cgpu->thr = (struct thr_info **)malloc(sizeof(*cgpu->thr) * (cgpu->threads+1));
     cgpu->thr[cgpu->threads] = NULL;
     cgpu->status = LIFE_INIT;
@@ -8393,6 +8369,7 @@ int main(int argc, char *argv[])
   /* Use the DRIVER_PARSE_COMMANDS macro to fill all the device_drvs */
   DRIVER_PARSE_COMMANDS(DRIVER_FILL_DEVICE_DRV)
 
+  // this will set total_devices
   opencl_drv.drv_detect(false);
 
   if (opt_display_devs) {
@@ -8414,19 +8391,27 @@ int main(int argc, char *argv[])
         if (i >= total_devices)
           quit (1, "Command line options set a device that doesn't exist");
         enable_device(devices[i]);
+        mining_threads += devices[i]->threads;
       } else if (i < total_devices) {
-        if (!opt_removedisabled)
+        if (!opt_removedisabled) {
           enable_device(devices[i]);
+          mining_threads += devices[i]->threads;
+        }
         devices[i]->deven = DEV_DISABLED;
       }
     }
-    total_devices = sgminer_id_count;
   } else {
-    for (i = 0; i < total_devices; ++i)
+    for (i = 0; i < total_devices; ++i) {
       enable_device(devices[i]);
+      mining_threads += devices[i]->threads;
+    }
   }
 
-  if (!total_devices)
+#ifdef HAVE_CURSES
+  adj_width(mining_threads, &dev_width);
+#endif
+
+  if (mining_threads == 0)
     quit(1, "All devices disabled, cannot mine!");
 
   most_devices = total_devices;

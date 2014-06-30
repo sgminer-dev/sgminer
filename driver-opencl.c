@@ -1154,6 +1154,7 @@ static void opencl_detect(bool hotplug)
     cgpu = &gpus[i];
     cgpu->deven = DEV_ENABLED;
     cgpu->drv = &opencl_drv;
+    cgpu->thr = NULL;
     cgpu->device_id = i;
 #ifndef HAVE_ADL
     cgpu->threads = opt_g_threads;
