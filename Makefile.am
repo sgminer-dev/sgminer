@@ -63,6 +63,7 @@ sgminer_SOURCES += algorithm/marucoin.c algorithm/marucoin.h
 sgminer_SOURCES += algorithm/maxcoin.c algorithm/maxcoin.h
 sgminer_SOURCES += algorithm/talkcoin.c algorithm/talkcoin.h
 sgminer_SOURCES += algorithm/bitblock.c algorithm/bitblock.h
+sgminer_SOURCES += algorithm/x14.c algorithm/x14.h
 
 bin_SCRIPTS	= $(top_srcdir)/kernel/*.cl
 

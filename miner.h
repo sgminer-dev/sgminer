@@ -1033,6 +1033,7 @@ extern int swork_id;
 extern int opt_tcp_keepalive;
 extern bool opt_incognito;
 extern int opt_hamsi_expand_big;
+extern bool opt_hamsi_short;
 
 #if LOCK_TRACKING
 extern pthread_mutex_t lockstat_lock;
