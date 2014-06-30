@@ -268,7 +268,7 @@ char *set_gpu_engine(const char *_arg)
 
   if(!(nextptr = strtok(arg, ",")))
     return "Invalid parameters for set gpu engine";
-    
+
   do {
     get_intrange(nextptr, &val1, &val2);
     if (val1 < 0 || val1 > 9999 || val2 < 0 || val2 > 9999)
@@ -276,12 +276,12 @@ char *set_gpu_engine(const char *_arg)
 
     gpus[device].min_engine = val1;
     gpus[device].gpu_engine = val2;
-  
+
     //also set adl settings otherwise range will never properly be applied
     //since min_engine/gpu_engine are only called during init_adl() at startup
     gpus[device].adl.minspeed = val1 * 100;
     gpus[device].adl.maxspeed = val2 * 100;
-  
+
     device++;
   } while ((nextptr = strtok(NULL, ",")) != NULL);
 
@@ -290,7 +290,7 @@ char *set_gpu_engine(const char *_arg)
     for (i = 1; i < MAX_GPUDEVICES; i++) {
       gpus[i].min_engine = gpus[0].min_engine;
       gpus[i].gpu_engine = gpus[0].gpu_engine;
-      
+
       //set adl values
       gpus[i].adl.minspeed = val1 * 100;
       gpus[i].adl.maxspeed = val2 * 100;
@@ -668,7 +668,7 @@ char *set_rawintensity(const char *_arg)
 void print_ndevs(int *ndevs)
 {
   opt_log_output = true;
-  opencl_drv.drv_detect(false);
+  opencl_drv.drv_detect();
   clear_adl(*ndevs);
   applog(LOG_INFO, "%i GPU devices max detected", *ndevs);
 }
@@ -1129,7 +1129,7 @@ out:
   return NULL;
 }
 
-static void opencl_detect(bool hotplug)
+static void opencl_detect(void)
 {
   int i;
 

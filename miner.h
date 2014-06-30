@@ -358,7 +358,7 @@ enum switcher_options {
   SWITCHER_APPLY_GPU_POWERTUNE = 0x4000,
   SWITCHER_APPLY_GPU_VDDC = 0x8000,
   SWITCHER_SOFT_RESET = 0x4000000,
-  SWITCHER_HARD_RESET = 0x8000000  
+  SWITCHER_HARD_RESET = 0x8000000
 };
 
 enum gpu_adl_options {
@@ -382,7 +382,7 @@ struct device_drv {
   char *name;
 
   // DRV-global functions
-  void (*drv_detect)(bool);
+  void (*drv_detect)(void);
 
   // Device-specific functions
   void (*reinit_device)(struct cgpu_info *);
