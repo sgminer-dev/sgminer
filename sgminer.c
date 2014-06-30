@@ -497,10 +497,11 @@ static struct cgpu_info *get_thr_cgpu(int thr_id)
 
 struct cgpu_info *get_devices(int id)
 {
-  struct cgpu_info *cgpu;
+  struct cgpu_info *cgpu = NULL;
 
   rd_lock(&devices_lock);
-  cgpu = devices[id];
+  if (id < total_devices)
+    cgpu = devices[id];
   rd_unlock(&devices_lock);
 
   return cgpu;
@@ -6126,9 +6127,11 @@ static void apply_initial_gpu_settings(struct pool *pool)
     if(!empty_string((opt = get_pool_setting(pool->gpu_threads, default_profile.gpu_threads))))
       set_gpu_threads((char *)opt);
 
+    rd_lock(&devices_lock);
     for (i = 0; i < total_devices; i++)
       if (!opt_removedisabled || !opt_devs_enabled || devices_enabled[i])
         needed_threads += devices[i]->threads;
+    rd_unlock(&devices_lock);
   #else
     needed_threads = mining_threads;
   #endif
@@ -6539,9 +6542,11 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
               set_gpu_threads(opt);
           }
 
+          rd_lock(&devices_lock);
           for (i = 0; i < total_devices; i++)
             if (!opt_removedisabled || !opt_devs_enabled || devices_enabled[i])
               n_threads += devices[i]->threads;
+          rd_unlock(&devices_lock);
         #else
           n_threads = mining_threads;
         #endif
@@ -8039,7 +8044,9 @@ bool add_cgpu(struct cgpu_info *cgpu)
   cgpu->last_device_valid_work = time(NULL);
   mutex_unlock(&stats_lock);
 
+  wr_lock(&devices_lock);
   devices[total_devices++] = cgpu;
+  wr_unlock(&devices_lock);
 
   adjust_mostdevs();
   return true;
@@ -8090,9 +8097,11 @@ static void restart_mining_threads(unsigned int new_n_threads)
 
   if (mining_thr)
   {
+    rd_lock(&devices_lock);
     for (i = 0; i < total_devices; i++) {
       if (devices[i]->thr) free(devices[i]->thr);
     }
+    rd_unlock(&devices_lock);
 
     for (i = 0; i < mining_threads; i++) {
       free(mining_thr[i]);
@@ -8427,8 +8436,10 @@ int main(int argc, char *argv[])
 
   load_temp_cutoffs();
 
+  rd_lock(&devices_lock);
   for (i = 0; i < total_devices; ++i)
     devices[i]->sgminer_stats.getwork_wait_min.tv_sec = MIN_SEC_UNSET;
+  rd_unlock(&devices_lock);
 
   if (!opt_compact) {
     logstart += most_devices;
@@ -8552,12 +8563,14 @@ int main(int argc, char *argv[])
   if(slept >= 60)
     applog(LOG_WARNING, "GPUs did not become initialized in 60 seconds...");
 
+  rd_lock(&devices_lock);
   total_mhashes_done = 0;
   for (i = 0; i < total_devices; i++) {
     struct cgpu_info *cgpu = devices[i];
 
     cgpu->rolling = cgpu->total_mhashes = 0;
   }
+  rd_unlock(&devices_lock);
 
   cgtime(&total_tv_start);
   cgtime(&total_tv_end);
