@@ -843,9 +843,6 @@ struct api_data *print_data(struct api_data *root, char *buf, bool isjson, bool 
   return root;
 }
 
-#define DRIVER_COUNT_DRV(X) if (devices[i]->drv->drv_id == DRIVER_##X) \
-  count++;
-
 // All replies (except BYE and RESTART) start with a message
 //  thus for JSON, message() inserts JSON_START at the front
 //  and send_result() adds JSON_END at the end
