@@ -486,13 +486,13 @@ static FILE *sharelog_file = NULL;
 
 static struct cgpu_info *get_thr_cgpu(int thr_id)
 {
-  struct thr_info *thr = NULL;
+  struct cgpu_info *cgpu = NULL;
   rd_lock(&mining_thr_lock);
-  if (thr_id < mining_threads)
-    thr = mining_thr[thr_id];
+  if (thr_id < mining_threads && mining_thr[thr_id])
+    cgpu = mining_thr[thr_id]->cgpu;
   rd_unlock(&mining_thr_lock);
 
-  return thr ? thr->cgpu : NULL;
+  return cgpu;
 }
 
 struct cgpu_info *get_devices(int id)
