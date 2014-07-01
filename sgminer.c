@@ -3413,6 +3413,7 @@ static void kill_mining(void)
     if (thr && PTH(thr) != 0L)
       pth = &thr->pth;
     thr_info_cancel(thr);
+    forcelog(LOG_DEBUG, "Waiting for thread %d to finish...", thr->id);
 #ifndef WIN32
     if (pth && *pth)
       pthread_join(*pth, NULL);
@@ -6284,6 +6285,11 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
   return options;
 }
 
+static void mutex_unlock_cleanup_handler(void *mutex)
+{
+  mutex_unlock((pthread_mutex_t *) mutex);
+}
+
 static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 {
   int i;
@@ -6299,7 +6305,7 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
   {
     //get pool options to apply on switch
     pool_switch_options = 0;
-    
+
     //switcher mode - switch on algorithm change
     if(opt_switchmode == SWITCH_ALGO)
     {
@@ -6315,21 +6321,21 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
         if((pool_switch_options = compare_pool_settings(pools[mythr->pool_no], work->pool)) == 0)
         {
           applog(LOG_NOTICE, "No settings change from pool %s...", isnull(get_pool_name(work->pool), ""));
-      
+
           rd_lock(&mining_thr_lock);
-          
+
           //apply new pool_no to all mining threads
           for (i = 0; i < mining_threads; i++)
           {
             struct thr_info *thr = mining_thr[i];
             thr->pool_no = work->pool->pool_no;
           }
-          
+
           rd_unlock(&mining_thr_lock);
         }
       }
     }
-     
+
     if(pool_switch_options == 0)
     {
       mutex_unlock(&algo_switch_lock);
@@ -6360,7 +6366,7 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
   if(algo_switch_n >= active_threads)
   {
     const char *opt;
-    
+
     applog(LOG_NOTICE, "Applying pool settings for %s...", isnull(get_pool_name(work->pool), ""));
     rd_lock(&mining_thr_lock);
 
@@ -6525,12 +6531,6 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
     rd_unlock(&mining_thr_lock);
     mutex_unlock(&algo_switch_lock);
 
-    //reset switch thread counter
-    mutex_lock(&algo_switch_wait_lock);
-    algo_switch_n = 0;
-    mutex_unlock(&algo_switch_wait_lock);
-
-    // Signal other threads to start working now 
     // Hard restart if needed
     if(opt_isset(pool_switch_options, SWITCHER_HARD_RESET))
     {
@@ -6562,9 +6562,10 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
       #endif
 
       pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-      
+
       if (unlikely(pthread_create(&restart_thr, NULL, restart_mining_threads_thread, (void *) (intptr_t) n_threads)))
         quit(1, "restart_mining_threads create thread failed");
+
       sleep(60);
 
       #ifdef __TEMP_ALGO_SWITCH_FIX__
@@ -6573,6 +6574,11 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
         {
           applog(LOG_DEBUG, "thread %d not found in fix list, don't exit sgminer", restart_thr);
           pthread_cancel(restart_thr);
+
+          mutex_lock(&algo_switch_wait_lock);
+          algo_switch_n = 0;
+          pthread_cond_broadcast(&algo_switch_wait_cond);
+          mutex_unlock(&algo_switch_wait_lock);
           return;
         }
       #endif /* __TEMP_ALGO_SWITCH_FIX__ */
@@ -6581,8 +6587,9 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
     }
     else
     {
-      //signal threads to resume work
+      // Signal other threads to start working now
       mutex_lock(&algo_switch_wait_lock);
+      algo_switch_n = 0;
       pthread_cond_broadcast(&algo_switch_wait_cond);
       mutex_unlock(&algo_switch_wait_lock);
 
@@ -6593,13 +6600,14 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
   {
     mutex_unlock(&algo_switch_lock);
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-    
+
     // Wait for signal to start working again
     mutex_lock(&algo_switch_wait_lock);
-    //set cleanup instructions in the event that the thread is cancelled
-    pthread_cleanup_push((_Voidfp) pthread_mutex_unlock, (void *)&algo_switch_wait_lock); 
+    // Set cleanup instructions in the event that the thread is cancelled
+    pthread_cleanup_push(mutex_unlock_cleanup_handler, (void *)&algo_switch_wait_lock);
     while(algo_switch_n > 0)
       pthread_cond_wait(&algo_switch_wait_cond, &algo_switch_wait_lock);
+    // Non-zero argument will execute the cleanup handler after popping it
     pthread_cleanup_pop(1);
   }
 }
@@ -8083,6 +8091,14 @@ static void restart_mining_threads(unsigned int new_n_threads)
 
     // kill_mining will rd lock mining_thr_lock
     kill_mining();
+
+    applog(LOG_DEBUG, "Finish switching pools");
+    // Finish switching pools
+    mutex_lock(&algo_switch_wait_lock);
+    algo_switch_n = 0;
+    mutex_unlock(&algo_switch_wait_lock);
+
+    applog(LOG_DEBUG, "Shutdown OpenCL contexts...");
     rd_lock(&mining_thr_lock);
     for (i = 0; i < mining_threads; i++)
     {
@@ -8097,6 +8113,7 @@ static void restart_mining_threads(unsigned int new_n_threads)
 
   if (mining_thr)
   {
+    applog(LOG_DEBUG, "Free old mining and device thread memory...");
     rd_lock(&devices_lock);
     for (i = 0; i < total_devices; i++) {
       if (devices[i]->thr) free(devices[i]->thr);
@@ -8111,6 +8128,7 @@ static void restart_mining_threads(unsigned int new_n_threads)
   }
 
   // Alloc
+  applog(LOG_DEBUG, "Allocate new threads...");
   mining_threads = (int) new_n_threads;
 #ifdef HAVE_CURSES
   adj_width(mining_threads, &dev_width);
@@ -8147,6 +8165,7 @@ static void restart_mining_threads(unsigned int new_n_threads)
       continue;
     }
 
+    applog(LOG_DEBUG, "Assign threads for device %d", i);
     for (j = 0; j < cgpu->threads; ++j, ++k)
     {
       thr = mining_thr[k];
@@ -8175,6 +8194,7 @@ static void restart_mining_threads(unsigned int new_n_threads)
     for (j = 0; j < cgpu->threads; ++j) {
       thr = cgpu->thr[j];
 
+      applog(LOG_DEBUG, "Starting device %d mining thread %d...", i, j);
       if (unlikely(thr_info_create(thr, NULL, miner_thread, thr)))
         quit(1, "thread %d create failed", thr->id);
 
