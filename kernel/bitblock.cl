@@ -1,5 +1,5 @@
 /*
- * X13 kernel implementation.
+ * X15 kernel implementation.
  *
  * ==========================(LICENSE BEGIN)============================
  *
@@ -1164,17 +1164,17 @@ __kernel void search12(__global hash_t* hashes)
   uint offset = get_global_offset(0);
   __global hash_t *hash = &(hashes[gid-offset]);
   
-    // mixtab
-    __local sph_u32 mixtab0[256], mixtab1[256], mixtab2[256], mixtab3[256];
-    int init = get_local_id(0);
-    int step = get_local_size(0);
-    for (int i = init; i < 256; i += step)
-    {
-    	mixtab0[i] = mixtab0_c[i];
-    	mixtab1[i] = mixtab1_c[i];
-    	mixtab2[i] = mixtab2_c[i];
-    	mixtab3[i] = mixtab3_c[i];
-    }
+  // mixtab
+  __local sph_u32 mixtab0[256], mixtab1[256], mixtab2[256], mixtab3[256];
+  int init = get_local_id(0);
+  int step = get_local_size(0);
+  for (int i = init; i < 256; i += step)
+  {
+    mixtab0[i] = mixtab0_c[i];
+    mixtab1[i] = mixtab1_c[i];
+    mixtab2[i] = mixtab2_c[i];
+    mixtab3[i] = mixtab3_c[i];
+  }
 
   // fugue
   sph_u32 S00, S01, S02, S03, S04, S05, S06, S07, S08, S09;
@@ -1234,6 +1234,7 @@ __kernel void search12(__global hash_t* hashes)
     ROR8;
     SMIX(S00, S01, S02, S03);
   }
+  
   S04 ^= S00;
   S09 ^= S00;
   S18 ^= S00;
@@ -1256,10 +1257,6 @@ __kernel void search12(__global hash_t* hashes)
   hash->h4[14] = SWAP4(S29);
   hash->h4[15] = SWAP4(S30);
 
-//  bool result = (hash->h8[3] <= target);
-//  if (result)
-//    output[atomic_inc(output+0xFF)] = SWAP4(gid);
-
   barrier(CLK_GLOBAL_MEM_FENCE); 
 }
 
@@ -1270,52 +1267,53 @@ __kernel void search13(__global hash_t* hashes)
   uint offset = get_global_offset(0);
   __global hash_t *hash = &(hashes[gid-offset]);
 
-    // shabal
+  // shabal
+  sph_u32 A00 = A_init_512[0], A01 = A_init_512[1], A02 = A_init_512[2], A03 = A_init_512[3], A04 = A_init_512[4], A05 = A_init_512[5], A06 = A_init_512[6], A07 = A_init_512[7],
+    A08 = A_init_512[8], A09 = A_init_512[9], A0A = A_init_512[10], A0B = A_init_512[11];
+  sph_u32 B0 = B_init_512[0], B1 = B_init_512[1], B2 = B_init_512[2], B3 = B_init_512[3], B4 = B_init_512[4], B5 = B_init_512[5], B6 = B_init_512[6], B7 = B_init_512[7],
+    B8 = B_init_512[8], B9 = B_init_512[9], BA = B_init_512[10], BB = B_init_512[11], BC = B_init_512[12], BD = B_init_512[13], BE = B_init_512[14], BF = B_init_512[15];
+  sph_u32 C0 = C_init_512[0], C1 = C_init_512[1], C2 = C_init_512[2], C3 = C_init_512[3], C4 = C_init_512[4], C5 = C_init_512[5], C6 = C_init_512[6], C7 = C_init_512[7],
+    C8 = C_init_512[8], C9 = C_init_512[9], CA = C_init_512[10], CB = C_init_512[11], CC = C_init_512[12], CD = C_init_512[13], CE = C_init_512[14], CF = C_init_512[15];
+  sph_u32 M0, M1, M2, M3, M4, M5, M6, M7, M8, M9, MA, MB, MC, MD, ME, MF;
+  sph_u32 Wlow = 1, Whigh = 0;
 
-    sph_u32 A00 = A_init_512[0], A01 = A_init_512[1], A02 = A_init_512[2], A03 = A_init_512[3], A04 = A_init_512[4], A05 = A_init_512[5], A06 = A_init_512[6], A07 = A_init_512[7],
-	    A08 = A_init_512[8], A09 = A_init_512[9], A0A = A_init_512[10], A0B = A_init_512[11];
-    sph_u32 B0 = B_init_512[0], B1 = B_init_512[1], B2 = B_init_512[2], B3 = B_init_512[3], B4 = B_init_512[4], B5 = B_init_512[5], B6 = B_init_512[6], B7 = B_init_512[7],
-	    B8 = B_init_512[8], B9 = B_init_512[9], BA = B_init_512[10], BB = B_init_512[11], BC = B_init_512[12], BD = B_init_512[13], BE = B_init_512[14], BF = B_init_512[15];
-    sph_u32 C0 = C_init_512[0], C1 = C_init_512[1], C2 = C_init_512[2], C3 = C_init_512[3], C4 = C_init_512[4], C5 = C_init_512[5], C6 = C_init_512[6], C7 = C_init_512[7],
-	    C8 = C_init_512[8], C9 = C_init_512[9], CA = C_init_512[10], CB = C_init_512[11], CC = C_init_512[12], CD = C_init_512[13], CE = C_init_512[14], CF = C_init_512[15];
-    sph_u32 M0, M1, M2, M3, M4, M5, M6, M7, M8, M9, MA, MB, MC, MD, ME, MF;
-    sph_u32 Wlow = 1, Whigh = 0;
+  M0 = hash->h4[0];
+  M1 = hash->h4[1];
+  M2 = hash->h4[2];
+  M3 = hash->h4[3];
+  M4 = hash->h4[4];
+  M5 = hash->h4[5];
+  M6 = hash->h4[6];
+  M7 = hash->h4[7];
+  M8 = hash->h4[8];
+  M9 = hash->h4[9];
+  MA = hash->h4[10];
+  MB = hash->h4[11];
+  MC = hash->h4[12];
+  MD = hash->h4[13];
+  ME = hash->h4[14];
+  MF = hash->h4[15];
 
-    M0 = hash->h4[0];
-    M1 = hash->h4[1];
-    M2 = hash->h4[2];
-    M3 = hash->h4[3];
-    M4 = hash->h4[4];
-    M5 = hash->h4[5];
-    M6 = hash->h4[6];
-    M7 = hash->h4[7];
-    M8 = hash->h4[8];
-    M9 = hash->h4[9];
-    MA = hash->h4[10];
-    MB = hash->h4[11];
-    MC = hash->h4[12];
-    MD = hash->h4[13];
-    ME = hash->h4[14];
-    MF = hash->h4[15];
+  INPUT_BLOCK_ADD;
+  XOR_W;
+  APPLY_P;
+  INPUT_BLOCK_SUB;
+  SWAP_BC;
+  INCR_W;
 
-    INPUT_BLOCK_ADD;
-    XOR_W;
-    APPLY_P;
-    INPUT_BLOCK_SUB;
+  M0 = 0x80;
+  M1 = M2 = M3 = M4 = M5 = M6 = M7 = M8 = M9 = MA = MB = MC = MD = ME = MF = 0;
+
+  INPUT_BLOCK_ADD;
+  XOR_W;
+  APPLY_P;
+  
+  for (unsigned i = 0; i < 3; i ++) 
+  {
     SWAP_BC;
-    INCR_W;
-
-    M0 = 0x80;
-    M1 = M2 = M3 = M4 = M5 = M6 = M7 = M8 = M9 = MA = MB = MC = MD = ME = MF = 0;
-
-    INPUT_BLOCK_ADD;
     XOR_W;
     APPLY_P;
-    for (unsigned i = 0; i < 3; i ++) {
-	SWAP_BC;
-	XOR_W;
-	APPLY_P;
-    }
+  }
 
 	hash->h4[0] = B0;
 	hash->h4[1] = B1;
@@ -1460,4 +1458,5 @@ __kernel void search14(__global hash_t* hashes, __global uint* output, const ulo
 
   barrier(CLK_GLOBAL_MEM_FENCE); 
 }
+
 #endif // BITBLOCK_CL

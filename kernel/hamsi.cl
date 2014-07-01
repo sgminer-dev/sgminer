@@ -88,15 +88,15 @@
  */
 
 #if !defined SPH_HAMSI_EXPAND_SMALL
-#if SPH_SMALL_FOOTPRINT_HAMSI
-#define SPH_HAMSI_EXPAND_SMALL  4
-#else
-#define SPH_HAMSI_EXPAND_SMALL  8
-#endif
+  #if SPH_SMALL_FOOTPRINT_HAMSI
+    #define SPH_HAMSI_EXPAND_SMALL  4
+  #else
+    #define SPH_HAMSI_EXPAND_SMALL  8
+  #endif
 #endif
 
 #if !defined SPH_HAMSI_EXPAND_BIG
-#define SPH_HAMSI_EXPAND_BIG    8
+  #define SPH_HAMSI_EXPAND_BIG    8
 #endif
 
 #ifdef _MSC_VER
