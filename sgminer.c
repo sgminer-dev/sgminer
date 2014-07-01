@@ -203,7 +203,6 @@ int total_devices;
 static int most_devices;
 struct cgpu_info **devices;
 int mining_threads;
-static int sgminer_id_count = 0;
 
 #ifdef HAVE_CURSES
 bool use_curses = true;
@@ -507,7 +506,7 @@ struct cgpu_info *get_devices(int id)
   return cgpu;
 }
 
-void enable_device(struct cgpu_info *cgpu);
+void enable_device(int i);
 
 static void sharelog(const char*disposition, const struct work*work)
 {
@@ -5983,21 +5982,15 @@ static void enable_devices(void)
   int i;
 
   //enable/disable devices as needed
-  sgminer_id_count = 0;
-
   if(opt_devs_enabled)
   {
     for (i = 0; i < total_devices; i++)
     {
       //device should be enabled
       if(devices_enabled[i])
-        enable_device(devices[i]);
+        enable_device(i);
       else
       {
-        //if option is set to not remove disabled, enable device
-        if(!opt_removedisabled)
-          enable_device(devices[i]);
-
         //mark as disabled
         devices[i]->deven = DEV_DISABLED;
       }
@@ -6007,7 +6000,7 @@ static void enable_devices(void)
   else
   {
     for (i = 0; i < total_devices; ++i)
-      enable_device(devices[i]);
+      enable_device(i);
   }
 }
 
@@ -6030,11 +6023,7 @@ static void apply_initial_gpu_settings(struct pool *pool)
 
   //assign pool devices if any
   if(!empty_string((opt = get_pool_setting(pool->devices, ((!empty_string(default_profile.devices))?default_profile.devices:"all"))))) {
-    if (opt_removedisabled) {
-      applog(LOG_ERR, "Changing enabled devices is not possible when remove-disabled is set.");
-    } else {
-      set_devices((char *)opt);
-    }
+    set_devices((char *)opt);
   }
 
   //lookup gap
@@ -6373,11 +6362,7 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 
         //assign pool devices if any
         if(!empty_string((opt = get_pool_setting(work->pool->devices, ((!empty_string(default_profile.devices))?default_profile.devices:"all"))))) {
-          if (opt_removedisabled) {
-            applog(LOG_ERR, "Changing enabled devices is not possible when remove-disabled is set.");
-          } else {
-            set_devices((char *)opt);
-          }
+          set_devices((char *)opt);
         }
       }
 
@@ -7375,7 +7360,8 @@ static void *watchdog_thread(void __maybe_unused *userdata)
         count = 0;
         for (i = 0; i < total_devices; i++) {
           cgpu = get_devices(i);
-          if (cgpu) curses_print_devstatus(cgpu, count++);
+          if (cgpu && (!opt_removedisabled || cgpu->deven != DEV_DISABLED))
+            curses_print_devstatus(cgpu, count++);
         }
       }
 
@@ -8000,13 +7986,11 @@ void fill_device_drv(struct device_drv *drv)
     drv->working_diff = 1;
 }
 
-void enable_device(struct cgpu_info *cgpu)
+void enable_device(int i)
 {
-  cgpu->deven = DEV_ENABLED;
-
-  wr_lock(&devices_lock);
-  devices[cgpu->sgminer_id = sgminer_id_count++] = cgpu;
-  wr_unlock(&devices_lock);
+  rd_lock(&devices_lock);
+  devices[i]->deven = DEV_ENABLED;
+  rd_unlock(&devices_lock);
 }
 
 struct _cgpu_devid_counter {
@@ -8410,19 +8394,17 @@ int main(int argc, char *argv[])
       if (devices_enabled[i]) {
         if (i >= total_devices)
           quit (1, "Command line options set a device that doesn't exist");
-        enable_device(devices[i]);
+        enable_device(i);
         mining_threads += devices[i]->threads;
       } else if (i < total_devices) {
-        if (!opt_removedisabled) {
-          enable_device(devices[i]);
-          mining_threads += devices[i]->threads;
-        }
         devices[i]->deven = DEV_DISABLED;
+        if (!opt_removedisabled)
+          mining_threads += devices[i]->threads;
       }
     }
   } else {
     for (i = 0; i < total_devices; ++i) {
-      enable_device(devices[i]);
+      enable_device(i);
       mining_threads += devices[i]->threads;
     }
   }

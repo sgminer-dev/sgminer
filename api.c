@@ -2507,7 +2507,7 @@ static void notify(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe
 {
   struct cgpu_info *cgpu;
   bool io_open = false;
-  int i;
+  int i, j;
 
   if (total_devices == 0) {
     message(io_data, MSG_NODEVS, 0, NULL, isjson);
@@ -2519,9 +2519,10 @@ static void notify(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe
   if (isjson)
     io_open = io_add(io_data, COMSTR JSON_NOTIFY);
 
-  for (i = 0; i < total_devices; i++) {
+  for (i = 0, j = 0; i < total_devices; i++) {
     cgpu = get_devices(i);
-    notifystatus(io_data, i, cgpu, isjson, group);
+    if (!opt_removedisabled || cgpu->deven != DEV_DISABLED)
+      notifystatus(io_data, j++, cgpu, isjson, group);
   }
 
   if (isjson && io_open)
@@ -2534,7 +2535,7 @@ static void devdetails(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
   char buf[TMPBUFSIZ];
   bool io_open = false;
   struct cgpu_info *cgpu;
-  int i;
+  int i, j;
 
   if (total_devices == 0) {
     message(io_data, MSG_NODEVS, 0, NULL, isjson);
@@ -2546,10 +2547,12 @@ static void devdetails(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
   if (isjson)
     io_open = io_add(io_data, COMSTR JSON_DEVDETAILS);
 
-  for (i = 0; i < total_devices; i++) {
+  for (i = 0, j = 0; i < total_devices; i++) {
     cgpu = get_devices(i);
 
-    root = api_add_int(root, "DEVDETAILS", &i, false);
+    if (opt_removedisabled && cgpu->deven == DEV_DISABLED) continue;
+
+    root = api_add_int(root, "DEVDETAILS", &j, false);
     root = api_add_string(root, "Name", cgpu->drv->name, false);
     root = api_add_int(root, "ID", &(cgpu->device_id), false);
     root = api_add_string(root, "Driver", cgpu->drv->dname, false);
@@ -2557,8 +2560,9 @@ static void devdetails(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
     root = api_add_const(root, "Model", cgpu->name ? cgpu->name : BLANK, false);
     root = api_add_const(root, "Device Path", cgpu->device_path ? cgpu->device_path : BLANK, false);
 
-    root = print_data(root, buf, isjson, isjson && (i > 0));
+    root = print_data(root, buf, isjson, isjson && (j > 0));
     io_add(io_data, buf);
+    j++;
   }
 
   if (isjson && io_open)
@@ -2659,7 +2663,7 @@ static void minerstats(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
   for (j = 0; j < total_devices; j++) {
     cgpu = get_devices(j);
 
-    if (cgpu && cgpu->drv) {
+    if (cgpu && cgpu->drv && (!opt_removedisabled || cgpu->deven != DEV_DISABLED)) {
       if (cgpu->drv->get_api_stats)
         extra = cgpu->drv->get_api_stats(cgpu);
       else
