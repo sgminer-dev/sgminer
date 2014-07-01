@@ -49,7 +49,6 @@ typedef struct _algorithm_t {
   uint32_t xintensity_shift;
   uint32_t intensity_shift;
   uint32_t found_idx;
-  unsigned long long   diff_nonce;
   unsigned long long   diff_numerator;
   uint32_t diff1targ;
   size_t n_extra_kernels;
