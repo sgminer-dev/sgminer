@@ -8122,14 +8122,14 @@ static void restart_mining_threads(unsigned int new_n_threads)
   for (i = 0; i < total_devices; ++i) {
     struct cgpu_info *cgpu = devices[i];
 
+    cgpu->thr = (struct thr_info **)malloc(sizeof(struct thr_info *) * (cgpu->threads+1));
+    cgpu->thr[cgpu->threads] = NULL;
+    cgpu->status = LIFE_INIT;
+
     if (cgpu->deven == DEV_DISABLED && opt_removedisabled) {
       cgpu->threads = 0;
       continue;
     }
-
-    cgpu->thr = (struct thr_info **)malloc(sizeof(struct thr_info *) * (cgpu->threads+1));
-    cgpu->thr[cgpu->threads] = NULL;
-    cgpu->status = LIFE_INIT;
 
     for (j = 0; j < cgpu->threads; ++j, ++k)
     {
