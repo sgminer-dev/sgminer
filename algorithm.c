@@ -26,6 +26,8 @@
 #include "algorithm/marucoin.h"
 #include "algorithm/maxcoin.h"
 #include "algorithm/talkcoin.h"
+#include "algorithm/bitblock.h"
+#include "algorithm/x14.h"
 
 #include "compat.h"
 
@@ -39,6 +41,8 @@ const char *algorithm_type_str[] = {
   "NScrypt",
   "X11",
   "X13",
+  "X14",
+  "X15",
   "Keccak",
   "Quarkcoin",
   "Twecoin",
@@ -90,11 +94,11 @@ static void append_scrypt_compiler_options(struct _build_kernel_data *data, stru
 static void append_hamsi_compiler_options(struct _build_kernel_data *data, struct cgpu_info *cgpu, struct _algorithm_t *algorithm)
 {
   char buf[255];
-  sprintf(buf, " -D SPH_HAMSI_EXPAND_BIG=%d",
-          opt_hamsi_expand_big);
+  sprintf(buf, " -D SPH_HAMSI_EXPAND_BIG=%d -D SPH_HAMSI_SHORT=%d ",
+          opt_hamsi_expand_big, ((opt_hamsi_short)?1:0));
   strcat(data->compiler_options, buf);
 
-  sprintf(buf, "big%u", (unsigned int)opt_hamsi_expand_big);
+  sprintf(buf, "big%u%s", (unsigned int)opt_hamsi_expand_big, ((opt_hamsi_short)?"hs":""));
   strcat(data->binary_filename, buf);
 }
 
@@ -196,6 +200,103 @@ static cl_int queue_darkcoin_mod_kernel(struct __clState *clState, struct _dev_b
 
   return status;
 }
+
+static cl_int queue_bitblock_kernel(struct __clState *clState, struct _dev_blk_ctx *blk, __maybe_unused cl_uint threads)
+{
+  cl_kernel *kernel;
+  unsigned int num;
+  cl_ulong le_target;
+  cl_int status = 0;
+
+  le_target = *(cl_ulong *)(blk->work->device_target + 24);
+  flip80(clState->cldata, blk->work->data);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+
+  // blake - search
+  kernel = &clState->kernel;
+  num = 0;
+  CL_SET_ARG(clState->CLbuffer0);
+  CL_SET_ARG(clState->padbuffer8);
+  // bmw - search1
+  kernel = clState->extra_kernels;
+  CL_SET_ARG_0(clState->padbuffer8);
+  // groestl - search2
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // skein - search3
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // jh - search4
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // keccak - search5
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // luffa - search6
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // cubehash - search7
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // shavite - search8
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // simd - search9
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // echo - search10
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // hamsi - search11
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // fugue - search12
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // hamsi - search11
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // fugue - search12
+  num = 0;
+  CL_NEXTKERNEL_SET_ARG(clState->padbuffer8);
+  CL_SET_ARG(clState->outputBuffer);
+  CL_SET_ARG(le_target);
+
+  return status;
+}
+
+static cl_int queue_bitblockold_kernel(struct __clState *clState, struct _dev_blk_ctx *blk, __maybe_unused cl_uint threads)
+{
+  cl_kernel *kernel;
+  unsigned int num;
+  cl_ulong le_target;
+  cl_int status = 0;
+
+  le_target = *(cl_ulong *)(blk->work->device_target + 24);
+  flip80(clState->cldata, blk->work->data);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+
+  // blake - search
+  kernel = &clState->kernel;
+  num = 0;
+  CL_SET_ARG(clState->CLbuffer0);
+  CL_SET_ARG(clState->padbuffer8);
+  // bmw - search1
+  kernel = clState->extra_kernels;
+  CL_SET_ARG_0(clState->padbuffer8);
+  // groestl - search2
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // skein - search3
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // jh - search4
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // keccak - search5
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // luffa - search6
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // cubehash - search7
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // shavite - search8
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // simd - search9
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // combined echo, hamsi, fugue - shabal - whirlpool - search10
+  num = 0;
+  CL_NEXTKERNEL_SET_ARG(clState->padbuffer8);
+  CL_SET_ARG(clState->outputBuffer);
+  CL_SET_ARG(le_target);
+
+  return status;
+}
+
 
 static cl_int queue_marucoin_mod_kernel(struct __clState *clState, struct _dev_blk_ctx *blk, __maybe_unused cl_uint threads)
 {
@@ -321,6 +422,100 @@ static cl_int queue_talkcoin_mod_kernel(struct __clState *clState, struct _dev_b
   return status;
 }
 
+static cl_int queue_x14_kernel(struct __clState *clState, struct _dev_blk_ctx *blk, __maybe_unused cl_uint threads)
+{
+  cl_kernel *kernel;
+  unsigned int num;
+  cl_ulong le_target;
+  cl_int status = 0;
+
+  le_target = *(cl_ulong *)(blk->work->device_target + 24);
+  flip80(clState->cldata, blk->work->data);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+
+  // blake - search
+  kernel = &clState->kernel;
+  num = 0;
+  CL_SET_ARG(clState->CLbuffer0);
+  CL_SET_ARG(clState->padbuffer8);
+  // bmw - search1
+  kernel = clState->extra_kernels;
+  CL_SET_ARG_0(clState->padbuffer8);
+  // groestl - search2
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // skein - search3
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // jh - search4
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // keccak - search5
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // luffa - search6
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // cubehash - search7
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // shavite - search8
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // simd - search9
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // echo - search10
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // hamsi - search11
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // fugue - search12
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // shabal - search13
+  num = 0;
+  CL_NEXTKERNEL_SET_ARG(clState->padbuffer8);
+  CL_SET_ARG(clState->outputBuffer);
+  CL_SET_ARG(le_target);
+
+  return status;
+}
+
+static cl_int queue_x14_old_kernel(struct __clState *clState, struct _dev_blk_ctx *blk, __maybe_unused cl_uint threads)
+{
+  cl_kernel *kernel;
+  unsigned int num;
+  cl_ulong le_target;
+  cl_int status = 0;
+
+  le_target = *(cl_ulong *)(blk->work->device_target + 24);
+  flip80(clState->cldata, blk->work->data);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+
+  // blake - search
+  kernel = &clState->kernel;
+  num = 0;
+  CL_SET_ARG(clState->CLbuffer0);
+  CL_SET_ARG(clState->padbuffer8);
+  // bmw - search1
+  kernel = clState->extra_kernels;
+  CL_SET_ARG_0(clState->padbuffer8);
+  // groestl - search2
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // skein - search3
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // jh - search4
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // keccak - search5
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // luffa - search6
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // cubehash - search7
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // shavite - search8
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // simd - search9
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // combined echo, hamsi, fugue - shabal - search10
+  num = 0;
+  CL_NEXTKERNEL_SET_ARG(clState->padbuffer8);
+  CL_SET_ARG(clState->outputBuffer);
+  CL_SET_ARG(le_target);
+
+  return status;
+}
+
 typedef struct _algorithm_settings_t {
   const char *name; /* Human-readable identifier */
   algorithm_type_t type; //common algorithm type
@@ -379,8 +574,13 @@ static algorithm_settings_t algos[] = {
   { "marucoin-mod", ALGO_X13, 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 12, 8 * 16 * 4194304, 0, marucoin_regenhash, queue_marucoin_mod_kernel, gen_hash, append_hamsi_compiler_options},
   { "marucoin-modold", ALGO_X13, 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, marucoin_regenhash, queue_marucoin_mod_old_kernel, gen_hash, append_hamsi_compiler_options},
 
-  { "talkcoin-mod", ALGO_NIST, 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 4,  8 * 16 * 4194304, 0, talkcoin_regenhash, queue_talkcoin_mod_kernel, gen_hash, NULL},
+  { "x14", ALGO_X14, 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 13, 8 * 16 * 4194304, 0, x14_regenhash, queue_x14_kernel, gen_hash, append_hamsi_compiler_options},
+  { "x14old", ALGO_X14, 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, x14_regenhash, queue_x14_old_kernel, gen_hash, append_hamsi_compiler_options},
 
+  { "bitblock", ALGO_X15, 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 14, 4 * 16 * 4194304, 0, bitblock_regenhash, queue_bitblock_kernel, gen_hash, append_hamsi_compiler_options},
+  { "bitblockold", ALGO_X15, 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 10, 4 * 16 * 4194304, 0, bitblock_regenhash, queue_bitblockold_kernel, gen_hash, append_hamsi_compiler_options},
+
+  { "talkcoin-mod", ALGO_NIST, 1, 1, 1, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 4,  8 * 16 * 4194304, 0, talkcoin_regenhash, queue_talkcoin_mod_kernel, gen_hash, NULL},
   // kernels starting from this will have difficulty calculated by using fuguecoin algorithm
 #define A_FUGUE(a, b) \
     { a, ALGO_FUGUE, 1, 256, 256, 0, 0, 0xFF, 0x00000000ffff0000ULL, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, b, queue_sph_kernel, sha256, NULL}

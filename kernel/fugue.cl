@@ -30,26 +30,26 @@
  * @author   Thomas Pornin <thomas.pornin@cryptolog.com>
  */
 
-__constant static const sph_u32 IV224[] = {
+__constant const sph_u32 IV224[] = {
 	SPH_C32(0xf4c9120d), SPH_C32(0x6286f757), SPH_C32(0xee39e01c),
 	SPH_C32(0xe074e3cb), SPH_C32(0xa1127c62), SPH_C32(0x9a43d215),
 	SPH_C32(0xbd8d679a)
 };
 
-__constant static const sph_u32 IV256[] = {
+__constant const sph_u32 IV256[] = {
 	SPH_C32(0xe952bdde), SPH_C32(0x6671135f), SPH_C32(0xe0d4f668),
 	SPH_C32(0xd2b0b594), SPH_C32(0xf96c621d), SPH_C32(0xfbf929de),
 	SPH_C32(0x9149e899), SPH_C32(0x34f8c248)
 };
 
-__constant static const sph_u32 IV384[] = {
+__constant const sph_u32 IV384[] = {
 	SPH_C32(0xaa61ec0d), SPH_C32(0x31252e1f), SPH_C32(0xa01db4c7),
 	SPH_C32(0x00600985), SPH_C32(0x215ef44a), SPH_C32(0x741b5e9c),
 	SPH_C32(0xfa693e9a), SPH_C32(0x473eb040), SPH_C32(0xe502ae8a),
 	SPH_C32(0xa99c25e0), SPH_C32(0xbc95517c), SPH_C32(0x5c1095a1)
 };
 
-__constant static const sph_u32 IV512[] = {
+__constant const sph_u32 IV512[] = {
 	SPH_C32(0x8807a57e), SPH_C32(0xe616af75), SPH_C32(0xc5d3e4db),
 	SPH_C32(0xac9ab027), SPH_C32(0xd915f117), SPH_C32(0xb6eecc54),
 	SPH_C32(0x06e8020b), SPH_C32(0x4a92efd1), SPH_C32(0xaac6e2c9),
@@ -58,7 +58,7 @@ __constant static const sph_u32 IV512[] = {
 	SPH_C32(0xe13e3567)
 };
 
-__constant static const sph_u32 mixtab0[] = {
+__constant const sph_u32 mixtab0_c[] = {
 	SPH_C32(0x63633297), SPH_C32(0x7c7c6feb), SPH_C32(0x77775ec7),
 	SPH_C32(0x7b7b7af7), SPH_C32(0xf2f2e8e5), SPH_C32(0x6b6b0ab7),
 	SPH_C32(0x6f6f16a7), SPH_C32(0xc5c56d39), SPH_C32(0x303090c0),
@@ -147,7 +147,7 @@ __constant static const sph_u32 mixtab0[] = {
 	SPH_C32(0x16166258)
 };
 
-__constant static const sph_u32 mixtab1[] = {
+__constant const sph_u32 mixtab1_c[] = {
 	SPH_C32(0x97636332), SPH_C32(0xeb7c7c6f), SPH_C32(0xc777775e),
 	SPH_C32(0xf77b7b7a), SPH_C32(0xe5f2f2e8), SPH_C32(0xb76b6b0a),
 	SPH_C32(0xa76f6f16), SPH_C32(0x39c5c56d), SPH_C32(0xc0303090),
@@ -236,7 +236,7 @@ __constant static const sph_u32 mixtab1[] = {
 	SPH_C32(0x58161662)
 };
 
-__constant static const sph_u32 mixtab2[] = {
+__constant const sph_u32 mixtab2_c[] = {
 	SPH_C32(0x32976363), SPH_C32(0x6feb7c7c), SPH_C32(0x5ec77777),
 	SPH_C32(0x7af77b7b), SPH_C32(0xe8e5f2f2), SPH_C32(0x0ab76b6b),
 	SPH_C32(0x16a76f6f), SPH_C32(0x6d39c5c5), SPH_C32(0x90c03030),
@@ -325,7 +325,7 @@ __constant static const sph_u32 mixtab2[] = {
 	SPH_C32(0x62581616)
 };
 
-__constant static const sph_u32 mixtab3[] = {
+__constant const sph_u32 mixtab3_c[] = {
 	SPH_C32(0x63329763), SPH_C32(0x7c6feb7c), SPH_C32(0x775ec777),
 	SPH_C32(0x7b7af77b), SPH_C32(0xf2e8e5f2), SPH_C32(0x6b0ab76b),
 	SPH_C32(0x6f16a76f), SPH_C32(0xc56d39c5), SPH_C32(0x3090c030),

@@ -1,5 +1,5 @@
 /*
- * X13 kernel implementation.
+ * X15 kernel implementation.
  *
  * ==========================(LICENSE BEGIN)============================
  *
@@ -30,8 +30,8 @@
  * @author   phm <phm@inbox.com>
  */
 
-#ifndef MARUCOIN_MOD_CL
-#define MARUCOIN_MOD_CL
+#ifndef BITBLOCK_CL
+#define BITBLOCK_CL
 
 #if __ENDIAN_LITTLE__
 #define SPH_LITTLE_ENDIAN 1
@@ -92,6 +92,8 @@ typedef long sph_s64;
 #include "echo.cl"
 #include "hamsi.cl"
 #include "fugue.cl"
+#include "shabal.cl"
+#include "whirlpool.cl"
 
 #define SWAP4(x) as_uint(as_uchar4(x).wzyx)
 #define SWAP8(x) as_ulong(as_uchar8(x).s76543210)
@@ -806,8 +808,7 @@ __kernel void search10(__global hash_t* hashes, __global uint* output, const ulo
     #else
       #define INPUT_BIG_LOCAL INPUT_BIG
     #endif
-    
-  
+
     // mixtab
     __local sph_u32 mixtab0[256], mixtab1[256], mixtab2[256], mixtab3[256];
     for (int i = init; i < 256; i += step)
@@ -1002,6 +1003,159 @@ __kernel void search10(__global hash_t* hashes, __global uint* output, const ulo
 
     }
 	
+	//shabal
+	{
+    sph_u32 A00 = A_init_512[0], A01 = A_init_512[1], A02 = A_init_512[2], A03 = A_init_512[3], A04 = A_init_512[4], A05 = A_init_512[5], A06 = A_init_512[6], A07 = A_init_512[7],
+	    A08 = A_init_512[8], A09 = A_init_512[9], A0A = A_init_512[10], A0B = A_init_512[11];
+    sph_u32 B0 = B_init_512[0], B1 = B_init_512[1], B2 = B_init_512[2], B3 = B_init_512[3], B4 = B_init_512[4], B5 = B_init_512[5], B6 = B_init_512[6], B7 = B_init_512[7],
+	    B8 = B_init_512[8], B9 = B_init_512[9], BA = B_init_512[10], BB = B_init_512[11], BC = B_init_512[12], BD = B_init_512[13], BE = B_init_512[14], BF = B_init_512[15];
+    sph_u32 C0 = C_init_512[0], C1 = C_init_512[1], C2 = C_init_512[2], C3 = C_init_512[3], C4 = C_init_512[4], C5 = C_init_512[5], C6 = C_init_512[6], C7 = C_init_512[7],
+	    C8 = C_init_512[8], C9 = C_init_512[9], CA = C_init_512[10], CB = C_init_512[11], CC = C_init_512[12], CD = C_init_512[13], CE = C_init_512[14], CF = C_init_512[15];
+    sph_u32 M0, M1, M2, M3, M4, M5, M6, M7, M8, M9, MA, MB, MC, MD, ME, MF;
+    sph_u32 Wlow = 1, Whigh = 0;
+
+    M0 = hash.h4[0];
+    M1 = hash.h4[1];
+    M2 = hash.h4[2];
+    M3 = hash.h4[3];
+    M4 = hash.h4[4];
+    M5 = hash.h4[5];
+    M6 = hash.h4[6];
+    M7 = hash.h4[7];
+    M8 = hash.h4[8];
+    M9 = hash.h4[9];
+    MA = hash.h4[10];
+    MB = hash.h4[11];
+    MC = hash.h4[12];
+    MD = hash.h4[13];
+    ME = hash.h4[14];
+    MF = hash.h4[15];
+
+    INPUT_BLOCK_ADD;
+    XOR_W;
+    APPLY_P;
+    INPUT_BLOCK_SUB;
+    SWAP_BC;
+    INCR_W;
+
+    M0 = 0x80;
+    M1 = M2 = M3 = M4 = M5 = M6 = M7 = M8 = M9 = MA = MB = MC = MD = ME = MF = 0;
+
+    INPUT_BLOCK_ADD;
+    XOR_W;
+    APPLY_P;
+    for (unsigned i = 0; i < 3; i ++) {
+	SWAP_BC;
+	XOR_W;
+	APPLY_P;
+    }
+
+	hash.h4[0] = B0;
+	hash.h4[1] = B1;
+	hash.h4[2] = B2;
+	hash.h4[3] = B3;
+	hash.h4[4] = B4;
+	hash.h4[5] = B5;
+	hash.h4[6] = B6;
+	hash.h4[7] = B7;
+	hash.h4[8] = B8;
+	hash.h4[9] = B9;
+	hash.h4[10] = BA;
+	hash.h4[11] = BB;
+	hash.h4[12] = BC;
+	hash.h4[13] = BD;
+	hash.h4[14] = BE;
+	hash.h4[15] = BF;	
+	}
+	
+	//whirlpool
+	{
+    sph_u64 n0, n1, n2, n3, n4, n5, n6, n7; 
+    sph_u64 h0, h1, h2, h3, h4, h5, h6, h7;
+    sph_u64 state[8];
+
+    n0 = (hash.h8[0]);
+    n1 = (hash.h8[1]);
+    n2 = (hash.h8[2]);
+    n3 = (hash.h8[3]);
+    n4 = (hash.h8[4]);
+    n5 = (hash.h8[5]);
+    n6 = (hash.h8[6]);
+    n7 = (hash.h8[7]);
+
+    h0 = h1 = h2 = h3 = h4 = h5 = h6 = h7 = 0;
+
+    n0 ^= h0;
+    n1 ^= h1;
+    n2 ^= h2;
+    n3 ^= h3;
+    n4 ^= h4;
+    n5 ^= h5;
+    n6 ^= h6;
+    n7 ^= h7;
+
+    for (unsigned r = 0; r < 10; r ++) {
+	sph_u64 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
+
+	ROUND_KSCHED(plain_T, h, tmp, plain_RC[r]);
+	TRANSFER(h, tmp);
+	ROUND_WENC(plain_T, n, h, tmp);
+	TRANSFER(n, tmp);
+    }
+
+    state[0] = n0 ^ (hash.h8[0]);
+    state[1] = n1 ^ (hash.h8[1]);
+    state[2] = n2 ^ (hash.h8[2]);
+    state[3] = n3 ^ (hash.h8[3]);
+    state[4] = n4 ^ (hash.h8[4]);
+    state[5] = n5 ^ (hash.h8[5]);
+    state[6] = n6 ^ (hash.h8[6]);
+    state[7] = n7 ^ (hash.h8[7]);
+
+    n0 = 0x80;
+    n1 = n2 = n3 = n4 = n5 = n6 = 0;
+    n7 = 0x2000000000000;
+
+    h0 = state[0];
+    h1 = state[1];
+    h2 = state[2];
+    h3 = state[3];
+    h4 = state[4];
+    h5 = state[5];
+    h6 = state[6];
+    h7 = state[7];
+
+    n0 ^= h0;
+    n1 ^= h1;
+    n2 ^= h2;
+    n3 ^= h3;
+    n4 ^= h4;
+    n5 ^= h5;
+    n6 ^= h6;
+    n7 ^= h7;
+
+    for (unsigned r = 0; r < 10; r ++) {
+	sph_u64 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
+
+	ROUND_KSCHED(plain_T, h, tmp, plain_RC[r]);
+	TRANSFER(h, tmp);
+	ROUND_WENC(plain_T, n, h, tmp);
+	TRANSFER(n, tmp);
+    }
+
+    state[0] ^= n0 ^ 0x80;
+    state[1] ^= n1;
+    state[2] ^= n2;
+    state[3] ^= n3;
+    state[4] ^= n4;
+    state[5] ^= n5;
+    state[6] ^= n6;
+    state[7] ^= n7 ^ 0x2000000000000;
+
+    for (unsigned i = 0; i < 8; i ++)
+	hash.h8[i] = state[i];	
+	}
+
     bool result = (hash.h8[3] <= target);
     if (result)
       output[atomic_inc(output+0xFF)] = SWAP4(gid);
@@ -1009,4 +1163,4 @@ __kernel void search10(__global hash_t* hashes, __global uint* output, const ulo
     barrier(CLK_GLOBAL_MEM_FENCE); 
 }
 
-#endif // MARUCOIN_MOD_CL
+#endif // BITBLOCK_CL

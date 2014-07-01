@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -28,23 +28,27 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -257,7 +261,9 @@
     <ClCompile Include="..\adl.c" />
     <ClCompile Include="..\algorithm.c" />
     <ClCompile Include="..\algorithm\animecoin.c" />
+    <ClCompile Include="..\algorithm\bitblock.c" />
     <ClCompile Include="..\algorithm\talkcoin.c" />
+    <ClCompile Include="..\algorithm\x14.c" />
     <ClCompile Include="..\api.c" />
     <ClCompile Include="..\ccan\opt\helpers.c" />
     <ClCompile Include="..\ccan\opt\opt.c" />
@@ -310,17 +316,21 @@
     <ClCompile Include="..\sph\panama.c" />
     <ClCompile Include="..\sph\sha2.c" />
     <ClCompile Include="..\sph\sha2big.c" />
+    <ClCompile Include="..\sph\shabal.c" />
     <ClCompile Include="..\sph\shavite.c" />
     <ClCompile Include="..\sph\simd.c" />
     <ClCompile Include="..\sph\skein.c" />
     <ClCompile Include="..\algorithm\twecoin.c" />
+    <ClCompile Include="..\sph\whirlpool.c" />
     <ClCompile Include="..\util.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\adl.h" />
     <ClInclude Include="..\algorithm.h" />
     <ClInclude Include="..\algorithm\animecoin.h" />
+    <ClInclude Include="..\algorithm\bitblock.h" />
     <ClInclude Include="..\algorithm\talkcoin.h" />
+    <ClInclude Include="..\algorithm\x14.h" />
     <ClInclude Include="..\api.h" />
     <ClInclude Include="..\arg-nonnull.h" />
     <ClInclude Include="..\bench_block.h" />
@@ -365,11 +375,13 @@
     <ClInclude Include="..\sph\sph_luffa.h" />
     <ClInclude Include="..\sph\sph_panama.h" />
     <ClInclude Include="..\sph\sph_sha2.h" />
+    <ClInclude Include="..\sph\sph_shabal.h" />
     <ClInclude Include="..\sph\sph_shavite.h" />
     <ClInclude Include="..\sph\sph_simd.h" />
     <ClInclude Include="..\sph\sph_skein.h" />
     <ClInclude Include="..\sph\sph_types.h" />
     <ClInclude Include="..\algorithm\twecoin.h" />
+    <ClInclude Include="..\sph\sph_whirlpool.h" />
     <ClInclude Include="..\uthash.h" />
     <ClInclude Include="..\util.h" />
     <ClInclude Include="..\warn-on-use.h" />

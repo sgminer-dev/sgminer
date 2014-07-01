@@ -192,6 +192,7 @@ int nDevs;
 int opt_dynamic_interval = 7;
 int opt_g_threads = -1;
 int opt_hamsi_expand_big = 4;
+bool opt_hamsi_short = false;
 bool opt_restart = true;
 
 struct list_head scan_devices;
@@ -1459,7 +1460,10 @@ struct opt_table opt_config_table[] = {
       "Set GPU lookup gap for scrypt mining, comma separated"),
   OPT_WITH_ARG("--hamsi-expand-big",
       set_int_1_to_10, opt_show_intval, &opt_hamsi_expand_big,
-      "Set SPH_HAMSI_EXPAND_BIG for X13 algorithms (1 or 4 are common)"),
+      "Set SPH_HAMSI_EXPAND_BIG for X13 derived algorithms (1 or 4 are common)"),
+  OPT_WITHOUT_ARG("--hamsi-short",
+      opt_set_bool, &opt_hamsi_short,
+      "Set SPH_HAMSI_SHORT for X13 derived algorithms (Can give better hashrate for some GPUs)"),
 #ifdef HAVE_CURSES
   OPT_WITHOUT_ARG("--incognito",
       opt_set_bool, &opt_incognito,
