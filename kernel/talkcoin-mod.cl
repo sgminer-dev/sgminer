@@ -111,7 +111,7 @@ __kernel void search(__global unsigned char* block, __global hash_t* hashes)
 
   if ((T0 = SPH_T64(T0 + 1024)) < 1024)
   {
-    T1 = SPH_T64(T1 + 1);
+  T1 = SPH_T64(T1 + 1);
   }
   sph_u64 M0, M1, M2, M3, M4, M5, M6, M7;
   sph_u64 M8, M9, MA, MB, MC, MD, ME, MF;
@@ -164,16 +164,16 @@ __kernel void search1(__global hash_t* hashes)
 
   for (int i = init; i < 256; i += step)
   {
-    T0_L[i] = T0[i];
-    T1_L[i] = T1[i];
-    T2_L[i] = T2[i];
-    T3_L[i] = T3[i];
-    T4_L[i] = T4[i];
-    T5_L[i] = T5[i];
-    T6_L[i] = T6[i];
-    T7_L[i] = T7[i];
+  T0_L[i] = T0[i];
+  T1_L[i] = T1[i];
+  T2_L[i] = T2[i];
+  T3_L[i] = T3[i];
+  T4_L[i] = T4[i];
+  T5_L[i] = T5[i];
+  T6_L[i] = T6[i];
+  T7_L[i] = T7[i];
   }
-  
+
   barrier(CLK_LOCAL_MEM_FENCE);
 
   #define T0 T0_L
@@ -186,14 +186,14 @@ __kernel void search1(__global hash_t* hashes)
   #define T7 T7_L
 
   sph_u64 H[16];
-  
+
   for (unsigned int u = 0; u < 15; u ++)
-    H[u] = 0;
-    
+  H[u] = 0;
+
   #if USE_LE
-    H[15] = ((sph_u64)(512 & 0xFF) << 56) | ((sph_u64)(512 & 0xFF00) << 40);
+  H[15] = ((sph_u64)(512 & 0xFF) << 56) | ((sph_u64)(512 & 0xFF00) << 40);
   #else
-    H[15] = (sph_u64)512;
+  H[15] = (sph_u64)512;
   #endif
 
   sph_u64 g[16], m[16];
@@ -205,10 +205,10 @@ __kernel void search1(__global hash_t* hashes)
   m[5] = DEC64E(hash->h8[5]);
   m[6] = DEC64E(hash->h8[6]);
   m[7] = DEC64E(hash->h8[7]);
-  
+
   for (unsigned int u = 0; u < 16; u ++)
-    g[u] = m[u] ^ H[u];
-      
+  g[u] = m[u] ^ H[u];
+
   m[8] = 0x80; g[8] = m[8] ^ H[8];
   m[9] = 0; g[9] = m[9] ^ H[9];
   m[10] = 0; g[10] = m[10] ^ H[10];
@@ -217,25 +217,25 @@ __kernel void search1(__global hash_t* hashes)
   m[13] = 0; g[13] = m[13] ^ H[13];
   m[14] = 0; g[14] = m[14] ^ H[14];
   m[15] = 0x100000000000000; g[15] = m[15] ^ H[15];
-  
+
   PERM_BIG_P(g);
   PERM_BIG_Q(m);
-  
+
   for (unsigned int u = 0; u < 16; u ++)
-    H[u] ^= g[u] ^ m[u];
-    
+  H[u] ^= g[u] ^ m[u];
+
   sph_u64 xH[16];
-  
+
   for (unsigned int u = 0; u < 16; u ++)
-    xH[u] = H[u];
-    
+  xH[u] = H[u];
+
   PERM_BIG_P(xH);
-  
+
   for (unsigned int u = 0; u < 16; u ++)
-    H[u] ^= xH[u];
-      
+  H[u] ^= xH[u];
+
   for (unsigned int u = 0; u < 8; u ++)
-    hash->h8[u] = DEC64E(H[u + 8]);
+  hash->h8[u] = DEC64E(H[u + 8]);
 
   barrier(CLK_GLOBAL_MEM_FENCE);
 }
@@ -253,34 +253,34 @@ __kernel void search2(__global hash_t* hashes)
 
   for(int i = 0; i < 2; i++)
   {
-    if (i == 0) 
-    {
-      h0h ^= DEC64E(hash->h8[0]);
-      h0l ^= DEC64E(hash->h8[1]);
-      h1h ^= DEC64E(hash->h8[2]);
-      h1l ^= DEC64E(hash->h8[3]);
-      h2h ^= DEC64E(hash->h8[4]);
-      h2l ^= DEC64E(hash->h8[5]);
-      h3h ^= DEC64E(hash->h8[6]);
-      h3l ^= DEC64E(hash->h8[7]);
-    } 
-    else if(i == 1) 
-    {
-      h4h ^= DEC64E(hash->h8[0]);
-      h4l ^= DEC64E(hash->h8[1]);
-      h5h ^= DEC64E(hash->h8[2]);
-      h5l ^= DEC64E(hash->h8[3]);
-      h6h ^= DEC64E(hash->h8[4]);
-      h6l ^= DEC64E(hash->h8[5]);
-      h7h ^= DEC64E(hash->h8[6]);
-      h7l ^= DEC64E(hash->h8[7]);
-
-      h0h ^= 0x80;
-      h3l ^= 0x2000000000000;
-    }
-    E8;
+  if (i == 0)
+  {
+    h0h ^= DEC64E(hash->h8[0]);
+    h0l ^= DEC64E(hash->h8[1]);
+    h1h ^= DEC64E(hash->h8[2]);
+    h1l ^= DEC64E(hash->h8[3]);
+    h2h ^= DEC64E(hash->h8[4]);
+    h2l ^= DEC64E(hash->h8[5]);
+    h3h ^= DEC64E(hash->h8[6]);
+    h3l ^= DEC64E(hash->h8[7]);
   }
-  
+  else if(i == 1)
+  {
+    h4h ^= DEC64E(hash->h8[0]);
+    h4l ^= DEC64E(hash->h8[1]);
+    h5h ^= DEC64E(hash->h8[2]);
+    h5l ^= DEC64E(hash->h8[3]);
+    h6h ^= DEC64E(hash->h8[4]);
+    h6l ^= DEC64E(hash->h8[5]);
+    h7h ^= DEC64E(hash->h8[6]);
+    h7l ^= DEC64E(hash->h8[7]);
+
+    h0h ^= 0x80;
+    h3l ^= 0x2000000000000;
+  }
+  E8;
+  }
+
   h4h ^= 0x80;
   h7l ^= 0x2000000000000;
 
@@ -329,7 +329,7 @@ __kernel void search3(__global hash_t* hashes)
   a21 ^= SWAP8(hash->h8[7]);
   a31 ^= 0x8000000000000001;
   KECCAK_F_1600;
-  
+
   // Finalize the "lane complement"
   a10 = ~a10;
   a20 = ~a20;
@@ -357,7 +357,7 @@ __kernel void search4(__global hash_t* hashes, __global uint* output, const ulon
   __global hash_t *hashp = &(hashes[gid-offset]);
 
   for (int i = 0; i < 8; i++)
-    hash.h8[i] = hashes[gid-offset].h8[i];
+  hash.h8[i] = hashes[gid-offset].h8[i];
 
   sph_u64 h0 = SPH_C64(0x4903ADFF749C51CE), h1 = SPH_C64(0x0D95DE399746DF03), h2 = SPH_C64(0x8FD1934127C79BCE), h3 = SPH_C64(0x9A255629FF352CB1), h4 = SPH_C64(0x5DB62599DF6CA7B0), h5 = SPH_C64(0xEABE394CA9D5C3F4), h6 = SPH_C64(0x991112C71A75B523), h7 = SPH_C64(0xAE18A40B660FCC33);
   sph_u64 m0, m1, m2, m3, m4, m5, m6, m7;
@@ -371,14 +371,14 @@ __kernel void search4(__global hash_t* hashes, __global uint* output, const ulon
   m5 = SWAP8(hash.h8[5]);
   m6 = SWAP8(hash.h8[6]);
   m7 = SWAP8(hash.h8[7]);
-  
+
   UBI_BIG(480, 64);
-  
+
   bcount = 0;
   m0 = m1 = m2 = m3 = m4 = m5 = m6 = m7 = 0;
-  
+
   UBI_BIG(510, 8);
-  
+
   hash.h8[0] = SWAP8(h0);
   hash.h8[1] = SWAP8(h1);
   hash.h8[2] = SWAP8(h2);
@@ -390,7 +390,7 @@ __kernel void search4(__global hash_t* hashes, __global uint* output, const ulon
 
   bool result = (SWAP8(hash.h8[3]) <= target);
   if (result)
-    output[atomic_inc(output+0xFF)] = SWAP4(gid);
+  output[atomic_inc(output+0xFF)] = SWAP4(gid);
 }
 
 #endif // TALKCOIN_MOD_CL

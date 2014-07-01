@@ -255,96 +255,96 @@
 #define SKBT(t, s, v)   XCAT(t, XCAT(XCAT(XCAT(M3_, s), _), v))
 
 #define TFBIG_KINIT(k0, k1, k2, k3, k4, k5, k6, k7, k8, t0, t1, t2)   do { \
-		k8 = ((k0 ^ k1) ^ (k2 ^ k3)) ^ ((k4 ^ k5) ^ (k6 ^ k7)) \
-			^ SPH_C64(0x1BD11BDAA9FC1A22); \
-		t2 = t0 ^ t1; \
-	} while (0)
+    k8 = ((k0 ^ k1) ^ (k2 ^ k3)) ^ ((k4 ^ k5) ^ (k6 ^ k7)) \
+      ^ SPH_C64(0x1BD11BDAA9FC1A22); \
+    t2 = t0 ^ t1; \
+  } while (0)
 
 #define TFBIG_ADDKEY(w0, w1, w2, w3, w4, w5, w6, w7, k, t, s)   do { \
-		w0 = SPH_T64(w0 + SKBI(k, s, 0)); \
-		w1 = SPH_T64(w1 + SKBI(k, s, 1)); \
-		w2 = SPH_T64(w2 + SKBI(k, s, 2)); \
-		w3 = SPH_T64(w3 + SKBI(k, s, 3)); \
-		w4 = SPH_T64(w4 + SKBI(k, s, 4)); \
-		w5 = SPH_T64(w5 + SKBI(k, s, 5) + SKBT(t, s, 0)); \
-		w6 = SPH_T64(w6 + SKBI(k, s, 6) + SKBT(t, s, 1)); \
-		w7 = SPH_T64(w7 + SKBI(k, s, 7) + (sph_u64)s); \
-	} while (0)
+    w0 = SPH_T64(w0 + SKBI(k, s, 0)); \
+    w1 = SPH_T64(w1 + SKBI(k, s, 1)); \
+    w2 = SPH_T64(w2 + SKBI(k, s, 2)); \
+    w3 = SPH_T64(w3 + SKBI(k, s, 3)); \
+    w4 = SPH_T64(w4 + SKBI(k, s, 4)); \
+    w5 = SPH_T64(w5 + SKBI(k, s, 5) + SKBT(t, s, 0)); \
+    w6 = SPH_T64(w6 + SKBI(k, s, 6) + SKBT(t, s, 1)); \
+    w7 = SPH_T64(w7 + SKBI(k, s, 7) + (sph_u64)s); \
+  } while (0)
 
 #define TFBIG_MIX(x0, x1, rc)   do { \
-		x0 = SPH_T64(x0 + x1); \
-		x1 = SPH_ROTL64(x1, rc) ^ x0; \
-	} while (0)
+    x0 = SPH_T64(x0 + x1); \
+    x1 = SPH_ROTL64(x1, rc) ^ x0; \
+  } while (0)
 
 #define TFBIG_MIX8(w0, w1, w2, w3, w4, w5, w6, w7, rc0, rc1, rc2, rc3)  do { \
-		TFBIG_MIX(w0, w1, rc0); \
-		TFBIG_MIX(w2, w3, rc1); \
-		TFBIG_MIX(w4, w5, rc2); \
-		TFBIG_MIX(w6, w7, rc3); \
-	} while (0)
+    TFBIG_MIX(w0, w1, rc0); \
+    TFBIG_MIX(w2, w3, rc1); \
+    TFBIG_MIX(w4, w5, rc2); \
+    TFBIG_MIX(w6, w7, rc3); \
+  } while (0)
 
 #define TFBIG_4e(s)   do { \
-		TFBIG_ADDKEY(p0, p1, p2, p3, p4, p5, p6, p7, h, t, s); \
-		TFBIG_MIX8(p0, p1, p2, p3, p4, p5, p6, p7, 46, 36, 19, 37); \
-		TFBIG_MIX8(p2, p1, p4, p7, p6, p5, p0, p3, 33, 27, 14, 42); \
-		TFBIG_MIX8(p4, p1, p6, p3, p0, p5, p2, p7, 17, 49, 36, 39); \
-		TFBIG_MIX8(p6, p1, p0, p7, p2, p5, p4, p3, 44,  9, 54, 56); \
-	} while (0)
+    TFBIG_ADDKEY(p0, p1, p2, p3, p4, p5, p6, p7, h, t, s); \
+    TFBIG_MIX8(p0, p1, p2, p3, p4, p5, p6, p7, 46, 36, 19, 37); \
+    TFBIG_MIX8(p2, p1, p4, p7, p6, p5, p0, p3, 33, 27, 14, 42); \
+    TFBIG_MIX8(p4, p1, p6, p3, p0, p5, p2, p7, 17, 49, 36, 39); \
+    TFBIG_MIX8(p6, p1, p0, p7, p2, p5, p4, p3, 44,  9, 54, 56); \
+  } while (0)
 
 #define TFBIG_4o(s)   do { \
-		TFBIG_ADDKEY(p0, p1, p2, p3, p4, p5, p6, p7, h, t, s); \
-		TFBIG_MIX8(p0, p1, p2, p3, p4, p5, p6, p7, 39, 30, 34, 24); \
-		TFBIG_MIX8(p2, p1, p4, p7, p6, p5, p0, p3, 13, 50, 10, 17); \
-		TFBIG_MIX8(p4, p1, p6, p3, p0, p5, p2, p7, 25, 29, 39, 43); \
-		TFBIG_MIX8(p6, p1, p0, p7, p2, p5, p4, p3,  8, 35, 56, 22); \
-	} while (0)
+    TFBIG_ADDKEY(p0, p1, p2, p3, p4, p5, p6, p7, h, t, s); \
+    TFBIG_MIX8(p0, p1, p2, p3, p4, p5, p6, p7, 39, 30, 34, 24); \
+    TFBIG_MIX8(p2, p1, p4, p7, p6, p5, p0, p3, 13, 50, 10, 17); \
+    TFBIG_MIX8(p4, p1, p6, p3, p0, p5, p2, p7, 25, 29, 39, 43); \
+    TFBIG_MIX8(p6, p1, p0, p7, p2, p5, p4, p3,  8, 35, 56, 22); \
+  } while (0)
 
 #define UBI_BIG(etype, extra)  do { \
-		sph_u64 h8, t0, t1, t2; \
-		sph_u64 p0 = m0; \
-		sph_u64 p1 = m1; \
-		sph_u64 p2 = m2; \
-		sph_u64 p3 = m3; \
-		sph_u64 p4 = m4; \
-		sph_u64 p5 = m5; \
-		sph_u64 p6 = m6; \
-		sph_u64 p7 = m7; \
-		t0 = SPH_T64(bcount << 6) + (sph_u64)(extra); \
-		t1 = (bcount >> 58) + ((sph_u64)(etype) << 55); \
-		TFBIG_KINIT(h0, h1, h2, h3, h4, h5, h6, h7, h8, t0, t1, t2); \
-		TFBIG_4e(0); \
-		TFBIG_4o(1); \
-		TFBIG_4e(2); \
-		TFBIG_4o(3); \
-		TFBIG_4e(4); \
-		TFBIG_4o(5); \
-		TFBIG_4e(6); \
-		TFBIG_4o(7); \
-		TFBIG_4e(8); \
-		TFBIG_4o(9); \
-		TFBIG_4e(10); \
-		TFBIG_4o(11); \
-		TFBIG_4e(12); \
-		TFBIG_4o(13); \
-		TFBIG_4e(14); \
-		TFBIG_4o(15); \
-		TFBIG_4e(16); \
-		TFBIG_4o(17); \
-		TFBIG_ADDKEY(p0, p1, p2, p3, p4, p5, p6, p7, h, t, 18); \
-		h0 = m0 ^ p0; \
-		h1 = m1 ^ p1; \
-		h2 = m2 ^ p2; \
-		h3 = m3 ^ p3; \
-		h4 = m4 ^ p4; \
-		h5 = m5 ^ p5; \
-		h6 = m6 ^ p6; \
-		h7 = m7 ^ p7; \
-	} while (0)
+    sph_u64 h8, t0, t1, t2; \
+    sph_u64 p0 = m0; \
+    sph_u64 p1 = m1; \
+    sph_u64 p2 = m2; \
+    sph_u64 p3 = m3; \
+    sph_u64 p4 = m4; \
+    sph_u64 p5 = m5; \
+    sph_u64 p6 = m6; \
+    sph_u64 p7 = m7; \
+    t0 = SPH_T64(bcount << 6) + (sph_u64)(extra); \
+    t1 = (bcount >> 58) + ((sph_u64)(etype) << 55); \
+    TFBIG_KINIT(h0, h1, h2, h3, h4, h5, h6, h7, h8, t0, t1, t2); \
+    TFBIG_4e(0); \
+    TFBIG_4o(1); \
+    TFBIG_4e(2); \
+    TFBIG_4o(3); \
+    TFBIG_4e(4); \
+    TFBIG_4o(5); \
+    TFBIG_4e(6); \
+    TFBIG_4o(7); \
+    TFBIG_4e(8); \
+    TFBIG_4o(9); \
+    TFBIG_4e(10); \
+    TFBIG_4o(11); \
+    TFBIG_4e(12); \
+    TFBIG_4o(13); \
+    TFBIG_4e(14); \
+    TFBIG_4o(15); \
+    TFBIG_4e(16); \
+    TFBIG_4o(17); \
+    TFBIG_ADDKEY(p0, p1, p2, p3, p4, p5, p6, p7, h, t, 18); \
+    h0 = m0 ^ p0; \
+    h1 = m1 ^ p1; \
+    h2 = m2 ^ p2; \
+    h3 = m3 ^ p3; \
+    h4 = m4 ^ p4; \
+    h5 = m5 ^ p5; \
+    h6 = m6 ^ p6; \
+    h7 = m7 ^ p7; \
+  } while (0)
 
 __constant static const sph_u64 SKEIN_IV512[] = {
-	SPH_C64(0x4903ADFF749C51CE), SPH_C64(0x0D95DE399746DF03),
-	SPH_C64(0x8FD1934127C79BCE), SPH_C64(0x9A255629FF352CB1),
-	SPH_C64(0x5DB62599DF6CA7B0), SPH_C64(0xEABE394CA9D5C3F4),
-	SPH_C64(0x991112C71A75B523), SPH_C64(0xAE18A40B660FCC33)
+  SPH_C64(0x4903ADFF749C51CE), SPH_C64(0x0D95DE399746DF03),
+  SPH_C64(0x8FD1934127C79BCE), SPH_C64(0x9A255629FF352CB1),
+  SPH_C64(0x5DB62599DF6CA7B0), SPH_C64(0xEABE394CA9D5C3F4),
+  SPH_C64(0x991112C71A75B523), SPH_C64(0xAE18A40B660FCC33)
 };
 
