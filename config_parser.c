@@ -527,7 +527,7 @@ static struct opt_table *opt_find(struct opt_table *tbl, char *optname)
     struct remote_config file = { "", NULL };
     
     //get filename out of url
-    if((p = strrchr(url, '/')) == NULL)
+    if((p = (char *)strrchr(url, '/')) == NULL)
     {
       applog(LOG_ERR, "Fetch remote file failed: Invalid URL");
       return NULL;
