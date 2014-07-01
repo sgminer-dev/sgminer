@@ -180,6 +180,8 @@ files are applied to the current object being parsed.
 
 `include` is used to include one single file. If you want to include multiple files, use `includes`, which is an array of filenames.
 
+As with config files, these files can be web URLs pointing to remote files.
+
 ```
 /etc/pool.ip.credentials:
 {
@@ -245,16 +247,22 @@ There is no limit as to how includes can be used as long as they follow proper j
 
 Load a JSON-formatted configuration file. See `example.conf` for an example configuration file. 
 
+The filename can also be a web or ftp url for remote configuration files. The file will be downloaded locally before being loaded. **Note:** If a file by the same name exists, it will be overwritten. If you modify and save your configuration, the changes will only be made locally and future downloads will overwrite your changes. **Also note** that the remote configuration file is only available with `libcurl`.
+
 Note that the configuration file's settings will override any settings passed via command line. For more information, see [Configuration Settings Order](#configuration-settings-order).
 
 *Syntax:* `--config <value>` or `-c <value>`
 
-*Argument:* `string` Filename
+*Argument:* `string` Filename or URL
 
 *Example:*
 
 ```
 # ./sgminer -c example.conf
+```
+
+```
+# ./sgminer -c http://www.mysite.com/configfiles/myconfig.conf
 ```
 
 [Top](#configuration-and-command-line-options) :: [CLI Only options](#cli-only-options)
