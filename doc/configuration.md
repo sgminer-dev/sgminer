@@ -7,7 +7,7 @@
 * [Configuration Settings Order](#configuration-settings-order)
 * [Globals and the Default Profile](#globals-and-the-default-profile)
 * [Working with Profiles and Pool Specific Settings](#working-with-profiles-and-pool-specific-settings)
-* [Includes](#includes)
+* [Include and Includes](#include-and-includes)
 * [CLI Only options](#cli-only-options)
 * [Config-file and CLI options](#config-file-and-cli-options)
 
@@ -173,10 +173,12 @@ The end result of the above would look like this:
 
 [Top](#configuration-and-command-line-options)
 
-## Includes
+## Include and Includes
 
-`Include` is a special keyword only available in the configuration file. You can include json-formatted files at any level of the configuration parsing. The values read in the included 
+`include` and `includes` are special keywords only available in the configuration file. You can include json-formatted files at any level of the configuration parsing. The values read in the included 
 files are applied to the current object being parsed.
+
+`include` is used to include one single file. If you want to include multiple files, use `includes`, which is an array of filenames.
 
 ```
 /etc/pool.ip.credentials:
@@ -207,6 +209,18 @@ sgminer.conf:
         "user":"user",
         "pass":"x"
     }
+],
+...
+```
+
+The example below shows how you could breakdown your config across multiple smaller files:
+
+```
+sgminer.conf:
+"includes":[
+    "/etc/pools.conf",
+    "/etc/profiles.conf",
+    "/etc/gpus.conf"
 ],
 ...
 ```
@@ -349,6 +363,7 @@ sgminer 4.2.1-116-g2e8b-dirty
   * [lookup-gap](#lookup-gap)
   * [nfactor](#nfactor)
   * [hamsi-expand-big](#hamsi-expand-big)
+  * [hamsi-short](#hamsi-short)
   * [shaders](#shaders)
   * [thread-concurrency](#thread-concurrency)
   * [worksize](#worksize)
@@ -722,7 +737,7 @@ Overrides the default scrypt parameter N, specified as the factor of 2 (`N = 2^n
 
 ### hamsi-expand-big
 
-Sets SPH_HAMSI_EXPAND_BIG for X13 algorithms. Values `"4"` and `"1"` are commonly used. Changing this may improve hashrate. Which value is better depends on GPU type and even manufacturer (i.e. exact GPU model).
+Sets SPH_HAMSI_EXPAND_BIG for X13 derived algorithms. Values `"4"` and `"1"` are commonly used. Changing this may improve hashrate. Which value is better depends on GPU type and even manufacturer (i.e. exact GPU model).
 
 *Available*: Global
 
@@ -733,6 +748,22 @@ Sets SPH_HAMSI_EXPAND_BIG for X13 algorithms. Values `"4"` and `"1"` are commonl
 *Argument:* `4` or `1`
 
 *Default:* `4`
+
+[Top](#configuration-and-command-line-options) :: [Config-file and CLI options](#config-file-and-cli-options) :: [Algorithm Options](#algorithm-options)
+
+### hamsi-short
+
+Sets SPH_HAMSI_SHORT for X13 derived algorithms. Changing this may improve hashrate. Which value is better depends on GPU type and even manufacturer (i.e. exact GPU model).
+
+*Available*: Global
+
+*Config File Syntax:* `"hamsi-short":true`
+
+*Command Line Syntax:* `--hamsi-short`
+
+*Argument:* None
+
+*Default:* `false`
 
 [Top](#configuration-and-command-line-options) :: [Config-file and CLI options](#config-file-and-cli-options) :: [Algorithm Options](#algorithm-options)
 
