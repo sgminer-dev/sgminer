@@ -281,7 +281,8 @@ static pthread_cond_t lp_cond;
 
 static pthread_mutex_t algo_switch_lock;
 static int algo_switch_n = 0;
-static pthread_mutex_t algo_switch_wait_lock;
+static unsigned long pool_switch_options = 0;
+static pthread_mutex_t algo_switch_wait_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t algo_switch_wait_cond;
 
 pthread_mutex_t restart_lock;
@@ -6286,9 +6287,6 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
 static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 {
   int i;
-  int active_threads;   //number of actual active threads
-  unsigned long options;
-  const char *opt;
 
   //if switcher is disabled
   if(opt_switchmode == SWITCH_OFF)
@@ -6297,20 +6295,42 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
   pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
   mutex_lock(&algo_switch_lock);
 
-  //switcher mode - switch on algorithm change
-  if(opt_switchmode == SWITCH_ALGO)
+  if(algo_switch_n == 0)
   {
-    if(cmp_algorithm(&work->pool->algorithm, &mythr->cgpu->algorithm) && (algo_switch_n == 0))
+    //get pool options to apply on switch
+    pool_switch_options = 0;
+    
+    //switcher mode - switch on algorithm change
+    if(opt_switchmode == SWITCH_ALGO)
     {
-      mutex_unlock(&algo_switch_lock);
-      pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-      return;
+      //if algorithms are different
+      if(!cmp_algorithm(&work->pool->algorithm, &mythr->cgpu->algorithm))
+        pool_switch_options = compare_pool_settings(pools[mythr->pool_no], work->pool);
     }
-  }
-  //switcher mode - switch on pool change
-  else if(opt_switchmode == SWITCH_POOL)
-  {
-    if((work->pool->pool_no == mythr->pool_no) && (algo_switch_n == 0))
+    //switcher mode - switch on pool change
+    else if(opt_switchmode == SWITCH_POOL)
+    {
+      if(work->pool->pool_no != mythr->pool_no)
+      {
+        if((pool_switch_options = compare_pool_settings(pools[mythr->pool_no], work->pool)) == 0)
+        {
+          applog(LOG_NOTICE, "No settings change from pool %s...", isnull(get_pool_name(work->pool), ""));
+      
+          rd_lock(&mining_thr_lock);
+          
+          //apply new pool_no to all mining threads
+          for (i = 0; i < mining_threads; i++)
+          {
+            struct thr_info *thr = mining_thr[i];
+            thr->pool_no = work->pool->pool_no;
+          }
+          
+          rd_unlock(&mining_thr_lock);
+        }
+      }
+    }
+     
+    if(pool_switch_options == 0)
     {
       mutex_unlock(&algo_switch_lock);
       pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
@@ -6321,9 +6341,9 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
   algo_switch_n++;
 
   //get the number of active threads to know when to switch... if we only check total threads, we may wait for ever on a disabled GPU
-  active_threads = 0;
-
   rd_lock(&mining_thr_lock);
+  int active_threads = 0;
+  
   for(i = 0; i < mining_threads; i++)
   {
     struct cgpu_info *cgpu = mining_thr[i]->cgpu;
@@ -6337,249 +6357,234 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
   // If all threads are waiting now
   if(algo_switch_n >= active_threads)
   {
-    //compare pools to figure out what we need to apply, if options is 0, don't change anything...
-    if((options = compare_pool_settings(pools[mythr->pool_no], work->pool)))
+    const char *opt;
+    
+    applog(LOG_NOTICE, "Applying pool settings for %s...", isnull(get_pool_name(work->pool), ""));
+    rd_lock(&mining_thr_lock);
+
+    // Shutdown all threads first (necessary)
+    if(opt_isset(pool_switch_options, SWITCHER_SOFT_RESET))
     {
-      rd_lock(&mining_thr_lock);
-
-      // Shutdown all threads first (necessary)
-      if(opt_isset(options, SWITCHER_SOFT_RESET))
-      {
-        applog(LOG_DEBUG, "Soft Reset... Shutdown threads...");
-        for (i = 0; i < mining_threads; i++)
-        {
-          struct thr_info *thr = mining_thr[i];
-          thr->cgpu->drv->thread_shutdown(thr);
-        }
-      }
-
-      // Reset stats (e.g. for working_diff to be set properly in hash_sole_work)
-      zero_stats();
-
-      //devices
-      if(opt_isset(options, SWITCHER_APPLY_DEVICE))
-      {
-        //reset devices flags
-        opt_devs_enabled = 0;
-        for (i = 0; i < MAX_DEVICES; i++)
-            devices_enabled[i] = false;
-
-        //assign pool devices if any
-        if(!empty_string((opt = get_pool_setting(work->pool->devices, ((!empty_string(default_profile.devices))?default_profile.devices:"all"))))) {
-          set_devices((char *)opt);
-        }
-      }
-
-      //lookup gap
-      if(opt_isset(options, SWITCHER_APPLY_LG))
-      {
-        if(!empty_string((opt = get_pool_setting(work->pool->lookup_gap, default_profile.lookup_gap))))
-          set_lookup_gap((char *)opt);
-      }
-
-      //raw intensity from pool
-      if(opt_isset(options, SWITCHER_APPLY_RAWINT))
-      {
-        if(!empty_string((opt = get_pool_setting(work->pool->rawintensity, default_profile.rawintensity))))
-          set_rawintensity((char *)opt);
-      }
-      //xintensity
-      else if(opt_isset(options, SWITCHER_APPLY_XINT))
-      {
-        if(!empty_string((opt = get_pool_setting(work->pool->xintensity, default_profile.xintensity))))
-          set_xintensity((char *)opt);
-      }
-      //intensity
-      else if(opt_isset(options, SWITCHER_APPLY_INT))
-      {
-        if(!empty_string((opt = get_pool_setting(work->pool->intensity, default_profile.intensity))))
-          set_intensity((char *)opt);
-      }
-      //default basic intensity
-      else if(opt_isset(options, SWITCHER_APPLY_INT8))
-      {
-        default_profile.intensity = strdup("8");
-        set_intensity(default_profile.intensity);
-      }
-
-      //shaders
-      if(opt_isset(options, SWITCHER_APPLY_SHADER))
-      {
-        if(!empty_string((opt = get_pool_setting(work->pool->shaders, default_profile.shaders))))
-          set_shaders((char *)opt);
-      }
-
-      //thread-concurrency
-      if(opt_isset(options, SWITCHER_APPLY_TC))
-      {
-        if(!empty_string((opt = get_pool_setting(work->pool->thread_concurrency, default_profile.thread_concurrency))))
-          set_thread_concurrency((char *)opt);
-      }
-
-      //worksize
-      if(opt_isset(options, SWITCHER_APPLY_WORKSIZE))
-      {
-        if(!empty_string((opt = get_pool_setting(work->pool->worksize, default_profile.worksize))))
-          set_worksize((char *)opt);
-      }
-
-      #ifdef HAVE_ADL
-        //GPU clock
-        if(opt_isset(options, SWITCHER_APPLY_GPU_ENGINE))
-        {
-          if(!empty_string((opt = get_pool_setting(work->pool->gpu_engine, default_profile.gpu_engine))))
-            set_gpu_engine((char *)opt);
-        }
-
-        //GPU memory clock
-        if(opt_isset(options, SWITCHER_APPLY_GPU_MEMCLOCK))
-        {
-          if(!empty_string((opt = get_pool_setting(work->pool->gpu_memclock, default_profile.gpu_memclock))))
-            set_gpu_memclock((char *)opt);
-        }
-
-        //GPU fans
-        if(opt_isset(options, SWITCHER_APPLY_GPU_FAN))
-        {
-          if(!empty_string((opt = get_pool_setting(work->pool->gpu_fan, default_profile.gpu_fan))))
-            set_gpu_fan((char *)opt);
-        }
-
-        //GPU powertune
-        if(opt_isset(options, SWITCHER_APPLY_GPU_POWERTUNE))
-        {
-          if(!empty_string((opt = get_pool_setting(work->pool->gpu_powertune, default_profile.gpu_powertune))))
-            set_gpu_powertune((char *)opt);
-        }
-
-        //GPU vddc
-        if(opt_isset(options, SWITCHER_APPLY_GPU_VDDC))
-        {
-          if(!empty_string((opt = get_pool_setting(work->pool->gpu_vddc, default_profile.gpu_vddc))))
-            set_gpu_vddc((char *)opt);
-        }
-
-        //apply gpu settings
-        for (i = 0; i < nDevs; i++)
-        {
-          if(opt_isset(options, SWITCHER_APPLY_GPU_ENGINE))
-            set_engineclock(i, gpus[i].min_engine);
-          if(opt_isset(options, SWITCHER_APPLY_GPU_MEMCLOCK))
-            set_memoryclock(i, gpus[i].gpu_memclock);
-          if(opt_isset(options, SWITCHER_APPLY_GPU_FAN))
-            set_fanspeed(i, gpus[i].min_fan);
-          if(opt_isset(options, SWITCHER_APPLY_GPU_POWERTUNE))
-            set_powertune(i, gpus[i].gpu_powertune);
-          if(opt_isset(options, SWITCHER_APPLY_GPU_VDDC))
-            set_vddc(i, gpus[i].gpu_vddc);
-        }
-      #endif
-
-      // Change algorithm for each thread (thread_prepare calls initCl)
-      if(opt_isset(options, SWITCHER_SOFT_RESET))
-        applog(LOG_DEBUG, "Soft Reset... Restarting threads...");
-
-      struct thr_info *thr;
-
-      for (i = 0; i < mining_threads; i++)
-      {
-        thr = mining_thr[i];
-        thr->pool_no = work->pool->pool_no; //set thread on new pool
-
-        //apply new algorithm if set
-        if(opt_isset(options, SWITCHER_APPLY_ALGO))
-          thr->cgpu->algorithm = work->pool->algorithm;
-
-        if(opt_isset(options, SWITCHER_SOFT_RESET))
-        {
-          thr->cgpu->drv->thread_prepare(thr);
-          thr->cgpu->drv->thread_init(thr);
-        }
-
-        // Necessary because algorithms can have dramatically different diffs
-        thr->cgpu->drv->working_diff = 1;
-      }
-
-      rd_unlock(&mining_thr_lock);
-
-      // Finish switching pools
-      algo_switch_n = 0;
-      mutex_unlock(&algo_switch_lock);
-      pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-
-      // Hard restart if needed
-      if(opt_isset(options, SWITCHER_HARD_RESET))
-      {
-        applog(LOG_DEBUG, "Hard Reset Mining Threads...");
-
-        //if devices changed... enable/disable as needed
-        if(opt_isset(options, SWITCHER_APPLY_DEVICE))
-        {
-          // reset devices
-          enable_devices();
-        }
-
-        //figure out how many mining threads we'll need
-        unsigned int n_threads = 0;
-        pthread_t restart_thr;
-
-        #ifdef HAVE_ADL
-          //change gpu threads if needed
-          if(opt_isset(options, SWITCHER_APPLY_GT))
-          {
-            if(!empty_string((opt = get_pool_setting(work->pool->gpu_threads, default_profile.gpu_threads))))
-              set_gpu_threads(opt);
-          }
-
-          rd_lock(&devices_lock);
-          for (i = 0; i < total_devices; i++)
-            if (!opt_removedisabled || !opt_devs_enabled || devices_enabled[i])
-              n_threads += devices[i]->threads;
-          rd_unlock(&devices_lock);
-        #else
-          n_threads = mining_threads;
-        #endif
-
-        if (unlikely(pthread_create(&restart_thr, NULL, restart_mining_threads_thread, (void *) (intptr_t) n_threads)))
-          quit(1, "restart_mining_threads create thread failed");
-        sleep(60);
-
-        #ifdef __TEMP_ALGO_SWITCH_FIX__
-          //if restart thread is done, then abort...
-          if(!thread_fix_search(restart_thr))
-          {
-            applog(LOG_DEBUG, "thread %d not found in fix list, don't exit sgminer", restart_thr);
-            pthread_cancel(restart_thr);
-            mutex_lock(&algo_switch_wait_lock);
-            pthread_cond_broadcast(&algo_switch_wait_cond);
-            mutex_unlock(&algo_switch_wait_lock);
-            return;
-          }
-        #endif /* __TEMP_ALGO_SWITCH_FIX__ */
-
-        quit(1, "thread was not cancelled in 60 seconds after restart_mining_threads");
-      }
-    }
-    //nothing changed... new pool uses same settings
-    else
-    {
-      //apply new pool_no to all mining threads
+      applog(LOG_DEBUG, "Soft Reset... Shutdown threads...");
       for (i = 0; i < mining_threads; i++)
       {
         struct thr_info *thr = mining_thr[i];
-        thr->pool_no = work->pool->pool_no;
+        thr->cgpu->drv->thread_shutdown(thr);
       }
-
-      algo_switch_n = 0;
-      mutex_unlock(&algo_switch_lock);
-      pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     }
 
-    // Signal other threads to start working now
+    // Reset stats (e.g. for working_diff to be set properly in hash_sole_work)
+    zero_stats();
+
+    //devices
+    if(opt_isset(pool_switch_options, SWITCHER_APPLY_DEVICE))
+    {
+      //reset devices flags
+      opt_devs_enabled = 0;
+      for (i = 0; i < MAX_DEVICES; i++)
+          devices_enabled[i] = false;
+
+      //assign pool devices if any
+      if(!empty_string((opt = get_pool_setting(work->pool->devices, ((!empty_string(default_profile.devices))?default_profile.devices:"all"))))) {
+        set_devices((char *)opt);
+      }
+    }
+
+    //lookup gap
+    if(opt_isset(pool_switch_options, SWITCHER_APPLY_LG))
+    {
+      if(!empty_string((opt = get_pool_setting(work->pool->lookup_gap, default_profile.lookup_gap))))
+        set_lookup_gap((char *)opt);
+    }
+
+    //raw intensity from pool
+    if(opt_isset(pool_switch_options, SWITCHER_APPLY_RAWINT))
+    {
+      if(!empty_string((opt = get_pool_setting(work->pool->rawintensity, default_profile.rawintensity))))
+        set_rawintensity((char *)opt);
+    }
+    //xintensity
+    else if(opt_isset(pool_switch_options, SWITCHER_APPLY_XINT))
+    {
+      if(!empty_string((opt = get_pool_setting(work->pool->xintensity, default_profile.xintensity))))
+        set_xintensity((char *)opt);
+    }
+    //intensity
+    else if(opt_isset(pool_switch_options, SWITCHER_APPLY_INT))
+    {
+      if(!empty_string((opt = get_pool_setting(work->pool->intensity, default_profile.intensity))))
+        set_intensity((char *)opt);
+    }
+    //default basic intensity
+    else if(opt_isset(pool_switch_options, SWITCHER_APPLY_INT8))
+    {
+      default_profile.intensity = strdup("8");
+      set_intensity(default_profile.intensity);
+    }
+
+    //shaders
+    if(opt_isset(pool_switch_options, SWITCHER_APPLY_SHADER))
+    {
+      if(!empty_string((opt = get_pool_setting(work->pool->shaders, default_profile.shaders))))
+        set_shaders((char *)opt);
+    }
+
+    //thread-concurrency
+    if(opt_isset(pool_switch_options, SWITCHER_APPLY_TC))
+    {
+      if(!empty_string((opt = get_pool_setting(work->pool->thread_concurrency, default_profile.thread_concurrency))))
+        set_thread_concurrency((char *)opt);
+    }
+
+    //worksize
+    if(opt_isset(pool_switch_options, SWITCHER_APPLY_WORKSIZE))
+    {
+      if(!empty_string((opt = get_pool_setting(work->pool->worksize, default_profile.worksize))))
+        set_worksize((char *)opt);
+    }
+
+    #ifdef HAVE_ADL
+      //GPU clock
+      if(opt_isset(pool_switch_options, SWITCHER_APPLY_GPU_ENGINE))
+      {
+        if(!empty_string((opt = get_pool_setting(work->pool->gpu_engine, default_profile.gpu_engine))))
+          set_gpu_engine((char *)opt);
+      }
+
+      //GPU memory clock
+      if(opt_isset(pool_switch_options, SWITCHER_APPLY_GPU_MEMCLOCK))
+      {
+        if(!empty_string((opt = get_pool_setting(work->pool->gpu_memclock, default_profile.gpu_memclock))))
+          set_gpu_memclock((char *)opt);
+      }
+
+      //GPU fans
+      if(opt_isset(pool_switch_options, SWITCHER_APPLY_GPU_FAN))
+      {
+        if(!empty_string((opt = get_pool_setting(work->pool->gpu_fan, default_profile.gpu_fan))))
+          set_gpu_fan((char *)opt);
+      }
+
+      //GPU powertune
+      if(opt_isset(pool_switch_options, SWITCHER_APPLY_GPU_POWERTUNE))
+      {
+        if(!empty_string((opt = get_pool_setting(work->pool->gpu_powertune, default_profile.gpu_powertune))))
+          set_gpu_powertune((char *)opt);
+      }
+
+      //GPU vddc
+      if(opt_isset(pool_switch_options, SWITCHER_APPLY_GPU_VDDC))
+      {
+        if(!empty_string((opt = get_pool_setting(work->pool->gpu_vddc, default_profile.gpu_vddc))))
+          set_gpu_vddc((char *)opt);
+      }
+
+      //apply gpu settings
+      for (i = 0; i < nDevs; i++)
+      {
+        if(opt_isset(pool_switch_options, SWITCHER_APPLY_GPU_ENGINE))
+          set_engineclock(i, gpus[i].min_engine);
+        if(opt_isset(pool_switch_options, SWITCHER_APPLY_GPU_MEMCLOCK))
+          set_memoryclock(i, gpus[i].gpu_memclock);
+        if(opt_isset(pool_switch_options, SWITCHER_APPLY_GPU_FAN))
+          set_fanspeed(i, gpus[i].min_fan);
+        if(opt_isset(pool_switch_options, SWITCHER_APPLY_GPU_POWERTUNE))
+          set_powertune(i, gpus[i].gpu_powertune);
+        if(opt_isset(pool_switch_options, SWITCHER_APPLY_GPU_VDDC))
+          set_vddc(i, gpus[i].gpu_vddc);
+      }
+    #endif
+
+    // Change algorithm for each thread (thread_prepare calls initCl)
+    if(opt_isset(pool_switch_options, SWITCHER_SOFT_RESET))
+      applog(LOG_DEBUG, "Soft Reset... Restarting threads...");
+
+    struct thr_info *thr;
+
+    for (i = 0; i < mining_threads; i++)
+    {
+      thr = mining_thr[i];
+      thr->pool_no = work->pool->pool_no; //set thread on new pool
+
+      //apply new algorithm if set
+      if(opt_isset(pool_switch_options, SWITCHER_APPLY_ALGO))
+        thr->cgpu->algorithm = work->pool->algorithm;
+
+      if(opt_isset(pool_switch_options, SWITCHER_SOFT_RESET))
+      {
+        thr->cgpu->drv->thread_prepare(thr);
+        thr->cgpu->drv->thread_init(thr);
+      }
+
+      // Necessary because algorithms can have dramatically different diffs
+      thr->cgpu->drv->working_diff = 1;
+    }
+
+    rd_unlock(&mining_thr_lock);
+
+    // Finish switching pools
+    algo_switch_n = 0;
+    mutex_unlock(&algo_switch_lock);
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+
+    // Hard restart if needed
+    if(opt_isset(pool_switch_options, SWITCHER_HARD_RESET))
+    {
+      applog(LOG_DEBUG, "Hard Reset Mining Threads...");
+
+      //if devices changed... enable/disable as needed
+      if(opt_isset(pool_switch_options, SWITCHER_APPLY_DEVICE))
+      {
+        // reset devices
+        enable_devices();
+      }
+
+      //figure out how many mining threads we'll need
+      unsigned int n_threads = 0;
+      pthread_t restart_thr;
+
+      #ifdef HAVE_ADL
+        //change gpu threads if needed
+        if(opt_isset(pool_switch_options, SWITCHER_APPLY_GT))
+        {
+          if(!empty_string((opt = get_pool_setting(work->pool->gpu_threads, default_profile.gpu_threads))))
+            set_gpu_threads(opt);
+        }
+
+        rd_lock(&devices_lock);
+        for (i = 0; i < total_devices; i++)
+          if (!opt_removedisabled || !opt_devs_enabled || devices_enabled[i])
+            n_threads += devices[i]->threads;
+        rd_unlock(&devices_lock);
+      #else
+        n_threads = mining_threads;
+      #endif
+
+      if (unlikely(pthread_create(&restart_thr, NULL, restart_mining_threads_thread, (void *) (intptr_t) n_threads)))
+        quit(1, "restart_mining_threads create thread failed");
+      sleep(60);
+
+      #ifdef __TEMP_ALGO_SWITCH_FIX__
+        //if restart thread is done, then abort...
+        if(!thread_fix_search(restart_thr))
+        {
+          applog(LOG_DEBUG, "thread %d not found in fix list, don't exit sgminer", restart_thr);
+          pthread_cancel(restart_thr);
+          mutex_lock(&algo_switch_wait_lock);
+          pthread_cond_broadcast(&algo_switch_wait_cond);
+          mutex_unlock(&algo_switch_wait_lock);
+          return;
+        }
+      #endif /* __TEMP_ALGO_SWITCH_FIX__ */
+
+      quit(1, "thread was not cancelled in 60 seconds after restart_mining_threads");
+    }
+    
+    // Signal other threads to start working now 
+    //Broken... the following hangs the thread
     mutex_lock(&algo_switch_wait_lock);
     pthread_cond_broadcast(&algo_switch_wait_cond);
     mutex_unlock(&algo_switch_wait_lock);
-    // Not all threads are waiting, join the waiting list
   }
   else
   {
