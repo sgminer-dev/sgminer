@@ -270,6 +270,8 @@ enum pool_strategy {
   POOL_BALANCE,
 };
 
+typedef void (*_Voidfp)(void*);
+
 #define TOP_STRATEGY (POOL_BALANCE)
 
 struct strategies {
@@ -1066,8 +1068,6 @@ extern bool fulltest(const unsigned char *hash, const unsigned char *target);
 extern int opt_queue;
 extern int opt_scantime;
 extern int opt_expiry;
-
-//extern algorithm_t opt_algorithm;
 
 extern cglock_t control_lock;
 extern pthread_mutex_t hash_lock;

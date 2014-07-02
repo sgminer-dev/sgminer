@@ -282,7 +282,7 @@ static pthread_cond_t lp_cond;
 static pthread_mutex_t algo_switch_lock;
 static int algo_switch_n = 0;
 static unsigned long pool_switch_options = 0;
-static pthread_mutex_t algo_switch_wait_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t algo_switch_wait_lock;
 static pthread_cond_t algo_switch_wait_cond;
 
 pthread_mutex_t restart_lock;
@@ -6338,12 +6338,14 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
     }
   }
 
+  mutex_lock(&algo_switch_wait_lock);
   algo_switch_n++;
+  mutex_unlock(&algo_switch_wait_lock);
 
   //get the number of active threads to know when to switch... if we only check total threads, we may wait for ever on a disabled GPU
-  rd_lock(&mining_thr_lock);
   int active_threads = 0;
-  
+
+  rd_lock(&mining_thr_lock);
   for(i = 0; i < mining_threads; i++)
   {
     struct cgpu_info *cgpu = mining_thr[i]->cgpu;
@@ -6521,12 +6523,14 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
     }
 
     rd_unlock(&mining_thr_lock);
-
-    // Finish switching pools
-    algo_switch_n = 0;
     mutex_unlock(&algo_switch_lock);
-    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
+    //reset switch thread counter
+    mutex_lock(&algo_switch_wait_lock);
+    algo_switch_n = 0;
+    mutex_unlock(&algo_switch_wait_lock);
+
+    // Signal other threads to start working now 
     // Hard restart if needed
     if(opt_isset(pool_switch_options, SWITCHER_HARD_RESET))
     {
@@ -6534,10 +6538,7 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 
       //if devices changed... enable/disable as needed
       if(opt_isset(pool_switch_options, SWITCHER_APPLY_DEVICE))
-      {
-        // reset devices
         enable_devices();
-      }
 
       //figure out how many mining threads we'll need
       unsigned int n_threads = 0;
@@ -6560,6 +6561,8 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
         n_threads = mining_threads;
       #endif
 
+      pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+      
       if (unlikely(pthread_create(&restart_thr, NULL, restart_mining_threads_thread, (void *) (intptr_t) n_threads)))
         quit(1, "restart_mining_threads create thread failed");
       sleep(60);
@@ -6570,30 +6573,34 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
         {
           applog(LOG_DEBUG, "thread %d not found in fix list, don't exit sgminer", restart_thr);
           pthread_cancel(restart_thr);
-          mutex_lock(&algo_switch_wait_lock);
-          pthread_cond_broadcast(&algo_switch_wait_cond);
-          mutex_unlock(&algo_switch_wait_lock);
           return;
         }
       #endif /* __TEMP_ALGO_SWITCH_FIX__ */
 
       quit(1, "thread was not cancelled in 60 seconds after restart_mining_threads");
     }
-    
-    // Signal other threads to start working now 
-    //Broken... the following hangs the thread
-    mutex_lock(&algo_switch_wait_lock);
-    pthread_cond_broadcast(&algo_switch_wait_cond);
-    mutex_unlock(&algo_switch_wait_lock);
+    else
+    {
+      //signal threads to resume work
+      mutex_lock(&algo_switch_wait_lock);
+      pthread_cond_broadcast(&algo_switch_wait_cond);
+      mutex_unlock(&algo_switch_wait_lock);
+
+      pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    }
   }
   else
   {
     mutex_unlock(&algo_switch_lock);
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    
     // Wait for signal to start working again
     mutex_lock(&algo_switch_wait_lock);
-    pthread_cond_wait(&algo_switch_wait_cond, &algo_switch_wait_lock);
-    mutex_unlock(&algo_switch_wait_lock);
+    //set cleanup instructions in the event that the thread is cancelled
+    pthread_cleanup_push((_Voidfp) pthread_mutex_unlock, (void *)&algo_switch_wait_lock); 
+    while(algo_switch_n > 0)
+      pthread_cond_wait(&algo_switch_wait_cond, &algo_switch_wait_lock);
+    pthread_cleanup_pop(1);
   }
 }
 
