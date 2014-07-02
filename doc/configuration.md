@@ -753,9 +753,9 @@ Sets SPH_HAMSI_EXPAND_BIG for X13 derived algorithms. Values `"4"` and `"1"` are
 
 *Command Line Syntax:* `--hamsi-expand-big <value>`
 
-*Argument:* `4` or `1`
+*Argument:* `number` (`1` or `4` are common)
 
-*Default:* `4`
+*Default:* `1` (`4` for kernels labeled "old")
 
 [Top](#configuration-and-command-line-options) :: [Config-file and CLI options](#config-file-and-cli-options) :: [Algorithm Options](#algorithm-options)
 
