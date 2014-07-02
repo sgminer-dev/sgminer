@@ -6561,29 +6561,10 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
         n_threads = mining_threads;
       #endif
 
-      pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-
       if (unlikely(pthread_create(&restart_thr, NULL, restart_mining_threads_thread, (void *) (intptr_t) n_threads)))
         quit(1, "restart_mining_threads create thread failed");
 
-      sleep(60);
-
-      #ifdef __TEMP_ALGO_SWITCH_FIX__
-        //if restart thread is done, then abort...
-        if(!thread_fix_search(restart_thr))
-        {
-          applog(LOG_DEBUG, "thread %d not found in fix list, don't exit sgminer", restart_thr);
-          pthread_cancel(restart_thr);
-
-          mutex_lock(&algo_switch_wait_lock);
-          algo_switch_n = 0;
-          pthread_cond_broadcast(&algo_switch_wait_cond);
-          mutex_unlock(&algo_switch_wait_lock);
-          return;
-        }
-      #endif /* __TEMP_ALGO_SWITCH_FIX__ */
-
-      quit(1, "thread was not cancelled in 60 seconds after restart_mining_threads");
+      // go wait with the other threads...
     }
     else
     {
@@ -6594,22 +6575,24 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
       mutex_unlock(&algo_switch_wait_lock);
 
       pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+
+      // no need to wait, exit
+      return;
     }
   }
   else
-  {
     mutex_unlock(&algo_switch_lock);
-    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
-    // Wait for signal to start working again
-    mutex_lock(&algo_switch_wait_lock);
-    // Set cleanup instructions in the event that the thread is cancelled
-    pthread_cleanup_push(mutex_unlock_cleanup_handler, (void *)&algo_switch_wait_lock);
-    while(algo_switch_n > 0)
-      pthread_cond_wait(&algo_switch_wait_cond, &algo_switch_wait_lock);
-    // Non-zero argument will execute the cleanup handler after popping it
-    pthread_cleanup_pop(1);
-  }
+  pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+
+  // Set cleanup instructions in the event that the thread is cancelled
+  pthread_cleanup_push(mutex_unlock_cleanup_handler, (void *)&algo_switch_wait_lock);
+  // Wait for signal to start working again
+  mutex_lock(&algo_switch_wait_lock);
+  while(algo_switch_n > 0)
+    pthread_cond_wait(&algo_switch_wait_cond, &algo_switch_wait_lock);
+  // Non-zero argument will execute the cleanup handler after popping it
+  pthread_cleanup_pop(1);
 }
 
 struct work *get_work(struct thr_info *thr, const int thr_id)
