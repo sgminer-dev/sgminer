@@ -245,15 +245,6 @@ enum drv_driver {
 DRIVER_PARSE_COMMANDS(DRIVER_PROTOTYPE)
 #endif
 
-/* Temp fix for 60 second exit after algo switch */
-#define __TEMP_ALGO_SWITCH_FIX__ //comment this to turn off the fix if needed
-#ifdef __TEMP_ALGO_SWITCH_FIX__
-  struct thread_fix {
-    pthread_t thread_id;
-    struct thread_fix *prev, *next;
-  };
-#endif /* __TEMP_ALGO_SWITCH_FIX__ */
-
 enum alive {
   LIFE_WELL,
   LIFE_SICK,
