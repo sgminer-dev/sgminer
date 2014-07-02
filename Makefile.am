@@ -1,14 +1,14 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-JANSSON_CPPFLAGS= -I$(top_builddir)/compat/jansson-2.5/src -I$(top_srcdir)/compat/jansson-2.5/src
+JANSSON_CPPFLAGS= -I$(top_builddir)/submodules/jansson/src -I$(top_srcdir)/submodules/jansson/src
 
 EXTRA_DIST	= example.conf m4/gnulib-cache.m4 \
 		  ADL_SDK/readme.txt api-example.php miner.php	\
 		  API.class API.java api-example.c hexdump.c \
 		  doc/API doc/FAQ doc/GPU doc/SCRYPT doc/windows-build.txt
 
-SUBDIRS		= lib compat ccan sph
+SUBDIRS		= lib submodules ccan sph
 
 bin_PROGRAMS     = sgminer
 

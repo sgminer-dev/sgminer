@@ -245,8 +245,8 @@ AM_CONDITIONAL([HAVE_CURSES], [test x$curses = xyes])
 AM_CONDITIONAL([HAVE_WINDOWS], [test x$have_win32 = xtrue])
 AM_CONDITIONAL([HAVE_x86_64], [test x$have_x86_64 = xtrue])
 
-AC_CONFIG_SUBDIRS([compat/jansson-2.5])
-JANSSON_LIBS="compat/jansson-2.5/src/.libs/libjansson.a"
+AC_CONFIG_SUBDIRS([submodules/jansson])
+JANSSON_LIBS="submodules/jansson/src/.libs/libjansson.a"
 
 PKG_PROG_PKG_CONFIG()
 
@@ -365,7 +365,7 @@ AC_SUBST(ADL_CPPFLAGS)
 
 AC_CONFIG_FILES([
 	Makefile
-	compat/Makefile
+	submodules/Makefile
 	ccan/Makefile
 	lib/Makefile
 	sph/Makefile

@@ -28,27 +28,27 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v100</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v100</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v100</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v100</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -94,7 +94,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>USE_SSE2;WIN32;NDEBUG;_CONSOLE;PTW32_STATIC_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;WIN32_LEAN_AND_MEAN</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\compat\jansson-2.5\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\submodules\jansson\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -104,7 +104,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x86;$(ProjectDir)jansson\Debug\x86</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <OptimizeReferences>false</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -136,7 +136,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_M_AMD64;_AMD64_;WIN32;_WIN64;NDEBUG;_CONSOLE;PTW32_STATIC_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;WIN32_LEAN_AND_MEAN</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\compat\jansson-2.5\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\submodules\jansson\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -146,7 +146,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x64;$(ProjectDir)jansson\Debug\x64</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <OptimizeReferences>false</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -180,7 +180,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CONSOLE;WIN32;PTW32_STATIC_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;WIN32_LEAN_AND_MEAN</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\compat\jansson-2.5\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\submodules\jansson\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
@@ -191,7 +191,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>false</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x86;$(ProjectDir)jansson\Release\x86</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
       <LinkTimeCodeGeneration>
@@ -223,7 +223,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_M_AMD64;_AMD64_;WIN32;_WIN64;PTW32_STATIC_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;WIN32_LEAN_AND_MEAN</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\compat\jansson-2.5\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\submodules\jansson\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
@@ -235,7 +235,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>false</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x64;$(ProjectDir)jansson\Release\x64</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
       <LinkTimeCodeGeneration>
@@ -269,16 +269,6 @@
     <ClCompile Include="..\ccan\opt\opt.c" />
     <ClCompile Include="..\ccan\opt\parse.c" />
     <ClCompile Include="..\ccan\opt\usage.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\dump.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\error.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\hashtable.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\load.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\memory.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\pack_unpack.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\strbuffer.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\strconv.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\utf.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\value.c" />
     <ClCompile Include="..\algorithm\darkcoin.c" />
     <ClCompile Include="..\config_parser.c" />
     <ClCompile Include="..\driver-opencl.c" />
@@ -336,11 +326,6 @@
     <ClInclude Include="..\bench_block.h" />
     <ClInclude Include="..\c++defs.h" />
     <ClInclude Include="..\compat.h" />
-    <ClInclude Include="..\compat\jansson-2.5\src\hashtable.h" />
-    <ClInclude Include="..\compat\jansson-2.5\src\jansson.h" />
-    <ClInclude Include="..\compat\jansson-2.5\src\jansson_private.h" />
-    <ClInclude Include="..\compat\jansson-2.5\src\strbuffer.h" />
-    <ClInclude Include="..\compat\jansson-2.5\src\utf.h" />
     <ClInclude Include="..\algorithm\darkcoin.h" />
     <ClInclude Include="..\config_parser.h" />
     <ClInclude Include="..\driver-opencl.h" />
