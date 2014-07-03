@@ -56,6 +56,7 @@
 #pragma comment(lib, "wsock32.lib")
 #pragma comment(lib, "pthreadVC2.lib")
 #pragma comment(lib, "OpenCL.lib")
+#pragma comment(lib, "jansson.lib")
 
 #ifdef HAVE_LIBCURL
 #define CURL_STATICLIB 1

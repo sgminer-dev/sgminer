@@ -8263,6 +8263,7 @@ int main(int argc, char *argv[])
 #endif
 
   applog(LOG_WARNING, "Started %s", packagename);
+  applog(LOG_WARNING, "* using Jansson %s", JANSSON_VERSION);
   if (cnfbuf) {
     applog(LOG_NOTICE, "Loaded configuration file %s", cnfbuf);
     switch (fileconf_load) {

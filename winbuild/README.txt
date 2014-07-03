@@ -83,3 +83,12 @@ x64 version:
 		nmake -f Makefile.vc mode=static VC=10 WITH_DEVEL=C:\OpenSSL-Win64 WITH_SSL=static ENABLE_SSPI=no ENABLE_IPV6=no ENABLE_IDN=no GEN_PDB=no DEBUG=no MACHINE=x64
 	- copy builds\libcurl-vc10-x64-release-static-ssl-static-spnego\lib\libcurl_a.lib to winbuild\dist\lib\x64
 	- copy builds\libcurl-vc10-x64-release-static-ssl-static-spnego\include\* winbuild\dist\include\
+
+5. Jansson
+----------
+If using git run commands below from sgminer/ folder:
+
+  git submodule init
+  git submodule update
+  
+or clone/extract Jansson source from https://github.com/akheron/jansson to submodules/jansson folder.
