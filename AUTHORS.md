@@ -57,7 +57,10 @@ updated by many others.
 
 * [sgminer-dev/sgminer](https://github.com/sgminer-dev/sgminer/graphs/contributors)
 
-
 ## Legacy
 
 * Original CPU mining software: Jeff Garzik <jgarzik@pobox.com>
+
+## Sponsors and acknowledgments
+
+* nicehash.com - sponsored adding/merging many additional algorithms including X11 and Keccak, stratum extranonce
