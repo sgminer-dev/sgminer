@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -128,6 +128,12 @@
     <ClCompile Include="..\sph\skein.c">
       <Filter>Source Files\sph</Filter>
     </ClCompile>
+    <ClCompile Include="..\sph\whirlpool.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\shabal.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
     <ClCompile Include="..\ocl\binary_kernel.c">
       <Filter>Source Files\ocl</Filter>
     </ClCompile>
@@ -184,12 +190,6 @@
     </ClCompile>
     <ClCompile Include="..\algorithm\talkcoin.c">
       <Filter>Source Files\algorithm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\sph\shabal.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\sph\whirlpool.c">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\algorithm\bitblock.c">
       <Filter>Source Files\algorithm</Filter>
@@ -304,6 +304,12 @@
     <ClInclude Include="..\sph\sph_blake.h">
       <Filter>Header Files\sph</Filter>
     </ClInclude>
+    <ClInclude Include="..\sph\sph_shabal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_whirlpool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\ocl\binary_kernel.h">
       <Filter>Header Files\ocl</Filter>
     </ClInclude>
@@ -363,12 +369,6 @@
     </ClInclude>
     <ClInclude Include="..\algorithm\talkcoin.h">
       <Filter>Header Files\algorithm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\sph\sph_shabal.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\sph\sph_whirlpool.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\algorithm\bitblock.h">
       <Filter>Header Files\algorithm</Filter>
