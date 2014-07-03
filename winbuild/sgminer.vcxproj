@@ -271,6 +271,7 @@
     <ClCompile Include="..\ccan\opt\usage.c" />
     <ClCompile Include="..\algorithm\darkcoin.c" />
     <ClCompile Include="..\config_parser.c" />
+    <ClCompile Include="..\events.c" />
     <ClCompile Include="..\driver-opencl.c" />
     <ClCompile Include="..\findnonce.c" />
     <ClCompile Include="..\algorithm\fuguecoin.c" />
@@ -328,6 +329,7 @@
     <ClInclude Include="..\compat.h" />
     <ClInclude Include="..\algorithm\darkcoin.h" />
     <ClInclude Include="..\config_parser.h" />
+    <ClInclude Include="..\events.h" />
     <ClInclude Include="..\driver-opencl.h" />
     <ClInclude Include="..\elist.h" />
     <ClInclude Include="..\findnonce.h" />

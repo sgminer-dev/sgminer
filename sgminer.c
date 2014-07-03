@@ -59,6 +59,7 @@ char *curly = ":D";
 #include "algorithm.h"
 #include "pool.h"
 #include "config_parser.h"
+#include "events.h"
 
 #if defined(unix) || defined(__APPLE__)
   #include <errno.h>
@@ -1319,6 +1320,27 @@ struct opt_table opt_config_table[] = {
   OPT_WITH_ARG("--expiry|-E",
       set_int_0_to_9999, opt_show_intval, &opt_expiry,
       "Upper bound on how many seconds after getting work we consider a share from it stale"),
+
+  // event options
+  OPT_WITH_ARG("--event-on",
+      set_event_type, NULL, NULL,
+      "Select event type to perform task on"),
+  OPT_WITH_ARG("--event-runcmd",
+      set_event_runcmd, NULL, NULL,
+      "Command to perform on event"),
+  OPT_WITH_ARG("--event-reboot",
+      set_event_reboot, NULL, NULL,
+      "Reboot the system on event"),
+  OPT_WITH_ARG("--event-reboot-delay",
+      set_event_reboot_delay, NULL, NULL,
+      "Delay in seconds to wait before rebooting"),
+  OPT_WITH_ARG("--event-quit",
+      set_event_quit, NULL, NULL,
+      "Quit sgminer on event"),
+  OPT_WITH_ARG("--event-quit-message",
+      set_event_quit_message, NULL, NULL,
+      "Quit message when quitting sgminer on event"),
+
   OPT_WITHOUT_ARG("--failover-only",
       opt_set_bool, &opt_fail_only,
       "Don't leak work to backup pools when primary pool is lagging"),
@@ -1702,6 +1724,10 @@ struct opt_table opt_config_table[] = {
   OPT_WITH_ARG("--pools",
       opt_set_bool, NULL, NULL, opt_hidden),
   OPT_WITH_ARG("--profiles",
+      opt_set_bool, NULL, NULL, opt_hidden),
+  OPT_WITH_ARG("--includes",
+      opt_set_bool, NULL, NULL, opt_hidden),
+  OPT_WITH_ARG("--events",
       opt_set_bool, NULL, NULL, opt_hidden),
   OPT_WITH_ARG("--difficulty-multiplier",
       set_difficulty_multiplier, NULL, NULL,
@@ -5728,6 +5754,7 @@ static struct work *hash_pop(bool blocking)
       if (rc && !no_work) {
         no_work = true;
         applog(LOG_WARNING, "Waiting for work to be available from pools.");
+        event_notify("idle");
       }
     } while (!HASH_COUNT(staged_work));
   }
@@ -6797,6 +6824,7 @@ static void hash_sole_work(struct thr_info *mythr)
         applog(LOG_ERR, "%s %d failure, disabling!", drv->name, cgpu->device_id);
         cgpu->deven = DEV_DISABLED;
         dev_error(cgpu, REASON_THREAD_ZERO_HASH);
+        event_notify("idle");
         cgpu->shutdown = true;
         break;
       }
@@ -7255,7 +7283,8 @@ static void *watchdog_thread(void __maybe_unused *userdata)
   memset(&zero_tv, 0, sizeof(struct timeval));
   cgtime(&rotate_tv);
 
-  while (1) {
+  while (1)
+  {
     int i;
     struct timeval now;
 
@@ -7293,6 +7322,10 @@ static void *watchdog_thread(void __maybe_unused *userdata)
 #endif
 
     cgtime(&now);
+
+    // check last getwork time if greater than 10 mins, declare idle...
+    if ((time(NULL) - last_getwork) >= 600)
+      event_notify("idle");
 
     if (!sched_paused && !should_run()) {
       applog(LOG_WARNING, "Pausing execution as per stop time %02d:%02d scheduled",
@@ -7372,6 +7405,7 @@ static void *watchdog_thread(void __maybe_unused *userdata)
         cgtime(&thr->sick);
 
         dev_error(cgpu, REASON_DEV_SICK_IDLE_60);
+        event_notify("gpu_sick");
 #ifdef HAVE_ADL
         if (adl_active && cgpu->has_adl && gpu_activity(gpu) > 50) {
           applog(LOG_ERR, "GPU still showing activity suggesting a hard hang.");
@@ -7388,6 +7422,7 @@ static void *watchdog_thread(void __maybe_unused *userdata)
         cgtime(&thr->sick);
 
         dev_error(cgpu, REASON_DEV_DEAD_IDLE_600);
+        event_notify("gpu_dead");
       } else if (now.tv_sec - thr->sick.tv_sec > 60 &&
            (cgpu->status == LIFE_SICK || cgpu->status == LIFE_DEAD)) {
         /* Attempt to restart a GPU that's sick or dead once every minute */

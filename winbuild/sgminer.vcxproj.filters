@@ -179,6 +179,9 @@
     <ClCompile Include="..\config_parser.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\events.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\algorithm\talkcoin.c">
       <Filter>Source Files\algorithm</Filter>
     </ClCompile>
@@ -350,6 +353,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\config_parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\events.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\algorithm\talkcoin.h">
