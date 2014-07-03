@@ -164,7 +164,7 @@ __kernel void search(__global unsigned char* block, __global hash_t* hashes)
     hash->h8[6] = H6;
     hash->h8[7] = H7;
 
-    barrier(CLK_GLOBAL_MEM_FENCE); 
+    barrier(CLK_GLOBAL_MEM_FENCE);
 }
 
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
@@ -225,7 +225,7 @@ __kernel void search1(__global hash_t* hashes)
     hash->h8[6] = SWAP8(BMW_h1[14]);
     hash->h8[7] = SWAP8(BMW_h1[15]);
 
-    barrier(CLK_GLOBAL_MEM_FENCE); 
+    barrier(CLK_GLOBAL_MEM_FENCE);
 }
 
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
@@ -304,7 +304,7 @@ __kernel void search2(__global hash_t* hashes)
     for (unsigned int u = 0; u < 8; u ++)
         hash->h8[u] = DEC64E(H[u + 8]);
 
-    barrier(CLK_GLOBAL_MEM_FENCE); 
+    barrier(CLK_GLOBAL_MEM_FENCE);
 }
 
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
@@ -339,8 +339,8 @@ __kernel void search3(__global hash_t* hashes)
     hash->h8[5] = SWAP8(h5);
     hash->h8[6] = SWAP8(h6);
     hash->h8[7] = SWAP8(h7);
- 
-    barrier(CLK_GLOBAL_MEM_FENCE); 
+
+    barrier(CLK_GLOBAL_MEM_FENCE);
 }
 
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
@@ -375,7 +375,7 @@ __kernel void search4(__global hash_t* hashes)
             h6l ^= DEC64E(hash->h8[5]);
             h7h ^= DEC64E(hash->h8[6]);
             h7l ^= DEC64E(hash->h8[7]);
-        
+
             h0h ^= 0x80;
             h3l ^= 0x2000000000000;
         }
@@ -393,7 +393,7 @@ __kernel void search4(__global hash_t* hashes)
     hash->h8[6] = DEC64E(h7h);
     hash->h8[7] = DEC64E(h7l);
 
-    barrier(CLK_GLOBAL_MEM_FENCE); 
+    barrier(CLK_GLOBAL_MEM_FENCE);
 }
 
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
@@ -405,7 +405,7 @@ __kernel void search5(__global hash_t* hashes)
     // keccak
 
     sph_u64 a00 = 0, a01 = 0, a02 = 0, a03 = 0, a04 = 0;
-    sph_u64 a10 = 0, a11 = 0, a12 = 0, a13 = 0, a14 = 0; 
+    sph_u64 a10 = 0, a11 = 0, a12 = 0, a13 = 0, a14 = 0;
     sph_u64 a20 = 0, a21 = 0, a22 = 0, a23 = 0, a24 = 0;
     sph_u64 a30 = 0, a31 = 0, a32 = 0, a33 = 0, a34 = 0;
     sph_u64 a40 = 0, a41 = 0, a42 = 0, a43 = 0, a44 = 0;
@@ -440,7 +440,7 @@ __kernel void search5(__global hash_t* hashes)
     hash->h8[6] = SWAP8(a11);
     hash->h8[7] = SWAP8(a21);
 
-    barrier(CLK_GLOBAL_MEM_FENCE); 
+    barrier(CLK_GLOBAL_MEM_FENCE);
 }
 
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
@@ -508,7 +508,7 @@ __kernel void search6(__global hash_t* hashes)
     hash->h4[15] = V06 ^ V16 ^ V26 ^ V36 ^ V46;
     hash->h4[14] = V07 ^ V17 ^ V27 ^ V37 ^ V47;
 
-    barrier(CLK_GLOBAL_MEM_FENCE); 
+    barrier(CLK_GLOBAL_MEM_FENCE);
 }
 
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
@@ -573,7 +573,7 @@ __kernel void search7(__global hash_t* hashes)
     hash->h4[14] = xe;
     hash->h4[15] = xf;
 
-    barrier(CLK_GLOBAL_MEM_FENCE); 
+    barrier(CLK_GLOBAL_MEM_FENCE);
 }
 
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
@@ -652,7 +652,7 @@ __kernel void search8(__global hash_t* hashes)
     hash->h4[14] = hE;
     hash->h4[15] = hF;
 
-    barrier(CLK_GLOBAL_MEM_FENCE); 
+    barrier(CLK_GLOBAL_MEM_FENCE);
 }
 
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
@@ -772,7 +772,7 @@ __kernel void search9(__global hash_t* hashes)
     hash->h4[14] = B6;
     hash->h4[15] = B7;
 
-    barrier(CLK_GLOBAL_MEM_FENCE); 
+    barrier(CLK_GLOBAL_MEM_FENCE);
 }
 
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
@@ -800,7 +800,7 @@ __kernel void search10(__global hash_t* hashes, __global uint* output, const ulo
     #ifdef INPUT_BIG_LOCAL
       __local sph_u32 T512_L[1024];
       __constant const sph_u32 *T512_C = &T512[0][0];
-      
+
       for (int i = init; i < 1024; i += step)
         T512_L[i] = T512_C[i];
 
@@ -1072,7 +1072,7 @@ __kernel void search10(__global hash_t* hashes, __global uint* output, const ulo
     if (result)
       output[atomic_inc(output+0xFF)] = SWAP4(gid);
 
-    barrier(CLK_GLOBAL_MEM_FENCE); 
+    barrier(CLK_GLOBAL_MEM_FENCE);
 }
 
 #endif // X14_CL

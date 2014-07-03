@@ -82,39 +82,39 @@ typedef long sph_s64;
 #define SWAP8(x) as_ulong(as_uchar8(x).s76543210)
 
 #if SPH_BIG_ENDIAN
-    #define DEC64E(x) (x)
-    #define DEC64BE(x) (*(const __global sph_u64 *) (x));
-    #define DEC32LE(x) SWAP4(*(const __global sph_u32 *) (x));
+  #define DEC64E(x) (x)
+  #define DEC64BE(x) (*(const __global sph_u64 *) (x));
+  #define DEC32LE(x) SWAP4(*(const __global sph_u32 *) (x));
 #else
-    #define DEC64E(x) SWAP8(x)
-    #define DEC64BE(x) SWAP8(*(const __global sph_u64 *) (x));
-    #define DEC32LE(x) (*(const __global sph_u32 *) (x));
+  #define DEC64E(x) SWAP8(x)
+  #define DEC64BE(x) SWAP8(*(const __global sph_u64 *) (x));
+  #define DEC32LE(x) (*(const __global sph_u32 *) (x));
 #endif
 
 // __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
 __kernel void search(__global unsigned char* block, volatile __global uint* output, const ulong target)
 {
-    uint gid = get_global_id(0);
-    union {
-        unsigned char h1[64];
-        uint h4[16];
-        ulong h8[8];
-    } hash;
+  uint gid = get_global_id(0);
+  union {
+    unsigned char h1[64];
+    uint h4[16];
+    ulong h8[8];
+  } hash;
 
-    __local sph_u32 AES0[256], AES1[256], AES2[256], AES3[256];
-    int init = get_local_id(0);
-    int step = get_local_size(0);
-    for (int i = init; i < 256; i += step)
-    {
-        AES0[i] = AES0_C[i];
-        AES1[i] = AES1_C[i];
-        AES2[i] = AES2_C[i];
-        AES3[i] = AES3_C[i];
-    }
-    barrier(CLK_LOCAL_MEM_FENCE);
+  __local sph_u32 AES0[256], AES1[256], AES2[256], AES3[256];
+  int init = get_local_id(0);
+  int step = get_local_size(0);
+  for (int i = init; i < 256; i += step)
+  {
+    AES0[i] = AES0_C[i];
+    AES1[i] = AES1_C[i];
+    AES2[i] = AES2_C[i];
+    AES3[i] = AES3_C[i];
+  }
+  barrier(CLK_LOCAL_MEM_FENCE);
 
-    // shavite
-    {
+  // shavite
+  {
     // IV
     sph_u32 h0 = SPH_C32(0x72FCCDD8), h1 = SPH_C32(0x79CA4727), h2 = SPH_C32(0x128A077B), h3 = SPH_C32(0x40D55AEC);
     sph_u32 h4 = SPH_C32(0xD1901A06), h5 = SPH_C32(0x430AE307), h6 = SPH_C32(0xB29F5CD1), h7 = SPH_C32(0xDF07FBFC);
@@ -173,11 +173,10 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
     hash.h4[13] = hD;
     hash.h4[14] = hE;
     hash.h4[15] = hF;
-    }
+  }
 
-
-    // shavite
-    {
+  // shavite
+  {
     // IV
     sph_u32 h0 = SPH_C32(0x72FCCDD8), h1 = SPH_C32(0x79CA4727), h2 = SPH_C32(0x128A077B), h3 = SPH_C32(0x40D55AEC);
     sph_u32 h4 = SPH_C32(0xD1901A06), h5 = SPH_C32(0x430AE307), h6 = SPH_C32(0xB29F5CD1), h7 = SPH_C32(0xDF07FBFC);
@@ -232,11 +231,11 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
     hash.h4[13] = hD;
     hash.h4[14] = hE;
     hash.h4[15] = hF;
-    }
+  }
 
-    bool result = (hash.h8[3] <= target);
-    if (result)
-        output[output[0xFF]++] = SWAP4(gid);
+  bool result = (hash.h8[3] <= target);
+  if (result)
+    output[output[0xFF]++] = SWAP4(gid);
 }
 
 #endif // DARKCOIN_CL

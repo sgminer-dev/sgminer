@@ -74,11 +74,11 @@ typedef long sph_s64;
 #define SWAP8(x) as_ulong(as_uchar8(x).s76543210)
 
 #if SPH_BIG_ENDIAN
-    #define ENC64E(x) SWAP8(x)
-    #define DEC64E(x) SWAP8(*(const __global sph_u64 *) (x));
+  #define ENC64E(x) SWAP8(x)
+  #define DEC64E(x) SWAP8(*(const __global sph_u64 *) (x));
 #else
-    #define ENC64E(x) (x)
-    #define DEC64E(x) (*(const __global sph_u64 *) (x));
+  #define ENC64E(x) (x)
+  #define DEC64E(x) (*(const __global sph_u64 *) (x));
 #endif
 
 #define ROL32(x, n)  rotate(x, (uint) n)
@@ -93,13 +93,13 @@ typedef long sph_s64;
 
 #define P(a,b,c,d,e,f,g,h,x,K)                  \
 {                                               \
-    temp1 = h + S3(e) + F1(e,f,g) + (K + x);      \
-    d += temp1; h = temp1 + S2(a) + F0(a,b,c);  \
+  temp1 = h + S3(e) + F1(e,f,g) + (K + x);      \
+  d += temp1; h = temp1 + S2(a) + F0(a,b,c);  \
 }
 
 #define PLAST(a,b,c,d,e,f,g,h,x,K)                  \
 {                                               \
-    d += h + S3(e) + F1(e,f,g) + (x + K);              \
+  d += h + S3(e) + F1(e,f,g) + (x + K);              \
 }
 
 #define F0(y, x, z) bitselect(z, y, z ^ x)
@@ -128,28 +128,28 @@ typedef long sph_s64;
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
 __kernel void search(__global unsigned char* block, volatile __global uint* output, const ulong target)
 {
-    uint gid = get_global_id(0);
-    union {
-        unsigned char h1[64];
-        uint h4[16];
-        ulong h8[8];
-    } hash;
+  uint gid = get_global_id(0);
+  union {
+    unsigned char h1[64];
+    uint h4[16];
+    ulong h8[8];
+  } hash;
 
-    __local sph_u64 T0_L[256], T1_L[256], T2_L[256], T3_L[256], T4_L[256], T5_L[256], T6_L[256], T7_L[256];
-    int init = get_local_id(0);
-    int step = get_local_size(0);
-    for (int i = init; i < 256; i += step)
-    {
-        T0_L[i] = T0[i];
-        T1_L[i] = T1[i];
-        T2_L[i] = T2[i];
-        T3_L[i] = T3[i];
-        T4_L[i] = T4[i];
-        T5_L[i] = T5[i];
-        T6_L[i] = T6[i];
-        T7_L[i] = T7[i];
-    }
-    barrier(CLK_LOCAL_MEM_FENCE);
+  __local sph_u64 T0_L[256], T1_L[256], T2_L[256], T3_L[256], T4_L[256], T5_L[256], T6_L[256], T7_L[256];
+  int init = get_local_id(0);
+  int step = get_local_size(0);
+  for (int i = init; i < 256; i += step)
+  {
+    T0_L[i] = T0[i];
+    T1_L[i] = T1[i];
+    T2_L[i] = T2[i];
+    T3_L[i] = T3[i];
+    T4_L[i] = T4[i];
+    T5_L[i] = T5[i];
+    T6_L[i] = T6[i];
+    T7_L[i] = T7[i];
+  }
+  barrier(CLK_LOCAL_MEM_FENCE);
 
 #define T0 T0_L
 #define T1 T1_L
@@ -160,16 +160,16 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
 #define T6 T6_L
 #define T7 T7_L
 
-    // groestl
-
+  // groestl
+  {
     sph_u64 H[16];
     for (unsigned int u = 0; u < 15; u ++)
-        H[u] = 0;
-#if USE_LE
+      H[u] = 0;
+  #if USE_LE
     H[15] = ((sph_u64)(512 & 0xFF) << 56) | ((sph_u64)(512 & 0xFF00) << 40);
-#else
+  #else
     H[15] = (sph_u64)512;
-#endif
+  #endif
 
     sph_u64 g[16], m[16];
     m[0] = DEC64E(block + 0 * 8);
@@ -191,27 +191,27 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
     m[14] = 0;
     m[15] = 0x100000000000000;
     for (unsigned int u = 0; u < 16; u ++)
-        g[u] = m[u] ^ H[u];
+      g[u] = m[u] ^ H[u];
     PERM_BIG_P(g);
     PERM_BIG_Q(m);
     for (unsigned int u = 0; u < 16; u ++)
-        H[u] ^= g[u] ^ m[u];
+      H[u] ^= g[u] ^ m[u];
     sph_u64 xH[16];
     for (unsigned int u = 0; u < 16; u ++)
-        xH[u] = H[u];
+      xH[u] = H[u];
     PERM_BIG_P(xH);
     for (unsigned int u = 0; u < 16; u ++)
-        H[u] ^= xH[u];
+      H[u] ^= xH[u];
     for (unsigned int u = 0; u < 8; u ++)
-        hash.h8[u] = ENC64E(H[u + 8]);
+      hash.h8[u] = ENC64E(H[u + 8]);
 
     for (unsigned int u = 0; u < 15; u ++)
-        H[u] = 0;
-#if USE_LE
+      H[u] = 0;
+  #if USE_LE
     H[15] = ((sph_u64)(512 & 0xFF) << 56) | ((sph_u64)(512 & 0xFF00) << 40);
-#else
+  #else
     H[15] = (sph_u64)512;
-#endif
+  #endif
 
     m[0] = hash.h8[0];
     m[1] = hash.h8[1];
@@ -222,7 +222,7 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
     m[6] = hash.h8[6];
     m[7] = hash.h8[7];
     for (unsigned int u = 0; u < 16; u ++)
-        g[u] = m[u] ^ H[u];
+      g[u] = m[u] ^ H[u];
     m[8] = 0x80; g[8] = m[8] ^ H[8];
     m[9] = 0; g[9] = m[9] ^ H[9];
     m[10] = 0; g[10] = m[10] ^ H[10];
@@ -234,18 +234,19 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
     PERM_BIG_P(g);
     PERM_BIG_Q(m);
     for (unsigned int u = 0; u < 16; u ++)
-        H[u] ^= g[u] ^ m[u];
+      H[u] ^= g[u] ^ m[u];
     for (unsigned int u = 0; u < 16; u ++)
-        xH[u] = H[u];
+      xH[u] = H[u];
     PERM_BIG_P(xH);
     for (unsigned int u = 0; u < 16; u ++)
-        H[u] ^= xH[u];
+      H[u] ^= xH[u];
     for (unsigned int u = 0; u < 8; u ++)
-        hash.h8[u] = H[u + 8];
+      hash.h8[u] = H[u + 8];
+  }
 
-    bool result = (hash.h8[3] <= target);
-    if (result)
-        output[output[0xFF]++] = SWAP4(gid);
+  bool result = (hash.h8[3] <= target);
+  if (result)
+    output[output[0xFF]++] = SWAP4(gid);
 }
 
 #endif // GROESTLCOIN_CL
