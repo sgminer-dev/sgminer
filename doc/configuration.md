@@ -1862,7 +1862,7 @@ The above would start mining `scrypt` on `pool.ip` with devices `0, 2, 3, 4, 5`.
 
 ### difficulty-multiplier
 
-**Need clarification** Set the difficulty multiplier for jobs received from stratum pools.
+**DEPRECATED** Set the difficulty multiplier for jobs received from stratum pools.
 
 *Available*: Global
 
