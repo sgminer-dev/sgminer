@@ -1237,6 +1237,7 @@ static char *set_null(const char __maybe_unused *arg)
 
 char *set_difficulty_multiplier(char *arg)
 {
+  applog(LOG_WARNING, "Option difficulty-multiplier is deprecated and will be removed in v5.1. Pools that need this option should fix their setup.");
   if (!(arg && arg[0]))
     return "Invalid parameters for set difficulty multiplier";
   opt_diff_mult = strtod(arg, NULL);
@@ -1704,7 +1705,7 @@ struct opt_table opt_config_table[] = {
       opt_set_bool, NULL, NULL, opt_hidden),
   OPT_WITH_ARG("--difficulty-multiplier",
       set_difficulty_multiplier, NULL, NULL,
-      "Difficulty multiplier for jobs received from stratum pools"),
+      "(deprecated) Difficulty multiplier for jobs received from stratum pools"),
   OPT_ENDTABLE
 };
 
