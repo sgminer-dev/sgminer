@@ -1,0 +1,467 @@
+.TH SGMINER 1
+.SH NAME
+sgminer \- A multi-threaded multi-pool ATI GPU miner for scrypt-based cryptocurrency
+.SH SYNOPSIS
+.B sgminer
+[\fB\-DLqTvhnV\fR]
+[\fB\-d device\fR]
+[\fB\-E seconds\fR]
+[\fB\-g threads\fR]
+[\fB\-I intensity\fR]
+[\fB\-X intensity\fR]
+[\fB\-K path\fR]
+[\fB\-k kernel\fR]
+[\fB\-l seconds\fR]
+[\fB\-m command\fR]
+[\fB\-p password\fR]
+[\fB\-Q items\fR]
+[\fB\-U url\fR]
+[\fB\-s seconds\fR]
+[\fB\-o url\fR]
+[\fB\-u username\fR]
+[\fB\-w worksize\fR]
+[\fB\-O username:password\fR]
+[\fB\-c file\fR]
+
+.SH DESCRIPTION
+.B sgminer 
+is a multi-threaded multi-pool GPU miner with ATI GPU monitoring, (over)clocking and fanspeed support for scrypt-based cryptocurrency. It is based on cgminer by Con Kolivas (ckolivas), which is in turn based on cpuminer by Jeff Garzik (jgarzik).
+
+.SH USAGE
+.PP 
+The classic and best usage of sgminer is to load a json formatted config file which specifies all the options you need. This is done by:
+
+.RS
+\f(CWsgminer -c /etc/sgminer.conf
+.RE
+
+You can run sgminer without a config file by specifying pools and GPU specifics on the command line.
+
+Single pool:
+
+.RS
+\f(CWsgminer -o http://pool:port -u username -p password
+.RE
+
+.PP
+Multiple pools:
+
+.RS
+\f(CWsgminer -o http://pool1:port -u pool1username -p pool1password -o http://pool2:port -u pool2usernmae -p pool2password
+.RE
+
+.PP
+Single pool with a standard http proxy, regular desktop:
+
+.RS
+\f(CWsgminer -o "http:proxy:port|http://pool:port" -u username -p password
+.RE
+
+.PP
+Single pool with various GPU options specified:
+
+.RS
+\f(CWsgminer -o http://pool:port -u username -p password --auto-fan --auto-gpu --gpu-memclock 1400 --gpu-threads 1 --expiry 30
+
+
+
+
+.SH OPTIONS
+
+.TP
+.BR \-\-algorithm " " \fIalgorithm\fR 
+Set mining algorithm and most common defaults, default: scrypt
+
+.TP
+.BR \-\-api-allow " " \fIaddress\fR 
+Allow API access only to the given list of [G:]IP[/Prefix] addresses[/subnets]
+
+.TP
+.BR \-\-api-description " " \fIdescription\fR 
+Description placed in the API status header, default: sgminer version
+
+.TP
+.BR \-\-api-groups " " \fIgroup\fR
+API one letter groups G:cmd:cmd[,P:cmd:*...] defining the cmds a groups can use
+
+.TP
+.BR \-\-api-listen
+Enable API, default: disabled
+
+.TP
+.BR \-\-api-mcast
+Enable API Multicast listener, default: disabled
+
+.TP
+.BR \-\-api-mcast-addr " " \fIaddress\fR 
+API Multicast listen address
+
+.TP
+.BR \-\-api-mcast-code " " \fIcode\fR 
+Code expected in the API Multicast message, don't use '-'
+
+.TP
+.BR \-\-api-mcast-des " " \fIdescription\fR 
+Description appended to the API Multicast reply, default: ''
+
+.TP
+.BR \-\-api-mcast-port " " \fIport\fR
+API Multicast listen port (default: 4028)
+
+.TP
+.BR \-\-api-network
+Allow API (if enabled) to listen on/for any address, default: only 127.0.0.1
+
+.TP
+.BR \-\-api-port " " \fIport\fR
+Port number of miner API (default: 4028)
+
+.TP
+.BR \-\-auto-fan
+Automatically adjust all GPU fan speeds to maintain a target temperature
+
+.TP
+.BR \-\-auto-gpu
+Automatically adjust all GPU engine clock speeds to maintain a target temperature
+
+.TP
+.BR \-\-balance 
+Change multipool strategy from failover to even share balance
+
+.TP
+.BR \-\-benchmark 
+Run sgminer in benchmark mode - produces no shares
+
+.TP
+.BR \-\-compact 
+Use compact display without per device statistics
+
+.TP
+.BR \-D ", "\-\-debug
+Enable debug output
+
+.TP
+.BR \-\-description " " \fIdescription\fR 
+Pool description
+
+.TP
+.BR \-d ", " \-\-device " " \fIdevice\fR 
+Select device to use, one value, range and/or comma separated (e.g. 0-2,4) default: all
+
+.TP
+.BR \-\-disable-rejecting 
+Automatically disable pools that continually reject shares
+
+.TP
+.BR \-E ", " \-\-expiry " " \fIseconds\fR 
+Upper bound on how many seconds after getting work we consider a share from it stale (default: 28)
+
+.TP
+.BR \-\-failover-only 
+Don't leak work to backup pools when primary pool is lagging
+
+.TP
+.BR \-\-failover-switch-delay " " \fIseconds\fR 
+Delay in seconds before switching back to a failed pool (default: 60)
+
+.TP
+.BR \-\-fix-protocol
+Do not redirect to a different getwork protocol (eg. stratum)
+
+.TP
+.BR \-\-gpu-dyninterval " " \fImilliseconds\fR 
+Set the refresh interval in ms for GPUs using dynamic intensity (default: 7)
+
+.TP
+.BR \-\-gpu-platform " " \fIplatform id\fR 
+Select OpenCL platform ID to use for GPU mining (default: -1)
+
+.TP
+.BR \-g ", " \-\-gpu-threads " " \fIthreads\fR 
+Number of threads per GPU - one value or comma separated list (e.g. 1,2,1)
+
+.TP
+.BR \-\-gpu-engine " " \fImhz\fR
+GPU engine (over)clock range in Mhz - one value, range and/or comma separated list (e.g. 850-900,900,750-850)
+
+.TP
+.BR \-\-gpu-fan " " \fIpercentage\fR 
+GPU fan percentage range - one value, range and/or comma separated list (e.g. 0-85,85,65)
+
+.TP
+.BR \-\-gpu-map " " \fIdevice order\fR 
+Map OpenCL to ADL device order manually, paired CSV (e.g. 1:0,2:1 maps OpenCL 1 to ADL 0, 2 to 1)
+
+.TP
+.BR \-\-gpu-memclock " " \fImhz\fR 
+Set the GPU memory (over)clock in Mhz - one value for all or separate by commas for per card
+
+.TP
+.BR \-\-gpu-memdiff " " \fImhz\fR 
+Set a fixed difference in clock speed between the GPU and memory in auto-gpu mode
+
+.TP
+.BR \-\-gpu-powertune " " \fIpowertune percentage\fR 
+Set the GPU powertune percentage - one value for all or separate by commas for per card
+
+.TP
+.BR \-\-gpu-reorder 
+Attempt to reorder GPU devices according to PCI Bus ID
+
+.TP
+.BR \-\-gpu-vddc " " \fIvolts\fR
+Set the GPU voltage in Volts - one value for all or separate by commas for per card
+
+.TP
+.BR \-\-lookup-gap " " \fIlookup gap\fR
+Set GPU lookup gap for scrypt mining, comma separated
+
+.TP
+.BR \-\-incognito 
+Do not display user name in status window
+
+.TP
+.BR \-I ", " \-\-intensity " " \fIintensity\fR 
+Intensity of GPU scanning (d or 8 -> 31,default: d to maintain desktop interactivity), overridden by \-\-xintensity or \-\-rawintensity.
+
+.TP
+.BR \-X ", " \-\-xintensity " " \fIintensity\fR 
+Shader based intensity of GPU scanning (1 to 9999), overrides \-\-intensity, overridden by \-\-rawintensity.
+
+.TP
+.BR \-\-rawintensity " " \fIintensity\fR 
+Raw intensity of GPU scanning (1 to 2147483647), overrides \-\-intensity and \-\-xintensity.
+
+.TP
+.BR \-K ", " \-\-kernel-path " " \fIpath\fR 
+Specify a path to where kernel files are (default: "/usr/local/bin")
+
+.TP
+.BR \-k ", " \-\-kernel " " \fIkernel\fR 
+Override kernel to use - one value or comma separated
+
+.TP
+.BR \-\-load-balance
+Change multipool strategy from failover to quota based balance
+
+.TP
+.BR \-l ", " \-\-log " " \fIseconds\fR
+Interval in seconds between log output (default: 5)
+
+.TP
+.BR \-L ", " \-\-log-show-date
+Show date on every log line
+
+.TP
+.BR \-\-lowmem
+Minimise caching of shares for low memory applications
+
+.TP
+.BR \-m ", " \-\-monitor " " \fIcommand\fR
+Use custom pipe cmd for output messages
+
+.TP
+.BR \-\-name " " \fIname\fR
+Name of pool
+
+.TP
+.BR \-\-net-delay 
+Impose small delays in networking to not overload slow routers
+
+.TP
+.BR \-\-nfactor " " \fIn-factor\fR 
+Override default scrypt N-factor parameter.
+
+.TP
+.BR \-\-no-adl
+Disable the ATI display library used for monitoring and setting GPU parameters
+
+.TP
+.BR \-\-no-client-reconnect 
+Disable 'client.reconnect' stratum functionality
+
+.TP
+.BR \-\-no-restart
+Do not attempt to restart GPUs that hang
+
+.TP
+.BR \-\-no-submit-stale 
+Don't submit shares if they are detected as stale
+
+.TP
+.BR \-p ", " \-\-pass " " \fIpassword\fR 
+Password for bitcoin JSON-RPC server
+
+.TP
+.BR \-\-per-device-stats
+Force verbose mode and output per-device statistics
+
+.TP
+.BR \-\-priority " " \fIpriority\fR
+Pool priority
+
+.TP
+.BR \-P ", " \-\-protocol-dump
+Verbose dump of protocol-level activities
+
+.TP
+.BR \-Q ", " \-\-queue " " \fIitems\fR
+Minimum number of work items to have queued (0+) (default: 1)
+
+.TP
+.BR \-q ", " \-\-quiet
+Disable logging output, display status and errors
+
+.TP
+.BR \-U ", " \-\-quota " " \fIurl\fR
+URL combination for server with load-balance strategy quotas
+
+.TP
+.BR \-\-real-quiet
+Disable all output
+
+.TP
+.BR \-\-remove-disabled 
+Remove disabled devices entirely, as if they didn't exist
+
+.TP
+.BR \-\-rotate " " \fIminutes\fR
+Change multipool strategy from failover to regularly rotate at N minutes (default: 0)
+
+.TP
+.BR \-\-round-robin 
+Change multipool strategy from failover to round robin on failure
+
+.TP
+.BR \-s ", " \-\-scan-time " " \fIseconds\fR 
+Upper bound on time spent scanning current work, in seconds (default: 7)
+
+.TP
+.BR \-\-sched-start " " \fIhh:mm\fR 
+Set a time of day in HH:MM to start mining (a once off without a stop time)
+
+.TP
+.BR \-\-sched-stop " " \fIhh:mm\fR
+Set a time of day in HH:MM to stop mining (will quit without a start time)
+
+.TP
+.BR \-\-shaders " " \fIshaders\fR 
+GPU shaders per card for tuning scrypt, comma separated
+
+.TP
+.BR \-\-sharelog " " \fIfile\fR
+Append share log to file
+
+.TP
+.BR \-\-shares " " \fIshares\fR
+Quit after mining N shares (default: unlimited)
+
+.TP
+.BR \-\-socks-proxy " " \fIhost:port\fR 
+Set socks4 proxy (host:port)
+
+.TP
+.BR \-\-state " " \fIstate\fR 
+Specify pool state at startup (default: enabled)
+
+.TP
+.BR \-\-syslog
+Use system log for output messages (default: standard error)
+
+.TP
+.BR \-\-tcp-keepalive " " \fIseconds\fR 
+TCP keepalive packet idle time (default: 30)
+
+.TP
+.BR \-\-temp-cutoff " " \fIdegrees\fR 
+Temperature which a device will be automatically disabled at, one value or comma separated list (default: 95)
+
+.TP
+.BR \-\-temp-hysteresis " " \fIdegrees\fR 
+Set how much the temperature can fluctuate outside limits when automanaging speeds (default: 3)
+
+.TP
+.BR \-\-temp-overheat " " \fIdegrees\fR 
+Temperature which a device will be throttled at while automanaging fan and/or GPU, one value or comma separated list (default: 85)
+
+.TP
+.BR \-\-temp-target " " \fIdegrees\fR 
+Temperature which a device should stay at while automanaging fan and/or GPU, one value or comma separated list (default: 75)
+
+.TP
+.BR \-T ", " \-\-text-only
+Disable ncurses formatted screen output
+
+.TP
+.BR \-\-thread-concurrency " " \fIthreads\fR 
+Set GPU thread concurrency for scrypt mining, comma separated
+
+.TP
+.BR \-o ", " \-\-url " " \fIurl\fR
+URL for bitcoin JSON-RPC server
+
+.TP
+.BR \-\-pool-algorithm " " \fIalgorithm\fR 
+Set algorithm for pool
+
+.TP
+.BR \-\-pool-nfactor " " \fIn-factor\fR 
+Set N-factor for pool
+
+.TP
+.BR \-u ", " \-\-user " " \fIusername\fR 
+Username for bitcoin JSON-RPC server
+
+.TP
+.BR \-v ", " \-\-verbose
+Log verbose output to stderr as well as status output
+
+.TP
+.BR \-w ", " \-\-worksize " " \fIworksize\fR 
+Override detected optimal worksize - one value or comma separated list
+
+.TP
+.BR \-O ", " \-\-userpass " " \fIusername:password\fR 
+Username:Password pair for bitcoin JSON-RPC server
+
+.TP
+.BR \-\-worktime
+Display extra work time debug information
+
+.TP
+.BR \-c ", " \-\-config " " \fIfile\fR 
+Load a JSON-format configuration file
+
+See example.conf for an example configuration.
+
+.TP
+.BR \-\-default-config " " \fIfile\fR 
+Specify the filename of the default config file
+Loaded at start and used when saving without a name.
+
+.TP
+.BR \-h ", " \-\-help 
+Print this message
+
+.TP
+.BR \-n ", " \-\-ndevs
+Display number of detected GPUs, OpenCL platform information, and exit
+
+.TP
+.BR \-V ", " \-\-version
+Display version and exit
+
+
+.SH REPORTING BUGS
+
+git tree: https://github.com/sgminer-dev/sgminer
+.br 
+bugtracker: https://github.com/sgminer-dev/sgminer/issues
+.br 
+irc: #sgminer and #sgminer-dev on freenode
+.br 
+mailing lists: https://sourceforge.net/p/sgminer/mailman/
+
+
+.SH COPYRIGHT
+Copyright \(co 2013 Free Software Foundation, Inc. License GPLv3: GNU GPL version 3 <http://gnu.org/licenses/gpl.html>. This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the extent permitted by law.
