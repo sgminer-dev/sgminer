@@ -9,8 +9,6 @@
  * Jansson, namely those things that affect the public API in
  * jansson.h.
  *
- * The CMake system will generate the jansson_config.h file and
- * copy it to the build and install directories.
  */
 
 #ifndef JANSSON_CONFIG_H
