@@ -34,7 +34,6 @@
 #include <inttypes.h>
 #include <string.h>
 
-
 const char *algorithm_type_str[] = {
   "Unknown",
   "Scrypt",
@@ -630,40 +629,43 @@ void copy_algorithm_settings(algorithm_t* dest, const char* algo)
   }
 }
 
+static const char *lookup_algorithm_alias(const char *lookup_alias, uint8_t *nfactor)
+{
+  #define ALGO_ALIAS_NF(alias, name, nf) \
+    if (strcasecmp(alias, lookup_alias) == 0) { *nfactor = nf; return name; }
+  #define ALGO_ALIAS(alias, name) \
+    if (strcasecmp(alias, lookup_alias) == 0) return name;
+
+  ALGO_ALIAS_NF("scrypt", "ckolivas", 10);
+  ALGO_ALIAS_NF("scrypt", "ckolivas", 10);
+  ALGO_ALIAS_NF("adaptive-n-factor", "ckolivas", 11);
+  ALGO_ALIAS_NF("adaptive-nfactor", "ckolivas", 11);
+  ALGO_ALIAS_NF("nscrypt", "ckolivas", 11);
+  ALGO_ALIAS_NF("adaptive-nscrypt", "ckolivas", 11);
+  ALGO_ALIAS_NF("adaptive-n-scrypt", "ckolivas", 11);
+  ALGO_ALIAS("x11mod", "darkcoin-mod");
+  ALGO_ALIAS("x11", "darkcoin-mod");
+  ALGO_ALIAS("x13mod", "marucoin-mod");
+  ALGO_ALIAS("x13", "marucoin-mod");
+  ALGO_ALIAS("x15mod", "bitblock");
+  ALGO_ALIAS("x15", "bitblock");
+  ALGO_ALIAS("nist5", "talkcoin-mod");
+  ALGO_ALIAS("keccak", "maxcoin");
+
+  #undef ALGO_ALIAS
+  #undef ALGO_ALIAS_NF
+
+  return NULL;
+}
+
 void set_algorithm(algorithm_t* algo, const char* newname_alias)
 {
   const char* newname;
   //load previous algorithm nfactor in case nfactor was applied before algorithm... or default to 10
   uint8_t nfactor = ((algo->nfactor)?algo->nfactor:10); 
 
-  // scrypt is default ckolivas kernel
-  if(!strcasecmp(newname_alias, "scrypt"))
-  {
-    newname = "ckolivas";
-    nfactor = 10;
-  }
-  // Adaptive N-factor Scrypt is default ckolivas kernel with nfactor 11
-  else if ((strcasecmp(newname_alias, "adaptive-n-factor") == 0) ||
-           (strcasecmp(newname_alias, "adaptive-nfactor") == 0) ||
-           (strcasecmp(newname_alias, "nscrypt") == 0) ||
-           (strcasecmp(newname_alias, "adaptive-nscrypt") == 0) ||
-           (strcasecmp(newname_alias, "adaptive-n-scrypt") == 0)) 
-  {
-    newname = "ckolivas";
-    nfactor = 11;
-    // Not an alias
-  }
-  //x11mod -> darkcoin-mod
-  else if(!strcasecmp(newname_alias, "x11mod"))
-    newname = "darkcoin-mod";
-  //x13mod -> marucoin-mod
-  else if(!strcasecmp(newname_alias, "x13mod"))
-    newname = "marucoin-mod";
-  //x13modold -> marucoin-modold
-  else if(!strcasecmp(newname_alias, "x13modold"))
-    newname = "marucoin-modold";
-  else
-    newname = newname_alias;
+  newname = lookup_algorithm_alias(newname_alias, &nfactor);
+  if (!newname) newname = newname_alias;
 
   copy_algorithm_settings(algo, newname);
 
