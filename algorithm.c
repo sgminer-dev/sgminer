@@ -647,8 +647,12 @@ static const char *lookup_algorithm_alias(const char *lookup_alias, uint8_t *nfa
   ALGO_ALIAS("x11", "darkcoin-mod");
   ALGO_ALIAS("x13mod", "marucoin-mod");
   ALGO_ALIAS("x13", "marucoin-mod");
+  ALGO_ALIAS("x13old", "marucoin-modold");
+  ALGO_ALIAS("x13modold", "marucoin-modold");
   ALGO_ALIAS("x15mod", "bitblock");
   ALGO_ALIAS("x15", "bitblock");
+  ALGO_ALIAS("x15modold", "bitblockold");
+  ALGO_ALIAS("x15old", "bitblockold");
   ALGO_ALIAS("nist5", "talkcoin-mod");
   ALGO_ALIAS("keccak", "maxcoin");
 
@@ -662,15 +666,21 @@ void set_algorithm(algorithm_t* algo, const char* newname_alias)
 {
   const char* newname;
   //load previous algorithm nfactor in case nfactor was applied before algorithm... or default to 10
-  uint8_t nfactor = ((algo->nfactor)?algo->nfactor:10); 
+  uint8_t old_nfactor = ((algo->nfactor)?algo->nfactor:0); 
+  uint8_t nfactor = 0; 
 
-  newname = lookup_algorithm_alias(newname_alias, &nfactor);
-  if (!newname) newname = newname_alias;
+  if (!(newname = lookup_algorithm_alias(newname_alias, &nfactor)))
+    newname = newname_alias;
 
   copy_algorithm_settings(algo, newname);
 
+  // use old nfactor if it was previously set and is different than the one set by alias
+  if ((old_nfactor > 0) && (old_nfactor != nfactor))
+    nfactor = old_nfactor;
+
   // Doesn't matter for non-scrypt algorithms
-  set_algorithm_nfactor(algo, nfactor);
+  if (nfactor > 0)
+    set_algorithm_nfactor(algo, nfactor);
 }
 
 void set_algorithm_nfactor(algorithm_t* algo, const uint8_t nfactor)
