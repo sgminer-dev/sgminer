@@ -7695,7 +7695,7 @@ static bool input_pool(bool live)
   if (strcmp(name, "-1") == 0) strcpy(name, "");
   desc = curses_input("Description (optional)");
   if (strcmp(desc, "-1") == 0) strcpy(desc, "");
-  algo = curses_input("Profile (optional)");
+  profile = curses_input("Profile (optional)");
   if (strcmp(profile, "-1") == 0) profile[0] = '\0';
   algo = curses_input("Algorithm (optional)");
   if (strcmp(algo, "-1") == 0) algo[0] = '\0';
