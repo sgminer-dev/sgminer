@@ -8,8 +8,11 @@
 * [Globals and the Default Profile](#globals-and-the-default-profile)
 * [Working with Profiles and Pool Specific Settings](#working-with-profiles-and-pool-specific-settings)
 * [Include and Includes](#include-and-includes)
+* [Events](#events)
 * [CLI Only options](#cli-only-options)
 * [Config-file and CLI options](#config-file-and-cli-options)
+* [Event options](#event-options)
+* [Event Types](#event-types)
 
 ---
 
@@ -228,6 +231,34 @@ sgminer.conf:
 ```
 
 There is no limit as to how includes can be used as long as they follow proper json syntax.
+
+[Top](#configuration-and-command-line-options)
+
+---
+
+## Events
+
+Users can now execute commands or perform certain tasks when pre-defined events occur while mining. 
+
+For example, one might want their miner to email them via a script when the miner goes idle and reboot the computer when a GPU goes dead. This gives users a little more flexibility controlling their mining uptime without necessarily resorting to external watchdog programs that, in some cases, can be troublesome.
+
+Here is a configuration example of the above scenario:
+```
+...
+"events":[
+  {
+    "on":"idle",
+    "runcmd":"/bin/mailscript \"Miner Idle\" \"Hey! My miner went idle!\""
+  },
+  {
+    "on":"gpu_dead",
+    "reboot":"yes"
+  }
+],
+...
+```
+
+For more details on configuration options, see [Event Options](#event-options) below.
 
 [Top](#configuration-and-command-line-options)
 
@@ -2355,3 +2386,120 @@ Displays extra work time debug information.
 *Default:* `false`
 
 [Top](#configuration-and-command-line-options) :: [Config-file and CLI options](#config-file-and-cli-options) :: [Miscellaneous Options](#miscellaneous-options)
+
+---
+
+## Event options
+
+* [on](#on)
+* [runcmd](#runcmd)
+* [reboot](#reboot)
+* [reboot-delay](#reboot-delay)
+* [quit](#quit)
+* [quit-message](#quit-message)
+
+### on
+
+Specify which event type to respond on. See below for a list of supported [event types](#event-types)
+
+*Available*: Events
+
+*Config File Syntax:* `"on":"<value>"`
+
+*Command Line Syntax:* `--event-on <value>`
+
+*Argument:* `string` Name of the event type
+
+*Default:* None
+
+[Top](#configuration-and-command-line-options) :: [Event options](#event-options)
+
+### runcmd
+
+Specify a command to run when the event occurs. Please remember to properly escape quotes (") with backslashes (\\) if you need to specify multi-word parameters enclosed in quotes (") for your commands: `\"`
+
+*Available*: Events
+
+*Config File Syntax:* `"runcmd":"<value>"`
+
+*Command Line Syntax:* `--event-runcmd <value>`
+
+*Argument:* `string` Command to execute on event
+
+*Default:* None
+
+[Top](#configuration-and-command-line-options) :: [Event options](#event-options)
+
+### reboot
+
+Reboot when event occurs.
+
+*Available*: Events
+
+*Config File Syntax:* `"reboot":"<value>"`
+
+*Command Line Syntax:* `--event-reboot <value>`
+
+*Argument:* `string` Yes: `"true"` `"yes"` `"1"` or No: `"false"` `"no"` `"0"`
+
+*Default:* `false`
+
+[Top](#configuration-and-command-line-options) :: [Event options](#event-options)
+
+### reboot-delay
+
+Wait a number of seconds before rebooting when event occurs. This is useful if you also want to fire off a script via `runcmd` prior to rebooting, giving it extra seconds to finish.
+
+*Available*: Events
+
+*Config File Syntax:* `"reboot-delay":"<value>"`
+
+*Command Line Syntax:* `--event-reboot-delay <value>`
+
+*Argument:* `number` Seconds to wait before reboot
+
+*Default:* `0`
+
+[Top](#configuration-and-command-line-options) :: [Event options](#event-options)
+
+### quit
+
+Exit sgminer when event occurs.
+
+*Available*: Events
+
+*Config File Syntax:* `"quit":"<value>"`
+
+*Command Line Syntax:* `--event-quit <value>`
+
+*Argument:* `string` Yes: `"true"` `"yes"` `"1"` or No: `"false"` `"no"` `"0"`
+
+*Default:* `false`
+
+[Top](#configuration-and-command-line-options) :: [Event options](#event-options)
+
+### quit-message
+
+Message to display on sgminer exit when event occurs.
+
+*Available*: Events
+
+*Config File Syntax:* `"quit-message":"<value>"`
+
+*Command Line Syntax:* `--event-quit-message "<value>"`
+
+*Argument:* `string` Message
+
+*Default:* `event_type`
+
+[Top](#configuration-and-command-line-options) :: [Event options](#event-options)
+
+---
+
+## Event Types
+
+* `idle` Occurs when a GPU goes idle for not performing any work or when no work has been received in 10 minutes.
+* `gpu_sick` Occurs when a GPU fails to respond for 2 minutes
+* `gpu_dead` Occurs when a GPU fails to respond for 10 minutes
+
+[Top](#configuration-and-command-line-options)
