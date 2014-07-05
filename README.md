@@ -420,7 +420,9 @@ file and any changes that may have been made.
 sgminer will log to stderr if it detects stderr is being redirected to a
 file. To enable logging simply append `2>logfile.txt` to your command line
 and `logfile.txt` will contain the logged output at the log level you
-specify (normal, verbose, debug etc.)
+specify (normal, verbose, debug etc.). If you use the `--debug-log` option
+then everything will be logged to the file (console output will remain as
+configured).
 
 There is also the -m option on Linux which will spawn a command of your choice
 and pipe the output directly to that command.
