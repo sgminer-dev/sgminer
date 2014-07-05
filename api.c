@@ -2755,9 +2755,10 @@ static void debugstate(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
       opt_quiet = false;
     break;
   case 'd':
-    opt_debug ^= true;
-    opt_verbose = opt_debug;
-    if (opt_debug)
+    opt_debug = true;
+    opt_debug_console ^= true;
+    opt_verbose = opt_debug_console;
+    if (opt_debug_console)
       opt_quiet = false;
     break;
   case 'r':
@@ -2771,7 +2772,7 @@ static void debugstate(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
     break;
   case 'n':
     opt_verbose = false;
-    opt_debug = false;
+    opt_debug_console = false;
     opt_quiet = false;
     opt_protocol = false;
     want_per_device_stats = false;
@@ -2799,7 +2800,7 @@ static void debugstate(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
   root = api_add_bool(root, "Silent", &opt_realquiet, false);
   root = api_add_bool(root, "Quiet", &opt_quiet, false);
   root = api_add_bool(root, "Verbose", &opt_verbose, false);
-  root = api_add_bool(root, "Debug", &opt_debug, false);
+  root = api_add_bool(root, "Debug", &opt_debug_console, false);
   root = api_add_bool(root, "RPCProto", &opt_protocol, false);
   root = api_add_bool(root, "PerDevice", &want_per_device_stats, false);
   root = api_add_bool(root, "WorkTime", &opt_worktime, false);
@@ -3362,8 +3363,7 @@ static void *quit_thread(__maybe_unused void *userdata)
   mutex_lock(&quit_restart_lock);
   mutex_unlock(&quit_restart_lock);
 
-  if (opt_debug)
-    applog(LOG_DEBUG, "API: killing sgminer");
+  applog(LOG_DEBUG, "API: killing sgminer");
 
   kill_work();
 
@@ -3376,8 +3376,7 @@ static void *restart_thread(__maybe_unused void *userdata)
   mutex_lock(&quit_restart_lock);
   mutex_unlock(&quit_restart_lock);
 
-  if (opt_debug)
-    applog(LOG_DEBUG, "API: restarting sgminer");
+  applog(LOG_DEBUG, "API: restarting sgminer");
 
   app_restart();
 
@@ -3734,12 +3733,10 @@ void api(int api_thr_id)
       else
         buf[n] = '\0';
 
-      if (opt_debug) {
-        if (SOCKETFAIL(n))
-          applog(LOG_DEBUG, "API: recv failed: %s", SOCKERRMSG);
-        else
-          applog(LOG_DEBUG, "API: recv command: (%d) '%s'", n, buf);
-      }
+      if (SOCKETFAIL(n))
+        applog(LOG_DEBUG, "API: recv failed: %s", SOCKERRMSG);
+      else
+        applog(LOG_DEBUG, "API: recv command: (%d) '%s'", n, buf);
 
       if (!SOCKETFAIL(n)) {
         // the time of the request in now
@@ -3892,9 +3889,8 @@ die:
 
   free(apisock);
 
-  if (opt_debug)
-    applog(LOG_DEBUG, "API: terminating due to: %s",
-        do_a_quit ? "QUIT" : (do_a_restart ? "RESTART" : (bye ? "BYE" : "UNKNOWN!")));
+  applog(LOG_DEBUG, "API: terminating due to: %s",
+      do_a_quit ? "QUIT" : (do_a_restart ? "RESTART" : (bye ? "BYE" : "UNKNOWN!")));
 
   mutex_lock(&quit_restart_lock);
 
