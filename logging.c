@@ -24,28 +24,18 @@ int opt_log_show_date = false;
 /* per default priorities higher than LOG_NOTICE are logged */
 int opt_log_level = LOG_NOTICE;
 
-static void my_log_curses(int prio, const char *datetime, const char *str, bool force)
+static void _my_log_curses(int prio, const char *datetime, const char *str)
 {
 	if (opt_quiet && prio != LOG_ERR)
 		return;
 
-	/* Mutex could be locked by dead thread on shutdown so forcelog will
-	 * invalidate any console lock status. */
-	if (force) {
-		mutex_trylock(&console_lock);
-		mutex_unlock(&console_lock);
-	}
 #ifdef HAVE_CURSES
 	extern bool use_curses;
-	if (use_curses && log_curses_only(prio, datetime, str))
+	if (use_curses && _log_curses_only(prio, datetime, str))
 		;
 	else
 #endif
-	{
-		mutex_lock(&console_lock);
 		printf("%s%s%s", datetime, str, "                    \n");
-		mutex_unlock(&console_lock);
-	}
 }
 
 void applog(int prio, const char* fmt, ...)
@@ -131,14 +121,25 @@ void _applog(int prio, const char *str, bool force)
         tm->tm_sec);
     }
 
-    /* Only output to stderr if it's not going to the screen as well */
-    if (write_stderr) {
-      fprintf(stderr, "%s%s\n", datetime, str); /* atomic write to stderr */
-      fflush(stderr);
-    }
+    if (write_console || write_stderr) {
+      /* Mutex could be locked by dead thread on shutdown so forcelog will
+       * invalidate any console lock status. */
+      if (force) {
+        mutex_trylock(&console_lock);
+        mutex_unlock(&console_lock);
+      }
 
-    if (write_console) {
-      my_log_curses(prio, datetime, str, force);
+      mutex_lock(&console_lock);
+      /* Only output to stderr if it's not going to the screen as well */
+      if (write_stderr) {
+        fprintf(stderr, "%s%s\n", datetime, str); /* atomic write to stderr */
+        fflush(stderr);
+      }
+
+      if (write_console) {
+        _my_log_curses(prio, datetime, str);
+      }
+      mutex_unlock(&console_lock);
     }
   }
 }

@@ -2654,13 +2654,13 @@ static void switch_logsize(bool __maybe_unused newdevs)
 #endif
 
 #ifdef HAVE_CURSES
-bool log_curses_only(int prio, const char *datetime, const char *str)
+bool _log_curses_only(int prio, const char *datetime, const char *str)
 {
   bool high_prio;
 
   high_prio = (prio == LOG_WARNING || prio == LOG_ERR);
 
-  if (curses_active_locked()) {
+  if (curses_active) {
     if (!opt_loginput || high_prio) {
       wprintw(logwin, "%s%s\n", datetime, str);
       if (high_prio) {
@@ -2668,7 +2668,6 @@ bool log_curses_only(int prio, const char *datetime, const char *str)
         wrefresh(logwin);
       }
     }
-    unlock_curses();
     return true;
   }
   return false;
