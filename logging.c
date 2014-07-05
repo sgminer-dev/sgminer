@@ -16,6 +16,7 @@
 #include "miner.h"
 
 bool opt_debug = false;
+bool opt_debug_console = false;
 bool opt_verbose = false;
 int last_date_output_day = 0;
 int opt_log_show_date = false;
@@ -69,12 +70,10 @@ void applogsiz(int prio, int size, const char* fmt, ...)
 void vapplogsiz(int prio, int size, const char* fmt, va_list args)
 {
   if (opt_debug || prio != LOG_DEBUG) {
-    if (use_syslog || opt_verbose || prio <= opt_log_level) {
-      char *tmp42 = (char *)calloc(size + 1, 1);
-      vsnprintf(tmp42, size, fmt, args);
-      _applog(prio, tmp42, false);
-      free(tmp42);
-    }
+    char *tmp42 = (char *)calloc(size + 1, 1);
+    vsnprintf(tmp42, size, fmt, args);
+    _applog(prio, tmp42, false);
+    free(tmp42);
   }
 }
 
@@ -91,6 +90,11 @@ void _applog(int prio, const char *str, bool force)
   if (0) {}
 #endif
   else {
+    bool write_console = opt_debug_console || (opt_verbose && prio != LOG_DEBUG) || prio <= opt_log_level;
+    bool write_stderr = !isatty(fileno((FILE *)stderr));
+    if (!(write_console || write_stderr))
+      return;
+
     char datetime[64];
     struct timeval tv = {0, 0};
     struct tm *tm;
@@ -128,11 +132,13 @@ void _applog(int prio, const char *str, bool force)
     }
 
     /* Only output to stderr if it's not going to the screen as well */
-    if (!isatty(fileno((FILE *)stderr))) {
+    if (write_stderr) {
       fprintf(stderr, "%s%s\n", datetime, str); /* atomic write to stderr */
       fflush(stderr);
     }
 
-    my_log_curses(prio, datetime, str, force);
+    if (write_console) {
+      my_log_curses(prio, datetime, str, force);
+    }
   }
 }

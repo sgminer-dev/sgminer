@@ -1101,6 +1101,7 @@ static char *set_pool_description(char *arg)
 static char *enable_debug(bool *flag)
 {
   *flag = true;
+  opt_debug_console = true;
   /* Turn on verbose output, too. */
   opt_verbose = true;
   return NULL;
@@ -1305,6 +1306,9 @@ struct opt_table opt_config_table[] = {
   OPT_WITHOUT_ARG("--debug|-D",
       enable_debug, &opt_debug,
       "Enable debug output"),
+  OPT_WITHOUT_ARG("--debug-log",
+      opt_set_bool, &opt_debug,
+      "Enable debug logging when stderr is redirected to file"),
   OPT_WITH_ARG("--default-profile",
       set_default_profile, NULL, NULL,
       "Set Default Profile"),
@@ -4661,7 +4665,7 @@ retry:
   wlogprint("[D]ebug: %s\n[P]er-device: %s\n[Q]uiet: %s\n[V]erbose: %s\n"
       "[R]PC debug: %s\n[W]orkTime details: %s\n[I]ncognito: %s\n"
       "co[M]pact: %s\n[L]og interval: %d\n[Z]ero statistics\n",
-    opt_debug ? "on" : "off",
+    opt_debug_console ? "on" : "off",
           want_per_device_stats? "on" : "off",
     opt_quiet ? "on" : "off",
     opt_verbose ? "on" : "off",
@@ -4685,7 +4689,7 @@ retry:
     goto retry;
   } else if (!strncasecmp(&input, "n", 1)) {
     opt_verbose = false;
-    opt_debug = false;
+    opt_debug_console = false;
     opt_quiet = false;
     opt_protocol = false;
     opt_compact = false;
@@ -4694,11 +4698,12 @@ retry:
     switch_logsize(false);
     goto retry;
   } else if (!strncasecmp(&input, "d", 1)) {
-    opt_debug ^= true;
-    opt_verbose = opt_debug;
-    if (opt_debug)
+    opt_debug = true;
+    opt_debug_console ^= true;
+    opt_verbose = opt_debug_console;
+    if (opt_debug_console)
       opt_quiet = false;
-    wlogprint("Debug mode %s\n", opt_debug ? "enabled" : "disabled");
+    wlogprint("Debug mode %s\n", opt_debug_console ? "enabled" : "disabled");
     goto retry;
   } else if (!strncasecmp(&input, "i", 1)) {
     opt_incognito ^= true;
