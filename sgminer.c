@@ -8202,6 +8202,9 @@ int main(int argc, char *argv[])
   sigaction(SIGINT, &handler, &inthandler);
 #endif
 
+  /* enable debug output to file by default is stderr is redirected to a file */
+  opt_debug = !isatty(fileno((FILE *)stderr));
+
   /* opt_kernel_path defaults to SGMINER_PREFIX */
   opt_kernel_path = (char *)alloca(PATH_MAX);
   strcpy(opt_kernel_path, SGMINER_PREFIX);

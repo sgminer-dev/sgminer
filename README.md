@@ -68,7 +68,7 @@ sgminer-specific configuration options:
     --disable-adl           Override detection and disable building with adl
 	--disable-adl-checks
     --without-curses        Do not compile support for curses TUI
-    
+
 #### Debian Example
 
     apt-get install libcurl4-openssl-dev pkg-config libtool libncurses5-dev
@@ -419,10 +419,9 @@ file and any changes that may have been made.
 
 sgminer will log to stderr if it detects stderr is being redirected to a
 file. To enable logging simply append `2>logfile.txt` to your command line
-and `logfile.txt` will contain the logged output at the log level you
-specify (normal, verbose, debug etc.). If you use the `--debug-log` option
-then everything will be logged to the file (console output will remain as
-configured).
+and `logfile.txt` will contain all debug output unless you set `debug-log`
+to `false`, in which case it will only contain output at the log level you
+specified (notice by default).
 
 There is also the -m option on Linux which will spawn a command of your choice
 and pipe the output directly to that command.
