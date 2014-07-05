@@ -39,7 +39,7 @@ The example below has `algorithm` set at the global level. Anytime a pool or pro
   ...
 ```
 
-In the example below, `algorithm` is not specified at the global level and no profile is used as `default-profile`. This means that the default profile's `algorithm` will be set to sgminer's core default: "scrypt". 
+In the example below, `algorithm` is not specified at the global level and no profile is used as `default-profile`. This means that the default profile's `algorithm` will be set to sgminer's core default: "scrypt".
 ```
 {
   "pools": [
@@ -101,7 +101,7 @@ See the [configuration settings order](#configuration-settings-order) for more i
 
 ## Working with Profiles and Pool Specific Settings
 
-Profiles have been added assist in specifying different GPU and/or algorithm settings that could be (re-)used by one or more pools. Pool-specific settings will override profile settings, and profile settings will override the default profile/globals. 
+Profiles have been added assist in specifying different GPU and/or algorithm settings that could be (re-)used by one or more pools. Pool-specific settings will override profile settings, and profile settings will override the default profile/globals.
 
 See the [configuration settings order](#configuration-settings-order) for more information about the order in which settings are applied.
 
@@ -141,7 +141,7 @@ See the [configuration settings order](#configuration-settings-order) for more i
   "gpu-engine":"1100"
 }
 ```
-In the example above, when using the second pool, Profile A is applied, which sets the `algorithm` to "darkcoin-mod", but since a `gpu-engine` of "1000" is specified in the pool, the value of "1050" is discarded. 
+In the example above, when using the second pool, Profile A is applied, which sets the `algorithm` to "darkcoin-mod", but since a `gpu-engine` of "1000" is specified in the pool, the value of "1050" is discarded.
 
 A similar situation occurs in the third pool. No profile is specified so the default `algorithm` "ckolivas" is set along with the default `gpu-engine` of "1100". Because `intensity` is set to "13" in the pool, the default profile's value of "19" is discarded.
 
@@ -178,7 +178,7 @@ The end result of the above would look like this:
 
 ## Include and Includes
 
-`include` and `includes` are special keywords only available in the configuration file. You can include json-formatted files at any level of the configuration parsing. The values read in the included 
+`include` and `includes` are special keywords only available in the configuration file. You can include json-formatted files at any level of the configuration parsing. The values read in the included
 files are applied to the current object being parsed.
 
 `include` is used to include one single file. If you want to include multiple files, use `includes`, which is an array of filenames.
@@ -276,7 +276,7 @@ For more details on configuration options, see [Event Options](#event-options) b
 
 ### config
 
-Load a JSON-formatted configuration file. See `example.conf` for an example configuration file. 
+Load a JSON-formatted configuration file. See `example.conf` for an example configuration file.
 
 The filename can also be a web or ftp url for remote configuration files. The file will be downloaded locally before being loaded. **Note:** If a file by the same name exists, it will be overwritten. If you modify and save your configuration, the changes will only be made locally and future downloads will overwrite your changes. **Also note** that the remote configuration files are only available with `libcurl`.
 
@@ -350,7 +350,7 @@ Displays the number of GPUs detected, Open CL/ADL platform information and then 
 ```
 # ./sgminer -n
 [10:16:04] CL Platform vendor: Advanced Micro Devices, Inc.
-[10:16:04] CL Platform name: AMD Accelerated Parallel Processing                
+[10:16:04] CL Platform name: AMD Accelerated Parallel Processing
 [10:16:04] CL Platform version: OpenCL 1.2 AMD-APP (1348.5)
 [10:16:04] Platform devices: 2
 [10:16:04]      0       Tahiti
@@ -487,6 +487,7 @@ sgminer 4.2.1-116-g2e8b-dirty
 * [Miscellaneous Options](#miscellaneous-options)
   * [compact](#compact)
   * [debug](#debug)
+  * [debug-log](#debug-log)
   * [default-profile](#default-profile)
   * [device](#device)
   * [difficulty-multiplier](#difficulty-multiplier)
@@ -519,7 +520,7 @@ sgminer 4.2.1-116-g2e8b-dirty
   * [text-only](#text-only)
   * [verbose](#verbose)
   * [worktime](#worktime)
-  
+
 ---
 
 ## API Options
@@ -728,7 +729,7 @@ Port to use for API.
 
 ### algorithm
 
-**Formerly the kernel option.** Sets the algorithm to use for mining. 
+**Formerly the kernel option.** Sets the algorithm to use for mining.
 
 *Available*: Global, Pool, Profile
 
@@ -762,7 +763,7 @@ Set GPU lookup gap for scrypt mining.
 
 ### nfactor
 
-Overrides the default scrypt parameter N, specified as the factor of 2 (`N = 2^nfactor`). 
+Overrides the default scrypt parameter N, specified as the factor of 2 (`N = 2^nfactor`).
 
 *Available*: Global, Pool, Profile
 
@@ -1119,7 +1120,7 @@ Set the GPU voltage in Volts.
 
 ### intensity
 
-Intensity of GPU scanning. 
+Intensity of GPU scanning.
 
 Overridden by [xintensity](#xintensity) and [rawintensity](#rawintensity).
 
@@ -1169,7 +1170,7 @@ Do not attempt to restart GPUs that hang.
 
 ### rawintensity
 
-Raw intensity of GPU scanning. 
+Raw intensity of GPU scanning.
 
 Overriddes by [intensity](#intensity) and [xintensity](#xintensity).
 
@@ -1259,7 +1260,7 @@ Used with [auto-fan](#auto-fan) and [auto-gpu](#auto-gpu).
 
 ### xintensity
 
-Shader based intensity of GPU scanning. 
+Shader based intensity of GPU scanning.
 
 Overridden by [rawintensity](#rawintensity) and overrides [intensity](#intensity).
 
@@ -1735,9 +1736,9 @@ See [lookup-gap](#lookup-gap).
 
 ### [profile-]name
 
-Set a name for a profile. 
+Set a name for a profile.
 
-**Note** if no profile name is set, the profile name defaults to the profile number in the order that 
+**Note** if no profile name is set, the profile name defaults to the profile number in the order that
 it was entered starting with `0`.
 
 *Available*: Profile
@@ -1821,6 +1822,22 @@ Enable debug output.
 *Argument:* None
 
 *Default:* `false`
+
+[Top](#configuration-and-command-line-options) :: [Config-file and CLI options](#config-file-and-cli-options) :: [Miscellaneous Options](#miscellaneous-options)
+
+### debug-log
+
+Enable debug logging when stderr is redirected to file.
+
+*Available*: Global
+
+*Config File Syntax:* `"debug-log":false`
+
+*Command Line Syntax:* `--debug-log`
+
+*Argument:* None
+
+*Default:* `true`
 
 [Top](#configuration-and-command-line-options) :: [Config-file and CLI options](#config-file-and-cli-options) :: [Miscellaneous Options](#miscellaneous-options)
 
