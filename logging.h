@@ -19,7 +19,7 @@ enum {
 
 /* debug flags */
 extern bool opt_debug;
-extern bool opt_log_output;
+extern bool opt_verbose;
 extern bool opt_realquiet;
 extern bool want_per_device_stats;
 
@@ -40,7 +40,7 @@ extern void _applog(int prio, const char *str, bool force);
 
 #define forcelog(prio, fmt, ...) do { \
   if (opt_debug || prio != LOG_DEBUG) { \
-    if (use_syslog || opt_log_output || prio <= opt_log_level) { \
+    if (use_syslog || opt_verbose || prio <= opt_log_level) { \
       char tmp42[LOGBUFSIZ]; \
       snprintf(tmp42, sizeof(tmp42), fmt, ##__VA_ARGS__); \
       _applog(prio, tmp42, true); \

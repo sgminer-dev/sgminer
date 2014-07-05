@@ -2750,13 +2750,13 @@ static void debugstate(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
     opt_quiet ^= true;
     break;
   case 'v':
-    opt_log_output ^= true;
-    if (opt_log_output)
+    opt_verbose ^= true;
+    if (opt_verbose)
       opt_quiet = false;
     break;
   case 'd':
     opt_debug ^= true;
-    opt_log_output = opt_debug;
+    opt_verbose = opt_debug;
     if (opt_debug)
       opt_quiet = false;
     break;
@@ -2767,10 +2767,10 @@ static void debugstate(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
     break;
   case 'p':
     want_per_device_stats ^= true;
-    opt_log_output = want_per_device_stats;
+    opt_verbose = want_per_device_stats;
     break;
   case 'n':
-    opt_log_output = false;
+    opt_verbose = false;
     opt_debug = false;
     opt_quiet = false;
     opt_protocol = false;
@@ -2798,7 +2798,7 @@ static void debugstate(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
 
   root = api_add_bool(root, "Silent", &opt_realquiet, false);
   root = api_add_bool(root, "Quiet", &opt_quiet, false);
-  root = api_add_bool(root, "Verbose", &opt_log_output, false);
+  root = api_add_bool(root, "Verbose", &opt_verbose, false);
   root = api_add_bool(root, "Debug", &opt_debug, false);
   root = api_add_bool(root, "RPCProto", &opt_protocol, false);
   root = api_add_bool(root, "PerDevice", &want_per_device_stats, false);
