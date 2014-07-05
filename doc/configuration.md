@@ -1383,7 +1383,7 @@ Disable 'extranonce' stratum subscribe for pool.
 
 *Available*: Pool
 
-*Config File Syntax:* `"no-extranonce:true`
+*Config File Syntax:* `"no-extranonce":true`
 
 *Command Line Syntax:* `--no-extranonce` `--pool-no-extranonce`
 
