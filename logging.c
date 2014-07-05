@@ -16,7 +16,7 @@
 #include "miner.h"
 
 bool opt_debug = false;
-bool opt_log_output = false;
+bool opt_verbose = false;
 int last_date_output_day = 0;
 int opt_log_show_date = false;
 
@@ -47,7 +47,7 @@ static void my_log_curses(int prio, const char *datetime, const char *str, bool 
 	}
 }
 
-void applog(int prio, const char* fmt, ...) 
+void applog(int prio, const char* fmt, ...)
 {
   va_list args;
 
@@ -56,7 +56,7 @@ void applog(int prio, const char* fmt, ...)
   va_end(args);
 }
 
-void applogsiz(int prio, int size, const char* fmt, ...) 
+void applogsiz(int prio, int size, const char* fmt, ...)
 {
   va_list args;
 
@@ -66,10 +66,10 @@ void applogsiz(int prio, int size, const char* fmt, ...)
 }
 
 /* high-level logging function, based on global opt_log_level */
-void vapplogsiz(int prio, int size, const char* fmt, va_list args) 
+void vapplogsiz(int prio, int size, const char* fmt, va_list args)
 {
   if (opt_debug || prio != LOG_DEBUG) {
-    if (use_syslog || opt_log_output || prio <= opt_log_level) {
+    if (use_syslog || opt_verbose || prio <= opt_log_level) {
       char *tmp42 = (char *)calloc(size + 1, 1);
       vsnprintf(tmp42, size, fmt, args);
       _applog(prio, tmp42, false);
@@ -132,7 +132,7 @@ void _applog(int prio, const char *str, bool force)
       fprintf(stderr, "%s%s\n", datetime, str); /* atomic write to stderr */
       fflush(stderr);
     }
-    
+
     my_log_curses(prio, datetime, str, force);
   }
 }

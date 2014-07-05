@@ -667,7 +667,7 @@ char *set_rawintensity(const char *_arg)
 
 void print_ndevs(int *ndevs)
 {
-  opt_log_output = true;
+  opt_verbose = true;
   opencl_drv.drv_detect();
   clear_adl(*ndevs);
   applog(LOG_INFO, "%i GPU devices max detected", *ndevs);

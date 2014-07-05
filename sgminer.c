@@ -1102,7 +1102,7 @@ static char *enable_debug(bool *flag)
 {
   *flag = true;
   /* Turn on verbose output, too. */
-  opt_log_output = true;
+  opt_verbose = true;
   return NULL;
 }
 
@@ -1710,7 +1710,7 @@ struct opt_table opt_config_table[] = {
       /* All current kernels only support vectors=1 */
       /* "Override detected optimal vector (1, 2 or 4) - one value or comma separated list"), */
   OPT_WITHOUT_ARG("--verbose|-v",
-      opt_set_bool, &opt_log_output,
+      opt_set_bool, &opt_verbose,
       "Log verbose output to stderr as well as status output"),
   OPT_WITH_ARG("--worksize|-w",
       set_default_worksize, NULL, NULL,
@@ -4664,7 +4664,7 @@ retry:
     opt_debug ? "on" : "off",
           want_per_device_stats? "on" : "off",
     opt_quiet ? "on" : "off",
-    opt_log_output ? "on" : "off",
+    opt_verbose ? "on" : "off",
     opt_protocol ? "on" : "off",
     opt_worktime ? "on" : "off",
     opt_incognito ? "on" : "off",
@@ -4678,13 +4678,13 @@ retry:
     wlogprint("Quiet mode %s\n", opt_quiet ? "enabled" : "disabled");
     goto retry;
   } else if (!strncasecmp(&input, "v", 1)) {
-    opt_log_output ^= true;
-    if (opt_log_output)
+    opt_verbose ^= true;
+    if (opt_verbose)
       opt_quiet = false;
-    wlogprint("Verbose mode %s\n", opt_log_output ? "enabled" : "disabled");
+    wlogprint("Verbose mode %s\n", opt_verbose ? "enabled" : "disabled");
     goto retry;
   } else if (!strncasecmp(&input, "n", 1)) {
-    opt_log_output = false;
+    opt_verbose = false;
     opt_debug = false;
     opt_quiet = false;
     opt_protocol = false;
@@ -4695,7 +4695,7 @@ retry:
     goto retry;
   } else if (!strncasecmp(&input, "d", 1)) {
     opt_debug ^= true;
-    opt_log_output = opt_debug;
+    opt_verbose = opt_debug;
     if (opt_debug)
       opt_quiet = false;
     wlogprint("Debug mode %s\n", opt_debug ? "enabled" : "disabled");
@@ -4711,7 +4711,7 @@ retry:
     goto retry;
   } else if (!strncasecmp(&input, "p", 1)) {
     want_per_device_stats ^= true;
-    opt_log_output = want_per_device_stats;
+    opt_verbose = want_per_device_stats;
     wlogprint("Per-device stats %s\n", want_per_device_stats ? "enabled" : "disabled");
     goto retry;
   } else if (!strncasecmp(&input, "r", 1)) {
@@ -8323,7 +8323,7 @@ int main(int argc, char *argv[])
   }
 
   if (want_per_device_stats)
-    opt_log_output = true;
+    opt_verbose = true;
 
   total_control_threads = 8;
   control_thr = (struct thr_info *)calloc(total_control_threads, sizeof(*thr));
