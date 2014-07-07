@@ -496,6 +496,7 @@ sgminer 4.2.1-116-g2e8b-dirty
   * [incognito](#incognito)
   * [kernel-path](#kernel-path)
   * [log](#log)
+  * [log-file](#log-file)
   * [log-show-date](#log-show-date)
   * [lowmem](#lowmem)
   * [monitor](#monitor)
@@ -2001,6 +2002,22 @@ Set the interval in seconds between log outputs.
 *Argument:* `number` Number of seconds between 0 and 9999.
 
 *Default:* `5`
+
+[Top](#configuration-and-command-line-options) :: [Config-file and CLI options](#config-file-and-cli-options) :: [Miscellaneous Options](#miscellaneous-options)
+
+### log-file
+
+Log stderr to file.
+
+*Available*: Global
+
+*Config File Syntax:* `"log-file":"<path>"`
+
+*Command Line Syntax:* `--log-file <path>`
+
+*Argument:* `path` Path to log file, or FD number, or `-` to redirect to stdout.
+
+*Default:* will log to stderr
 
 [Top](#configuration-and-command-line-options) :: [Config-file and CLI options](#config-file-and-cli-options) :: [Miscellaneous Options](#miscellaneous-options)
 
