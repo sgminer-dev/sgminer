@@ -825,13 +825,14 @@ int thr_info_create(struct thr_info *thr, pthread_attr_t *attr, void *(*start) (
   return pthread_create(&thr->pth, attr, start, arg);
 }
 
-void thr_info_cancel(struct thr_info *thr)
+void thr_info_cancel_join(struct thr_info *thr)
 {
   if (!thr)
     return;
 
   if (PTH(thr) != 0L) {
     pthread_cancel(thr->pth);
+    pthread_join(thr->pth, NULL);
     PTH(thr) = 0L;
   }
   cgsem_destroy(&thr->sem);

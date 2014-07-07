@@ -1061,9 +1061,9 @@ select_cgpu:
     thr->rolling = thr->cgpu->rolling = 0;
     /* Reports the last time we tried to revive a sick GPU */
     cgtime(&thr->sick);
-    if (!pthread_cancel(thr->pth)) {
+    if (!pthread_kill(thr->pth, 0)) {
       applog(LOG_WARNING, "Thread %d still exists, killing it off", thr_id);
-      pthread_join(thr->pth, NULL);
+      cg_completion_timeout(&thr_info_cancel_join, thr, 5000);
       thr->cgpu->drv->thread_shutdown(thr);
     } else
       applog(LOG_WARNING, "Thread %d no longer exists", thr_id);
