@@ -3352,11 +3352,11 @@ static void kill_mining(void)
   /* Kill the mining threads*/
   rd_lock(&mining_thr_lock);
   for (i = 0; i < mining_threads; i++) {
-    pthread_t *pth = NULL;
+    pthread_t *pth = (pthread_t *) calloc(1, sizeof(pthread_t));
 
     thr = mining_thr[i];
     if (thr && PTH(thr) != 0L)
-      pth = &thr->pth;
+      *pth = thr->pth;
     thr_info_cancel(thr);
     forcelog(LOG_DEBUG, "Waiting for thread %d to finish...", thr->id);
 #ifndef WIN32
@@ -3366,6 +3366,7 @@ static void kill_mining(void)
     if (pth && pth->p)
       pthread_join(*pth, NULL);
 #endif
+    free(pth);
   }
   rd_unlock(&mining_thr_lock);
 }
