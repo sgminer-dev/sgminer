@@ -3310,7 +3310,7 @@ static void disable_curses(void)
 
 static void kill_timeout(struct thr_info *thr)
 {
-  cg_completion_timeout(&thr_info_cancel, thr, 1000);
+  cg_completion_timeout(&thr_info_cancel_join, thr, 1000);
 }
 
 static void kill_mining(void)
@@ -3322,21 +3322,9 @@ static void kill_mining(void)
   /* Kill the mining threads*/
   rd_lock(&mining_thr_lock);
   for (i = 0; i < mining_threads; i++) {
-    pthread_t *pth = (pthread_t *) calloc(1, sizeof(pthread_t));
-
     thr = mining_thr[i];
-    if (thr && PTH(thr) != 0L)
-      *pth = thr->pth;
-    thr_info_cancel(thr);
     forcelog(LOG_DEBUG, "Waiting for thread %d to finish...", thr->id);
-#ifndef WIN32
-    if (pth && *pth)
-      pthread_join(*pth, NULL);
-#else
-    if (pth && pth->p)
-      pthread_join(*pth, NULL);
-#endif
-    free(pth);
+    thr_info_cancel_join(thr);
   }
   rd_unlock(&mining_thr_lock);
 }

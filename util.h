@@ -107,7 +107,7 @@ struct pool;
 enum dev_reason;
 struct cgpu_info;
 int thr_info_create(struct thr_info *thr, pthread_attr_t *attr, void *(*start) (void *), void *arg);
-void thr_info_cancel(struct thr_info *thr);
+void thr_info_cancel_join(struct thr_info *thr);
 void cgtime(struct timeval *tv);
 void subtime(struct timeval *a, struct timeval *b);
 void addtime(struct timeval *a, struct timeval *b);
