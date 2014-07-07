@@ -6536,7 +6536,8 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
       if (unlikely(pthread_create(&restart_thr, NULL, restart_mining_threads_thread, (void *) (intptr_t) n_threads)))
         quit(1, "restart_mining_threads create thread failed");
 
-      // go wait with the other threads...
+      applog(LOG_DEBUG, "Hard reset: Exiting mining thread %d", mythr->id);
+      pthread_exit(NULL);
     }
     else
     {
@@ -6552,8 +6553,15 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
       return;
     }
   }
-  else
+  else {
+    bool hard_reset = opt_isset(pool_switch_options, SWITCHER_HARD_RESET);
     mutex_unlock(&algo_switch_lock);
+
+    if (hard_reset) {
+      applog(LOG_DEBUG, "Hard reset: Exiting mining thread %d", mythr->id);
+      pthread_exit(NULL);
+    }
+  }
 
   pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
@@ -8048,7 +8056,7 @@ static void restart_mining_threads(unsigned int new_n_threads)
     for (i = 0; i < mining_threads; i++)
     {
         applog(LOG_DEBUG, "Shutting down thread %d", i);
-         mining_thr[i]->cgpu->shutdown = true;
+        mining_thr[i]->cgpu->shutdown = true;
     }
     rd_unlock(&mining_thr_lock);
 
