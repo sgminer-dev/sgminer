@@ -6105,7 +6105,7 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
 
   //compare algorithm
   if(!cmp_algorithm(&pool1->algorithm, &pool2->algorithm))
-    options |= (SWITCHER_APPLY_ALGO | ((!opt_isset(options, SWITCHER_HARD_RESET))?SWITCHER_SOFT_RESET:0));
+    options |= (SWITCHER_APPLY_ALGO | SWITCHER_SOFT_RESET);
 
   //lookup gap
   opt1 = get_pool_setting(pool1->lookup_gap, default_profile.lookup_gap);
@@ -6113,7 +6113,7 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
 
   //lookup gap means soft reset but only if hard reset isnt set
   if(strcasecmp(opt1, opt2) != 0)
-    options |= (SWITCHER_APPLY_LG | ((!opt_isset(options, SWITCHER_HARD_RESET))?SWITCHER_SOFT_RESET:0));
+    options |= (SWITCHER_APPLY_LG | SWITCHER_SOFT_RESET);
 
   //intensities
   opt1 = get_pool_setting(pool1->rawintensity, default_profile.rawintensity);
@@ -6123,7 +6123,7 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
   {
     //intensity is soft reset
     if(!empty_string(opt2))
-      options |= (SWITCHER_APPLY_RAWINT | ((!opt_isset(options, SWITCHER_HARD_RESET))?SWITCHER_SOFT_RESET:0));
+      options |= (SWITCHER_APPLY_RAWINT | SWITCHER_SOFT_RESET);
   }
 
   //xintensity -- only if raw intensity not set
@@ -6137,7 +6137,7 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
     {
       //intensity is soft reset
       if(!empty_string(opt2))
-        options |= (SWITCHER_APPLY_XINT | ((!opt_isset(options, SWITCHER_HARD_RESET))?SWITCHER_SOFT_RESET:0));
+        options |= (SWITCHER_APPLY_XINT | SWITCHER_SOFT_RESET);
     }
   }
 
@@ -6152,10 +6152,10 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
     {
       //intensity is soft reset
       if(!empty_string(opt2))
-        options |= (SWITCHER_APPLY_INT | ((!opt_isset(options, SWITCHER_HARD_RESET))?SWITCHER_SOFT_RESET:0));
+        options |= (SWITCHER_APPLY_INT | SWITCHER_SOFT_RESET);
       //if blank, set default profile to intensity 8 and apply
       else
-        options |= (SWITCHER_APPLY_INT8 | ((!opt_isset(options, SWITCHER_HARD_RESET))?SWITCHER_SOFT_RESET:0));
+        options |= (SWITCHER_APPLY_INT8 | SWITCHER_SOFT_RESET);
     }
   }
 
@@ -6167,7 +6167,7 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
   {
     //shaders is soft reset
     if(!empty_string(opt2))
-      options |= (SWITCHER_APPLY_SHADER | ((!opt_isset(options, SWITCHER_HARD_RESET))?SWITCHER_SOFT_RESET:0));
+      options |= (SWITCHER_APPLY_SHADER | SWITCHER_SOFT_RESET);
   }
 
   //thread-concurrency
@@ -6176,7 +6176,7 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
 
   //thread-concurrency is soft reset
   if(strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
-    options |= (SWITCHER_APPLY_TC | ((!opt_isset(options, SWITCHER_HARD_RESET))?SWITCHER_SOFT_RESET:0));
+    options |= (SWITCHER_APPLY_TC | SWITCHER_SOFT_RESET);
 
   //worksize
   opt1 = get_pool_setting(pool1->worksize, default_profile.worksize);
@@ -6184,7 +6184,7 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
 
   //worksize is soft reset
   if(strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
-      options |= (SWITCHER_APPLY_WORKSIZE | ((!opt_isset(options, SWITCHER_HARD_RESET))?SWITCHER_SOFT_RESET:0));
+      options |= (SWITCHER_APPLY_WORKSIZE | SWITCHER_SOFT_RESET);
 
   #ifdef HAVE_ADL
     //gpu-engine
@@ -6222,6 +6222,12 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
     if(strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
       options |= SWITCHER_APPLY_GPU_VDDC;
   #endif
+
+  // Remove soft reset if hard reset is set
+  if (opt_isset(options, SWITCHER_HARD_RESET) &&
+    opt_isset(options, SWITCHER_SOFT_RESET)) {
+    options &= ~SWITCHER_SOFT_RESET;
+  }
 
   return options;
 }
