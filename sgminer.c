@@ -5481,13 +5481,22 @@ static void *stratum_sthread(void *userdata)
       bool sessionid_match;
 
       if (likely(stratum_send(pool, s, strlen(s)))) {
-        if (pool_tclear(pool, &pool->submit_fail))
-            applog(LOG_WARNING, "%s communication resumed, submitting work", get_pool_name(pool));
+        int ssdiff;
+
+        sshare->sshare_sent = time(NULL);
+        ssdiff = sshare->sshare_sent - sshare->sshare_time;
+        if (opt_debug || ssdiff > 0) {
+          applog(LOG_INFO, "Pool %d stratum share submission lag time %d seconds",
+                 pool->pool_no, ssdiff);
+        }
 
         mutex_lock(&sshare_lock);
         HASH_ADD_INT(stratum_shares, id, sshare);
         pool->sshares++;
         mutex_unlock(&sshare_lock);
+
+        if (pool_tclear(pool, &pool->submit_fail))
+            applog(LOG_WARNING, "%s communication resumed, submitting work", get_pool_name(pool));
 
         applog(LOG_DEBUG, "Successfully submitted, adding to stratum_shares db");
         submitted = true;
@@ -5522,15 +5531,6 @@ static void *stratum_sthread(void *userdata)
       free(sshare);
       pool->stale_shares++;
       total_stale++;
-    } else {
-      int ssdiff;
-
-      sshare->sshare_sent = time(NULL);
-      ssdiff = sshare->sshare_sent - sshare->sshare_time;
-      if (opt_debug || ssdiff > 0) {
-        applog(LOG_INFO, "Pool %d stratum share submission lag time %d seconds",
-               pool->pool_no, ssdiff);
-      }
     }
   }
 
