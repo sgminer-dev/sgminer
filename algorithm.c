@@ -667,7 +667,7 @@ void set_algorithm(algorithm_t* algo, const char* newname_alias)
   const char* newname;
   //load previous algorithm nfactor in case nfactor was applied before algorithm... or default to 10
   uint8_t old_nfactor = ((algo->nfactor)?algo->nfactor:0); 
-  uint8_t nfactor = 0; 
+  uint8_t nfactor = 10; 
 
   if (!(newname = lookup_algorithm_alias(newname_alias, &nfactor)))
     newname = newname_alias;
@@ -678,9 +678,7 @@ void set_algorithm(algorithm_t* algo, const char* newname_alias)
   if ((old_nfactor > 0) && (old_nfactor != nfactor))
     nfactor = old_nfactor;
 
-  // Doesn't matter for non-scrypt algorithms
-  if (nfactor > 0)
-    set_algorithm_nfactor(algo, nfactor);
+  set_algorithm_nfactor(algo, nfactor);
 }
 
 void set_algorithm_nfactor(algorithm_t* algo, const uint8_t nfactor)
