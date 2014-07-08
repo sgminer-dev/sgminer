@@ -304,11 +304,11 @@
     <ClInclude Include="..\sph\sph_blake.h">
       <Filter>Header Files\sph</Filter>
     </ClInclude>
-    <ClInclude Include="..\sph\sph_shabal.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\sph\sph_whirlpool.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_shabal.h">
+      <Filter>Header Files\sph</Filter>
     </ClInclude>
     <ClInclude Include="..\ocl\binary_kernel.h">
       <Filter>Header Files\ocl</Filter>
