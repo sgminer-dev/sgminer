@@ -18,7 +18,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
-
+#include <signal.h>
 #include <sys/types.h>
 
 #ifndef WIN32
