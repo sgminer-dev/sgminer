@@ -22,10 +22,11 @@ typedef enum {
   ALGO_QUARK,
   ALGO_TWE,
   ALGO_FUGUE,
-  ALGO_NIST
+  ALGO_NIST,
+  ALGO_FRESH
 } algorithm_type_t;
 
-extern const char *algorithm_type_str[]; 
+extern const char *algorithm_type_str[];
 
 extern void gen_hash(const unsigned char *data, unsigned int len, unsigned char *hash);
 
