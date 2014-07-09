@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <mmsystem.h>
 #include <io.h>
+#include <unistd.h>
 #include <process.h>
 #include <math.h>
 #include <time.h>
