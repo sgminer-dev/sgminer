@@ -1719,7 +1719,7 @@ void api_profile_list(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __ma
   struct profile *profile;
   char buf[TMPBUFSIZ];
   bool io_open = false;
-  bool b;
+  bool b, default_done = false;
   int i;
 
   if (total_profiles == 0)
@@ -1737,12 +1737,19 @@ void api_profile_list(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __ma
   {
     //last profile is the default profile
     if(i == total_profiles)
+    {
+      // if the default profile was already processed, skip posting it again
+      if(default_done)
+        break;
+
       profile = &default_profile;
+    }
     else
       profile = profiles[i];
 
     //if default profile name is profile name or loop index is beyond the last profile, then it is the default profile
-    b = (((i == total_profiles) || (!strcasecmp(default_profile.name, profile->name)))?true:false);
+    if((b = (((i == total_profiles) || (!strcasecmp(default_profile.name, profile->name)))?true:false)))
+      default_done = true;
 
     root = api_add_int(root, "PROFILE", &i, false);
     root = api_add_escape(root, "Name", profile->name, true);
