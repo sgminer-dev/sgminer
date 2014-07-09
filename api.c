@@ -1370,10 +1370,12 @@ static void minerconfig(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __
   root = api_add_const(root, "ADL", (char *)adl, false);
   root = api_add_string(root, "ADL in use", adlinuse, false);
   root = api_add_const(root, "Strategy", strategies[pool_strategy].s, false);
+  root = api_add_int(root, "Rotate Period", &opt_rotate_period, false);
   root = api_add_int(root, "Log Interval", &opt_log_interval, false);
   root = api_add_const(root, "Device Code", DEVICECODE, false);
   root = api_add_const(root, "OS", OSINFO, false);
   root = api_add_bool(root, "Failover-Only", &opt_fail_only, false);
+  root = api_add_int(root, "Failover Switch Delay", &opt_fail_switch_delay, false);
   root = api_add_int(root, "ScanTime", &opt_scantime, false);
   root = api_add_int(root, "Queue", &opt_queue, false);
   root = api_add_int(root, "Expiry", &opt_expiry, false);
