@@ -6084,10 +6084,6 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
   if(!pool1 || !pool2)
     return 0;
 
-  //compare algorithm
-  if(!cmp_algorithm(&pool1->algorithm, &pool2->algorithm))
-    options |= (SWITCHER_APPLY_ALGO | SWITCHER_HARD_RESET);
-
   //compare pool devices
   opt1 = get_pool_setting(pool1->devices, ((!empty_string(default_profile.devices))?default_profile.devices:"all"));
   opt2 = get_pool_setting(pool2->devices, ((!empty_string(default_profile.devices))?default_profile.devices:"all"));
@@ -6103,6 +6099,10 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
   //changing gpu threads means a hard reset of mining threads
   if(strcasecmp(opt1, opt2) != 0)
     options |= (SWITCHER_APPLY_GT | SWITCHER_HARD_RESET);
+
+  //compare algorithm
+  if(!cmp_algorithm(&pool1->algorithm, &pool2->algorithm))
+    options |= (SWITCHER_APPLY_ALGO | ((!opt_isset(options, SWITCHER_HARD_RESET))?SWITCHER_SOFT_RESET:0));
 
   //lookup gap
   opt1 = get_pool_setting(pool1->lookup_gap, default_profile.lookup_gap);
@@ -6258,7 +6258,7 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
       {
         if((pool_switch_options = compare_pool_settings(pools[mythr->pool_no], work->pool)) == 0)
         {
-          applog(LOG_NOTICE, "No settings change from pool %s...", isnull(get_pool_name(work->pool), ""));
+          applog(LOG_DEBUG, "No settings change from pool %s...", isnull(get_pool_name(work->pool), ""));
 
           rd_lock(&mining_thr_lock);
 
@@ -6305,7 +6305,7 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
   {
     const char *opt;
 
-    applog(LOG_NOTICE, "Applying pool settings for %s...", isnull(get_pool_name(work->pool), ""));
+    applog(LOG_DEBUG, "Applying pool settings for %s...", isnull(get_pool_name(work->pool), ""));
     rd_lock(&mining_thr_lock);
 
     // Shutdown all threads first (necessary)

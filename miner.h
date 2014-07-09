@@ -245,6 +245,27 @@ enum drv_driver {
 DRIVER_PARSE_COMMANDS(DRIVER_PROTOTYPE)
 #endif
 
+// helper to check for empty or NULL strings
+#ifndef empty_string
+  #define empty_string(str) ((str && str[0] != '\0')?0:1)
+#endif
+// helper to safely compare strings: 0 = equal, 1 = not equal
+#ifndef safe_cmp
+  #define safe_cmp(val1, val2) ((!empty_string(val1) && !empty_string(val2))?((strcasecmp(val1, val2) == 0)?0:1):((empty_string(val1) && empty_string(val2))?0:1))
+#endif
+// helper to pick pool settings or default profile settings
+#ifndef pool_cmp
+  #define pool_cmp(val1, val2) (((val1 && val2 && strcasecmp(val1, val2) == 0) || empty_string(val1))?1:0)
+#endif
+// helper safely output a string
+#ifndef isnull
+  #define isnull(str, default_str) ((str == NULL)?default_str:str)
+#endif
+// helper to get boolean value out of string
+#ifndef strtobool
+  #define strtobool(str) ((str && (!strcasecmp(str, "true") || !strcasecmp(str, "yes") || !strcasecmp(str, "1")))?true:false)
+#endif
+
 enum alive {
   LIFE_WELL,
   LIFE_SICK,
@@ -1003,6 +1024,7 @@ extern struct schedtime schedstop;
 extern char *sgminer_path;
 extern int opt_shares;
 extern bool opt_fail_only;
+extern int opt_fail_switch_delay;
 extern bool opt_autofan;
 extern bool opt_autoengine;
 extern bool use_curses;

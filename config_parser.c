@@ -105,7 +105,7 @@ static void remove_profile(struct profile *profile)
     //look for the profile
     if(profiles[i]->profile_no == profile->profile_no)
       found = 1;
-    
+
     //once we found the profile, change the current index profile to next
     if(found)
     {
@@ -113,7 +113,7 @@ static void remove_profile(struct profile *profile)
       profiles[i]->profile_no = i;
     }
   }
-  
+
   //give the profile an invalid number and remove
   profile->profile_no = total_profiles;
   profile->removed = true;
@@ -402,13 +402,13 @@ json_t *json_sprintf(const char *fmt, ...)
   va_list args;
   char *buf;
   size_t bufsize;
-  
+
   //build args
   va_start(args, fmt);
   //get final string buffer size
   bufsize = vsnprintf(NULL, 0, fmt, args);
   va_end(args);
-  
+
   if(!(buf = (char *)malloc(++bufsize)))
     quit(1, "Malloc failure in config_parser::json_sprintf().");
 
@@ -455,7 +455,7 @@ char *set_last_json_error(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(last_json_error, bufsize, fmt, args);
   va_end(args);
-  
+
   return last_json_error;
 }
 
@@ -507,14 +507,14 @@ static struct opt_table *opt_find(struct opt_table *tbl, char *optname)
   static size_t fetch_remote_config_cb(void *buffer, size_t size, size_t nmemb, void *stream)
   {
     struct remote_config *out = (struct remote_config *)stream;
-    
+
     //create file if not created
     if(out && !out->stream)
     {
       if(!(out->stream = fopen(out->filename, "w+")))
         return -1;
     }
-    
+
     return fwrite(buffer, size, nmemb, out->stream);
   }
 
@@ -525,7 +525,7 @@ static struct opt_table *opt_find(struct opt_table *tbl, char *optname)
     CURLcode res;
     char *p;
     struct remote_config file = { "", NULL };
-    
+
     //get filename out of url
     if((p = (char *)strrchr(url, '/')) == NULL)
     {
@@ -541,32 +541,32 @@ static struct opt_table *opt_find(struct opt_table *tbl, char *optname)
       applog(LOG_ERR, "Fetch remote file failed: Invalid Filename");
       return NULL;
     }
-    
+
     //init curl
     if((curl = curl_easy_init()) == NULL)
     {
       applog(LOG_ERR, "Fetch remote file failed: curl init failed.");
       return NULL;
     }
-    
+
     //https stuff - skip verification we just want the data
     if(strstr(url, "https") != NULL)
       curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-    
+
     //set url
     curl_easy_setopt(curl, CURLOPT_URL, url);
     //set write callback and fileinfo
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fetch_remote_config_cb);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);
-    
+
     if((res = curl_easy_perform(curl)) != CURLE_OK)
       applog(LOG_ERR, "Fetch remote file failed: %s", curl_easy_strerror(res));
-    
+
     if(file.stream)
       fclose(file.stream);
-    
+
     curl_easy_cleanup(curl);
-    
+
     return (char *)((res == CURLE_OK)?file.filename:NULL);
   }
 #endif
@@ -722,7 +722,7 @@ char *load_config(const char *arg, const char *parentkey, void __maybe_unused *u
         return NULL;
     }
   #endif
-  
+
   //most likely useless but leaving it here for now...
   if(!cnfbuf)
     cnfbuf = strdup(arg);
@@ -731,6 +731,10 @@ char *load_config(const char *arg, const char *parentkey, void __maybe_unused *u
   /*if(++include_count > JSON_MAX_DEPTH)
     return JSON_MAX_DEPTH_ERR;
   */
+
+  //check if the file exists
+  if(access(arg, F_OK) == -1)
+    quit(1, "%s: file not found.", arg);
 
 #if JANSSON_MAJOR_VERSION > 1
   config = json_load_file(arg, 0, &err);
@@ -780,7 +784,7 @@ void load_default_profile()
 
   if (empty_string(default_profile.name))
     return;
-    
+
   applog(LOG_DEBUG, "default_profile.name is %s", default_profile.name);
 
   // find profile ...
@@ -793,7 +797,7 @@ void load_default_profile()
   // ... and copy settings
   if(!empty_string(profile->algorithm.name))
     default_profile.algorithm = profile->algorithm;
-    
+
   if(!empty_string(profile->devices))
     default_profile.devices = profile->devices;
 
@@ -808,7 +812,7 @@ void load_default_profile()
 
   if(!empty_string(profile->rawintensity))
     default_profile.rawintensity = profile->rawintensity;
-    
+
   if(!empty_string(profile->thread_concurrency))
     default_profile.thread_concurrency = profile->thread_concurrency;
 
@@ -848,7 +852,7 @@ void apply_defaults()
   //by default all unless specified
   if(empty_string(default_profile.devices))
     default_profile.devices = strdup("all");
-  
+
   applog(LOG_DEBUG, "Default Devices = %s", default_profile.devices);
   set_devices((char *)default_profile.devices);
 
@@ -901,15 +905,13 @@ void apply_pool_profiles()
   int i;
 
   for (i=total_pools; i--;)
-  {
     apply_pool_profile(pools[i]);
-  }
 }
 
 void apply_pool_profile(struct pool *pool)
 {
   struct profile *profile;
-  
+
   //if the pool has a profile set load it
   if(!empty_string(pool->profile))
   {
@@ -922,7 +924,7 @@ void apply_pool_profile(struct pool *pool)
       applog(LOG_DEBUG, "Profile load failed for pool %i: profile %s not found. Using default profile.", pool->pool_no, pool->profile);
       //remove profile name
       pool->profile[0] = '\0';
-      
+
       profile = &default_profile;
     }
   }
@@ -939,7 +941,7 @@ void apply_pool_profile(struct pool *pool)
   {
     if(!empty_string(profile->algorithm.name))
         pool->algorithm = profile->algorithm;
-    else 
+    else
         pool->algorithm = default_profile.algorithm;
   }
   applog(LOG_DEBUG, "Pool %i Algorithm set to \"%s\"", pool->pool_no, pool->algorithm.name);
@@ -948,7 +950,7 @@ void apply_pool_profile(struct pool *pool)
   {
     if(!empty_string(profile->devices))
         pool->devices = profile->devices;
-    else 
+    else
         pool->devices = default_profile.devices;
   }
   applog(LOG_DEBUG, "Pool %i devices set to \"%s\"", pool->pool_no, pool->devices);
@@ -957,7 +959,7 @@ void apply_pool_profile(struct pool *pool)
   {
     if(!empty_string(profile->lookup_gap))
         pool->lookup_gap = profile->lookup_gap;
-    else 
+    else
         pool->lookup_gap = default_profile.lookup_gap;
   }
   applog(LOG_DEBUG, "Pool %i lookup gap set to \"%s\"", pool->pool_no, pool->lookup_gap);
@@ -966,7 +968,7 @@ void apply_pool_profile(struct pool *pool)
   {
     if(!empty_string(profile->intensity))
         pool->intensity = profile->intensity;
-    else 
+    else
         pool->intensity = default_profile.intensity;
   }
   applog(LOG_DEBUG, "Pool %i Intensity set to \"%s\"", pool->pool_no, pool->intensity);
@@ -975,7 +977,7 @@ void apply_pool_profile(struct pool *pool)
   {
     if(!empty_string(profile->xintensity))
         pool->xintensity = profile->xintensity;
-    else 
+    else
         pool->xintensity = default_profile.xintensity;
   }
   applog(LOG_DEBUG, "Pool %i XIntensity set to \"%s\"", pool->pool_no, pool->xintensity);
@@ -984,7 +986,7 @@ void apply_pool_profile(struct pool *pool)
   {
     if(!empty_string(profile->rawintensity))
         pool->rawintensity = profile->rawintensity;
-    else 
+    else
         pool->rawintensity = default_profile.rawintensity;
   }
   applog(LOG_DEBUG, "Pool %i Raw Intensity set to \"%s\"", pool->pool_no, pool->rawintensity);
@@ -993,7 +995,7 @@ void apply_pool_profile(struct pool *pool)
   {
     if(!empty_string(profile->thread_concurrency))
         pool->thread_concurrency = profile->thread_concurrency;
-    else 
+    else
         pool->thread_concurrency = default_profile.thread_concurrency;
   }
   applog(LOG_DEBUG, "Pool %i Thread Concurrency set to \"%s\"", pool->pool_no, pool->thread_concurrency);
@@ -1003,7 +1005,7 @@ void apply_pool_profile(struct pool *pool)
     {
       if(!empty_string(profile->gpu_engine))
           pool->gpu_engine = profile->gpu_engine;
-      else 
+      else
           pool->gpu_engine = default_profile.gpu_engine;
     }
     applog(LOG_DEBUG, "Pool %i GPU Clock set to \"%s\"", pool->pool_no, pool->gpu_engine);
@@ -1012,7 +1014,7 @@ void apply_pool_profile(struct pool *pool)
     {
       if(!empty_string(profile->gpu_memclock))
           pool->gpu_memclock = profile->gpu_memclock;
-      else 
+      else
           pool->gpu_memclock = default_profile.gpu_memclock;
     }
     applog(LOG_DEBUG, "Pool %i GPU Memory clock set to \"%s\"", pool->pool_no, pool->gpu_memclock);
@@ -1021,7 +1023,7 @@ void apply_pool_profile(struct pool *pool)
     {
       if(!empty_string(profile->gpu_threads))
           pool->gpu_threads = profile->gpu_threads;
-      else 
+      else
           pool->gpu_threads = default_profile.gpu_threads;
     }
     applog(LOG_DEBUG, "Pool %i GPU Threads set to \"%s\"", pool->pool_no, pool->gpu_threads);
@@ -1030,7 +1032,7 @@ void apply_pool_profile(struct pool *pool)
     {
       if(!empty_string(profile->gpu_fan))
           pool->gpu_fan = profile->gpu_fan;
-      else 
+      else
           pool->gpu_fan = default_profile.gpu_fan;
     }
     applog(LOG_DEBUG, "Pool %i GPU Fan set to \"%s\"", pool->pool_no, pool->gpu_fan);
@@ -1039,7 +1041,7 @@ void apply_pool_profile(struct pool *pool)
     {
       if(!empty_string(profile->gpu_powertune))
           pool->gpu_powertune = profile->gpu_powertune;
-      else 
+      else
           pool->gpu_powertune = default_profile.gpu_powertune;
     }
     applog(LOG_DEBUG, "Pool %i GPU Powertune set to \"%s\"", pool->pool_no, pool->gpu_powertune);
@@ -1048,7 +1050,7 @@ void apply_pool_profile(struct pool *pool)
     {
       if(!empty_string(profile->gpu_vddc))
           pool->gpu_vddc = profile->gpu_vddc;
-      else 
+      else
           pool->gpu_vddc = default_profile.gpu_vddc;
     }
     applog(LOG_DEBUG, "Pool %i GPU Vddc set to \"%s\"", pool->pool_no, pool->gpu_vddc);
@@ -1058,7 +1060,7 @@ void apply_pool_profile(struct pool *pool)
   {
     if(!empty_string(profile->shaders))
         pool->shaders = profile->shaders;
-    else 
+    else
         pool->shaders = default_profile.shaders;
   }
   applog(LOG_DEBUG, "Pool %i Shaders set to \"%s\"", pool->pool_no, pool->shaders);
@@ -1067,45 +1069,88 @@ void apply_pool_profile(struct pool *pool)
   {
     if(!empty_string(profile->worksize))
         pool->worksize = profile->worksize;
-    else 
+    else
         pool->worksize = default_profile.worksize;
   }
   applog(LOG_DEBUG, "Pool %i Worksize set to \"%s\"", pool->pool_no, pool->worksize);
 }
 
-//helper function to add json values to pool object
-static bool build_pool_json_add(json_t *object, const char *key, const char *val, const char *str_compare, int id)
-{
-  if(!empty_string(val))
-  {
-    if(safe_cmp(str_compare, val))
-    {
-      if(json_object_set(object, key, json_string(val)) == -1)
-      {
-        set_last_json_error("json_object_set() failed on pool(%d):%s", id, key);
-        return false;
-      }
-    }
-  }
+/***************************************
+* Config Writer Functions
+****************************************/
 
-  return true;
+/*******************************
+ * Helper macros
+ *******************************/
+#define JSON_POOL_ERR "json_object_set() failed on pool(%d):%s"
+#define JSON_PROFILE_ERR "json_object_set() failed on profile(%d):%s"
+#define JSON_ROOT_ERR "Error: config_parser::write_config():\n json_object_set() failed on %s"
+
+#ifndef json_pool_add
+  #define json_pool_add(obj, key, val, id) \
+    if(json_object_set(obj, key, val) == -1) { \
+      set_last_json_error(JSON_POOL_ERR, id, key); \
+      return NULL; \
+    }
+#endif
+
+#ifndef json_profile_add
+  #define json_profile_add(obj, key, val, parentkey, id) \
+    if(json_object_set(obj, key, val) == -1) { \
+      if(!empty_string(parentkey)) { \
+        set_last_json_error(JSON_PROFILE_ERR, id, key); \
+        return NULL; \
+      } else { \
+        applog(LOG_ERR, JSON_ROOT_ERR, key); \
+        return NULL; \
+      } \
+    }
+#endif
+
+#ifndef json_add
+  #define json_add(obj, key, val) \
+    if(json_object_set(obj, key, val) == -1) { \
+      applog(LOG_ERR, JSON_ROOT_ERR, key); \
+      return; \
+    }
+#endif
+
+// helper function to add json values to pool object
+static json_t *build_pool_json_add(json_t *object, const char *key, const char *val, const char *str_compare, const char *default_compare, int id)
+{
+  // if pool value is empty, abort
+  if (empty_string(val))
+    return object;
+
+  // check to see if its the same value as profile, abort if it is
+  if(safe_cmp(str_compare, val) == 0)
+    return object;
+
+  // check to see if it's the same value as default profile, abort if it is
+  if(safe_cmp(default_compare, val) == 0)
+    return object;
+
+  // not same value, add value to JSON
+  json_pool_add(object, key, json_string(val), id);
+
+  return object;
 }
 
 //builds the "pools" json array for config file
-json_t *build_pool_json()
+static json_t *build_pool_json()
 {
   json_t *pool_array, *obj;
   struct pool *pool;
   struct profile *profile;
   int i;
-  
+
   //create the "pools" array
   if(!(pool_array = json_array()))
   {
     set_last_json_error("json_array() failed on pools");
     return NULL;
   }
-  
+
   //process pool entries
   for(i=0;i<total_pools;i++)
   {
@@ -1118,332 +1163,289 @@ json_t *build_pool_json()
       return NULL;
     }
 
-    //pool name
+    // pool name
     if(!empty_string(pool->name))
-    {
-      if(json_object_set(obj, "name", json_string(pool->name)) == -1)
-      {
-        set_last_json_error("json_object_set() failed on pool(%d):name", pool->pool_no);
-        return NULL;
-      }
-    }
-    
-    //add quota/url
+      json_pool_add(obj, "name", json_string(pool->name), pool->pool_no);
+
+    // add quota/url
     if(pool->quota != 1)
     {
-      if(json_object_set(obj, "quota", json_sprintf("%s%s%s%d;%s",
+      json_pool_add(obj, "quota", json_sprintf("%s%s%s%d;%s",
         ((pool->rpc_proxy)?(char *)proxytype(pool->rpc_proxytype):""),
         ((pool->rpc_proxy)?pool->rpc_proxy:""),
         ((pool->rpc_proxy)?"|":""),
         pool->quota,
-        pool->rpc_url)) == -1)
-      {
-        set_last_json_error("json_object_set() failed on pool(%d):quota", pool->pool_no);
-        return NULL;
-      }
+        pool->rpc_url), pool->pool_no);
     }
     else
     {
-      if(json_object_set(obj, "url", json_sprintf("%s%s%s%s",
+      json_pool_add(obj, "url", json_sprintf("%s%s%s%s",
         ((pool->rpc_proxy)?(char *)proxytype(pool->rpc_proxytype):""),
         ((pool->rpc_proxy)?pool->rpc_proxy:""),
         ((pool->rpc_proxy)?"|":""),
-        pool->rpc_url)) == -1)
-      {
-        set_last_json_error("json_object_set() failed on pool(%d):url", pool->pool_no);
-        return NULL;
-      }
+        pool->rpc_url), pool->pool_no);
     }
 
-    //user
-    if(json_object_set(obj, "user", json_string(pool->rpc_user)) == -1)
-    {
-      set_last_json_error("json_object_set() failed on pool(%d):user", pool->pool_no);
-      return NULL;
-    }
-    
-    //pass
-    if(json_object_set(obj, "pass", json_string(pool->rpc_pass)) == -1)
-    {
-      set_last_json_error("json_object_set() failed on pool(%d):pass", pool->pool_no);
-      return NULL;
-    }
+    // user
+    json_pool_add(obj, "user", json_string(pool->rpc_user), pool->pool_no);
 
-    if(!pool->extranonce_subscribe)
+    // pass
+    json_pool_add(obj, "pass", json_string(pool->rpc_pass), pool->pool_no);
+
+    if (!pool->extranonce_subscribe)
+      json_pool_add(obj, "no-extranonce", json_true(), pool->pool_no);
+
+    if (!empty_string(pool->description))
+      json_pool_add(obj, "no-description", json_string(pool->description), pool->pool_no);
+
+    // if priority isnt the same as array index, specify it
+    if (pool->prio != i)
+      json_pool_add(obj, "priority", json_sprintf("%d", pool->prio), pool->pool_no);
+
+    // if a profile was specified, add it then compare pool/profile settings to see what we write
+    if (!empty_string(pool->profile))
     {
-      if(json_object_set(obj, "no-extranonce", json_true()) == -1)
+      if ((profile = get_profile(pool->profile)))
       {
-        set_last_json_error("json_object_set() failed on pool(%d):no-extranonce", pool->pool_no);
-        return NULL;
+        // save profile name
+        json_pool_add(obj, "profile", json_string(pool->profile), pool->pool_no);
       }
-    }
-    
-    if(!empty_string(pool->description))
-    {
-      if(json_object_set(obj, "description", json_string(pool->description)) == -1)
-      {
-        set_last_json_error("json_object_set() failed on pool(%d):description", pool->pool_no);
-        return NULL;
-      }
-    }
-    
-    //if priority isnt the same as array index, specify it
-    if(pool->prio != i) 
-    {
-      if(json_object_set(obj, "priority", json_sprintf("%d", pool->prio)) == -1)
-      {
-        set_last_json_error("json_object_set() failed on pool(%d):description", pool->pool_no);
-        return NULL;
-      }
-    }
-    
-    //if a profile was specified, add it then compare pool/profile settings to see what we write
-    if(!empty_string(pool->profile))
-    {
-      if((profile = get_profile(pool->profile)))
-      {
-        //save profile name
-        if(json_object_set(obj, "profile", json_string(pool->profile)) == -1)
-        {
-          set_last_json_error("json_object_set() failed on pool(%d):profile", pool->pool_no);
-          return NULL;
-        }
-      }
-      //profile not found use default profile
+      // profile not found use default profile
       else
         profile = &default_profile;
     }
-    //or select default profile
+    // or select default profile
     else
       profile = &default_profile;
-    
-    //if algorithm is different than profile, add it
-    if(!cmp_algorithm(&pool->algorithm, &profile->algorithm)) 
+
+    // if algorithm is different than profile, add it
+    if (!cmp_algorithm(&pool->algorithm, &profile->algorithm))
     {
-      //save algorithm name
-      if(json_object_set(obj, "algorithm", json_string(pool->algorithm.name)) == -1)
-      {
-        set_last_json_error("json_object_set() failed on pool(%d):algorithm", pool->pool_no);
-        return NULL;
-      }
-      
-      //TODO: add other options like nfactor etc...
+      // save algorithm name
+      json_pool_add(obj, "algorithm", json_string(pool->algorithm.name), pool->pool_no);
+
+      // save nfactor also
+      if (pool->algorithm.type == ALGO_NSCRYPT)
+        json_pool_add(obj, "nfactor", json_sprintf("%d", profile->algorithm.nfactor), pool->pool_no);
     }
 
-    //if pool and profile value doesn't match below, add it
-    //devices
-    if(!build_pool_json_add(obj, "device", pool->devices, profile->devices, pool->pool_no))
+    // if pool and profile value doesn't match below, add it
+    // devices
+    if (!build_pool_json_add(obj, "device", pool->devices, profile->devices, default_profile.devices, pool->pool_no))
       return NULL;
 
-    //lookup-gap
-    if(!build_pool_json_add(obj, "lookup-gap", pool->lookup_gap, profile->lookup_gap, pool->pool_no))
+    // lookup-gap
+    if (!build_pool_json_add(obj, "lookup-gap", pool->lookup_gap, profile->lookup_gap, default_profile.lookup_gap, pool->pool_no))
       return NULL;
 
-    //intensity
-    if(!build_pool_json_add(obj, "intensity", pool->intensity, profile->intensity, pool->pool_no))
+    // rawintensity
+    if (!empty_string(pool->rawintensity))
+      if (!build_pool_json_add(obj, "rawintensity", pool->rawintensity, profile->rawintensity, default_profile.rawintensity, pool->pool_no))
+        return NULL;
+    // xintensity
+    else if (!empty_string(pool->xintensity))
+      if (!build_pool_json_add(obj, "xintensity", pool->xintensity, profile->xintensity, default_profile.xintensity, pool->pool_no))
+        return NULL;
+    // intensity
+    else
+      if (!build_pool_json_add(obj, "intensity", pool->intensity, profile->intensity, default_profile.intensity, pool->pool_no))
+        return NULL;
+
+    // shaders
+    if (!build_pool_json_add(obj, "shaders", pool->shaders, profile->shaders, default_profile.shaders, pool->pool_no))
       return NULL;
 
-    //xintensity
-    if(!build_pool_json_add(obj, "xintensity", pool->xintensity, profile->xintensity, pool->pool_no))
-      return NULL;
-      
-    //rawintensity
-    if(!build_pool_json_add(obj, "rawintensity", pool->rawintensity, profile->rawintensity, pool->pool_no))
-      return NULL;
-      
-    //shaders
-    if(!build_pool_json_add(obj, "shaders", pool->shaders, profile->shaders, pool->pool_no))
+    // thread_concurrency
+    if (!build_pool_json_add(obj, "thread-concurrency", pool->thread_concurrency, profile->thread_concurrency, default_profile.thread_concurrency, pool->pool_no))
       return NULL;
 
-    //thread_concurrency
-    if(!build_pool_json_add(obj, "thread-concurrency", pool->thread_concurrency, profile->thread_concurrency, pool->pool_no))
+    // worksize
+    if (!build_pool_json_add(obj, "worksize", pool->worksize, profile->worksize, default_profile.worksize, pool->pool_no))
       return NULL;
 
-    //worksize
-    if(!build_pool_json_add(obj, "worksize", pool->worksize, profile->worksize, pool->pool_no))
+#ifdef HAVE_ADL
+    // gpu_engine
+    if (!build_pool_json_add(obj, "gpu-engine", pool->gpu_engine, profile->gpu_engine, default_profile.gpu_engine, pool->pool_no))
       return NULL;
 
-#ifdef HAVE_ADL      
-    //gpu_engine
-    if(!build_pool_json_add(obj, "gpu-engine", pool->gpu_engine, profile->gpu_engine, pool->pool_no))
+    // gpu_memclock
+    if (!build_pool_json_add(obj, "gpu-memclock", pool->gpu_memclock, profile->gpu_memclock, default_profile.gpu_memclock, pool->pool_no))
       return NULL;
 
-    //gpu_memclock
-    if(!build_pool_json_add(obj, "gpu-memclock", pool->gpu_memclock, profile->gpu_memclock, pool->pool_no))
+    // gpu_threads
+    if (!build_pool_json_add(obj, "gpu-threads", pool->gpu_threads, profile->gpu_threads, default_profile.gpu_threads, pool->pool_no))
       return NULL;
 
-    //gpu_threads
-    if(!build_pool_json_add(obj, "gpu-threads", pool->gpu_threads, profile->gpu_threads, pool->pool_no))
+    // gpu_fan
+    if (!build_pool_json_add(obj, "gpu-fan", pool->gpu_fan, profile->gpu_fan, default_profile.gpu_fan, pool->pool_no))
       return NULL;
 
-    //gpu_fan
-    if(!build_pool_json_add(obj, "gpu-fan", pool->gpu_fan, profile->gpu_fan, pool->pool_no))
+    // gpu-powertune
+    if (!build_pool_json_add(obj, "gpu-powertune", pool->gpu_powertune, profile->gpu_powertune, default_profile.gpu_powertune, pool->pool_no))
       return NULL;
 
-    //gpu-powertune
-    if(!build_pool_json_add(obj, "gpu-powertune", pool->gpu_powertune, profile->gpu_powertune, pool->pool_no))
-      return NULL;
-
-    //gpu-vddc
-    if(!build_pool_json_add(obj, "gpu-vddc", pool->gpu_vddc, profile->gpu_vddc, pool->pool_no))
+    // gpu-vddc
+    if (!build_pool_json_add(obj, "gpu-vddc", pool->gpu_vddc, profile->gpu_vddc, default_profile.gpu_vddc, pool->pool_no))
       return NULL;
 #endif
-    
-    //all done, add pool to array...
-    if(json_array_append_new(pool_array, obj) == -1)
+
+    // all done, add pool to array...
+    if (json_array_append_new(pool_array, obj) == -1)
     {
       set_last_json_error("json_array_append() failed on pool %d", pool->pool_no);
       return NULL;
     }
   }
-  
+
   return pool_array;
 }
 
-
 //helper function to add json values to profile object
-static bool build_profile_json_add(json_t *object, const char *key, const char *val, const char *str_compare, bool isdefault, int id)
+static json_t *build_profile_json_add(json_t *object, const char *key, const char *val, const char *str_compare, const bool isdefault, const char *parentkey, int id)
 {
-  if(!empty_string(val))
-  {
-    //always add if default profile is this profile
-    if(safe_cmp(str_compare, val) || isdefault)
-    {
-      if(json_object_set(object, key, json_string(val)) == -1)
-      {
-        set_last_json_error("json_object_set() failed on profile(%d):%s", id, key);
-        return false;
-      }
-    }
-  }
-  
-  return true;
+  //if default profile, make sure we sync profile and default_profile values...
+  if(isdefault)
+    val = str_compare;
+
+  // no value, return...
+  if(empty_string(val))
+    return object;
+
+  //if the value is the same as default profile and, the current profile is not default profile, return...
+  if((safe_cmp(str_compare, val) == 0) && isdefault == false)
+    return object;
+
+  json_profile_add(object, key, json_string(val), parentkey, id);
+
+  return object;
 }
 
-//builds the "profiles" json array for config file
+// helper function to write all the profile settings
+static json_t *build_profile_settings_json(json_t *object, struct profile *profile, const bool isdefault, const char *parentkey)
+{
+  // if algorithm is different than default profile or profile is default profile, add it
+  if (!cmp_algorithm(&default_profile.algorithm, &profile->algorithm) || isdefault)
+  {
+    // save algorithm name
+    json_profile_add(object, "algorithm", json_string(profile->algorithm.name), parentkey, profile->profile_no);
+
+    // save nfactor also
+    if (profile->algorithm.type == ALGO_NSCRYPT)
+      json_profile_add(object, "nfactor", json_sprintf("%u", profile->algorithm.nfactor), parentkey, profile->profile_no);
+  }
+
+  // devices
+  if (!build_profile_json_add(object, "device", profile->devices, default_profile.devices, isdefault, parentkey, profile->profile_no))
+    return NULL;
+
+  // lookup-gap
+  if (!build_profile_json_add(object, "lookup-gap", profile->lookup_gap, default_profile.lookup_gap, isdefault, parentkey, profile->profile_no))
+    return NULL;
+
+  // rawintensity
+  if (!empty_string(profile->rawintensity))
+    if(!build_profile_json_add(object, "rawintensity", profile->rawintensity, default_profile.rawintensity, isdefault, parentkey, profile->profile_no))
+      return NULL;
+  // xintensity
+  else if (!empty_string(profile->xintensity))
+    if(!build_profile_json_add(object, "xintensity", profile->xintensity, default_profile.xintensity, isdefault, parentkey, profile->profile_no))
+      return NULL;
+  // intensity
+  else if (!empty_string(profile->intensity))
+    if(!build_profile_json_add(object, "intensity", profile->intensity, default_profile.intensity, isdefault, parentkey, profile->profile_no))
+      return NULL;
+
+  //shaders
+  if (!build_profile_json_add(object, "shaders", profile->shaders, default_profile.shaders, isdefault, parentkey, profile->profile_no))
+    return NULL;
+
+  // thread_concurrency
+  if (!build_profile_json_add(object, "thread-concurrency", profile->thread_concurrency, default_profile.thread_concurrency, isdefault, parentkey, profile->profile_no))
+    return NULL;
+
+  // worksize
+  if (!build_profile_json_add(object, "worksize", profile->worksize, default_profile.worksize, isdefault, parentkey, profile->profile_no))
+    return NULL;
+
+  #ifdef HAVE_ADL
+    // gpu_engine
+    if (!build_profile_json_add(object, "gpu-engine", profile->gpu_engine, default_profile.gpu_engine, isdefault, parentkey, profile->profile_no))
+      return NULL;
+
+    // gpu_memclock
+    if (!build_profile_json_add(object, "gpu-memclock", profile->gpu_memclock, default_profile.gpu_memclock, isdefault, parentkey, profile->profile_no))
+      return NULL;
+
+    // gpu_threads
+    if (!build_profile_json_add(object, "gpu-threads", profile->gpu_threads, default_profile.gpu_threads, isdefault, parentkey, profile->profile_no))
+      return NULL;
+
+    // gpu_fan
+    if (!build_profile_json_add(object, "gpu-fan", profile->gpu_fan, default_profile.gpu_fan, isdefault, parentkey, profile->profile_no))
+      return NULL;
+
+    // gpu-powertune
+    if (!build_profile_json_add(object, "gpu-powertune", profile->gpu_powertune, default_profile.gpu_powertune, isdefault, parentkey, profile->profile_no))
+      return NULL;
+
+    // gpu-vddc
+    if (!build_profile_json_add(object, "gpu-vddc", profile->gpu_vddc, default_profile.gpu_vddc, isdefault, parentkey, profile->profile_no))
+      return NULL;
+  #endif
+
+  return object;
+}
+
+// builds the "profiles" json array for config file
 json_t *build_profile_json()
 {
   json_t *profile_array, *obj;
   struct profile *profile;
   bool isdefault;
   int i;
-  
-  //create the "pools" array
-  if(!(profile_array = json_array()))
+
+  // create the "profiles" array
+  if (!(profile_array = json_array()))
   {
     set_last_json_error("json_array() failed on profiles");
     return NULL;
   }
-  
+
   //process pool entries
-  for(i=0;i<total_profiles;i++)
+  for (i=0;i<total_profiles;i++)
   {
     profile = profiles[i];
     isdefault = false;
 
-    if(!empty_string(default_profile.name))
+    if (!empty_string(default_profile.name))
     {
-      if(!strcmp(profile->name, default_profile.name))
+      if (!strcasecmp(profile->name, default_profile.name))
         isdefault = true;
     }
 
-    //create a new object
+    // create a new object
     if(!(obj = json_object()))
     {
       set_last_json_error("json_object() failed on profile %d", profile->profile_no);
       return NULL;
     }
 
-    //profile name
-    if(!empty_string(profile->name))
-    {
-      if(json_object_set(obj, "name", json_string(profile->name)) == -1)
-      {
-        set_last_json_error("json_object_set() failed on profile(%d):name", profile->profile_no);
-        return NULL;
-      }
-    }
-    
-    //if algorithm is different than profile, add it - if default profile is the current profile, always add
-    if(!cmp_algorithm(&default_profile.algorithm, &profile->algorithm) || !strcasecmp(default_profile.name, profile->name)) 
-    {
-      //save algorithm name
-      if(json_object_set(obj, "algorithm", json_string(profile->algorithm.name)) == -1)
-      {
-        set_last_json_error("json_object_set() failed on profile(%d):algorithm", profile->profile_no);
-        return NULL;
-      }
-      
-      //TODO: add other options like nfactor etc...
-    }
+    // profile name
+    if (!empty_string(profile->name))
+      json_profile_add(obj, "name", json_string(profile->name), "profile", profile->profile_no);
 
-    //if pool and profile value doesn't match below, add it
-    //devices
-    if(!build_profile_json_add(obj, "device", profile->devices, default_profile.devices, isdefault, profile->profile_no))
-      return NULL;
-    
-    //lookup-gap
-    if(!build_profile_json_add(obj, "lookup-gap", profile->lookup_gap, default_profile.lookup_gap, isdefault, profile->profile_no))
+    // save profile settings
+    if(!build_profile_settings_json(obj, profile, isdefault, "profile"))
       return NULL;
 
-    //intensity
-    if(!build_profile_json_add(obj, "intensity", profile->intensity, default_profile.intensity, isdefault, profile->profile_no))
-      return NULL;
-
-    //xintensity
-    if(!build_profile_json_add(obj, "xintensity", profile->xintensity, default_profile.xintensity, isdefault, profile->profile_no))
-      return NULL;
-      
-    //rawintensity
-    if(!build_profile_json_add(obj, "rawintensity", profile->rawintensity, default_profile.rawintensity, isdefault, profile->profile_no))
-      return NULL;
-      
-    //shaders
-    if(!build_profile_json_add(obj, "shaders", profile->shaders, default_profile.shaders, isdefault, profile->profile_no))
-      return NULL;
-    
-    //thread_concurrency
-    if(!build_profile_json_add(obj, "thread-concurrency", profile->thread_concurrency, default_profile.thread_concurrency, isdefault, profile->profile_no))
-      return NULL;
-
-    //worksize
-    if(!build_profile_json_add(obj, "worksize", profile->worksize, default_profile.worksize, isdefault, profile->profile_no))
-      return NULL;
-
-#ifdef HAVE_ADL      
-    //gpu_engine
-    if(!build_profile_json_add(obj, "gpu-engine", profile->gpu_engine, default_profile.gpu_engine, isdefault, profile->profile_no))
-      return NULL;
-
-    //gpu_memclock
-    if(!build_profile_json_add(obj, "gpu-memclock", profile->gpu_memclock, default_profile.gpu_memclock, isdefault, profile->profile_no))
-      return NULL;
-
-    //gpu_threads
-    if(!build_profile_json_add(obj, "gpu-threads", profile->gpu_threads, default_profile.gpu_threads, isdefault, profile->profile_no))
-      return NULL;
-
-    //gpu_fan
-    if(!build_profile_json_add(obj, "gpu-fan", profile->gpu_fan, default_profile.gpu_fan, isdefault, profile->profile_no))
-      return NULL;
-
-    //gpu-powertune
-    if(!build_profile_json_add(obj, "gpu-powertune", profile->gpu_powertune, default_profile.gpu_powertune, isdefault, profile->profile_no))
-      return NULL;
-
-    //gpu-vddc
-    if(!build_profile_json_add(obj, "gpu-vddc", profile->gpu_vddc, default_profile.gpu_vddc, isdefault, profile->profile_no))
-      return NULL;
-#endif
-    
-    //all done, add pool to array...
+    // all done, add pool to array...
     if(json_array_append_new(profile_array, obj) == -1)
     {
       set_last_json_error("json_array_append() failed on profile %d", profile->profile_no);
       return NULL;
     }
   }
-  
+
   return profile_array;
 }
 
@@ -1453,254 +1455,83 @@ void write_config(const char *filename)
   struct opt_table *opt;
   char *p, *optname;
   int i;
-  
-  if(!(config = json_object()))
+
+  // json root
+  if (!(config = json_object()))
   {
-    applog(LOG_ERR, "Error: config_parser::write_config():\n json_object() failed on root."); 
-    return;
-  }
-  
-  //build pools
-  if(!(obj = build_pool_json()))
-  {
-    applog(LOG_ERR, "Error: config_parser::write_config():\n %s.", last_json_error); 
-    return;
-  }
-  
-  //add pools to config
-  if(json_object_set(config, "pools", obj) == -1)
-  {
-    applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set(pools) failed."); 
-    return;
-  }
-  
-  //build profiles
-  if(!(obj = build_profile_json()))
-  {
-    applog(LOG_ERR, "Error: config_parser::write_config():\n %s.", last_json_error); 
-    return;
-  }
-  
-  //add profiles to config
-  if(json_object_set(config, "profiles", obj) == -1)
-  {
-    applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set(profiles) failed."); 
+    applog(LOG_ERR, "Error: config_parser::write_config():\n json_object() failed on root.");
     return;
   }
 
-  //pool strategy
-  switch(pool_strategy)
+  // build pools
+  if (!(obj = build_pool_json()))
+  {
+    applog(LOG_ERR, "Error: config_parser::write_config():\n %s.", last_json_error);
+    return;
+  }
+
+  // add pools to config
+  if (json_object_set(config, "pools", obj) == -1)
+  {
+    applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set(pools) failed.");
+    return;
+  }
+
+  // build profiles
+  if (!(obj = build_profile_json()))
+  {
+    applog(LOG_ERR, "Error: config_parser::write_config():\n %s.", last_json_error);
+    return;
+  }
+
+  // add profiles to config
+  if (json_object_set(config, "profiles", obj) == -1)
+  {
+    applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set(profiles) failed.");
+    return;
+  }
+
+  // pool strategy
+  switch (pool_strategy)
   {
     case POOL_BALANCE:
-      if(json_object_set(config, "balance", json_true()) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on balance");
-        return;
-      }
+      json_add(config, "balance", json_true());
       break;
     case POOL_LOADBALANCE:
-      if(json_object_set(config, "load-balance", json_true()) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on load-balance");
-        return;
-      }
+      json_add(config, "load-balance", json_true());
       break;
     case POOL_ROUNDROBIN:
-      if(json_object_set(config, "round-robin", json_true()) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on round-robin");
-        return;
-      }
+      json_add(config, "round-robin", json_true());
       break;
     case POOL_ROTATE:
-      if(json_object_set(config, "rotate", json_sprintf("%d", opt_rotate_period)) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on rotate");
-        return;
-      }
+      json_add(config, "rotate", json_sprintf("%d", opt_rotate_period));
       break;
     //default failover only
     default:
-      if(json_object_set(config, "failover-only", json_true()) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on failover-only");
-        return;
-      }
+      json_add(config, "failover-only", json_true());
       break;
   }
-  
+
   //if using a specific profile as default, set it
-  if(!empty_string(default_profile.name))
+  if (!empty_string(default_profile.name))
   {
-    if(json_object_set(config, "default-profile", json_string(default_profile.name)) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on default_profile");
-      return;
-    }
+    json_add(config, "default-profile", json_string(default_profile.name));
   }
   //otherwise save default profile values
   else
-  {
-    //save algorithm name
-    if(json_object_set(config, "algorithm", json_string(default_profile.algorithm.name)) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on algorithm");
+    // save default profile settings
+    if(!build_profile_settings_json(config, &default_profile, true, ""))
       return;
-    }
-    //TODO: add other options like nfactor etc...
-
-    //devices
-    if(!empty_string(default_profile.devices))
-    {
-      if(json_object_set(config, "devices", json_string(default_profile.devices)) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on devices");
-        return;
-      }
-    }
-
-    //lookup-gap
-    if(!empty_string(default_profile.lookup_gap))
-    {
-      if(json_object_set(config, "lookup-gap", json_string(default_profile.lookup_gap)) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on lookup-gap");
-        return;
-      }
-    }
-
-    //intensity
-    if(!empty_string(default_profile.intensity))
-    {
-      if(json_object_set(config, "intensity", json_string(default_profile.intensity)) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on intensity");
-        return;
-      }
-    }
-
-    //xintensity
-    if(!empty_string(default_profile.xintensity))
-    {
-      if(json_object_set(config, "xintensity", json_string(default_profile.xintensity)) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on xintensity");
-        return;
-      }
-    }
-      
-    //rawintensity
-    if(!empty_string(default_profile.rawintensity))
-    {
-      if(json_object_set(config, "rawintensity", json_string(default_profile.rawintensity)) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on rawintensity");
-        return;
-      }
-    }
-      
-    //shaders
-    if(!empty_string(default_profile.shaders))
-    {
-      if(json_object_set(config, "shaders", json_string(default_profile.shaders)) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on shaders");
-        return;
-      }
-    }
-
-    //thread_concurrency
-    if(!empty_string(default_profile.thread_concurrency))
-    {
-      if(json_object_set(config, "thread-concurrency", json_string(default_profile.thread_concurrency)) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on thread_concurrency");
-        return;
-      }
-    }
-
-    //worksize
-    if(!empty_string(default_profile.worksize))
-    {
-      if(json_object_set(config, "worksize", json_string(default_profile.worksize)) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on worksize");
-        return;
-      }
-    }
-
-#ifdef HAVE_ADL      
-    //gpu_engine
-    if(!empty_string(default_profile.gpu_engine))
-    {
-      if(json_object_set(config, "gpu-engine", json_string(default_profile.gpu_engine)) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-engine");
-        return;
-      }
-    }
-
-    //gpu_memclock
-    if(!empty_string(default_profile.gpu_memclock))
-    {
-      if(json_object_set(config, "gpu-memclock", json_string(default_profile.gpu_memclock)) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-memclock");
-        return;
-      }
-    }
-
-    //gpu_threads
-    if(!empty_string(default_profile.gpu_threads))
-    {
-      if(json_object_set(config, "gpu-threads", json_string(default_profile.gpu_threads)) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-threads");
-        return;
-      }
-    }
-
-    //gpu_fan
-    if(!empty_string(default_profile.gpu_fan))
-    {
-      if(json_object_set(config, "gpu-fan", json_string(default_profile.gpu_fan)) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-fan");
-        return;
-      }
-    }
-
-    //gpu-powertune
-    if(!empty_string(default_profile.gpu_powertune))
-    {
-      if(json_object_set(config, "gpu-powertune", json_string(default_profile.gpu_powertune)) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-powertune");
-        return;
-      }
-    }
-
-    //gpu-vddc
-    if(!empty_string(default_profile.gpu_vddc))
-    {
-      if(json_object_set(config, "gpu-vddc", json_string(default_profile.gpu_vddc)) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-vddc");
-        return;
-      }
-    }
-#endif
-  }
 
   //devices
-  /*if(opt_devs_enabled) 
+  /*if(opt_devs_enabled)
   {
     bool extra_devs = false;
     obj = json_string("");
 
-    for(i = 0; i < MAX_DEVICES; i++) 
+    for(i = 0; i < MAX_DEVICES; i++)
     {
-      if(devices_enabled[i]) 
+      if(devices_enabled[i])
       {
         int startd = i;
 
@@ -1709,225 +1540,126 @@ void write_config(const char *filename)
 
         while (i < MAX_DEVICES && devices_enabled[i + 1])
           ++i;
-        
+
         obj = json_sprintf("%s%d", json_string_value(obj), startd);
         if(i > startd)
           obj = json_sprintf("%s-%d", json_string_value(obj), i);
       }
     }
-    
+
     if(json_object_set(config, "devices", obj) == -1)
     {
       applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on devices");
       return;
-    }    
+    }
   }*/
-  
+
   //remove-disabled
   if(opt_removedisabled)
-  {
-    if(json_object_set(config, "remove-disabled", json_true()) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on remove-disabled");
-      return;
-    }    
-    
-  }
+    json_add(config, "remove-disabled", json_true());
 
   //write gpu settings that aren't part of profiles -- only write if gpus are available
   if(nDevs)
   {
-  
-#ifdef HAVE_ADL
-    //temp-cutoff
-    for(i = 0;i < nDevs; i++)
-      obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), gpus[i].cutofftemp);
-      
-    if(json_object_set(config, "temp-cutoff", obj) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on temp-cutoff");
-      return;
-    }
+    #ifdef HAVE_ADL
+      //temp-cutoff
+      for(i = 0;i < nDevs; i++)
+        obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), gpus[i].cutofftemp);
 
-    //temp-overheat
-    for(i = 0;i < nDevs; i++)
-      obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), gpus[i].adl.overtemp);
-      
-    if(json_object_set(config, "temp-overheat", obj) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on temp-overheat");
-      return;
-    }
+      json_add(config, "temp-cutoff", obj);
 
-    //temp-target
-    for(i = 0;i < nDevs; i++)
-      obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), gpus[i].adl.targettemp);
-      
-    if(json_object_set(config, "temp-target", obj) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on temp-target");
-      return;
-    }
-    
-    //reorder gpus
-    if(opt_reorder)
-    {
-      if(json_object_set(config, "gpu-reorder", json_true()) == -1)
-      {
-        applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-reorder");
-        return;
-      }
-    }
+      //temp-overheat
+      for(i = 0;i < nDevs; i++)
+        obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), gpus[i].adl.overtemp);
 
-    //gpu-memdiff
-    for(i = 0;i < nDevs; i++)
-      obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), (int)gpus[i].gpu_memdiff);
-      
-    if(json_object_set(config, "gpu-memdiff", obj) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on gpu-memdiff");
-      return;
-    }
-#endif
+      json_add(config, "temp-overheat", obj);
+
+      //temp-target
+      for(i = 0;i < nDevs; i++)
+        obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), gpus[i].adl.targettemp);
+
+      json_add(config, "temp-target", obj);
+
+      //reorder gpus
+      if(opt_reorder)
+        json_add(config, "gpu-reorder", json_true());
+
+      //gpu-memdiff - FIXME: should be moved to pool/profile options
+      for(i = 0;i < nDevs; i++)
+        obj = json_sprintf("%s%s%d", ((i > 0)?json_string_value(obj):""), ((i > 0)?",":""), (int)gpus[i].gpu_memdiff);
+
+      json_add(config, "gpu-memdiff", obj);
+    #endif
   }
 
   //add other misc options
   //shares
-  if(json_object_set(config, "shares", json_sprintf("%d", opt_shares)) == -1)
-  {
-    applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on shares");
-    return;
-  }
-  
-#if defined(unix) || defined(__APPLE__)
-  //monitor
-  if(opt_stderr_cmd && *opt_stderr_cmd)
-  {
-    if(json_object_set(config, "monitor", json_string(opt_stderr_cmd)) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on monitor");
-      return;
-    }
-  }
-#endif // defined(unix)
+  json_add(config, "shares", json_sprintf("%d", opt_shares));
+
+  #if defined(unix) || defined(__APPLE__)
+    //monitor
+    if(opt_stderr_cmd && *opt_stderr_cmd)
+      json_add(config, "monitor", json_string(opt_stderr_cmd));
+  #endif // defined(unix)
 
   //kernel path
-  if(opt_kernel_path && *opt_kernel_path) 
+  if(opt_kernel_path && *opt_kernel_path)
   {
     //strip end /
     char *kpath = strdup(opt_kernel_path);
     if(kpath[strlen(kpath)-1] == '/')
       kpath[strlen(kpath)-1] = 0;
-    
-    if(json_object_set(config, "kernel-path", json_string(kpath)) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on kernel-path");
-      return;
-    }
+
+    json_add(config, "kernel-path", json_string(kpath));
   }
-  
+
   //sched-time
   if(schedstart.enable)
-  {
-    if(json_object_set(config, "sched-time", json_sprintf("%d:%d", schedstart.tm.tm_hour, schedstart.tm.tm_min)) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on sched-time");
-      return;
-    }
-  }
-  
+    json_add(config, "sched-time", json_sprintf("%d:%d", schedstart.tm.tm_hour, schedstart.tm.tm_min));
+
   //stop-time
   if(schedstop.enable)
-  {
-    if(json_object_set(config, "stop-time", json_sprintf("%d:%d", schedstop.tm.tm_hour, schedstop.tm.tm_min)) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on stop-time");
-      return;
-    }
-  }
-  
+    json_add(config, "stop-time", json_sprintf("%d:%d", schedstop.tm.tm_hour, schedstop.tm.tm_min));
+
   //socks-proxy
   if(opt_socks_proxy && *opt_socks_proxy)
-  {
-    if(json_object_set(config, "socks-proxy", json_string(opt_socks_proxy)) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on socks-proxy");
-      return;
-    }
-  }
-  
-  
+    json_add(config, "socks-proxy", json_string(opt_socks_proxy));
+
   //api stuff
   //api-allow
   if(opt_api_allow)
-  {
-    if(json_object_set(config, "api-allow", json_string(opt_api_allow)) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on api-allow");
-      return;
-    }
-  }
-  
+    json_add(config, "api-allow", json_string(opt_api_allow));
+
   //api-mcast-addr
   if(strcmp(opt_api_mcast_addr, API_MCAST_ADDR) != 0)
-  {
-    if(json_object_set(config, "api-mcast-addr", json_string(opt_api_mcast_addr)) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on api-mcast-addr");
-      return;
-    }
-  }
+    json_add(config, "api-mcast-addr", json_string(opt_api_mcast_addr));
 
   //api-mcast-code
   if(strcmp(opt_api_mcast_code, API_MCAST_CODE) != 0)
-  {
-    if(json_object_set(config, "api-mcast-code", json_string(opt_api_mcast_code)) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on api-mcast-code");
-      return;
-    }
-  }
+    json_add(config, "api-mcast-code", json_string(opt_api_mcast_code));
 
   //api-mcast-des
   if(*opt_api_mcast_des)
-  {
-    if(json_object_set(config, "api-mcast-des", json_string(opt_api_mcast_des)) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on api-mcast-des");
-      return;
-    }
-  }
+    json_add(config, "api-mcast-des", json_string(opt_api_mcast_des));
 
   //api-description
   if(strcmp(opt_api_description, PACKAGE_STRING) != 0)
-  {
-    if(json_object_set(config, "api-description", json_string(opt_api_description)) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on api-description");
-      return;
-    }
-  }
-  
+    json_add(config, "api-description", json_string(opt_api_description));
+
   //api-groups
   if(opt_api_groups)
-  {
-    if(json_object_set(config, "api-groups", json_string(opt_api_groups)) == -1)
-    {
-      applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on api-groups");
-      return;
-    }
-  }
+    json_add(config, "api-groups", json_string(opt_api_groups));
 
   //add other misc bool/int options
-  for(opt = opt_config_table; opt->type != OPT_END; opt++) 
+  for(opt = opt_config_table; opt->type != OPT_END; opt++)
   {
     optname = strdup(opt->names);
-    
+
     //ignore --pool-* and --profile-* options
     if(!strstr(optname, "--pool-") && !strstr(optname, "--profile-"))
     {
       //get first available long form option name
-      for(p = strtok(optname, "|"); p; p = strtok(NULL, "|")) 
+      for(p = strtok(optname, "|"); p; p = strtok(NULL, "|"))
       {
         //skip short options
         if(p[1] != '-')
@@ -1938,11 +1670,7 @@ void write_config(const char *filename)
           ((void *)opt->cb == (void *)opt_set_bool || (void *)opt->cb == (void *)opt_set_invbool) &&
           (*(bool *)opt->u.arg == ((void *)opt->cb == (void *)opt_set_bool)))
         {
-          if(json_object_set(config, p+2, json_true()) == -1)
-          {
-            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on %s.", p+2); 
-            return;
-          }
+          json_add(config, p+2, json_true());
           break;  //exit for loop... so we don't enter a duplicate value if an option has multiple names
         }
         //numeric types
@@ -1952,22 +1680,18 @@ void write_config(const char *filename)
           (void *)opt->cb_arg == (void *)set_int_0_to_10 ||
           (void *)opt->cb_arg == (void *)set_int_1_to_10) && opt->desc != opt_hidden)
         {
-          if(json_object_set(config, p+2, json_sprintf("%d", *(int *)opt->u.arg)) == -1)
-          {
-            applog(LOG_ERR, "Error: config_parser::write_config():\n json_object_set() failed on %s.", p+2); 
-            return;
-          }
+          json_add(config, p+2, json_sprintf("%d", *(int *)opt->u.arg));
           break;  //exit for loop... so we don't enter a duplicate value if an option has multiple names
         }
       }
     }
-  } 
-  
+  }
+
   json_dump_file(config, filename, JSON_PRESERVE_ORDER|JSON_INDENT(2));
 }
 
 /*********************************************
- * API functions 
+ * API functions
  * *******************************************/
 //profile parameters
 enum {
@@ -1998,7 +1722,7 @@ void api_profile_list(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __ma
   bool b;
   int i;
 
-  if (total_profiles == 0) 
+  if (total_profiles == 0)
   {
     message(io_data, MSG_NOPROFILE, 0, NULL, isjson);
     return;
@@ -2009,7 +1733,7 @@ void api_profile_list(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __ma
   if (isjson)
     io_open = io_add(io_data, COMSTR JSON_PROFILES);
 
-  for (i = 0; i <= total_profiles; i++) 
+  for (i = 0; i <= total_profiles; i++)
   {
     //last profile is the default profile
     if(i == total_profiles)
@@ -2025,11 +1749,11 @@ void api_profile_list(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __ma
     root = api_add_bool(root, "IsDefault", &b, false);
     root = api_add_escape(root, "Algorithm", isnull((char *)profile->algorithm.name, ""), true);
     root = api_add_escape(root, "Algorithm Type", (char *)algorithm_type_str[profile->algorithm.type], false);
-    
+
     //show nfactor for nscrypt
     if(profile->algorithm.type == ALGO_NSCRYPT)
       root = api_add_int(root, "Algorithm NFactor", (int *)&(profile->algorithm.nfactor), false);
-      
+
     root = api_add_escape(root, "LookupGap", isnull((char *)profile->lookup_gap, ""), true);
     root = api_add_escape(root, "Devices", isnull((char *)profile->devices, ""), true);
     root = api_add_escape(root, "Intensity", isnull((char *)profile->intensity, ""), true);
@@ -2044,7 +1768,7 @@ void api_profile_list(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __ma
     root = api_add_escape(root, "Shaders", isnull((char *)profile->shaders, ""), true);
     root = api_add_escape(root, "Thread Concurrency", isnull((char *)profile->thread_concurrency, ""), true);
     root = api_add_escape(root, "Worksize", isnull((char *)profile->worksize, ""), true);
-    
+
     root = print_data(root, buf, isjson, isjson && (i > 0));
     io_add(io_data, buf);
   }
@@ -2059,9 +1783,9 @@ void api_profile_add(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char 
   char *split_str;
   struct profile *profile;
   int idx;
-  
+
   split_str = strdup(param);
-  
+
   //split all params by colon (:) because the comma (,) can be used in some of those parameters
   if((p = strsep(&split_str, ":")))
   {
@@ -2071,13 +1795,13 @@ void api_profile_add(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char 
       message(io_data, MSG_PROFILEEXIST, 0, p, isjson);
       return;
     }
-    
+
     //doesnt exist, create new profile
     profile = add_profile();
-    
+
     //assign name
     profile->name = strdup(p);
-    
+
     //get other parameters
     idx = 0;
     while((p = strsep(&split_str, ":")) != NULL)
@@ -2151,7 +1875,7 @@ void api_profile_add(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char 
           //invalid option ignore
           break;
       }
-      
+
       idx++;
     }
   }
@@ -2171,14 +1895,14 @@ void api_profile_remove(struct io_data *io_data, __maybe_unused SOCKETTYPE c, ch
   int i;
 
   //no profiles, nothing to remove
-  if (total_profiles == 0) 
+  if (total_profiles == 0)
   {
     message(io_data, MSG_NOPROFILE, 0, NULL, isjson);
     return;
   }
 
   //make sure profile name is supplied
-  if(param == NULL || *param == '\0') 
+  if(param == NULL || *param == '\0')
   {
     message(io_data, MSG_MISPRID, 0, NULL, isjson);
     return;
@@ -2202,7 +1926,7 @@ void api_profile_remove(struct io_data *io_data, __maybe_unused SOCKETTYPE c, ch
   for(i = 0;i < total_pools; i++)
   {
     pool = pools[i];
-    
+
     if(!strcasecmp(pool->profile, profile->name))
     {
       message(io_data, MSG_PRINUSE, 0, param, isjson);
@@ -2214,7 +1938,7 @@ void api_profile_remove(struct io_data *io_data, __maybe_unused SOCKETTYPE c, ch
   remove_profile(profile);
 
   message(io_data, MSG_REMPROFILE, profile->profile_no, profile->name, isjson);
-  
+
   free(profile);
 }
 
@@ -2227,21 +1951,21 @@ void api_pool_profile(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char
   int i;
 
   //no pool, nothing to change
-  if (total_pools == 0) 
+  if (total_pools == 0)
   {
     message(io_data, MSG_NOPOOL, 0, NULL, isjson);
     return;
   }
 
   //no profiles, nothing to change
-  if (total_profiles == 0) 
+  if (total_profiles == 0)
   {
     message(io_data, MSG_NOPROFILE, 0, NULL, isjson);
     return;
   }
 
   //check if parameters were passed
-  if (param == NULL || *param == '\0') 
+  if (param == NULL || *param == '\0')
   {
     message(io_data, MSG_MISPID, 0, NULL, isjson);
     return;
@@ -2253,16 +1977,16 @@ void api_pool_profile(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char
     message(io_data, MSG_MISPID, 0, NULL, isjson);
     return;
   }
-  
+
   //check valid pool id
   i = atoi(p);
-  
+
   if(i < 0 || i >= total_pools)
   {
     message(io_data, MSG_INVPID, i, NULL, isjson);
     return;
   }
-  
+
   //get pool
   pool = pools[i];
 
@@ -2272,7 +1996,7 @@ void api_pool_profile(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char
     message(io_data, MSG_MISPRID, 0, NULL, isjson);
     return;
   }
-  
+
   //see if the profile exists
   if(!(profile = get_profile(p)))
   {

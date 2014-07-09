@@ -7,25 +7,6 @@
 #include "api.h"
 #include "algorithm.h"
 
-//helper to check for empty or NULL strings
-#ifndef empty_string
-  #define empty_string(str) ((str && str[0] != '\0')?0:1)
-#endif
-#ifndef safe_cmp
-  #define safe_cmp(val1, val2) (((val1 && strcasecmp(val1, val2) != 0) || empty_string(val1))?1:0)
-#endif
-#ifndef pool_cmp
-  #define pool_cmp(val1, val2) (((val1 && val2 && strcasecmp(val1, val2) == 0) || empty_string(val1))?1:0)
-#endif
-#ifndef isnull
-  #define isnull(str, default_str) ((str == NULL)?default_str:str)
-#endif
-
-//helper function to get a gpu option value
-#ifndef gpu_opt
-  #define gpu_opt(i,optname) gpus[i].optname
-#endif
-
 //profile structure
 struct profile {
   int profile_no;
