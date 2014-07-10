@@ -1787,7 +1787,8 @@ static bool jobj_binary(const json_t *obj, const char *key,
   tmp = json_object_get(obj, key);
   if (unlikely(!tmp)) {
     if (unlikely(required))
-      applog(LOG_ERR, "JSON key '%s' not found", key);
+      if (opt_morenotices)
+        applog(LOG_ERR, "JSON key '%s' not found", key);
     return false;
   }
   hexstr = json_string_value(tmp);
@@ -2139,18 +2140,21 @@ static bool gbt_decode(struct pool *pool, json_t *res_val)
 static bool getwork_decode(json_t *res_val, struct work *work)
 {
   if (unlikely(!jobj_binary(res_val, "data", work->data, sizeof(work->data), true))) {
-    applog(LOG_ERR, "%s: JSON inval data", isnull(get_pool_name(work->pool), ""));
+    if (opt_morenotices)
+      applog(LOG_ERR, "%s: JSON inval data", isnull(get_pool_name(work->pool), ""));
     return false;
   }
 
   if (!jobj_binary(res_val, "midstate", work->midstate, sizeof(work->midstate), false)) {
     // Calculate it ourselves
-    applog(LOG_DEBUG, "%s: Calculating midstate locally", isnull(get_pool_name(work->pool), ""));
+    if (opt_morenotices)
+      applog(LOG_DEBUG, "%s: Calculating midstate locally", isnull(get_pool_name(work->pool), ""));
     calc_midstate(work);
   }
 
   if (unlikely(!jobj_binary(res_val, "target", work->target, sizeof(work->target), true))) {
-    applog(LOG_ERR, "%s: JSON inval target", isnull(get_pool_name(work->pool), ""));
+    if (opt_morenotices)
+      applog(LOG_ERR, "%s: JSON inval target", isnull(get_pool_name(work->pool), ""));
     return false;
   }
   return true;
