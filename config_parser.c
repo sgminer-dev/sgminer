@@ -556,8 +556,10 @@ static struct opt_table *opt_find(struct opt_table *tbl, char *optname)
     //set url
     curl_easy_setopt(curl, CURLOPT_URL, url);
     //set write callback and fileinfo
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fetch_remote_config_cb);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file);
+    curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1); // fail on 404 or other 4xx http codes
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30); // timeout after 30 secs to prevent being stuck
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &file); // stream to write data to
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fetch_remote_config_cb);  // callback function to write to config file
 
     if((res = curl_easy_perform(curl)) != CURLE_OK)
       applog(LOG_ERR, "Fetch remote file failed: %s", curl_easy_strerror(res));
@@ -714,37 +716,71 @@ char *load_config(const char *arg, const char *parentkey, void __maybe_unused *u
   json_t *config;
 
   #ifdef HAVE_LIBCURL
-    //if detected as url
-    if((strstr(arg, "http://") != NULL) || (strstr(arg, "https://") != NULL) || (strstr(arg, "ftp://") != NULL))
-    {
-      //download config file locally and reset arg to it so we can parse it
-      if((arg = fetch_remote_config(arg)) == NULL)
-        return NULL;
+    int retry = opt_remoteconf_retry;
+    const char *url;
+
+    // if detected as url
+    if ((strstr(arg, "http://") != NULL) || (strstr(arg, "https://") != NULL) || (strstr(arg, "ftp://") != NULL)) {
+      url = strdup(arg);
+
+      do {
+        // wait for next retry
+        if (retry < opt_remoteconf_retry) {
+          sleep(opt_remoteconf_wait);
+        }
+
+        // download config file locally and reset arg to it so we can parse it
+        if ((arg = fetch_remote_config(url)) != NULL) {
+          break;
+        }
+
+        --retry;
+      } while (retry);
+
+      // file not downloaded... abort
+      if (arg == NULL) {
+        // if we should use last downloaded copy...
+        if (opt_remoteconf_usecache) {
+          char *p;
+
+          // extract filename out of url
+          if ((p = (char *)strrchr(url, '/')) == NULL) {
+            quit(1, "%s: invalid URL.", url);
+          }
+
+          arg = p+1;
+        } else {
+          quit(1, "%s: unable to download config file.", url);
+        }
+      }
     }
   #endif
 
-  //most likely useless but leaving it here for now...
-  if(!cnfbuf)
+  // most likely useless but leaving it here for now...
+  if (!cnfbuf) {
     cnfbuf = strdup(arg);
+  }
 
-  //no need to restrict the number of includes... if it causes problems, restore it later
+  // no need to restrict the number of includes... if it causes problems, restore it later
   /*if(++include_count > JSON_MAX_DEPTH)
     return JSON_MAX_DEPTH_ERR;
   */
 
-  //check if the file exists
-  if(access(arg, F_OK) == -1)
+  // check if the file exists
+  if (access(arg, F_OK) == -1) {
     quit(1, "%s: file not found.", arg);
+  }
 
-#if JANSSON_MAJOR_VERSION > 1
-  config = json_load_file(arg, 0, &err);
-#else
-  config = json_load_file(arg, &err);
-#endif
+  #if JANSSON_MAJOR_VERSION > 1
+    config = json_load_file(arg, 0, &err);
+  #else
+    config = json_load_file(arg, &err);
+  #endif
 
-  //if json root is not an object, error out
-  if(!json_is_object(config))
+  // if json root is not an object, error out
+  if (!json_is_object(config)) {
     return set_last_json_error("Error: JSON decode of file \"%s\" failed:\n %s", arg, err.text);
+  }
 
   config_loaded = true;
 

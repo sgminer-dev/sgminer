@@ -89,6 +89,11 @@ bool opt_loginput;
 bool opt_compact;
 bool opt_incognito;
 
+// remote config options...
+int opt_remoteconf_retry = 3; // number of retries
+int opt_remoteconf_wait = 10; // wait in secs between retries
+bool opt_remoteconf_usecache = false; // use last downloaded copy of the config file when download fails
+
 const int opt_cutofftemp = 95;
 int opt_log_interval = 5;
 int opt_queue = 1;
@@ -1801,6 +1806,15 @@ static struct opt_table opt_cmdline_table[] = {
       set_default_config, NULL, NULL,
       "Specify the filename of the default config file\n"
       "Loaded at start and used when saving without a name."),
+  OPT_WITH_ARG("--remote-config-retry",
+      set_int_0_to_9999, opt_show_intval, &opt_remoteconf_retry,
+      "Number of times to retry downloading remote config file. Default: 3"),
+  OPT_WITH_ARG("--remote-config-wait",
+      set_int_0_to_9999, opt_show_intval, &opt_remoteconf_wait,
+      "Time in seconds to wait between download retries of remote config files. Default: 10secs"),
+  OPT_WITHOUT_ARG("--remote-config-usecache",
+      opt_set_bool, &opt_remoteconf_usecache,
+      "Use cached copy of the remote config file when download fails. Default: No"),
   OPT_WITHOUT_ARG("--help|-h",
       opt_verusage_and_exit, NULL,
       "Print this message"),

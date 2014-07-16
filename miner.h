@@ -266,6 +266,10 @@ DRIVER_PARSE_COMMANDS(DRIVER_PROTOTYPE)
   #define strtobool(str) ((str && (!strcasecmp(str, "true") || !strcasecmp(str, "yes") || !strcasecmp(str, "1")))?true:false)
 #endif
 
+extern int opt_remoteconf_retry;
+extern int opt_remoteconf_wait;
+extern bool opt_remoteconf_usecache;
+
 
 enum alive {
   LIFE_WELL,
