@@ -268,6 +268,9 @@ For more details on configuration options, see [Event Options](#event-options) b
 
 * [config](#config) `--config` or `-c`
 * [default-config](#default-config) `--default-config`
+* [remote-config-retry](#remote-config-retry) `--remote-config-retry`
+* [remote-config-wait](#remote-config-wait) `--remote-config-wait`
+* [remote-config-usecache](#remote-config-usecache) `--remote-config-usecache`
 * [help](#help) `--help` or `-h`
 * [ndevs](#ndevs) `-ndevs` or `-n`
 * [version](#version) `--version` or `-V`
@@ -310,6 +313,60 @@ Specifies the name of the default configuration file to be loaded at start up an
 
 ```
 # ./sgminer --default_config defaultconfig.conf
+```
+
+[Top](#configuration-and-command-line-options) :: [CLI Only options](#cli-only-options)
+
+### remote-config-retry
+
+Specifies the number of time to retry downloading a remote configuration file.
+
+*Syntax:* `--remote-config-retry <value>`
+
+*Argument:* `number` Number of retries
+
+*Default:* `3`
+
+*Example:*
+
+```
+# ./sgminer --remote-config-retry 4 http://myserver.com/configs/defaultconfig.conf
+```
+
+[Top](#configuration-and-command-line-options) :: [CLI Only options](#cli-only-options)
+
+### remote-config-wait
+
+Specifies the number of seconds to wait between retries when downloading a remote configuration file fails.
+
+*Syntax:* `--remote-config-wait <value>`
+
+*Argument:* `number` Number of seconds
+
+*Default:* `10`
+
+*Example:*
+
+```
+# ./sgminer --remote-config-retry 4 --remote-config-wait 15 http://myserver.com/configs/defaultconfig.conf
+```
+
+[Top](#configuration-and-command-line-options) :: [CLI Only options](#cli-only-options)
+
+### remote-config-usecache
+
+Tells sgminer to use the last successfully downloaded copy of the remote configuration file if all attempts to download fails.
+
+*Syntax:* `--remote-config-usecache`
+
+*Argument:* `None`
+
+*Default:* `False`
+
+*Example:*
+
+```
+# ./sgminer --remote-config-retry 4 --remote-config-usecache http://myserver.com/configs/defaultconfig.conf
 ```
 
 [Top](#configuration-and-command-line-options) :: [CLI Only options](#cli-only-options)
