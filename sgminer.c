@@ -4082,17 +4082,19 @@ static void *restart_thread(void __maybe_unused *arg)
   /* Discard staged work that is now stale */
   discard_stale();
 
-  rd_lock(&mining_thr_lock);
-  for (i = 0; i < mining_threads; i++) {
-    cgpu = mining_thr[i]->cgpu;
-    if (unlikely(!cgpu))
-      continue;
-    if (cgpu->deven != DEV_ENABLED)
-      continue;
-    mining_thr[i]->work_restart = true;
-    cgpu->drv->flush_work(cgpu);
+  if (mining_thr) {
+    rd_lock(&mining_thr_lock);
+    for (i = 0; i < mining_threads; i++) {
+      cgpu = mining_thr[i]->cgpu;
+      if (unlikely(!cgpu))
+        continue;
+      if (cgpu->deven != DEV_ENABLED)
+        continue;
+      mining_thr[i]->work_restart = true;
+      cgpu->drv->flush_work(cgpu);
+    }
+    rd_unlock(&mining_thr_lock);
   }
-  rd_unlock(&mining_thr_lock);
 
   mutex_lock(&restart_lock);
   pthread_cond_broadcast(&restart_cond);
