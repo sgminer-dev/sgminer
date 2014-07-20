@@ -2613,8 +2613,9 @@ static void check_winsizes(void)
 
 static void disable_curses_windows(void);
 static void enable_curses_windows(void);
+static void adjust_mostdevs(void);
 
-static void switch_logsize(bool __maybe_unused newdevs)
+void switch_logsize(bool __maybe_unused newdevs)
 {
   if (curses_active_locked()) {
 #ifdef WIN32
@@ -2624,6 +2625,7 @@ static void switch_logsize(bool __maybe_unused newdevs)
     if (opt_compact) {
       logstart = devcursor + 1;
     } else {
+      adjust_mostdevs();
       logstart = devcursor + most_devices + 1;
     }
     logcursor = logstart + 1;
@@ -7324,7 +7326,7 @@ static void *watchdog_thread(void __maybe_unused *userdata)
         count = 0;
         for (i = 0; i < total_devices; i++) {
           cgpu = get_devices(i);
-          if (cgpu && (!opt_removedisabled || cgpu->deven != DEV_DISABLED))
+          if (cgpu && (!opt_removedisabled || cgpu->deven != DEV_DISABLED || devices_enabled[i]))
             curses_print_devstatus(cgpu, count++);
         }
       }
@@ -7965,8 +7967,12 @@ struct _cgpu_devid_counter {
 
 static void adjust_mostdevs(void)
 {
-  if (total_devices > most_devices)
-    most_devices = total_devices;
+  most_devices = 0;
+  for (int i = 0; i < total_devices; i++) {
+      if (devices_enabled[i]) {
+        most_devices++;
+      }
+  }
 }
 
 bool add_cgpu(struct cgpu_info *cgpu)
@@ -8359,6 +8365,8 @@ int main(int argc, char *argv[])
     quit(0, "%d devices listed", total_devices);
   }
 
+  most_devices = 0;
+
   mining_threads = 0;
   if (opt_devs_enabled) {
     for (i = 0; i < MAX_DEVICES; i++) {
@@ -8367,6 +8375,7 @@ int main(int argc, char *argv[])
           quit (1, "Command line options set a device that doesn't exist");
         enable_device(i);
         mining_threads += devices[i]->threads;
+        most_devices++;
       } else if (i < total_devices) {
         devices[i]->deven = DEV_DISABLED;
         if (!opt_removedisabled)
@@ -8378,6 +8387,7 @@ int main(int argc, char *argv[])
       enable_device(i);
       mining_threads += devices[i]->threads;
     }
+    most_devices = total_devices;
   }
 
 #ifdef HAVE_CURSES
@@ -8386,8 +8396,6 @@ int main(int argc, char *argv[])
 
   if (mining_threads == 0)
     quit(1, "All devices disabled, cannot mine!");
-
-  most_devices = total_devices;
 
   load_temp_cutoffs();
 
