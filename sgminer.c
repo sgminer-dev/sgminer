@@ -7967,8 +7967,10 @@ struct _cgpu_devid_counter {
 
 static void adjust_mostdevs(void)
 {
+  int i;
+
   most_devices = 0;
-  for (int i = 0; i < total_devices; i++) {
+  for (i = 0; i < total_devices; i++) {
       if (devices_enabled[i]) {
         most_devices++;
       }
