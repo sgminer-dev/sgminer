@@ -58,7 +58,7 @@ files.
 You've probably already done this, but this can be done with git or with a zip
 file. With git:
     $ cd
-    $ git clone git@github.com:veox/sgminer.git
+    $ git clone git://github.com/sgminer-dev/sgminer.git
 
 With a zip file:
     $ cd
@@ -70,12 +70,17 @@ With a zip file:
 * Install AMD ADL SDK, latest version (only if you want GPU monitoring)        *
 ********************************************************************************
 Note: You do not need to install the AMD ADL SDK if you are only using Nvidia
-GPUs. Go to this URL:
+GPUs.
+
+Warning: Also take note that the latest AMD ADL SDK 7.0 won't work with SGMiner 4.2.2,
+you MUST download and use the version 6.0. This may change with later version of SGMiner.
+
+Go to this URL:
 http://developer.amd.com/tools-and-sdks/graphics-development/display-library-adl-sdk/
 Download and unzip the file you downloaded:
     $ cd ~/sgminer
     $ unzip /cygdrive/c/Users/'YOURNAME'/Downloads/ADL_SDK*.zip 'include/*'
-
+    
 ********************************************************************************
 * Build sgminer.exe                                                            *
 ********************************************************************************
