@@ -370,8 +370,11 @@ sgminer 4.2.1-116-g2e8b-dirty
   * [algorithm](#algorithm)
   * [lookup-gap](#lookup-gap)
   * [nfactor](#nfactor)
+  * [blake-compact](#blake-compact)
   * [hamsi-expand-big](#hamsi-expand-big)
   * [hamsi-short](#hamsi-short)
+  * [keccak-unroll](#keccak-unroll)
+  * [luffa-parallel](#luffa-parallel)
   * [shaders](#shaders)
   * [thread-concurrency](#thread-concurrency)
   * [worksize](#worksize)
@@ -749,9 +752,27 @@ Overrides the default scrypt parameter N, specified as the factor of 2 (`N = 2^n
 
 [Top](#configuration-and-command-line-options) :: [Config-file and CLI options](#config-file-and-cli-options) :: [Algorithm Options](#algorithm-options)
 
+### blake-compact
+
+Sets SPH\_COMPACT\_BLAKE64 for Xn derived algorithms. Changing this may improve hashrate. Which value is better depends on GPU type and even manufacturer (i.e. exact GPU model).
+
+*Available*: Global
+
+*Algorithms*: `X11` `X13` `X14` `X15`
+
+*Config File Syntax:* `"blake-compact":true`
+
+*Command Line Syntax:* `--blake-compact`
+
+*Argument:* None
+
+*Default:* `false`
+
+[Top](#configuration-and-command-line-options) :: [Config-file and CLI options](#config-file-and-cli-options) :: [Algorithm Options](#algorithm-options)
+
 ### hamsi-expand-big
 
-Sets SPH_HAMSI_EXPAND_BIG for X13 derived algorithms. Values `"4"` and `"1"` are commonly used. Changing this may improve hashrate. Which value is better depends on GPU type and even manufacturer (i.e. exact GPU model).
+Sets SPH\_HAMSI\_EXPAND\_BIG for X13 derived algorithms. Values `"4"` and `"1"` are commonly used. Changing this may improve hashrate. Which value is better depends on GPU type and even manufacturer (i.e. exact GPU model).
 
 *Available*: Global
 
@@ -769,7 +790,7 @@ Sets SPH_HAMSI_EXPAND_BIG for X13 derived algorithms. Values `"4"` and `"1"` are
 
 ### hamsi-short
 
-Sets SPH_HAMSI_SHORT for X13 derived algorithms. Changing this may improve hashrate. Which value is better depends on GPU type and even manufacturer (i.e. exact GPU model).
+Sets SPH\_HAMSI\_SHORT for X13 derived algorithms. Changing this may improve hashrate. Which value is better depends on GPU type and even manufacturer (i.e. exact GPU model).
 
 *Available*: Global
 
@@ -778,6 +799,42 @@ Sets SPH_HAMSI_SHORT for X13 derived algorithms. Changing this may improve hashr
 *Config File Syntax:* `"hamsi-short":true`
 
 *Command Line Syntax:* `--hamsi-short`
+
+*Argument:* None
+
+*Default:* `false`
+
+[Top](#configuration-and-command-line-options) :: [Config-file and CLI options](#config-file-and-cli-options) :: [Algorithm Options](#algorithm-options)
+
+### keccak-unroll
+
+Sets SPH\_KECCAK\_UNROLL for Xn derived algorithms. Changing this may improve hashrate. Which value is better depends on GPU type and even manufacturer (i.e. exact GPU model).
+
+*Available*: Global
+
+*Algorithms*: `X11` `X13` `X14` `X15`
+
+*Config File Syntax:* `"keccak-unroll":"<value>"`
+
+*Command Line Syntax:* `--keccak-unroll <value>`
+
+*Argument:* `number`
+
+*Default:* `0`
+
+[Top](#configuration-and-command-line-options) :: [Config-file and CLI options](#config-file-and-cli-options) :: [Algorithm Options](#algorithm-options)
+
+### luffa-parallel
+
+Sets SPH\_LUFFA\_PARALLEL for Xn derived algorithms. Changing this may improve hashrate. Which value is better depends on GPU type and even manufacturer (i.e. exact GPU model).
+
+*Available*: Global
+
+*Algorithms*: `X11` `X13` `X14` `X15`
+
+*Config File Syntax:* `"luffa-parallel":true`
+
+*Command Line Syntax:* `--luffa-parallel`
 
 *Argument:* None
 
