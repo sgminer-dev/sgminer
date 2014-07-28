@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2014  phm
  * Copyright (c) 2014 Girino Vey
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -12,10 +12,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -34,54 +34,57 @@
 #endif
 
 #ifndef DARKCOIN_MOD_CL
-  #define DARKCOIN_MOD_CL
+#define DARKCOIN_MOD_CL
 
-  #if __ENDIAN_LITTLE__
+#if __ENDIAN_LITTLE__
   #define SPH_LITTLE_ENDIAN 1
-  #else
+#else
   #define SPH_BIG_ENDIAN 1
-  #endif
-
-  #define SPH_UPTR sph_u64
-  typedef unsigned int sph_u32;
-  typedef int sph_s32;
-
-  #ifndef __OPENCL_VERSION__
-  typedef unsigned long long sph_u64;
-  typedef long long sph_s64;
-  #else
-  typedef unsigned long sph_u64;
-  typedef long sph_s64;
-  #endif
-
-  #define SPH_64 1
-  #define SPH_64_TRUE 1
-
-  #define SPH_C32(x) ((sph_u32)(x ## U))
-  #define SPH_T32(x) (as_uint(x))
-  #define SPH_ROTL32(x, n) rotate(as_uint(x), as_uint(n))
-  #define SPH_ROTR32(x, n) SPH_ROTL32(x, (32 - (n)))
-
-  #define SPH_C64(x) ((sph_u64)(x ## UL))
-  #define SPH_T64(x) (as_ulong(x))
-  #define SPH_ROTL64(x, n) rotate(as_ulong(x), (n) & 0xFFFFFFFFFFFFFFFFUL)
-  #define SPH_ROTR64(x, n) SPH_ROTL64(x, (64 - (n)))
-
-  #define SPH_ECHO_64 1
-  #define SPH_KECCAK_64 1
-  #define SPH_JH_64 1
-  #define SPH_SIMD_NOCOPY 0
-  #define SPH_KECCAK_NOCOPY 0
-  #define SPH_COMPACT_BLAKE_64 0
-  #define SPH_LUFFA_PARALLEL 0
-  #ifndef SPH_SMALL_FOOTPRINT_GROESTL
-  #define SPH_SMALL_FOOTPRINT_GROESTL 0
 #endif
 
-#define SPH_GROESTL_BIG_ENDIAN 0
+#define SPH_UPTR sph_u64
+typedef unsigned int sph_u32;
+typedef int sph_s32;
 
+#ifndef __OPENCL_VERSION__
+  typedef unsigned long long sph_u64;
+  typedef long long sph_s64;
+#else
+  typedef unsigned long sph_u64;
+  typedef long sph_s64;
+#endif
+
+#define SPH_64 1
+#define SPH_64_TRUE 1
+
+#define SPH_C32(x) ((sph_u32)(x ## U))
+#define SPH_T32(x) (as_uint(x))
+#define SPH_ROTL32(x, n) rotate(as_uint(x), as_uint(n))
+#define SPH_ROTR32(x, n) SPH_ROTL32(x, (32 - (n)))
+
+#define SPH_C64(x) ((sph_u64)(x ## UL))
+#define SPH_T64(x) (as_ulong(x))
+#define SPH_ROTL64(x, n) rotate(as_ulong(x), (n) & 0xFFFFFFFFFFFFFFFFUL)
+#define SPH_ROTR64(x, n) SPH_ROTL64(x, (64 - (n)))
+
+#define SPH_ECHO_64 1
+#define SPH_KECCAK_64 1
+#define SPH_JH_64 1
+#define SPH_SIMD_NOCOPY 0
+#define SPH_KECCAK_NOCOPY 0
+#define SPH_SMALL_FOOTPRINT_GROESTL 0
+#define SPH_GROESTL_BIG_ENDIAN 0
 #define SPH_CUBEHASH_UNROLL 0
-#define SPH_KECCAK_UNROLL   0
+
+#ifndef SPH_COMPACT_BLAKE_64
+  #define SPH_COMPACT_BLAKE_64 0
+#endif
+#ifndef SPH_LUFFA_PARALLEL
+  #define SPH_LUFFA_PARALLEL 0
+#endif
+#ifndef SPH_KECCAK_UNROLL
+  #define SPH_KECCAK_UNROLL   0
+#endif
 
 //#include "aes_helper.cl"
 #include "blake.cl"

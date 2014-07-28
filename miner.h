@@ -1047,6 +1047,11 @@ extern bool opt_worktime;
 extern int swork_id;
 extern int opt_tcp_keepalive;
 extern bool opt_incognito;
+
+// Xn Algorithm options
+extern int opt_keccak_unroll;
+extern bool opt_blake_compact;
+extern bool opt_luffa_parallel;
 extern int opt_hamsi_expand_big;
 extern bool opt_hamsi_short;
 

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2014  phm
  * Copyright (c) 2014 Girino Vey
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -13,10 +13,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -69,12 +69,19 @@ typedef long sph_s64;
 #define SPH_JH_64 1
 #define SPH_SIMD_NOCOPY 0
 #define SPH_KECCAK_NOCOPY 0
-#define SPH_COMPACT_BLAKE_64 0
-#define SPH_LUFFA_PARALLEL 0
 #define SPH_SMALL_FOOTPRINT_GROESTL 0
 #define SPH_GROESTL_BIG_ENDIAN 0
 #define SPH_CUBEHASH_UNROLL 0
-#define SPH_KECCAK_UNROLL   1
+
+#ifndef SPH_COMPACT_BLAKE_64
+  #define SPH_COMPACT_BLAKE_64 0
+#endif
+#ifndef SPH_LUFFA_PARALLEL
+  #define SPH_LUFFA_PARALLEL 0
+#endif
+#ifndef SPH_KECCAK_UNROLL
+  #define SPH_KECCAK_UNROLL 0
+#endif
 #ifndef SPH_HAMSI_EXPAND_BIG
   #define SPH_HAMSI_EXPAND_BIG 4
 #endif
@@ -796,7 +803,7 @@ __kernel void search10(__global hash_t* hashes, __global uint* output, const ulo
     }
 
     barrier(CLK_LOCAL_MEM_FENCE);
-	
+
     #ifdef INPUT_BIG_LOCAL
       __local sph_u32 T512_L[1024];
       __constant const sph_u32 *T512_C = &T512[0][0];
@@ -819,7 +826,7 @@ __kernel void search10(__global hash_t* hashes, __global uint* output, const ulo
     	mixtab3[i] = mixtab3_c[i];
     }
     barrier(CLK_LOCAL_MEM_FENCE);
-	
+
 
     for (int i = 0; i < 8; i++) {
         hash.h8[i] = hashes[gid-offset].h8[i];
@@ -1002,7 +1009,7 @@ __kernel void search10(__global hash_t* hashes, __global uint* output, const ulo
     hash.h4[15] = SWAP4(S30);
 
     }
-	
+
 	//shabal
 	{
     sph_u32 A00 = A_init_512[0], A01 = A_init_512[1], A02 = A_init_512[2], A03 = A_init_512[3], A04 = A_init_512[4], A05 = A_init_512[5], A06 = A_init_512[6], A07 = A_init_512[7],
@@ -1065,9 +1072,9 @@ __kernel void search10(__global hash_t* hashes, __global uint* output, const ulo
 	hash.h4[12] = BC;
 	hash.h4[13] = BD;
 	hash.h4[14] = BE;
-	hash.h4[15] = BF;	
+	hash.h4[15] = BF;
 	}
-	
+
 	//whirlpool
 	{
     sph_u64 n0, n1, n2, n3, n4, n5, n6, n7;
@@ -1153,7 +1160,7 @@ __kernel void search10(__global hash_t* hashes, __global uint* output, const ulo
     state[7] ^= n7 ^ 0x2000000000000;
 
     for (unsigned i = 0; i < 8; i ++)
-	hash.h8[i] = state[i];	
+	hash.h8[i] = state[i];
 	}
 
     bool result = (hash.h8[3] <= target);
