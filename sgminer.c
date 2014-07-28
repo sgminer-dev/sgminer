@@ -108,9 +108,16 @@ time_t last_getwork;
 int nDevs;
 int opt_dynamic_interval = 7;
 int opt_g_threads = -1;
-int opt_hamsi_expand_big = 4;
-bool opt_hamsi_short = false;
 bool opt_restart = true;
+
+/*****************************************
+ * Xn Algorithm options
+ *****************************************/
+int opt_hamsi_expand_big = 4;
+int opt_keccak_unroll = 0;
+bool opt_hamsi_short = false;
+bool opt_blake_compact = false;
+bool opt_luffa_parallel = false;
 
 struct list_head scan_devices;
 bool devices_enabled[MAX_DEVICES];
@@ -1333,6 +1340,9 @@ struct opt_table opt_config_table[] = {
   OPT_WITHOUT_ARG("--balance",
       set_balance, &pool_strategy,
       "Change multipool strategy from failover to even share balance"),
+  OPT_WITHOUT_ARG("--blake-compact",
+      opt_set_bool, &opt_blake_compact,
+      "Set SPH_COMPACT_BLAKE64 for Xn derived algorithms (Can give better hashrate for some GPUs)"),
 #ifdef HAVE_CURSES
   OPT_WITHOUT_ARG("--compact",
       opt_set_bool, &opt_compact,
@@ -1429,15 +1439,21 @@ struct opt_table opt_config_table[] = {
       set_default_gpu_vddc, NULL, NULL,
       "Set the GPU voltage in Volts - one value for all or separate by commas for per card"),
 #endif
-  OPT_WITH_ARG("--lookup-gap",
-      set_default_lookup_gap, NULL, NULL,
-      "Set GPU lookup gap for scrypt mining, comma separated"),
   OPT_WITH_ARG("--hamsi-expand-big",
       set_int_1_to_10, opt_show_intval, &opt_hamsi_expand_big,
       "Set SPH_HAMSI_EXPAND_BIG for X13 derived algorithms (1 or 4 are common)"),
   OPT_WITHOUT_ARG("--hamsi-short",
       opt_set_bool, &opt_hamsi_short,
       "Set SPH_HAMSI_SHORT for X13 derived algorithms (Can give better hashrate for some GPUs)"),
+  OPT_WITH_ARG("--keccak-unroll",
+      set_int_0_to_9999, opt_show_intval, &opt_keccak_unroll,
+      "Set SPH_KECCAK_UNROLL for Xn derived algorithms (Default: 0)"),
+  OPT_WITH_ARG("--lookup-gap",
+      set_default_lookup_gap, NULL, NULL,
+      "Set GPU lookup gap for scrypt mining, comma separated"),
+  OPT_WITHOUT_ARG("--luffa-parallel",
+      opt_set_bool, &opt_luffa_parallel,
+      "Set SPH_LUFFA_PARALLEL for Xn derived algorithms (Can give better hashrate for some GPUs)"),
 #ifdef HAVE_CURSES
   OPT_WITHOUT_ARG("--incognito",
       opt_set_bool, &opt_incognito,

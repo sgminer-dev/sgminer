@@ -92,14 +92,26 @@ static void append_scrypt_compiler_options(struct _build_kernel_data *data, stru
   strcat(data->binary_filename, buf);
 }
 
-static void append_hamsi_compiler_options(struct _build_kernel_data *data, struct cgpu_info *cgpu, struct _algorithm_t *algorithm)
+static void append_x11_compiler_options(struct _build_kernel_data *data, struct cgpu_info *cgpu, struct _algorithm_t *algorithm)
 {
   char buf[255];
-  sprintf(buf, " -D SPH_HAMSI_EXPAND_BIG=%d -D SPH_HAMSI_SHORT=%d ",
-          opt_hamsi_expand_big, ((opt_hamsi_short)?1:0));
+  sprintf(buf, " -D SPH_COMPACT_BLAKE_64=%d -D SPH_LUFFA_PARALLEL=%d -D SPH_KECCAK_UNROLL=%u ",
+          ((opt_blake_compact)?1:0), ((opt_luffa_parallel)?1:0), (unsigned int)opt_keccak_unroll);
   strcat(data->compiler_options, buf);
 
-  sprintf(buf, "big%u%s", (unsigned int)opt_hamsi_expand_big, ((opt_hamsi_short)?"hs":""));
+  sprintf(buf, "ku%u%s%s", (unsigned int)opt_keccak_unroll, ((opt_blake_compact)?"bc":""), ((opt_luffa_parallel)?"lp":""));
+  strcat(data->binary_filename, buf);
+}
+
+
+static void append_x13_compiler_options(struct _build_kernel_data *data, struct cgpu_info *cgpu, struct _algorithm_t *algorithm)
+{
+  char buf[255];
+  sprintf(buf, " -D SPH_COMPACT_BLAKE_64=%d -D SPH_LUFFA_PARALLEL=%d -D SPH_KECCAK_UNROLL=%u -D SPH_HAMSI_EXPAND_BIG=%d -D SPH_HAMSI_SHORT=%d ",
+          ((opt_blake_compact)?1:0), ((opt_luffa_parallel)?1:0), (unsigned int)opt_keccak_unroll, opt_hamsi_expand_big, ((opt_hamsi_short)?1:0));
+  strcat(data->compiler_options, buf);
+
+  sprintf(buf, "ku%ubig%u%s%s%s", (unsigned int)opt_keccak_unroll, (unsigned int)opt_hamsi_expand_big, ((opt_blake_compact)?"bc":""), ((opt_luffa_parallel)?"lp":""), ((opt_hamsi_short)?"hs":""));
   strcat(data->binary_filename, buf);
 }
 
@@ -600,17 +612,18 @@ static algorithm_settings_t algos[] = {
 
   { "twecoin", ALGO_TWE, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, twecoin_regenhash, queue_sph_kernel, sha256, NULL},
   { "maxcoin", ALGO_KECCAK, 1, 256, 1, 4, 15, 0x0F, 0xFFFFULL, 0x000000ffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, maxcoin_regenhash, queue_maxcoin_kernel, sha256, NULL},
-  { "darkcoin-mod", ALGO_X11, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, darkcoin_regenhash, queue_darkcoin_mod_kernel, gen_hash, NULL},
 
-  { "marucoin", ALGO_X13, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, marucoin_regenhash, queue_sph_kernel, gen_hash, append_hamsi_compiler_options},
-  { "marucoin-mod", ALGO_X13, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 12, 8 * 16 * 4194304, 0, marucoin_regenhash, queue_marucoin_mod_kernel, gen_hash, append_hamsi_compiler_options},
-  { "marucoin-modold", ALGO_X13, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, marucoin_regenhash, queue_marucoin_mod_old_kernel, gen_hash, append_hamsi_compiler_options},
+  { "darkcoin-mod", ALGO_X11, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, darkcoin_regenhash, queue_darkcoin_mod_kernel, gen_hash, append_x11_compiler_options},
 
-  { "x14", ALGO_X14, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 13, 8 * 16 * 4194304, 0, x14_regenhash, queue_x14_kernel, gen_hash, append_hamsi_compiler_options},
-  { "x14old", ALGO_X14, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, x14_regenhash, queue_x14_old_kernel, gen_hash, append_hamsi_compiler_options},
+  { "marucoin", ALGO_X13, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, marucoin_regenhash, queue_sph_kernel, gen_hash, append_x13_compiler_options},
+  { "marucoin-mod", ALGO_X13, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 12, 8 * 16 * 4194304, 0, marucoin_regenhash, queue_marucoin_mod_kernel, gen_hash, append_x13_compiler_options},
+  { "marucoin-modold", ALGO_X13, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, marucoin_regenhash, queue_marucoin_mod_old_kernel, gen_hash, append_x13_compiler_options},
 
-  { "bitblock", ALGO_X15, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 14, 4 * 16 * 4194304, 0, bitblock_regenhash, queue_bitblock_kernel, gen_hash, append_hamsi_compiler_options},
-  { "bitblockold", ALGO_X15, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 4 * 16 * 4194304, 0, bitblock_regenhash, queue_bitblockold_kernel, gen_hash, append_hamsi_compiler_options},
+  { "x14", ALGO_X14, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 13, 8 * 16 * 4194304, 0, x14_regenhash, queue_x14_kernel, gen_hash, append_x13_compiler_options},
+  { "x14old", ALGO_X14, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, x14_regenhash, queue_x14_old_kernel, gen_hash, append_x13_compiler_options},
+
+  { "bitblock", ALGO_X15, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 14, 4 * 16 * 4194304, 0, bitblock_regenhash, queue_bitblock_kernel, gen_hash, append_x13_compiler_options},
+  { "bitblockold", ALGO_X15, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 4 * 16 * 4194304, 0, bitblock_regenhash, queue_bitblockold_kernel, gen_hash, append_x13_compiler_options},
 
   { "talkcoin-mod", ALGO_NIST, 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 4,  8 * 16 * 4194304, 0, talkcoin_regenhash, queue_talkcoin_mod_kernel, gen_hash, NULL},
 
@@ -703,8 +716,8 @@ void set_algorithm(algorithm_t* algo, const char* newname_alias)
 {
   const char* newname;
   //load previous algorithm nfactor in case nfactor was applied before algorithm... or default to 10
-  uint8_t old_nfactor = ((algo->nfactor)?algo->nfactor:0); 
-  uint8_t nfactor = 10; 
+  uint8_t old_nfactor = ((algo->nfactor)?algo->nfactor:0);
+  uint8_t nfactor = 10;
 
   if (!(newname = lookup_algorithm_alias(newname_alias, &nfactor)))
     newname = newname_alias;
