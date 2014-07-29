@@ -107,11 +107,14 @@ static void append_x11_compiler_options(struct _build_kernel_data *data, struct 
 static void append_x13_compiler_options(struct _build_kernel_data *data, struct cgpu_info *cgpu, struct _algorithm_t *algorithm)
 {
   char buf[255];
-  sprintf(buf, " -D SPH_COMPACT_BLAKE_64=%d -D SPH_LUFFA_PARALLEL=%d -D SPH_KECCAK_UNROLL=%u -D SPH_HAMSI_EXPAND_BIG=%d -D SPH_HAMSI_SHORT=%d ",
-          ((opt_blake_compact)?1:0), ((opt_luffa_parallel)?1:0), (unsigned int)opt_keccak_unroll, opt_hamsi_expand_big, ((opt_hamsi_short)?1:0));
+
+  append_x11_compiler_options(data, cgpu, algorithm);
+
+  sprintf(buf, " -D SPH_HAMSI_EXPAND_BIG=%d -D SPH_HAMSI_SHORT=%d ",
+          (unsigned int)opt_hamsi_expand_big, ((opt_hamsi_short)?1:0));
   strcat(data->compiler_options, buf);
 
-  sprintf(buf, "ku%ubig%u%s%s%s", (unsigned int)opt_keccak_unroll, (unsigned int)opt_hamsi_expand_big, ((opt_blake_compact)?"bc":""), ((opt_luffa_parallel)?"lp":""), ((opt_hamsi_short)?"hs":""));
+  sprintf(buf, "big%u%s", (unsigned int)opt_hamsi_expand_big, ((opt_hamsi_short)?"hs":""));
   strcat(data->binary_filename, buf);
 }
 
