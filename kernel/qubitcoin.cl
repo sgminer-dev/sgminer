@@ -65,8 +65,11 @@ typedef long sph_s64;
 
 #define SPH_ECHO_64 1
 #define SPH_SIMD_NOCOPY 0
-#define SPH_LUFFA_PARALLEL 0
 #define SPH_CUBEHASH_UNROLL 0
+
+#ifndef SPH_LUFFA_PARALLEL
+  #define SPH_LUFFA_PARALLEL 0
+#endif
 
 #include "luffa.cl"
 #include "cubehash.cl"
