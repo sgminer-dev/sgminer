@@ -68,14 +68,21 @@ typedef long sph_s64;
 #define SPH_JH_64 1
 #define SPH_SIMD_NOCOPY 0
 #define SPH_KECCAK_NOCOPY 0
-#define SPH_COMPACT_BLAKE_64 0
-#define SPH_LUFFA_PARALLEL 0
 #define SPH_SMALL_FOOTPRINT_GROESTL 0
 #define SPH_GROESTL_BIG_ENDIAN 0
 #define SPH_CUBEHASH_UNROLL 0
-#define SPH_KECCAK_UNROLL   0
-#if !defined SPH_HAMSI_EXPAND_BIG
-#define SPH_HAMSI_EXPAND_BIG 4
+
+#ifndef SPH_COMPACT_BLAKE_64
+  #define SPH_COMPACT_BLAKE_64 0
+#endif
+#ifndef SPH_LUFFA_PARALLEL
+  #define SPH_LUFFA_PARALLEL 0
+#endif
+#ifndef SPH_KECCAK_UNROLL
+  #define SPH_KECCAK_UNROLL   0
+#endif
+#ifndef SPH_HAMSI_EXPAND_BIG
+  #define SPH_HAMSI_EXPAND_BIG 4
 #endif
 
 #include "blake.cl"
