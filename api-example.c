@@ -8,7 +8,7 @@
  */
 
 /* Compile:
- *   gcc api-example.c -Icompat/jansson-2.5 -Icompat/libusb-1.0/libusb -o sgminer-api
+ *   gcc api-example.c -Isubmodules/jansson -Icompat/libusb-1.0/libusb -o sgminer-api
  */
 
 #include "config.h"

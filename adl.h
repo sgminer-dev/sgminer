@@ -15,8 +15,9 @@ float gpu_vddc(int gpu);
 int gpu_activity(int gpu);
 int gpu_fanspeed(int gpu);
 int gpu_fanpercent(int gpu);
+extern int set_powertune(int gpu, int iPercentage);
 bool gpu_stats(int gpu, float *temp, int *engineclock, int *memclock, float *vddc,
-	       int *activity, int *fanspeed, int *fanpercent, int *powertune);
+               int *activity, int *fanspeed, int *fanpercent, int *powertune);
 void change_gpusettings(int gpu);
 void gpu_autotune(int gpu, enum dev_enable *denable);
 void clear_adl(int nDevs);

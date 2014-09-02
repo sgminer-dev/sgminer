@@ -4,7 +4,6 @@
 
 See directory `kernel`.
 
-
 ## Parameter configuration
 
 ### Common
@@ -16,7 +15,9 @@ such as (but not necessarily limited to) `thread-concurrency`, `intensity`,
 A description of how to do this is available in `doc/MINING.md`.
 
 
-### alexkarnew
+### Scrypt kernels
+
+#### alexkarnew
 
 Alexey Karimov's optimised kernel, based on `ckolivas`. For Catalyst >=13.4.
 
@@ -25,7 +26,7 @@ Only supports `vectors=1`.
 [Announcement](https://litecointalk.org/index.php?topic=4082.0).
 
 
-### alexkarold
+#### alexkarold
 
 Alexey Karimov's optimised kernel, based on `ckolivas`. For Catalyst <13.4.
 
@@ -34,14 +35,14 @@ Only supports `vectors=1`.
 [Announcement](https://litecointalk.org/index.php?topic=4082.0).
 
 
-### bufius
+#### bufius
 
 Bufius' optimised kernel, based on `ckolivas`. Merged from vertminer.
 
 Only supports `vectors=1` and `lookup-gap` 2, 4 or 8.
 
 
-### ckolivas
+#### ckolivas
 
 The original Colin Percival `scrypt` kernel, maintained for a long time by
 Con Kolivas in `cgminer` and renamed to reflect the fact.
@@ -49,14 +50,14 @@ Con Kolivas in `cgminer` and renamed to reflect the fact.
 Only supports `vectors=1`.
 
 
-### psw
+#### psw
 
 Pavel Semjanov optimised kernel, SHA256 speedups.
 
 [Announcement](https://bitcointalk.org/index.php?topic=369858.0).
 
 
-### zuikkis
+#### zuikkis
 
 Zuikkis' optimised kernel, based on `ckolivas`.
 
@@ -64,6 +65,22 @@ Only supports `vectors=1` and `lookup-gap=2`.
 
 [Announcement](https://litecointalk.org/index.php?topic=6058.msg90873#msg90873).
 
+### Other kernels
+
+#### darkcoin
+#### darkcoin-mod
+#### animecoin
+#### fuguecoin
+#### groestlcoin
+#### inkcoin
+#### marucoin
+#### marucoin-mod
+#### myriadcoin-groestl
+#### quarkcoin
+#### qubitcoin
+#### sifcoin
+#### twecoin
+#### maxcoin
 
 ## Submitting new kernels
 

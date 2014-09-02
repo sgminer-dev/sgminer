@@ -28,23 +28,27 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v100</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v100</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v100</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v100</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -90,7 +94,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>USE_SSE2;WIN32;NDEBUG;_CONSOLE;PTW32_STATIC_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;WIN32_LEAN_AND_MEAN</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\compat\jansson-2.5\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\submodules\jansson\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -100,10 +104,13 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x86;$(ProjectDir)jansson\Debug\x86</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <OptimizeReferences>false</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <LinkTimeCodeGeneration>
+      </LinkTimeCodeGeneration>
+      <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -111,12 +118,14 @@
       </Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>del /f "$(OutDir)*.exe"
-del /f "$(OutDir)*.dll"
+      <Command>
+        del /f "$(OutDir)*.exe"
+        del /f "$(OutDir)*.dll"
 
-type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
-FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
-exit 0</Command>
+        type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
+        FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+        exit 0
+      </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -127,7 +136,7 @@ exit 0</Command>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_M_AMD64;_AMD64_;WIN32;_WIN64;NDEBUG;_CONSOLE;PTW32_STATIC_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;WIN32_LEAN_AND_MEAN</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\compat\jansson-2.5\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\submodules\jansson\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -137,10 +146,13 @@ exit 0</Command>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x64;$(ProjectDir)jansson\Debug\x64</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <OptimizeReferences>false</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <LinkTimeCodeGeneration>
+      </LinkTimeCodeGeneration>
+      <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -148,12 +160,14 @@ exit 0</Command>
       </Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>del /f "$(OutDir)*.exe"
-del /f "$(OutDir)*.dll"
+      <Command>
+        del /f "$(OutDir)*.exe"
+        del /f "$(OutDir)*.dll"
 
-type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
-FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
-exit 0</Command>
+        type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
+        FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+        exit 0
+      </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -166,7 +180,7 @@ exit 0</Command>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_CONSOLE;WIN32;PTW32_STATIC_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;WIN32_LEAN_AND_MEAN</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\compat\jansson-2.5\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\submodules\jansson\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
@@ -177,9 +191,11 @@ exit 0</Command>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>false</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x86;$(ProjectDir)jansson\Release\x86</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
+      <LinkTimeCodeGeneration>
+      </LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -187,12 +203,14 @@ exit 0</Command>
       </Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>del /f "$(OutDir)*.exe"
-del /f "$(OutDir)*.dll"
+      <Command>
+        del /f "$(OutDir)*.exe"
+        del /f "$(OutDir)*.dll"
 
-type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
-FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
-exit 0</Command>
+        type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
+        FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+        exit 0
+      </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -205,7 +223,7 @@ exit 0</Command>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>_M_AMD64;_AMD64_;WIN32;_WIN64;PTW32_STATIC_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;WIN32_LEAN_AND_MEAN</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\compat\jansson-2.5\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..;$(ProjectDir)dist\include\;$(ProjectDir)..\submodules\jansson\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
@@ -217,7 +235,7 @@ exit 0</Command>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>false</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)dist\lib\x64;$(ProjectDir)jansson\Release\x64</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
       <LinkTimeCodeGeneration>
@@ -229,66 +247,126 @@ exit 0</Command>
       </Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>del /f "$(OutDir)*.exe"
-del /f "$(OutDir)*.dll"
+      <Command>
+        del /f "$(OutDir)*.exe"
+        del /f "$(OutDir)*.dll"
 
-type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
-FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
-exit 0</Command>
+        type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
+        FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+        exit 0
+      </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\adl.c">
-      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</WholeProgramOptimization>
-    </ClCompile>
+    <ClCompile Include="..\adl.c" />
     <ClCompile Include="..\algorithm.c" />
+    <ClCompile Include="..\algorithm\animecoin.c" />
+    <ClCompile Include="..\algorithm\bitblock.c" />
+    <ClCompile Include="..\algorithm\talkcoin.c" />
+    <ClCompile Include="..\algorithm\x14.c" />
     <ClCompile Include="..\api.c" />
     <ClCompile Include="..\ccan\opt\helpers.c" />
     <ClCompile Include="..\ccan\opt\opt.c" />
     <ClCompile Include="..\ccan\opt\parse.c" />
     <ClCompile Include="..\ccan\opt\usage.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\dump.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\error.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\hashtable.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\load.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\memory.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\pack_unpack.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\strbuffer.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\strconv.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\utf.c" />
-    <ClCompile Include="..\compat\jansson-2.5\src\value.c" />
+    <ClCompile Include="..\algorithm\darkcoin.c" />
+    <ClCompile Include="..\config_parser.c" />
     <ClCompile Include="..\driver-opencl.c" />
     <ClCompile Include="..\findnonce.c" />
+    <ClCompile Include="..\algorithm\fuguecoin.c" />
+    <ClCompile Include="..\algorithm\groestlcoin.c" />
     <ClCompile Include="..\hexdump.c" />
+    <ClCompile Include="..\algorithm\inkcoin.c" />
     <ClCompile Include="..\logging.c" />
+    <ClCompile Include="..\algorithm\marucoin.c" />
+    <ClCompile Include="..\algorithm\maxcoin.c" />
+    <ClCompile Include="..\algorithm\myriadcoin-groestl.c" />
     <ClCompile Include="..\ocl.c" />
+    <ClCompile Include="..\ocl\binary_kernel.c" />
+    <ClCompile Include="..\ocl\build_kernel.c" />
+    <ClCompile Include="..\ocl\patch_kernel.c" />
     <ClCompile Include="..\pool.c" />
-    <ClCompile Include="..\scrypt.c" />
+    <ClCompile Include="..\algorithm\quarkcoin.c" />
+    <ClCompile Include="..\algorithm\qubitcoin.c" />
+    <ClCompile Include="..\algorithm\scrypt.c" />
     <ClCompile Include="..\sgminer.c" />
-    <ClCompile Include="..\sha2.c" />
+    <ClCompile Include="..\algorithm\sifcoin.c" />
+    <ClCompile Include="..\sph\aes_helper.c" />
+    <ClCompile Include="..\sph\blake.c" />
+    <ClCompile Include="..\sph\bmw.c" />
+    <ClCompile Include="..\sph\cubehash.c" />
+    <ClCompile Include="..\sph\echo.c" />
+    <ClCompile Include="..\sph\fugue.c" />
+    <ClCompile Include="..\sph\groestl.c" />
+    <ClCompile Include="..\sph\hamsi.c" />
+    <ClCompile Include="..\sph\hamsi_helper.c" />
+    <ClCompile Include="..\sph\jh.c" />
+    <ClCompile Include="..\sph\keccak.c" />
+    <ClCompile Include="..\sph\luffa.c" />
+    <ClCompile Include="..\sph\panama.c" />
+    <ClCompile Include="..\sph\sha2.c" />
+    <ClCompile Include="..\sph\sha2big.c" />
+    <ClCompile Include="..\sph\shabal.c" />
+    <ClCompile Include="..\sph\shavite.c" />
+    <ClCompile Include="..\sph\simd.c" />
+    <ClCompile Include="..\sph\skein.c" />
+    <ClCompile Include="..\algorithm\twecoin.c" />
+    <ClCompile Include="..\sph\whirlpool.c" />
     <ClCompile Include="..\util.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\adl.h" />
     <ClInclude Include="..\algorithm.h" />
+    <ClInclude Include="..\algorithm\animecoin.h" />
+    <ClInclude Include="..\algorithm\bitblock.h" />
+    <ClInclude Include="..\algorithm\talkcoin.h" />
+    <ClInclude Include="..\algorithm\x14.h" />
+    <ClInclude Include="..\api.h" />
     <ClInclude Include="..\arg-nonnull.h" />
     <ClInclude Include="..\bench_block.h" />
     <ClInclude Include="..\c++defs.h" />
     <ClInclude Include="..\compat.h" />
-    <ClInclude Include="..\compat\jansson-2.5\src\hashtable.h" />
-    <ClInclude Include="..\compat\jansson-2.5\src\jansson.h" />
-    <ClInclude Include="..\compat\jansson-2.5\src\jansson_private.h" />
-    <ClInclude Include="..\compat\jansson-2.5\src\strbuffer.h" />
-    <ClInclude Include="..\compat\jansson-2.5\src\utf.h" />
+    <ClInclude Include="..\algorithm\darkcoin.h" />
+    <ClInclude Include="..\config_parser.h" />
     <ClInclude Include="..\driver-opencl.h" />
     <ClInclude Include="..\elist.h" />
     <ClInclude Include="..\findnonce.h" />
+    <ClInclude Include="..\algorithm\fuguecoin.h" />
+    <ClInclude Include="..\algorithm\groestlcoin.h" />
+    <ClInclude Include="..\algorithm\inkcoin.h" />
     <ClInclude Include="..\logging.h" />
+    <ClInclude Include="..\algorithm\marucoin.h" />
+    <ClInclude Include="..\algorithm\maxcoin.h" />
     <ClInclude Include="..\miner.h" />
+    <ClInclude Include="..\algorithm\myriadcoin-groestl.h" />
     <ClInclude Include="..\ocl.h" />
+    <ClInclude Include="..\ocl\binary_kernel.h" />
+    <ClInclude Include="..\ocl\build_kernel.h" />
+    <ClInclude Include="..\ocl\patch_kernel.h" />
     <ClInclude Include="..\pool.h" />
-    <ClInclude Include="..\scrypt.h" />
-    <ClInclude Include="..\sha2.h" />
+    <ClInclude Include="..\algorithm\quarkcoin.h" />
+    <ClInclude Include="..\algorithm\qubitcoin.h" />
+    <ClInclude Include="..\algorithm\scrypt.h" />
+    <ClInclude Include="..\algorithm\sifcoin.h" />
+    <ClInclude Include="..\sph\sph_blake.h" />
+    <ClInclude Include="..\sph\sph_bmw.h" />
+    <ClInclude Include="..\sph\sph_cubehash.h" />
+    <ClInclude Include="..\sph\sph_echo.h" />
+    <ClInclude Include="..\sph\sph_fugue.h" />
+    <ClInclude Include="..\sph\sph_groestl.h" />
+    <ClInclude Include="..\sph\sph_hamsi.h" />
+    <ClInclude Include="..\sph\sph_jh.h" />
+    <ClInclude Include="..\sph\sph_keccak.h" />
+    <ClInclude Include="..\sph\sph_luffa.h" />
+    <ClInclude Include="..\sph\sph_panama.h" />
+    <ClInclude Include="..\sph\sph_sha2.h" />
+    <ClInclude Include="..\sph\sph_shabal.h" />
+    <ClInclude Include="..\sph\sph_shavite.h" />
+    <ClInclude Include="..\sph\sph_simd.h" />
+    <ClInclude Include="..\sph\sph_skein.h" />
+    <ClInclude Include="..\sph\sph_types.h" />
+    <ClInclude Include="..\algorithm\twecoin.h" />
+    <ClInclude Include="..\sph\sph_whirlpool.h" />
     <ClInclude Include="..\uthash.h" />
     <ClInclude Include="..\util.h" />
     <ClInclude Include="..\warn-on-use.h" />

@@ -4,6 +4,7 @@
 #ifdef WIN32
 #include "config.h"
 #include <errno.h>
+#include <fcntl.h>
 #include <time.h>
 #include <pthread.h>
 #include <sys/time.h>
@@ -12,6 +13,29 @@
 #include "util.h"
 
 #include <windows.h>
+
+
+#if !defined S_ISDIR && defined S_IFDIR
+# define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
+#endif
+#if !S_IRUSR && S_IREAD
+# define S_IRUSR S_IREAD
+#endif
+#if !S_IRUSR
+# define S_IRUSR 00400
+#endif
+#if !S_IWUSR && S_IWRITE
+# define S_IWUSR S_IWRITE
+#endif
+#if !S_IWUSR
+# define S_IWUSR 00200
+#endif
+#if !S_IXUSR && S_IEXEC
+# define S_IXUSR S_IEXEC
+#endif
+#if !S_IXUSR
+# define S_IXUSR 00100
+#endif
 
 #ifndef HAVE_LIBWINPTHREAD
 static inline int nanosleep(const struct timespec *req, struct timespec *rem)
@@ -69,6 +93,30 @@ static inline int setpriority(__maybe_unused int which, __maybe_unused int who, 
 	/* FIXME - actually do something */
 	return 0;
 }
+
+#ifndef HAVE_STRSEP
+static inline char *strsep(char **stringp, const char *delim)
+{
+  char *res;
+
+  if (!stringp || !*stringp || !**stringp) {
+    return NULL;
+  }
+
+  res = *stringp;
+  while(**stringp && !strchr(delim, **stringp)) {
+    ++(*stringp);
+  }
+
+  if (**stringp) {
+    **stringp = '\0';
+    ++(*stringp);
+  }
+
+  return res;
+}
+#endif
+
 
 typedef unsigned long int ulong;
 typedef unsigned short int ushort;

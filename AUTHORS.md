@@ -2,11 +2,19 @@
 
 ## Core
 
-* Scrypt-only refactor: Noel Maersk <veox at wemakethings dot net> LfxRFgXzA13TSTxgFGUFEtumv5ShGzAmLw
-* Core: Martin Danielsen <kalroth {at} gmail _dot_ com> 1DNBcSEENBwDKrcTyTW61ezWhzsPy5imkn
-* Core: Con Kolivas <kernel [at] kolivas {dot} org> 15qSxP1SQcUX3o4nhkfdbgyoWEFMomJ4rZ
-* Core: Luke Dashjr <luke-jr+cgminer @at@ utopios .dot. org> 1QATWksNFGeUJCWBrN4g6hGM178Lovm7Wh
-* API: Andrew Smith <kan0i {at} kano-kun [dot] net> 1Jjk2LmktEQKnv8r2cZ9MvLiZwZ9gxabKm
+* Jan Berdajs <mrbrdo at mrbrdo dot net> 15bULC8snaKAMeFb3xBmmhbWj1xyTmBUfm
+* Noel Maersk <veox at wemakethings dot net> 12jF1VExtmmMu8D36vo4Y4CYqLK5yCtLC4
+* troky <troky2001 at yahoo dot com> 15hMFjU8xQhiFzQ19JSaX2y7SV2GAoTuXs
+* Yann St.Arnaud <ystarnaud at gmail dot com> 1SLixz2vRvjdpzZTep4Tiqs82Jc28tc6J
+* lasybear <**FIXME**>
+* Luke Dashjr <luke-jr+cgminer @at@ utopios .dot. org> 1QATWksNFGeUJCWBrN4g6hGM178Lovm7Wh
+* Andrew Smith <kan0i {at} kano-kun [dot] net> 1Jjk2LmktEQKnv8r2cZ9MvLiZwZ9gxabKm
+
+
+## Core (history)
+
+* Con Kolivas <kernel [at] kolivas {dot} org> 15qSxP1SQcUX3o4nhkfdbgyoWEFMomJ4rZ
+* Martin Danielsen <kalroth {at} gmail _dot_ com> 1DNBcSEENBwDKrcTyTW61ezWhzsPy5imkn
 
 
 ## Cross-platform support
@@ -14,11 +22,13 @@
 * MinGW (Windows native): Drogean <Drogean>
 * MinGW (Linux cross-compilation): Wolf` <wolf9466>
 * MinGW (Linux cross-compilation): tonobitc <tonobitc>
-* MSVS2010: troky <troky2001 at yahoo dot com> Letoqz4yEnJxjWw9B7Ysn8h9VDQTMDnT29
+* MSVS2010: troky <troky2001 at yahoo dot com>
 * Cygwin: Markus Peloquin <markuspeloquin>
 
 
 ## OpenCL kernels
+
+**FIXME**: this section is outdated.
 
 All current kernels are based on `scrypt`, originally by Colin Percival,
 updated by many others.
@@ -32,7 +42,6 @@ updated by many others.
 
 ## Testing, bug fixes, improvements
 
-* Hot-switching OpenCL kernel (N-Factor): Jan Berdajs <mrbrdo> 15bULC8snaKAMeFb3xBmmhbWj1xyTmBUfm
 * Michael Fiano <mfiano>
 * Gabriel Devenyi <gdevenyi>
 * Benjamin Herrenschmidt <ozbenh>
@@ -46,9 +55,12 @@ updated by many others.
 
 ...and many others. See:
 
-* [veox/sgminer](https://github.com/veox/sgminer/graphs/contributors)
-
+* [sgminer-dev/sgminer](https://github.com/sgminer-dev/sgminer/graphs/contributors)
 
 ## Legacy
 
 * Original CPU mining software: Jeff Garzik <jgarzik@pobox.com>
+
+## Sponsors and acknowledgments
+
+* nicehash.com - sponsored adding/merging many additional algorithms including X11 and Keccak, stratum extranonce

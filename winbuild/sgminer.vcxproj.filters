@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -9,11 +9,23 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Libraries">
-      <UniqueIdentifier>{f88c4590-fe1f-4c7e-ac04-b7ee56ff742c}</UniqueIdentifier>
+    <Filter Include="Header Files\sph">
+      <UniqueIdentifier>{8ff97542-2c8c-456f-9b09-ff1e3910e80c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Libraries\jansson">
-      <UniqueIdentifier>{d18d03ff-8391-466a-9992-6701c4dbf0f3}</UniqueIdentifier>
+    <Filter Include="Source Files\sph">
+      <UniqueIdentifier>{7bfc5c04-e7b8-4d6c-973c-2a0ed07b2a54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ocl">
+      <UniqueIdentifier>{ab693ca5-5746-44aa-8fd8-5291a2b5a766}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ocl">
+      <UniqueIdentifier>{bd01bdbc-b9ea-446c-93d5-b5199bf47835}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\algorithm">
+      <UniqueIdentifier>{ab073c91-df9c-4d43-86e8-1469a8ff1571}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\algorithm">
+      <UniqueIdentifier>{8cc454ef-b019-4f41-bb22-2dd8941888c8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -38,13 +50,7 @@
     <ClCompile Include="..\ocl.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\scrypt.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\sgminer.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\sha2.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\util.c">
@@ -62,41 +68,131 @@
     <ClCompile Include="..\ccan\opt\helpers.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\compat\jansson-2.5\src\dump.c">
-      <Filter>Libraries\jansson</Filter>
-    </ClCompile>
-    <ClCompile Include="..\compat\jansson-2.5\src\error.c">
-      <Filter>Libraries\jansson</Filter>
-    </ClCompile>
-    <ClCompile Include="..\compat\jansson-2.5\src\hashtable.c">
-      <Filter>Libraries\jansson</Filter>
-    </ClCompile>
-    <ClCompile Include="..\compat\jansson-2.5\src\load.c">
-      <Filter>Libraries\jansson</Filter>
-    </ClCompile>
-    <ClCompile Include="..\compat\jansson-2.5\src\memory.c">
-      <Filter>Libraries\jansson</Filter>
-    </ClCompile>
-    <ClCompile Include="..\compat\jansson-2.5\src\pack_unpack.c">
-      <Filter>Libraries\jansson</Filter>
-    </ClCompile>
-    <ClCompile Include="..\compat\jansson-2.5\src\strbuffer.c">
-      <Filter>Libraries\jansson</Filter>
-    </ClCompile>
-    <ClCompile Include="..\compat\jansson-2.5\src\strconv.c">
-      <Filter>Libraries\jansson</Filter>
-    </ClCompile>
-    <ClCompile Include="..\compat\jansson-2.5\src\utf.c">
-      <Filter>Libraries\jansson</Filter>
-    </ClCompile>
-    <ClCompile Include="..\compat\jansson-2.5\src\value.c">
-      <Filter>Libraries\jansson</Filter>
-    </ClCompile>
     <ClCompile Include="..\pool.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\algorithm.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\aes_helper.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\blake.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\bmw.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\cubehash.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\echo.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\fugue.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\groestl.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\hamsi.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\hamsi_helper.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\jh.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\keccak.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\luffa.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\panama.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\sha2.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\sha2big.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\shavite.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\simd.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\skein.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ocl\binary_kernel.c">
+      <Filter>Source Files\ocl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ocl\build_kernel.c">
+      <Filter>Source Files\ocl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ocl\patch_kernel.c">
+      <Filter>Source Files\ocl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\animecoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\darkcoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\fuguecoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\groestlcoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\inkcoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\marucoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\maxcoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\myriadcoin-groestl.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\quarkcoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\qubitcoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\scrypt.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\sifcoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\twecoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\config_parser.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\talkcoin.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\bitblock.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\x14.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\whirlpool.c">
+      <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\sph\shabal.c">
+      <Filter>Source Files\sph</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -133,12 +229,6 @@
     <ClInclude Include="..\ocl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\scrypt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\sha2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\uthash.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -151,21 +241,6 @@
     <ClInclude Include="dist\include\config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\compat\jansson-2.5\src\hashtable.h">
-      <Filter>Libraries\jansson</Filter>
-    </ClInclude>
-    <ClInclude Include="..\compat\jansson-2.5\src\jansson.h">
-      <Filter>Libraries\jansson</Filter>
-    </ClInclude>
-    <ClInclude Include="..\compat\jansson-2.5\src\jansson_private.h">
-      <Filter>Libraries\jansson</Filter>
-    </ClInclude>
-    <ClInclude Include="..\compat\jansson-2.5\src\strbuffer.h">
-      <Filter>Libraries\jansson</Filter>
-    </ClInclude>
-    <ClInclude Include="..\compat\jansson-2.5\src\utf.h">
-      <Filter>Libraries\jansson</Filter>
-    </ClInclude>
     <ClInclude Include="dist\include\winbuild.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -174,6 +249,123 @@
     </ClInclude>
     <ClInclude Include="..\algorithm.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_types.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_skein.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_simd.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_shavite.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_sha2.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_panama.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_luffa.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_keccak.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_jh.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_hamsi.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_groestl.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_fugue.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_echo.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_cubehash.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_bmw.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_blake.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ocl\binary_kernel.h">
+      <Filter>Header Files\ocl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ocl\build_kernel.h">
+      <Filter>Header Files\ocl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ocl\patch_kernel.h">
+      <Filter>Header Files\ocl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\animecoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\darkcoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\fuguecoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\groestlcoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\inkcoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\marucoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\maxcoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\myriadcoin-groestl.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\quarkcoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\qubitcoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\scrypt.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\sifcoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\twecoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\api.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\config_parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\talkcoin.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\bitblock.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\x14.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_whirlpool.h">
+      <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\sph\sph_shabal.h">
+      <Filter>Header Files\sph</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
