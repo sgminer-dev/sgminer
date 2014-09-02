@@ -1,7 +1,8 @@
-Updated on tor  2 sep 2014 22:34:08 CEST.
+Updated on tor  2 sep 2014 22:34:56 CEST.
 If working with git, use `git log --oneline --decorate` for latest change log.
 ------------------------------------------------------------------------
-447dd68 (HEAD, master) Merge branch 'v5_0'
+7a16f78 (HEAD, master) bump version to 5.0.0, update changelog
+447dd68 Merge branch 'v5_0'
 92a9250 (origin/master, origin/HEAD) Merge pull request #361 from Phoenix48/patch-1
 5bf26e7 Update cygwin-build.txt
 3ddffaa (origin/v5_0, v5_0) Compatibility fix.
