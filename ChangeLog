@@ -1,33 +1,292 @@
-Updated on Fri Jun 27 18:24:12 EEST 2014.
+Updated on tor  2 sep 2014 22:34:08 CEST.
 If working with git, use `git log --oneline --decorate` for latest change log.
 ------------------------------------------------------------------------
-92d2256 (HEAD, tag: 4.2.2, sgminer-dev/master, origin/master, origin/HEAD, master) Bump version to 4.2.2.
+447dd68 (HEAD, master) Merge branch 'v5_0'
+92a9250 (origin/master, origin/HEAD) Merge pull request #361 from Phoenix48/patch-1
+5bf26e7 Update cygwin-build.txt
+3ddffaa (origin/v5_0, v5_0) Compatibility fix.
+dbe0263 Fixed device display when both --device and --remove-disabled options are used.
+82b5320 Check if mining threads are initialized before restarting them.
+5bd2689 Hard reset only when gpu-threads or devices are changed, but not when algorithm is changed. Also a little refactor.
+deacbdd immediately exit threads if doing hard reset
+19fcb5e improve locking to prevent race condition stratum could respond faster than we are able to add the sent share into the hash, which could cause memory leaks
+283e8fb Added coding.md
+e0b3448 Fixed compatilibilty issues on MSVS.
+a408e85 Fix API profile list
+f8fcbbc Config writer fix
+8b44007 Fixed compatilibilty issues on MSVS.
+72590bd Fix potential division by 0 if nfactor is not set
+b4dd3ae Forgot include needed for pthread_kill
+04722e2 sshare could have already been free'd by parse_stratum_response in stratum_rthread by the point we reach this code - possible segfault fixed
+2d23a7d Added missing permission flags to Windows build #333
+4a9ee47 Add log-file option to automatically redirect stderr to a file From bfgminer https://github.com/luke-jr/bfgminer/commit/b0240dd004823cb1834b21508e4b621e9e7574cf
+0bd7a9f After cancelling a thread (unless it's detached, but mining threads aren't), it is always necessary to join the thread so the system will release resources. This also simplifies kill_mining a bit.
+e33590f Thread was never joined because thr_info_cancel sets pth to 0. Should improve mining thread hard reset.
+363f52d Write to both stderr and console within same console lock "session" From https://github.com/luke-jr/bfgminer/commit/7dd230cd8ff76737735fa981fd7110dd9f1a70fa
+2d66c44 Add debug-log documentation and enable it by default
+f3336dc Update README.md
+eb6f47e Add debug-log setting to log everything when stderr is redirected to file Based on code from BFGMiner
+485ec9a rename poorly named variable
+a96048e Update configuration.md
+855adf1 Merge pull request #324 from Elbandi/v5_0-stylefix
+0a66d49 Fix x14 algo code style
+e64291e Fix bitblock algo code style
+8001dc0 Algorithm alias fix
+b6aefc6 Fixed segfault when adding pool profile via ncurses GUI #322
+fdd4e84 Update README.md
+94607ba Merge pull request #310 from sgminer-dev/v5_0-jansson
+2902429 Add algorithm aliases x11, x13, x15, x15mod, nist5, keccak Also refactor aliasing
+30d0a9b Deprecating "difficulty-multiplier" setting
+e8f1089 Merge pull request #292 from Elbandi/v5_0
+03daaff Merge pull request #313 from davedean/master
+c196dfd MSVS2010 project update.
+8567370 Merge pull request #316 from Elbandi/v5_0-leakfix
+a39316d Fix nonce1 and sessionid memory leak
+e15f354 Updated AUTHORS.md
+74d4cfa (origin/v5_0-jansson) Added Janson version string to log output.
+0950af7 Documentation update.
+21d3ad4 added sgminer.1 manpage file, draft
+ec8ba02 nicehash deserve mention for providing bitcoins for stimulation of development. section for future sponsors or special acknowledgments
+6c60ce2 Fix kernel code style: every hash has own codeblocks
+db40274 convert tabs to spaces in kernel files and remove whitespace from lineends
+27709ce Remove now unused temporary fix for algo switch
+171e5dd Update configuration.md
+69ab3a8 Changed the way hard restart is done for better compatibility with windows pthread.
+a0e95b3 some improvements for the zero-hashrate fix, and more debug output
+b3d6e5b Update configuration.md
+cf4aa31 Switcher thread fix
+66ec621 Added Jansson as submodule.
+ecdb8ac Merge pull request #309 from Elbandi/v5_0-removeunused
+55cd3ec Hangup fix
+65a1509 Remove unused diff_nonce
+d211d5b Update configuration.md
+2df1924 Update configuration.md
+16361a6 Update configuration.md
+f3a773f Merge pull request #307 from sgminer-dev/v5_0-x15
+9e515ab MSVS fix.
+dc3ec79 Thread info struct should be initialized/allocated for disabled devices, too.
+47c6034 Cleanup
+22c34fb Old Kernel Fix
+5c9126f X14 Implementation
+e064754 Hamsi fix
+e234b2d X13 Fix
+bb667fe Remove old files
+85fa163 Fixed marucoin mod
+12a2acc MSVC X15 commit
+ab8be24 Create whirlpool.cl
+81bcc15 Create shabal.cl
+847d454 Add bitblock files to solution
+e78d444 Create hamsi_helper.cl
+4be3039 File too big .. can't edit
+c24cd98 Optimized a bit
+80d5195 Create bitblockold.cl
+348c974 Create bitblock.cl
+69e3282 Create hamsi_helper_old.cl
+fbcde31 Create hamsi_old.cl
+84b21e0 bitblock header
+99abe7e Bitblock kernel
+fd417c0 Add shabal.c and whirlpool.c to source list
+63153e6 Whirlpool algo
+9711682 Whirlpool header
+f1f5046 Shabal header
+b728a32 Shabal algo
+52b4dab Add bitblock to source list
+18e0ed0 Add BitBlock kernel
+6f8d38e Remote config files
+1c2de13 fix broken disabled devices when remove-disabled is set
+8f53b7c safer
+976873b more locks for devices
+d9b1f20 unused preprocessor directive
+50483e3 spaces/indent
+92deefc Fix bad lock
+40894db Changing disabled devices on pool switch is not possible if remove-disabled is set (enabled)
+7507790 GPUs cannot be hotplugged
+7f04513 Refactor and stability improvements when restarting threads enable_device should not modify mining_threads because this is unsafe after initialization. it is also not necessary in most cases where it is currently used, except in initialization refactored some of the new restart_mining_threads code and incorporated above change for better stability properly handle disabled devices in restart_mining_threads when opt_removedisabled is set total_devices was set incorrectly if the disabled devices were not at the end of devices, so total_devices is now always the number of detected devices, since that is what is in the devices variable
+be7d47d add lock when accessing mining_threads
+028f19e remove old commented-out code
+ba7c489 Remove obsolete benchmark mode This mode/setting is unusable left-over from SHA-256 cgminer. It does not work with Scrypt or other algorithms that are used in sgminer. Removed in single commit so it can be used as reference, if benchmark mode is added in the future.
+9d54637 Fix HW Issue at startup
+3ae5f97 Algorithm Switcher Update
+10fcbd3 tools: typo in update_changelog.sh.
+63afb25 tools: typo in update_changelog.sh.
+0677b95 Merge branch 'master' into v5_0
+92d2256 (tag: 4.2.2) Bump version to 4.2.2.
 ae94126 tools: update_changelog.sh and entire ChangeLog.
-5cc43f2 (ystarnaud/master) misc: ChangeLog typo.
+82518d6 Merge pull request #291 from Elbandi/v5_0
+cc699e1 Fix typo
+044bf70 Nfactor fix
+78014ab work queue: verbose log as to why staged work is being discarded.
+7024d14 Fix high fan issue at startup/algo switch
+f0527d3 Fix high fan issue at startup/algo switch
+99082f4 GPU initialization update
+212009a GPU Initialization update
+7628773 Fixed GPU initialization
+e9b8299 60 second quit fix after algo switch
+b91f2d3 60 second quit fix after algo switch
+3a728e6 Fix possible config issue
+416c6b6 Update AUTHORS.md
+c78f14d Update windows-build.txt
+0bdb7d3 Fix issue compiling in mingw32
+4278c87 Fixed kernel problems under 13.12
+8dea195 Merge pull request #281 from Elbandi/v5_0
+707ddd6 Merge pull request #282 from ystarnaud/x11mod
+ea1de32 Updated x11 kernel
+2925ea0 Use macros in queue_talkcoin_mod_kernel
+1914cef Fixed x13 and other issues
+298a752 Merge remote-tracking branch 'upstream/v5_0' into x11mod
+f6adfd5 Updated x13 kernel
+d7d387a MSVS fix for talkcoin commit.
+e96f279 Sync with v5_0
+5605575 Whitespace and indentation fix
+056a9f7 Merge pull request #272 from lasybear/v5_0
+1fb86b3 Update configuration.md
+5e8bba2 Update configuration.md
+1965131 Moved strsep() implementation from winbuild.h to compat.h
+3975f04 Updated x13 kernel
+83b2ac9 Compatibility update for MSVS
+3f83f22 Moved (reverted) some struct definitions to api.c. MSVS doesn't like them in .h
+85a6adf MSVS project update for config_parser commit
+513307c config: remove commented-out old config-loading code.
+76dd32a config: one less branching in load_default_profile(), some whitespace.
+ef722e6 Fix to apply correct GPU engine clock or range
+5430d1e config: be a little less cryptic on what's going on in load_default_profile().
+0886740 Merge branch 'config-parser' into v5_0
+6228694 config: conflict with v5_0 (develop) branch, opt_algorithm was changed from a pointer.
+0b85c05 misc: update AUTHORS and NEWS with changes from branch config-parser (and a few others).
+5309da5 config: remove unused variable.
+4021704 Update configuration.md
+3042745 Update API.md (3 squashed commits).
+e7881ff Update configuration.md
+bd54c59 Updated example.conf
+fae56ce Added API function to change pool profile
+58def44 Fixed a segfault issue writing config file
+ea1aba0 API Update
+832ac82 Updated API functionality
+4c3352b Update configuration.md (19 squashed commits).
+d9b4798 More options added
+9fe5272 Updated config writer
+03379f9 Fixed whitespaces
+9faa8fa Updated the config parser
+14d2b94 Merge pull request #274 from Elbandi/v5_0
+1f76f9b Use macros in queue_kernel functions
+3b29847 Made opt_algorithm to simple variable
+e86b72e Remove unused enum
+c0d79fa Refactored kernel source loading (missing / delimiter). Added more debug messages.
+b2e500e Fixed pool name display in rejected share notice when pool name is longer than 20 chars.
+a85e669 Fix compatibility with AMD drivers 14.6
+8ad1d91 Fixed MSVS project bug introduced in d83d7bd386
+e7228b2 talkcoin-mod
+c924433 Lock tracking code fixed for MSVS.
+5ba1772 algorithm spaces/indentation fix
+60a7902 MSVS project cleanup.
+d83d7bd Removed original sha2 and made code use sph_sha2
+f9a8e66 Fixed crash when changing display modes (#237)
+cd9864f Removed unneccessary code introduced in 954c0e6
+24fa44e Make sure log string is null-terminated.
+fd35c77 Kernel include path fix.
+6971ce6 logging spaces/indentation
+cbc2282 Removed trailing slashes from folder paths to avoid kernel building under Windows (MSVS).
+9f6bf16 Refactored logging. Increased default log buffer size.
+d8d8ba8 adl spaces indentation
+d818014 index was into cgpu threads, not into global mining threads
+3cbfe25 fix bug where device is not restarted after overheating and cooling off
+280a64e Squelch "Network diff set" unless --more-notices
+25d7d42 convert tabs to spaces in most commonly modified files
+2ea8f5d just in case, read-lock devices
+9fdd23e since mining_threads count can change, we need to lock more carefully and get_thread function is not helpful anymore
+2877e8d of course it needs to be a write lock! fixes segfault
+d1f7ef6 is already locked at this point
+954c0e6 fix opt_kernel_path writing over the allocated memory! also some small changes for more robust hard restart
+77c9968 fix compiler warning and indentation
+a5fd98c declare opt_morenotices;
+0f9bf18 Add option --more-notices & shorten stale submit
+ff05aac attempt to fix memory issues when doing curl calls
+ff787bc add docs about the new hamsi-expand-big setting
+e134ab7 move algorithm-specific OpenCL compile options into algorithm_t
+881355d add --hamsi-expand-big option for setting EXPAND_BIG in X13 kernels
+5e3142c remove unused code (mostly intended for ASICs which are not supported in sgminer), fix some compiler warnings
+cabbd73 refactor initCl more
+a564c24 MSVS: project cleanup and reorder.
+d04c096 add ocl/ files to MSVC project
+e5779e1 move algorithms into separate folder
+c25a59b refactor building/loading/saving OpenCL kernel
+04c0aee MSVS: Removed Curl includes from sgminer tree as they are provided from Curl source archive.
+bc1c620 MSVS: Updated libcurl Makefile to v7.37.0
+6152638 fix compile without ADL
+518d6e9 Merge pull request #236 from Blagodarenko/v5_0
+1bca4a7 fix "diff 0.000/0.000"
+1bb452e Fixed kernel path bug introduced in 8198286597
+e3290db Merge pull request #231 from tupieurods/feature
+32824e5 Total uptime drop fix
+5cc43f2 misc: ChangeLog typo.
 411a413 Merge branch 'dejavusec-backport'
-ae7dbca (dejavusec-backport) stratum: parse_notify(): Don't die on malformed bbversion/prev_hash/nbit/ntime.
+ae7dbca stratum: parse_notify(): Don't die on malformed bbversion/prev_hash/nbit/ntime.
 cab6e28 stratum: parse_reconnect(): treat pool-sent URL as untrusted.
 91d29ea Stratum: extract_sockaddr: Truncate overlong addresses rather than stack overflow
 44e7709 Bugfix: initiate_stratum: Ensure extranonce2 size is not negative (which could lead to exploits later as too little memory gets allocated)
-1bd9636 Fixed found blocks calculation.
+1f73ae0 Merge branch 'v5_0' of https://github.com/sgminer-dev/sgminer into v5_0
+8198286 Fixed MSVS build.
+2588394 Added null-termination for kernel build log.
+00d17d1 fix segfault (watchdog thread declares threads sick and tries to restart them while they are already being restarted)
+a5bec2b Merge branch 'dejavusec' into v5_0
+910c360 stratum: parse_notify(): Don't die on malformed bbversion/prev_hash/nbit/ntime.
+4f38732 misc: update AUTHORS.md, add CR to sgminer.c, minor style.
+78cc408 stratum: parse_reconnect(): treat pool-sent URL as untrusted.
+b65574b Stratum: extract_sockaddr: Truncate overlong addresses rather than stack overflow
+bac5831 Bugfix: initiate_stratum: Ensure extranonce2 size is not negative (which could lead to exploits later as too little memory gets allocated)
+f0e47ec make sure reinit_device cannot happen while algo switching, which would probably result in segfault
+e58cd00 fix bug in thread_reportin (watchdog can detect getwork is false before thr->last is set), and a few cosmetic changes
+b8a1c1f MSVS compatibility update.
+68c54c2 Partially reverting e4a4efdb42 to keep MSVS compatibility.
+e4a4efd fix some potential memory leaks, remove a few old unused functions
+87bbca6 only change gpu engine, memclock, fans, if ADL is enabled
+dfaee21 extract marucoin-modold (for old GPUs like Radeon HD 5xxx, e.g. 5850) as separate kernel and add support for it
+064d940 manually merge changes to X11-mod/X13-mod kernels (lazybear)
+8c48255 Code cleanup WATCHDOG_SICK_TIME increase reverted Hardcode in get_work_blockdiff removed
+99db171 show-coindiff option added
+8f10cbf Total uptime length
+d89e53b Extend time to sick state
+ce3624f (tupieurods/v5_0, dev/v5_0) add marucoin-mod (X13-mod)
+2ec0915 (origin/sph_algos, sph_algos) per-pool gpu-fan
+9ec87cf fixes for MSVC2010 to build
+713cfb5 update visual studio project (add new files), update solution (was too new for VS2010 Express)
+33023de more documentation
+f596631 adjust ncurses interface when we change mining_threads count
+6c5ce53 fix compiler warnings
+13cdc33 pool-gpu-threads setting
+19fc4cc remove gpu_threads which is identical to mining_threads. refactor mining threads init code
+24d0ce4 all hail SPACE
+c4f2b78 per-pool gpu-engine, gpu-memclock and thread_concurrency
+06d8e1d extranonce - some cleanup and better description for pool setting
+91a26c4 Protect pool name with lock
+cac833e fix bug which can occur when switching from a very low diff algo (darkcoin) to a high diff algo (scrypt), which caused invalid nonces
+1bd9636 (tupieurods/master, dev/master) Fixed found blocks calculation.
 b08782f Merge pull request #214 from sterlingpickens/patch-1
 812efe4 initial_args warning
 246615f initial_args warning
+5b8adcd add todo comment if we ever fix the broken config parser
+0bbf555 add docs about new pool-specific options, and note about the current bad config parser
+efe1ebd Intensity can be set for each pool individually
+dca83c1 (origin/x11_mod, x11_mod) Add improved Darkcoin (X11-mod) algorithm
+d12cda0 refactor that will come handy soon
+9d9f5b7 Add MaxCoin support
+c0baf79 making new algorithms and other changes merged from sph-sgminer work with current version of sgminer
+93e3a6d Merge branch 'master' into sph
 c46c913 doc: mention optional name/desc/algo for addpool.
 49eae16 (tag: 4.2.1) doc: NEWS.md typo.
 76c462d Bump version to 4.2.1.
 22a3c5b Reverting 83d71da. VS2010 fix.
 addc411 Merge pull request #212 from Fcases/master
 8fe9b0a Added ultratune
-87ece62 (tag: 4.2.0, sourceforge/master) Bump version to 4.2.0.
+87ece62 (tag: 4.2.0) Bump version to 4.2.0.
 9fd94b5 doc: list kernels alphabetically.
 67763bf Merge remote-tracking branch 'bufius/master'
-0b0a3ed (bufius/master) core. include check in ocl.c regarding lookup-gap for kernel 'bufius'
+0b0a3ed core. include check in ocl.c regarding lookup-gap for kernel 'bufius'
 6d5e7bd add credits
 292ede3 format code
 3c14f0a slightly improved performance, works with LG of 2, 4 and 8
 ecfd497 core: remove second-to-last remnants of hotplug.
-e32dcd7 (sling00/master) Mark pool as idle if stratum restart is failed
+e32dcd7 Mark pool as idle if stratum restart is failed
 9867676 Set the pool idle and switch pool, if need
 c469ff9 Disconnect from pool, if auth is failed
 3eb22b2 api: write xintensity and rawintensity using api_add_int().
@@ -43,12 +302,14 @@ eb53e32 misc: add API restart/quit changes to NEWS.md.
 828aa7b misc: update NEWS.md with changes from `api-compatibility` branch.
 2f3e08a Merge branch 'api-compatibility'
 47d00ee api: add missing header.
-5bd5b07 (origin/api-compatibility) RPC: Add "Miner" to version response to include software name along with version
+5bd5b07 RPC: Add "Miner" to version response to include software name along with version
 897ca9f Merge pull request #200 from Elbandi/poolnamefix
 973dcef Use get_pool_name everywhere
 b090ac9 misc: veox can no longer actively maintain this software.
 3d7167c config: improve pool section writing.
 e42f77d misc: moved from veox/sgminer to sgminer-dev/sgminer
+0001517 Merge branch 'marucoin'
+67cf41a Added support for MaruCoin
 7bc0be0 misc: FAQ cleanup.
 b2462e6 misc: Add Michael Fiano <mfiano> to AUTHORS.md.
 f570991 (tag: 4.1.271) api: Bugfix, bump version to 4.1.271, initialise name/desc/algo in addpool() so checks for NULL work.
@@ -65,7 +326,7 @@ da667d6 config: write pool name and description to config.
 942c671 Update miner.h
 b3d483a core: revert two of the changes in Bllacky's pull request #187.
 b457461 Merge pull request #187 from Bllacky/patch-5
-fe64ac9 (bllacky/patch-7) Update sgminer.c
+fe64ac9 Update sgminer.c
 1dc8aab Update sgminer.c
 4f3d2ed misc: set `algorithm` for pool in example.conf.
 aa5f4c7 config: add `const` qualifier to set_pool_{algorithm,nfactor}().
@@ -80,16 +341,21 @@ cc59247 adding mrbrdo to AUTHORS.md for kernel hot-switching
 0793c96 Merge remote-tracking branch 'mrbrdo/poolalgo' into poolalgo
 336135f (tag: 4.1.242) misc: Bump version to 4.1.242.
 b6218e2 config: rename --pool-priority to --priority, --coin to --description.
+7678db6 Fixed problem with stratum support when mining FC, GRS and TWE. Added --difficulty-multiplier parameter for controlling stratum difficulty multiplier.
+769c9f8 Merge branch 'twecoin'
+474091c Added support for Twecoin
 cc735db misc: don't violate reserved identifier naming convention.
 cabb02f log: do not show pool difficulty changes on non-current pool.
 4c64a19 Merge pull request #181 from morenoh149/patch-1
 3c5f0fa made debian apt-get a one-liner
 74ec146 added clarification for dependencies
-cdb817b (mrbrdo/poolalgo_working_2_4_2014) Change algorithm more robustly and faster, previous way was buggy
+cdb817b Change algorithm more robustly and faster, previous way was buggy
 c2131df add support for setting algorithm/nfactor for each pool separately, and fix bugged OpenCL thread cleanup (thread shutdown)
+a683f93 Merge branch 'sifcoin'
+0f88162 Added support for Sifcoin
 9a2b928 misc: update NEWS.md with reference to mailing lists and duplicate entry removal.
 a57f841 Revert "fix for mingw-w64"
-e1b944e (veox-sf/master) doc: update README.md with links to mailing lists.
+e1b944e doc: update README.md with links to mailing lists.
 2724091 doc: minor README wording.
 9e97ccd adl/misc: remove unused lpAdlDisplayInfo (silence GCC warning).
 db0f7cf core: silence gcc warning about sprintf() use in add_pool() - this time for sure.
@@ -115,13 +381,19 @@ e02f111 opencl: reuse strbuf in initCl, get rid of poorly-named numbuf.
 89d6416 log: warn on using kernel zuikkis with lookup-gap != 2.
 7a3a510 log: mention non-user-settable kernel parameters in "Initialising kernel" notice.
 0d89777 opencl: correctly test if no kernel name was specified in config.
+983eae1 Merge branch 'groestlcoin'
+764d870 Added support for GroestlCoin.
+21d928b Fixed problem with invalid stratum difficulty for Quark, AnimeCoin and QubitCoin.
 1b3df7c doc: add note on incognito mode in doc/BUGS.md.
 29cbd1f doc: make the title of your issue report informative.
 57fce98 Merge pull request #159 from troky/api-ext
 9414592 Added pool name to API "pools" command
+a0c0975 Merge branch 'animecoin'
+35744a8 Merge branch 'inkcoin'
 04942b6 Merge pull request #155 from troky/master
+535696a Cleaned up source code.
 9e481eb VS2010 build: Removed kernel name definitions.
-ea9c54a (mrbrdo/kernel-name) misc: update NEWS.md.
+ea9c54a (elbandi/kernel-name) misc: update NEWS.md.
 41f9948 doc: update README.md doc list, rename KERNEL.md to kernel.md.
 9b68b27 doc: update doc/KERNEL.md to reflect the fact that kernel names are no longer hard-coded.
 106dbee core: check if GPU thread is disabled before checking if it's waiting on getwork.
@@ -133,7 +405,8 @@ e0736b1 misc: suggest checking configuration in log message.
 3787f47 misc: add comment on what cgpu_info->{,k}name are.
 c9ccf55 opencl: remove cl_kernels structure definition and mention.
 1333ed5 core: simplify kernel selection code.
-f2934d8 (mrbrdo/master) misc: set `algorithm` in example.conf, set GPU clocks as if there were 3 GPUs.
+e260e79 Added support for FugueCoin
+f2934d8 misc: set `algorithm` in example.conf, set GPU clocks as if there were 3 GPUs.
 ddd3b12 misc: change `poolname` to `name` in example.conf.
 fc902f0 pool: add back --poolname as hidden option for backward compatibility.
 49aef71 Reverting "poolname" to "name".
@@ -146,7 +419,7 @@ bf2ca7b doc: update doc/configuration.md with `algorithm` aliases.
 b80f6c2 misc: fix typo in NEWS.md.
 8079d05 Merge branch 'nfactor'
 e59e4f5 (tag: 4.1.153) Bump version to 4.1.153.
-0db99d6 (mrbrdo/nfactor) algorithm: add nfactor aliases "adaptive-n-factor" and "nscrypt".
+0db99d6 (elbandi/nfactor) algorithm: add nfactor aliases "adaptive-n-factor" and "nscrypt".
 2b75a67 Merge pull request #147 from troky/nfactor
 0e37fc2 Added algorrithm name to "coin" API command. Changed default algo name to "scrypt".
 609b4f0 Merge pull request #145 from troky/master
@@ -155,13 +428,13 @@ e59e4f5 (tag: 4.1.153) Bump version to 4.1.153.
 2ff4234 Merge pull request #143 from Bllacky/patch-4
 e7fbdf3 Removed orphan file.
 f7f5827 Fixed bufsize type.
-e2763e7 (bllacky/patch-4) Update README.txt
+e2763e7 Update README.txt
 549d01e Merge pull request #142 from Bllacky/patch-3
-6a32e17 (bllacky/patch-3) Update README.txt
+6a32e17 Update README.txt
 95e397d Merge pull request #140 from troky/nfactor
 a697c66 Merge pull request #139 from Bllacky/patch-1
 201036d Added algorithm.* and inttypes.h for MSVS build
-0b5aace (bllacky/patch-1) Update README.txt
+0b5aace Update README.txt
 4ed13e4 doc: update configuration.md with latest on --algorithm and --nfactor.
 a3f9b24 core: set default algorithm for when neither --algorithm nor --nfactor are provided.
 c6a2770 core: use global algorithm structure instead of opt_nfactor.
@@ -169,12 +442,15 @@ a0c52bf config: introduce set_nfactor() and use it to call set_algorithm_nfactor
 92b7770 config: add `--algorithm` option and documentation.
 50a792f algorithm: initial set_algorithm() and set_algorithm_nfactor().
 776eec2 algorithm: initial structure definition.
+66f508d Added support for AnimeCoin
 c2c8231 kernel: zuikkis supports all worksizes.
 28ade9f Merge remote-tracking branch 'troky/build-msvs2010-upd2'
 ded4452 ui: check for opt_incognito is Display settings menu.
 8f014ef util: add missing include.
 9c0f912 core: remove ifdef from opt_compact and opt_incognito declaration.
 747efda MSVS2010: Added pool.c and pool.h to project.
+ccc7d13 Added remaning sphlib files needed for SHA256.
+8fe1b86 Added support for MyriadCoin groestl algorithm.
 428061e pool: display URL instead of "Pool N" if no poolname provided.
 4059780 pool: do not use defines, just inline strings.
 d58de45 pool: use get_pool_name() where appropriate.
@@ -190,33 +466,46 @@ a511266 doc: minor fix for --help message on `--incognito`.
 5a8f84b ui: allow switching to incognito mode through ncurses interface.
 d78f372 core: undo some of previous two commits and andd conditionals to display user name as `<incognito>` instead.
 2561295 log: do not set poolname in log in incognito mode.
-f737992 (bllacky/master) core: introduce `--incognito` + minimal revision of `--compact`.
+f737992 core: introduce `--incognito` + minimal revision of `--compact`.
 8ff6246 doc: verbose FAQ answer on running per-instance.
 9eba015 doc: update example.conf.
 394c200 doc: minor FAQ update (formatting and reference a Q from another).
-11cf733 (bllacky/nfactor) misc: fix spaces after closing parenthesis.
+11cf733 misc: fix spaces after closing parenthesis.
 e18bcc2 kernel: use N-factor table instead of passing parameter N directly.
 3afaaf1 ocl: rename nfactor to N where appropriate.
 c159470 doc: update Windows build references in README.md.
-c4c85ca (mrbrdo/nfactor-zuikkis, bllacky/nfactor-zuikkis) misc: add FIXME for scrypt_test() and scanhash_scrypt().
+c4c85ca (elbandi/nfactor-zuikkis) misc: add FIXME for scrypt_test() and scanhash_scrypt().
 2135777 scrypt: remove commented-out magic numbers.
 4b3b2ef ocl: use 'nf' instead of 'n' in compiled kernel binary name.
 5b42d38 ocl/misc: spacing.
 7217da3 ocl: vectors are hard-set to 1, add appropriate "optimisation".
+3370e08 Quark optimizations - replaced ifs with condiational operators
 ab9fcb1 ocl: use same type convention for nfactor (`cl_uint` instead of `int`).
 c4edf50 VS2010 build: Cosmetic changes in project configuration.
 dab737c VS2010 build: Fixed compatibility with non-MSVS compilers.
 3640f14 Merge remote-tracking branch 'dadiv/zuikkis-nfactor' into nfactor
 ee70f9f misc: FAQ formatting.
 ae23d25 api: proper type casting for MSVS support.
-2b9a588 (dadiv/zuikkis-nfactor) Update sgminer.c & scrypt.c
+2b9a588 Update sgminer.c & scrypt.c
+d47e232 Merge branch 'master' of https://github.com/prettyhatemachine/sph-sgminer
+3e89fb9 Merge branch 'quark'
+bc05151 Corrected target in nonce test.
 73bb150 Scrypt-nfactor support!
-44aed35 (dadiv/master) Merge branch 'build-msvs2010-upd' into build-msvs2010-merge
+65336dc Corrected order of kernel identifiers.
+d9fc7cc Added support for QubitCoin
+c336a83 Added support for INKcoin.
+089bfdd Merge branch 'quark' into inkcoin
+44aed35 Merge branch 'build-msvs2010-upd' into build-msvs2010-merge
 a38f01c misc: explain gpu-threads comment FIXME.
+e92d5eb Added support for InkCoin
+60a0e00 Added support for quarkcoin difficulty calculation.
 323c849 Merge pull request #106 from sshimko/master
 45a16f1 Fixup --help on intensities.
+a17ec11 Added support for Quark mining.
+a53e984 Added hash functions from sphlib.
+9585d2a Added support for DarkCoin kernel. Modified stats display to handle low difficulty values.
 80e6307 Merge branch 'port-ckolivas-3.12.3'
-edc94b0 (dadiv/port-ckolivas-3.12.3) misc: update NEWS with what's been ported from ckolivas/cgminer.
+edc94b0 misc: update NEWS with what's been ported from ckolivas/cgminer.
 fa21900 Merge pull request #100 from gionn/patch-1
 7ca0965 Fixed md formatting in MINING.md
 a825524 We shouldn't block on no work situations directly from the getwork scheduler itself.

@@ -1,6 +1,6 @@
 # Release news
 
-## Master
+## Version 5.0.0 - 2nd September 2014
 
 * Added support for animecoin, darkcoin, fuguecoin, groestlcoin, inkcoin,
   marucoin, myriadcoin-groestl, quarkcoin, qubitcoin, sifcoin, twecoin,
