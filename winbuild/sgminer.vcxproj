@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -291,6 +291,7 @@
     <ClCompile Include="..\algorithm\quarkcoin.c" />
     <ClCompile Include="..\algorithm\qubitcoin.c" />
     <ClCompile Include="..\algorithm\scrypt.c" />
+    <ClCompile Include="..\algorithm\neoscrypt.c" />
     <ClCompile Include="..\sgminer.c" />
     <ClCompile Include="..\algorithm\sifcoin.c" />
     <ClCompile Include="..\sph\aes_helper.c" />
@@ -351,6 +352,7 @@
     <ClInclude Include="..\algorithm\quarkcoin.h" />
     <ClInclude Include="..\algorithm\qubitcoin.h" />
     <ClInclude Include="..\algorithm\scrypt.h" />
+    <ClInclude Include="..\algorithm\neoscrypt.h" />
     <ClInclude Include="..\algorithm\sifcoin.h" />
     <ClInclude Include="..\sph\sph_blake.h" />
     <ClInclude Include="..\sph\sph_bmw.h" />

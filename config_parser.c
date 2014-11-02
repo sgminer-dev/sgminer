@@ -173,6 +173,14 @@ char *set_default_devices(const char *arg)
   return NULL;
 }
 
+char *set_default_kernelfile(const char *arg)
+{
+  applog(LOG_INFO, "Set default kernel file to %s", arg);
+  default_profile.algorithm.kernelfile = arg;
+
+  return NULL;
+}
+
 char *set_default_lookup_gap(const char *arg)
 {
   default_profile.lookup_gap = arg;
@@ -276,7 +284,7 @@ char *set_profile_algorithm(const char *arg)
 {
   struct profile *profile = get_current_profile();
 
-  //applog(LOG_DEBUG, "Setting profile %s algorithm to %s", profile->name, arg);
+  applog(LOG_DEBUG, "Setting profile %s algorithm to %s", profile->name, arg);
   set_algorithm(&profile->algorithm, arg);
 
   return NULL;
@@ -286,6 +294,16 @@ char *set_profile_devices(const char *arg)
 {
   struct profile *profile = get_current_profile();
   profile->devices = arg;
+  return NULL;
+}
+
+char *set_profile_kernelfile(const char *arg)
+{
+  struct profile *profile = get_current_profile();
+
+  applog(LOG_DEBUG, "Setting profile %s algorithm kernel file to %s", profile->name, arg);
+  profile->algorithm.kernelfile = arg;
+
   return NULL;
 }
 
@@ -982,6 +1000,19 @@ void apply_pool_profile(struct pool *pool)
   }
   applog(LOG_DEBUG, "Pool %i Algorithm set to \"%s\"", pool->pool_no, pool->algorithm.name);
 
+  // if the pool doesn't have a specific kernel file...
+  if (empty_string(pool->algorithm.kernelfile)) {
+    // ...but profile does, apply it to the pool
+    if (!empty_string(profile->algorithm.kernelfile)) {
+        pool->algorithm.kernelfile = profile->algorithm.kernelfile;
+        applog(LOG_DEBUG, "Pool %i Kernel File set to \"%s\"", pool->pool_no, pool->algorithm.kernelfile);
+    // ...or default profile does, apply it to the pool
+    } else if (!empty_string(default_profile.algorithm.kernelfile)) {
+        pool->algorithm.kernelfile = default_profile.algorithm.kernelfile;
+        applog(LOG_DEBUG, "Pool %i Kernel File set to \"%s\"", pool->pool_no, pool->algorithm.kernelfile);
+    }
+  }
+
   if(pool_cmp(pool->devices, default_profile.devices))
   {
     if(!empty_string(profile->devices))
@@ -1270,6 +1301,10 @@ static json_t *build_pool_json()
     if (!build_pool_json_add(obj, "device", pool->devices, profile->devices, default_profile.devices, pool->pool_no))
       return NULL;
 
+    // kernelfile
+    if (!build_pool_json_add(obj, "kernelfile", pool->algorithm.kernelfile, profile->algorithm.kernelfile, default_profile.algorithm.kernelfile, pool->pool_no))
+      return NULL;
+
     // lookup-gap
     if (!build_pool_json_add(obj, "lookup-gap", pool->lookup_gap, profile->lookup_gap, default_profile.lookup_gap, pool->pool_no))
       return NULL;
@@ -1372,6 +1407,10 @@ static json_t *build_profile_settings_json(json_t *object, struct profile *profi
 
   // devices
   if (!build_profile_json_add(object, "device", profile->devices, default_profile.devices, isdefault, parentkey, profile->profile_no))
+    return NULL;
+
+  // kernelfile
+  if (!build_profile_json_add(object, "kernelfile", profile->algorithm.kernelfile, default_profile.algorithm.kernelfile, isdefault, parentkey, profile->profile_no))
     return NULL;
 
   // lookup-gap

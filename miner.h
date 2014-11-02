@@ -1105,6 +1105,7 @@ extern pthread_cond_t restart_cond;
 extern void clear_stratum_shares(struct pool *pool);
 extern void clear_pool_work(struct pool *pool);
 extern void set_target(unsigned char *dest_target, double diff, double diff_multiplier2);
+extern void set_target_neoscrypt(unsigned char *target, double diff);
 
 extern void kill_work(void);
 
@@ -1301,20 +1302,20 @@ struct pool {
 
   char *profile;
   algorithm_t algorithm;
-    const char *devices;
-    const char *intensity;
-    const char *xintensity;
-    const char *rawintensity;
-    const char *lookup_gap;
-    const char *gpu_engine;
-    const char *gpu_memclock;
-    const char *gpu_threads;
-    const char *gpu_fan;
-    const char *gpu_powertune;
-    const char *gpu_vddc;
-    const char *shaders;
-    const char *thread_concurrency;
-    const char *worksize;
+  const char *devices;
+  const char *intensity;
+  const char *xintensity;
+  const char *rawintensity;
+  const char *lookup_gap;
+  const char *gpu_engine;
+  const char *gpu_memclock;
+  const char *gpu_threads;
+  const char *gpu_fan;
+  const char *gpu_powertune;
+  const char *gpu_vddc;
+  const char *shaders;
+  const char *thread_concurrency;
+  const char *worksize;
 
   pthread_mutex_t pool_lock;
   cglock_t data_lock;
