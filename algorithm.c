@@ -154,25 +154,25 @@ static cl_int queue_scrypt_kernel(struct __clState *clState, struct _dev_blk_ctx
 
 static cl_int queue_neoscrypt_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_unused cl_uint threads)
 {
-	cl_kernel *kernel = &clState->kernel;
-	unsigned int num = 0;
-	cl_uint le_target;
-	cl_int status = 0;
+  cl_kernel *kernel = &clState->kernel;
+  unsigned int num = 0;
+  cl_uint le_target;
+  cl_int status = 0;
 
-	/* This looks like a unnecessary double cast, but to make sure, that
-	 * the target's most significant entry is adressed as a 32-bit value
-	 * and not accidently by something else the double cast seems wise.
-	 * The compiler will get rid of it anyway. */
-	le_target = (cl_uint)le32toh(((uint32_t *)blk->work->/*device_*/target)[7]);
-	memcpy(clState->cldata, blk->work->data, 80);
-	status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+  /* This looks like a unnecessary double cast, but to make sure, that
+   * the target's most significant entry is adressed as a 32-bit value
+   * and not accidently by something else the double cast seems wise.
+   * The compiler will get rid of it anyway. */
+  le_target = (cl_uint)le32toh(((uint32_t *)blk->work->/*device_*/target)[7]);
+  memcpy(clState->cldata, blk->work->data, 80);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
 
-	CL_SET_ARG(clState->CLbuffer0);
-	CL_SET_ARG(clState->outputBuffer);
-	CL_SET_ARG(clState->padbuffer8);
-	CL_SET_ARG(le_target);
+  CL_SET_ARG(clState->CLbuffer0);
+  CL_SET_ARG(clState->outputBuffer);
+  CL_SET_ARG(clState->padbuffer8);
+  CL_SET_ARG(le_target);
 
-	return status;
+  return status;
 }
 
 static cl_int queue_maxcoin_kernel(struct __clState *clState, struct _dev_blk_ctx *blk, __maybe_unused cl_uint threads)

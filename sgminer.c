@@ -535,7 +535,7 @@ struct pool *add_pool(void)
   char buf[32];
   buf[0] = '\0';
   pool->name = strdup(buf);
-  pool->profile = strdup(buf);	//profile blank by default
+  pool->profile = strdup(buf);  //profile blank by default
   pool->algorithm.name[0] = '\0'; //blank algorithm name
 
   pools = (struct pool **)realloc(pools, sizeof(struct pool *) * (total_pools + 2));
@@ -5970,42 +5970,42 @@ void set_target(unsigned char *dest_target, double diff, double diff_multiplier2
  ****************************************************/
 void set_target_neoscrypt(unsigned char *target, double diff)
 {
-	uint64_t m;
-	int k;
+  uint64_t m;
+  int k;
 
-	diff /=	65536.0;
-	for (k = 6; k > 0 && diff > 1.0; --k) {
-		diff /= 4294967296.0;
+  diff /=  65536.0;
+  for (k = 6; k > 0 && diff > 1.0; --k) {
+    diff /= 4294967296.0;
   }
 
-	m = 4294901760.0 / diff;
+  m = 4294901760.0 / diff;
 
-	if (m == 0 && k == 6) {
-		memset(target, 0xff, 32);
-	} else {
-		memset(target, 0, 32);
-		((uint32_t *)target)[k] = (uint32_t)m;
-		((uint32_t *)target)[k + 1] = (uint32_t)(m >> 32);
-	}
+  if (m == 0 && k == 6) {
+    memset(target, 0xff, 32);
+  } else {
+    memset(target, 0, 32);
+    ((uint32_t *)target)[k] = (uint32_t)m;
+    ((uint32_t *)target)[k + 1] = (uint32_t)(m >> 32);
+  }
 
-	if (opt_debug) {
-		/* The target is computed in this systems endianess and stored
-		 * in its endianess on a uint32-level. But because the target are
-		 * eight uint32s, they are stored in mixed mode, i.e., each uint32
-		 * is stored in the local endianess, but the least significant bit
-		 * is stored in target[0] bit 0.
-		 *
-		 * To print this large number in a native human readable form the
-		 * order of the array entries is swapped, i.e., target[7] <-> target[0]
-		 * and each array entry is byte swapped to have the least significant
-		 * bit to the right. */
-		uint32_t swaped[8];
-		swab256(swaped, target);
-		char *htarget = bin2hex((unsigned char *)swaped, 32);
+  if (opt_debug) {
+    /* The target is computed in this systems endianess and stored
+     * in its endianess on a uint32-level. But because the target are
+     * eight uint32s, they are stored in mixed mode, i.e., each uint32
+     * is stored in the local endianess, but the least significant bit
+     * is stored in target[0] bit 0.
+     *
+     * To print this large number in a native human readable form the
+     * order of the array entries is swapped, i.e., target[7] <-> target[0]
+     * and each array entry is byte swapped to have the least significant
+     * bit to the right. */
+    uint32_t swaped[8];
+    swab256(swaped, target);
+    char *htarget = bin2hex((unsigned char *)swaped, 32);
 
-		applog(LOG_DEBUG, "Generated neoscrypt target 0x%s", htarget);
-		free(htarget);
-	}
+    applog(LOG_DEBUG, "Generated neoscrypt target 0x%s", htarget);
+    free(htarget);
+  }
 }
 
 /* Generates stratum based work based on the most recent notify information
@@ -6044,31 +6044,31 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
   // Different for Neoscrypt because of Little Endian
   if (!safe_cmp(pool->algorithm.name, "neoscrypt")) {
     /* Incoming data is in little endian. */
-		memcpy(merkle_root, merkle_sha, 32);
+    memcpy(merkle_root, merkle_sha, 32);
 
     uint32_t temp = pool->merkle_offset/ sizeof(uint32_t), i;
-		/* Put version (4 byte) + prev_hash (4 byte* 8) but big endian encoded
-		 * into work. */
-		for (i=0; i < temp; ++i) {
-			((uint32_t *)work->data)[i] = be32toh(((uint32_t *)pool->header_bin)[i]);
+    /* Put version (4 byte) + prev_hash (4 byte* 8) but big endian encoded
+     * into work. */
+    for (i=0; i < temp; ++i) {
+      ((uint32_t *)work->data)[i] = be32toh(((uint32_t *)pool->header_bin)[i]);
     }
 
-		/* Now add the merkle_root (4 byte* 8), but it is encoded in little endian. */
-		temp += 8;
+    /* Now add the merkle_root (4 byte* 8), but it is encoded in little endian. */
+    temp += 8;
 
-		for (j=0; i < temp; ++i, ++j) {
-			((uint32_t *)work->data)[i] = le32toh(((uint32_t *)merkle_root)[j]);
+    for (j=0; i < temp; ++i, ++j) {
+      ((uint32_t *)work->data)[i] = le32toh(((uint32_t *)merkle_root)[j]);
     }
 
-		/* Add the time encoded in big endianess. */
-		hex2bin((unsigned char *)&temp, pool->swork.ntime, 4);
+    /* Add the time encoded in big endianess. */
+    hex2bin((unsigned char *)&temp, pool->swork.ntime, 4);
 
     /* Add the nbits (big endianess). */
-		((uint32_t *)work->data)[17]= be32toh(temp);
-		hex2bin((unsigned char *)&temp, pool->swork.nbit, 4);
-		((uint32_t *)work->data)[18]= be32toh(temp);
-		((uint32_t *)work->data)[20]= 0x80000000;
-		((uint32_t *)work->data)[31]= 0x00000280;
+    ((uint32_t *)work->data)[17]= be32toh(temp);
+    hex2bin((unsigned char *)&temp, pool->swork.nbit, 4);
+    ((uint32_t *)work->data)[18]= be32toh(temp);
+    ((uint32_t *)work->data)[20]= 0x80000000;
+    ((uint32_t *)work->data)[31]= 0x00000280;
   } else {
     data32 = (uint32_t *)merkle_sha;
     swap32 = (uint32_t *)merkle_root;
@@ -8839,8 +8839,8 @@ int main(int argc, char *argv[])
       work = hash_pop(false);
       if (work) {
         applog(LOG_DEBUG,
-	       "Staged work: total (%d) > max (%d), discarding",
-	       ts, max_staged);
+         "Staged work: total (%d) > max (%d), discarding",
+         ts, max_staged);
         discard_work(work);
       }
       continue;

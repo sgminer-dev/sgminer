@@ -349,34 +349,34 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
   // neoscrypt calculates TC differently
   if (!safe_cmp(cgpu->algorithm.name, "neoscrypt")) {
     int max_int = ((cgpu->dynamic)?MAX_INTENSITY:cgpu->intensity);
-		size_t glob_thread_count = 1UL << max_int;
+    size_t glob_thread_count = 1UL << max_int;
 
     // if TC is entered by user, use that value... otherwise use default
-		cgpu->thread_concurrency = ((cgpu->opt_tc)?cgpu->opt_tc:((glob_thread_count < cgpu->work_size)?cgpu->work_size:glob_thread_count));
+    cgpu->thread_concurrency = ((cgpu->opt_tc)?cgpu->opt_tc:((glob_thread_count < cgpu->work_size)?cgpu->work_size:glob_thread_count));
 
     // if TC * scratchbuf size is too big for memory... reduce to max
-		if (((uint64_t)cgpu->thread_concurrency * NEOSCRYPT_SCRATCHBUF_SIZE) > (uint64_t)cgpu->max_alloc) {
-			/* Selected intensity will not run on this GPU. Not enough memory.
-			 * Adapt the memory setting. */
-			glob_thread_count = cgpu->max_alloc / NEOSCRYPT_SCRATCHBUF_SIZE;
+    if (((uint64_t)cgpu->thread_concurrency * NEOSCRYPT_SCRATCHBUF_SIZE) > (uint64_t)cgpu->max_alloc) {
+      /* Selected intensity will not run on this GPU. Not enough memory.
+       * Adapt the memory setting. */
+      glob_thread_count = cgpu->max_alloc / NEOSCRYPT_SCRATCHBUF_SIZE;
 
       /* Find highest significant bit in glob_thread_count, which gives
-			 * the intensity. */
-			while (max_int && ((1U << max_int) & glob_thread_count) == 0) {
-				--max_int;
+       * the intensity. */
+      while (max_int && ((1U << max_int) & glob_thread_count) == 0) {
+        --max_int;
       }
 
-			/* Check if max_intensity is >0. */
-			if(max_int < MIN_INTENSITY) {
-				applog(LOG_ERR, "GPU %d: Max intensity is below minimum.", gpu);
-				max_int = MIN_INTENSITY;
-			}
+      /* Check if max_intensity is >0. */
+      if(max_int < MIN_INTENSITY) {
+        applog(LOG_ERR, "GPU %d: Max intensity is below minimum.", gpu);
+        max_int = MIN_INTENSITY;
+      }
 
-			cgpu->intensity = max_int;
-			cgpu->thread_concurrency = 1U << max_int;
-		}
+      cgpu->intensity = max_int;
+      cgpu->thread_concurrency = 1U << max_int;
+    }
 
-		applog(LOG_DEBUG, "GPU %d: computing max. global thread count to %u", gpu, (unsigned)(cgpu->thread_concurrency));
+    applog(LOG_DEBUG, "GPU %d: computing max. global thread count to %u", gpu, (unsigned)(cgpu->thread_concurrency));
 
   } else if (!cgpu->opt_tc) {
     unsigned int sixtyfours;
