@@ -67,7 +67,7 @@ char *curly = ":D";
   #include <sys/wait.h>
 #endif
 
-#ifdef GIT_VERSION
+#ifdef USE_GIT_VERSION
 #undef VERSION
 #define VERSION GIT_VERSION
 #endif
