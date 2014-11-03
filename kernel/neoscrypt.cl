@@ -1,10 +1,11 @@
 /* NeoScrypt(128, 2, 1) with Salsa20/20 and ChaCha20/20 */
+/* Adapted and improved for 14.x drivers by Wolf9466 (Wolf`) */
 
 #define rotl(x,y) rotate(x,y)
 #define Ch(x,y,z) bitselect(z,y,x)
 #define Maj(x,y,z) Ch((x^z),y,z)
 #define ROTR32(a,b) (((a) >> (b)) | ((a) << (32 - b)))
-#define ROTL32(a,b) rotate(a,b)
+#define ROTL32(a,b) rotate(a,as_uint(b))
 
 __constant uint ES[2] = { 0x00FF00FF, 0xFF00FF00 };
 #define EndianSwap(n) (rotate(n & ES[0], 24U)|rotate(n & ES[1], 8U))
@@ -20,74 +21,6 @@ __constant uchar testsalt[]= {
 135, 99, 188, 101, 252, 81, 54, 91, 243, 212, 78, 99, 46, 1, 113, 232, 9, 208, 203, 88, 25, 93, 218, 215, 53, 112, 105, 136, 238, 114, 242, 24, 194, 144, 239, 172, 37, 158, 113, 15, 116, 114, 47, 53, 51, 167, 178, 107, 192, 90, 92, 37, 59, 116, 234, 107, 80, 251, 2, 251, 145, 185, 119, 89, 115, 112, 94, 154, 117, 126, 233, 100, 15, 24, 246, 137, 220, 124, 244, 244, 129, 246, 244, 180, 78, 247, 146, 229, 69, 177, 143, 94, 2, 144, 63, 33, 89, 136, 234, 174, 38, 37, 183, 62, 176, 243, 136, 30, 249, 195, 129, 227, 146, 216, 38, 118, 185, 43, 175, 217, 246, 203, 251, 211, 222, 237, 21, 231, 133, 218, 206, 9, 148, 229, 20, 229, 101, 146, 183, 120, 155, 91, 16, 10, 86, 198, 185, 179, 1, 197, 69, 95, 44, 133, 49, 225, 2, 115, 182, 6, 82, 166, 35, 3, 19, 59, 193, 253, 14, 239, 65, 79, 105, 154, 70, 146, 169, 233, 227, 20, 66, 15, 52, 223, 228, 202, 158, 207, 6, 245, 204, 212, 220, 108, 204, 39, 136, 66, 215, 186, 247, 184, 92, 171, 56, 166, 162, 105, 126, 162, 127, 175, 181, 227, 236, 233, 127, 219, 115, 30, 136, 108, 169, 14, 172, 71, 82, 250, 141, 209, 98, 216, 221, 165, 132, 146, 98, 76, 194, 239, 123, 90, 91, 193, 58, 121, 235, 161, 51, 144, 5, 41, 216, 160, 93, 173
 };
 #endif
-
-/* Salsa20, rounds must be a multiple of 2 */
-void neoscrypt_salsa(uint *X, uint rounds) {
-    uint x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, t;
-
-    x0 = X[0];   x1 = X[1];   x2 = X[2];   x3 = X[3];
-    x4 = X[4];   x5 = X[5];   x6 = X[6];   x7 = X[7];
-    x8 = X[8];   x9 = X[9];  x10 = X[10]; x11 = X[11];
-   x12 = X[12]; x13 = X[13]; x14 = X[14]; x15 = X[15];
-
-#define quarter(a, b, c, d) \
-    t = a + d; t = rotate(t,  7u); b ^= t; \
-    t = b + a; t = rotate(t,  9u); c ^= t; \
-    t = c + b; t = rotate(t, 13u); d ^= t; \
-    t = d + c; t = rotate(t, 18u); a ^= t;
-
-    for(; rounds; rounds -= 2) {
-        quarter( x0,  x4,  x8, x12);
-        quarter( x5,  x9, x13,  x1);
-        quarter(x10, x14,  x2,  x6);
-        quarter(x15,  x3,  x7, x11);
-        quarter( x0,  x1,  x2,  x3);
-        quarter( x5,  x6,  x7,  x4);
-        quarter(x10, x11,  x8,  x9);
-        quarter(x15, x12, x13, x14);
-    }
-
-    X[0] += x0;   X[1] += x1;   X[2] += x2;   X[3] += x3;
-    X[4] += x4;   X[5] += x5;   X[6] += x6;   X[7] += x7;
-    X[8] += x8;   X[9] += x9;  X[10] += x10; X[11] += x11;
-   X[12] += x12; X[13] += x13; X[14] += x14; X[15] += x15;
-
-#undef quarter
-}
-
-/* ChaCha20, rounds must be a multiple of 2 */
-void neoscrypt_chacha(uint *X, uint rounds) {
-    uint x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, t;
-
-    x0 = X[0];   x1 = X[1];   x2 = X[2];   x3 = X[3];
-    x4 = X[4];   x5 = X[5];   x6 = X[6];   x7 = X[7];
-    x8 = X[8];   x9 = X[9];  x10 = X[10]; x11 = X[11];
-   x12 = X[12]; x13 = X[13]; x14 = X[14]; x15 = X[15];
-
-#define quarter(a,b,c,d) \
-    a += b; t = d ^ a; d = ROTL32(t, 16u); \
-    c += d; t = b ^ c; b = ROTL32(t, 12u); \
-    a += b; t = d ^ a; d = ROTL32(t,  8u); \
-    c += d; t = b ^ c; b = ROTL32(t,  7u);
-
-    for(; rounds; rounds -= 2) {
-        quarter( x0,  x4,  x8, x12);
-        quarter( x1,  x5,  x9, x13);
-        quarter( x2,  x6, x10, x14);
-        quarter( x3,  x7, x11, x15);
-        quarter( x0,  x5, x10, x15);
-        quarter( x1,  x6, x11, x12);
-        quarter( x2,  x7,  x8, x13);
-        quarter( x3,  x4,  x9, x14);
-    }
-
-    X[0] += x0;   X[1] += x1;   X[2] += x2;   X[3] += x3;
-    X[4] += x4;   X[5] += x5;   X[6] += x6;   X[7] += x7;
-    X[8] += x8;   X[9] += x9;  X[10] += x10; X[11] += x11;
-   X[12] += x12; X[13] += x13; X[14] += x14; X[15] += x15;
-
-#undef quarter
-}
 
 /* When changing the optimal type, make sure the loops unrolled
 	in _blkcopy, _blkswp and _blkxor are modified accordingly. */
@@ -574,13 +507,46 @@ void fastkdf(const uchar *password, const uchar *salt, const uint salt_len,
     }
 }
 
+uint16 neoscrypt_salsa(uint16 X)
+{
+	uint16 tmp = X;
 
-/* Configurable optimised block mixer */
-void neoscrypt_blkmix(uint *X, /*uint *Y, uint r,*/ uint mixmode) {
-    uint mixer, rounds;
+	for(int i = 0; i < 10; ++i)
+	{
+		tmp.s4 ^= rotate(tmp.s0 + tmp.sc, 7U); tmp.s8 ^= rotate(tmp.s4 + tmp.s0, 9U); tmp.sc ^= rotate(tmp.s8 + tmp.s4, 13U); tmp.s0 ^= rotate(tmp.sc + tmp.s8, 18U);
+		tmp.s9 ^= rotate(tmp.s5 + tmp.s1, 7U); tmp.sd ^= rotate(tmp.s9 + tmp.s5, 9U); tmp.s1 ^= rotate(tmp.sd + tmp.s9, 13U); tmp.s5 ^= rotate(tmp.s1 + tmp.sd, 18U);
+		tmp.se ^= rotate(tmp.sa + tmp.s6, 7U); tmp.s2 ^= rotate(tmp.se + tmp.sa, 9U); tmp.s6 ^= rotate(tmp.s2 + tmp.se, 13U); tmp.sa ^= rotate(tmp.s6 + tmp.s2, 18U);
+		tmp.s3 ^= rotate(tmp.sf + tmp.sb, 7U); tmp.s7 ^= rotate(tmp.s3 + tmp.sf, 9U); tmp.sb ^= rotate(tmp.s7 + tmp.s3, 13U); tmp.sf ^= rotate(tmp.sb + tmp.s7, 18U);
+		tmp.s1 ^= rotate(tmp.s0 + tmp.s3, 7U); tmp.s2 ^= rotate(tmp.s1 + tmp.s0, 9U); tmp.s3 ^= rotate(tmp.s2 + tmp.s1, 13U); tmp.s0 ^= rotate(tmp.s3 + tmp.s2, 18U);
+		tmp.s6 ^= rotate(tmp.s5 + tmp.s4, 7U); tmp.s7 ^= rotate(tmp.s6 + tmp.s5, 9U); tmp.s4 ^= rotate(tmp.s7 + tmp.s6, 13U); tmp.s5 ^= rotate(tmp.s4 + tmp.s7, 18U);
+		tmp.sb ^= rotate(tmp.sa + tmp.s9, 7U); tmp.s8 ^= rotate(tmp.sb + tmp.sa, 9U); tmp.s9 ^= rotate(tmp.s8 + tmp.sb, 13U); tmp.sa ^= rotate(tmp.s9 + tmp.s8, 18U);
+		tmp.sc ^= rotate(tmp.sf + tmp.se, 7U); tmp.sd ^= rotate(tmp.sc + tmp.sf, 9U); tmp.se ^= rotate(tmp.sd + tmp.sc, 13U); tmp.sf ^= rotate(tmp.se + tmp.sd, 18U);
+	}
 
-    mixer  = mixmode >> 8;
-    rounds = mixmode & 0xFF;
+	return(X + tmp);
+}
+
+uint16 neoscrypt_chacha(uint16 X)
+{
+   uint16 tmp = X;
+
+	for(int i = 0; i < 10; ++i)
+	{
+		tmp.s0 += tmp.s4; tmp.sc = rotate(tmp.sc ^ tmp.s0, 16U); tmp.s8 += tmp.sc; tmp.s4 = rotate(tmp.s4 ^ tmp.s8, 12U); tmp.s0 += tmp.s4; tmp.sc = rotate(tmp.sc ^ tmp.s0, 8U); tmp.s8 += tmp.sc; tmp.s4 = rotate(tmp.s4 ^ tmp.s8, 7U);
+		tmp.s1 += tmp.s5; tmp.sd = rotate(tmp.sd ^ tmp.s1, 16U); tmp.s9 += tmp.sd; tmp.s5 = rotate(tmp.s5 ^ tmp.s9, 12U); tmp.s1 += tmp.s5; tmp.sd = rotate(tmp.sd ^ tmp.s1, 8U); tmp.s9 += tmp.sd; tmp.s5 = rotate(tmp.s5 ^ tmp.s9, 7U);
+		tmp.s2 += tmp.s6; tmp.se = rotate(tmp.se ^ tmp.s2, 16U); tmp.sa += tmp.se; tmp.s6 = rotate(tmp.s6 ^ tmp.sa, 12U); tmp.s2 += tmp.s6; tmp.se = rotate(tmp.se ^ tmp.s2, 8U); tmp.sa += tmp.se; tmp.s6 = rotate(tmp.s6 ^ tmp.sa, 7U);
+		tmp.s3 += tmp.s7; tmp.sf = rotate(tmp.sf ^ tmp.s3, 16U); tmp.sb += tmp.sf; tmp.s7 = rotate(tmp.s7 ^ tmp.sb, 12U); tmp.s3 += tmp.s7; tmp.sf = rotate(tmp.sf ^ tmp.s3, 8U); tmp.sb += tmp.sf; tmp.s7 = rotate(tmp.s7 ^ tmp.sb, 7U);
+		tmp.s0 += tmp.s5; tmp.sf = rotate(tmp.sf ^ tmp.s0, 16U); tmp.sa += tmp.sf; tmp.s5 = rotate(tmp.s5 ^ tmp.sa, 12U); tmp.s0 += tmp.s5; tmp.sf = rotate(tmp.sf ^ tmp.s0, 8U); tmp.sa += tmp.sf; tmp.s5 = rotate(tmp.s5 ^ tmp.sa, 7U);
+		tmp.s1 += tmp.s6; tmp.sc = rotate(tmp.sc ^ tmp.s1, 16U); tmp.sb += tmp.sc; tmp.s6 = rotate(tmp.s6 ^ tmp.sb, 12U); tmp.s1 += tmp.s6; tmp.sc = rotate(tmp.sc ^ tmp.s1, 8U); tmp.sb += tmp.sc; tmp.s6 = rotate(tmp.s6 ^ tmp.sb, 7U);
+		tmp.s2 += tmp.s7; tmp.sd = rotate(tmp.sd ^ tmp.s2, 16U); tmp.s8 += tmp.sd; tmp.s7 = rotate(tmp.s7 ^ tmp.s8, 12U); tmp.s2 += tmp.s7; tmp.sd = rotate(tmp.sd ^ tmp.s2, 8U); tmp.s8 += tmp.sd; tmp.s7 = rotate(tmp.s7 ^ tmp.s8, 7U);
+		tmp.s3 += tmp.s4; tmp.se = rotate(tmp.se ^ tmp.s3, 16U); tmp.s9 += tmp.se; tmp.s4 = rotate(tmp.s4 ^ tmp.s9, 12U); tmp.s3 += tmp.s4; tmp.se = rotate(tmp.se ^ tmp.s3, 8U); tmp.s9 += tmp.se; tmp.s4 = rotate(tmp.s4 ^ tmp.s9, 7U);
+	}
+
+    return(X + tmp);
+}
+
+void neoscrypt_blkmix(uint16 *XV, uint mixmode)
+{
 
     /* NeoScrypt flow:                   Scrypt flow:
          Xa ^= Xd;  M(Xa'); Ya = Xa";      Xa ^= Xb;  M(Xa'); Ya = Xa";
@@ -590,27 +556,27 @@ void neoscrypt_blkmix(uint *X, /*uint *Y, uint r,*/ uint mixmode) {
          Xa" = Ya; Xb" = Yc;
          Xc" = Yb; Xd" = Yd; */
 
-	neoscrypt_blkxor(&X[0], &X[48], BLOCK_SIZE);
-	if(mixer)
-	  neoscrypt_chacha(&X[0], rounds);
-	else
-	  neoscrypt_salsa(&X[0], rounds);
-	neoscrypt_blkxor(&X[16], &X[0], BLOCK_SIZE);
-	if(mixer)
-	  neoscrypt_chacha(&X[16], rounds);
-	else
-	  neoscrypt_salsa(&X[16], rounds);
-	neoscrypt_blkxor(&X[32], &X[16], BLOCK_SIZE);
-	if(mixer)
-	  neoscrypt_chacha(&X[32], rounds);
-	else
-	  neoscrypt_salsa(&X[32], rounds);
-	neoscrypt_blkxor(&X[48], &X[32], BLOCK_SIZE);
-	if(mixer)
-	  neoscrypt_chacha(&X[48], rounds);
-	else
-	  neoscrypt_salsa(&X[48], rounds);
-	neoscrypt_blkswp(&X[16], &X[32], BLOCK_SIZE);
+	XV[0] ^= XV[3];
+
+	if(!mixmode) XV[0] = neoscrypt_salsa(XV[0]);
+	else XV[0] = neoscrypt_chacha(XV[0]);
+
+	XV[1] ^= XV[0];
+
+	if(!mixmode) XV[1] = neoscrypt_salsa(XV[1]);
+	else XV[1] = neoscrypt_chacha(XV[1]);
+
+	XV[2] ^= XV[1];
+
+	if(!mixmode) XV[2] = neoscrypt_salsa(XV[2]);
+	else XV[2] = neoscrypt_chacha(XV[2]);
+
+	XV[3] ^= XV[2];
+
+	if(!mixmode) XV[3] = neoscrypt_salsa(XV[3]);
+	else XV[3] = neoscrypt_chacha(XV[3]);
+
+	neoscrypt_blkswp(&XV[1], &XV[2], BLOCK_SIZE);
 }
 
 /* NeoScrypt core engine:
@@ -702,37 +668,22 @@ __kernel void search(__global const uchar* restrict input,
     /* Process ChaCha 1st, Salsa 2nd and XOR them into PBKDF2 */
 	neoscrypt_blkcpy(Z, X, CONSTANT_r * 2 * BLOCK_SIZE);
 
-	/* Z = SMix(Z) */
-	for(i = 0; i < CONSTANT_N; i++) {
-		/* blkcpy(V, Z) */
-		neoscrypt_gl_blkcpy(&V[(i * (32 * CONSTANT_r))<< 2], &Z[0], CONSTANT_r * 2 * BLOCK_SIZE);
-		/* blkmix(Z, Y) */
-		neoscrypt_blkmix((uint *)Z, (mixmode | 0x0100));
-	}
-	for(i = 0; i < CONSTANT_N; i++) {
-		/* integerify(Z) mod N */
-		j = (32 * CONSTANT_r) * (((uint *)Z)[16 * (2 * CONSTANT_r - 1)] & (CONSTANT_N - 1));
-		/* blkxor(Z, V) */
-		neoscrypt_gl_blkxor(Z, &V[j<< 2], CONSTANT_r * 2 * BLOCK_SIZE);
-		/* blkmix(Z, Y) */
-		neoscrypt_blkmix((uint *)Z, (mixmode | 0x0100));
+	for(int y = 0; y < 2; ++y)
+    {
+		for(i = 0; i < 128; ++i)
+		{
+			neoscrypt_gl_blkcpy(&V[i << 8], &X[0], 256);
+			neoscrypt_blkmix((uint16 *)X, y);
+		}
+
+		for(i = 0; i < 128; ++i)
+		{
+			neoscrypt_gl_blkxor(&X[0], &V[(((uint *)X)[48] & 127) << 8], 256);
+			neoscrypt_blkmix((uint16 *)X, y);
+		}
+		if(!y) neoscrypt_blkswp(&X[0], &Z[0], 256);
 	}
 
-    /* X = SMix(X) */
-    for(i = 0; i < CONSTANT_N; i++) {
-        /* blkcpy(V, X) */
-        neoscrypt_gl_blkcpy(&V[(i * (32 * CONSTANT_r))<< 2], &X[0], CONSTANT_r * 2 * BLOCK_SIZE);
-        /* blkmix(X, Y) */
-        neoscrypt_blkmix((uint *)X, mixmode);
-    }
-    for(i = 0; i < CONSTANT_N; i++) {
-        /* integerify(X) mod N */
-        j = (32 * CONSTANT_r) * (((uint *)X)[16 * (2 * CONSTANT_r - 1)] & (CONSTANT_N - 1));
-        /* blkxor(X, V) */
-        neoscrypt_gl_blkxor(&X[0], &V[j<< 2], CONSTANT_r * 2 * BLOCK_SIZE);
-        /* blkmix(X, Y) */
-        neoscrypt_blkmix((uint *)X, mixmode);
-    }
 	/* blkxor(X, Z) */
 	neoscrypt_blkxor(&X[0], &Z[0], CONSTANT_r * 2 * BLOCK_SIZE);
 
