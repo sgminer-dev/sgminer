@@ -181,6 +181,11 @@
 
 #define MSG_CHPOOLPR 139
 
+#define MSG_INVXINT 140
+#define MSG_GPUXINT 141
+#define MSG_INVRAWINT 142
+#define MSG_GPURAWINT 143
+
 enum code_severity {
   SEVERITY_ERR,
   SEVERITY_WARN,

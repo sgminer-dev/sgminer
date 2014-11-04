@@ -884,6 +884,10 @@ retry: // TODO: refactor
     if (!strncasecmp(intvar, "d", 1)) {
       wlogprint("Dynamic mode enabled on gpu %d\n", selected);
       gpus[selected].dynamic = true;
+
+      // fix config with new settings so that we can save them
+      update_config_intensity(get_gpu_profile(selected));
+
       pause_dynamic_threads(selected);
       free(intvar);
       goto retry;
@@ -899,6 +903,10 @@ retry: // TODO: refactor
     gpus[selected].xintensity = 0; // Disable xintensity when enabling intensity
     gpus[selected].rawintensity = 0; // Disable raw intensity when enabling intensity
     wlogprint("Intensity on gpu %d set to %d\n", selected, intensity);
+
+    // fix config with new settings so that we can save them
+    update_config_intensity(get_gpu_profile(selected));
+
     pause_dynamic_threads(selected);
     goto retry;
   } else if (!strncasecmp(&input, "x", 1)) {
@@ -928,6 +936,10 @@ retry: // TODO: refactor
     gpus[selected].rawintensity = 0; // Disable raw intensity when enabling xintensity
     gpus[selected].xintensity = xintensity;
     wlogprint("Experimental intensity on gpu %d set to %d\n", selected, xintensity);
+
+    // fix config with new settings so that we can save them
+    update_config_xintensity(get_gpu_profile(selected));
+
     pause_dynamic_threads(selected);
     goto retry;
   } else if (!strncasecmp(&input, "a", 1)) {
@@ -957,6 +969,10 @@ retry: // TODO: refactor
     gpus[selected].xintensity = 0; // Disable xintensity when enabling raw intensity
     gpus[selected].rawintensity = rawintensity;
     wlogprint("Raw intensity on gpu %d set to %d\n", selected, rawintensity);
+
+    // fix config with new settings so that we can save them
+    update_config_rawintensity(get_gpu_profile(selected));
+
     pause_dynamic_threads(selected);
     goto retry;
   } else if (!strncasecmp(&input, "r", 1)) {

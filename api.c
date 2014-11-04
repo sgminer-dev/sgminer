@@ -143,6 +143,10 @@ struct CODES codes[] = {
  { SEVERITY_ERR,   MSG_NOGPUADL,PARAM_GPU,  "GPU %d does not have ADL" },
  { SEVERITY_ERR,   MSG_INVINT,  PARAM_STR,  "Invalid intensity (%s) - must be '" _DYNAMIC  "' or range " MIN_INTENSITY_STR " - " MAX_INTENSITY_STR },
  { SEVERITY_INFO,  MSG_GPUINT,  PARAM_BOTH, "GPU %d set new intensity to %s" },
+ { SEVERITY_ERR,   MSG_INVXINT,  PARAM_STR,  "Invalid xintensity (%s) - must be range " MIN_XINTENSITY_STR " - " MAX_XINTENSITY_STR },
+ { SEVERITY_INFO,  MSG_GPUXINT,  PARAM_BOTH, "GPU %d set new xintensity to %s" },
+ { SEVERITY_ERR,   MSG_INVRAWINT,  PARAM_STR,  "Invalid rawintensity (%s) - must be range " MIN_RAWINTENSITY_STR " - " MAX_RAWINTENSITY_STR },
+ { SEVERITY_INFO,  MSG_GPURAWINT,  PARAM_BOTH, "GPU %d set new rawintensity to %s" },
  { SEVERITY_SUCC,  MSG_MINECONFIG,PARAM_NONE, "sgminer config" },
  { SEVERITY_ERR,   MSG_GPUMERR, PARAM_BOTH, "Setting GPU %d memoryclock to (%s) reported failure" },
  { SEVERITY_SUCC,  MSG_GPUMEM,  PARAM_BOTH, "Setting GPU %d memoryclock to (%s) reported success" },
@@ -2329,10 +2333,71 @@ static void gpuintensity(struct io_data *io_data, __maybe_unused SOCKETTYPE c, c
 
     gpus[id].dynamic = false;
     gpus[id].intensity = intensity;
+    gpus[id].xintensity = 0;
+    gpus[id].rawintensity = 0;
     sprintf(intensitystr, "%d", intensity);
   }
 
+  // fix config with new settings so that we can save them
+  update_config_intensity(get_gpu_profile(id));
+
   message(io_data, MSG_GPUINT, id, intensitystr, isjson);
+}
+
+static void gpuxintensity(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
+{
+  int id;
+  char *value;
+  int intensity;
+  char intensitystr[7];
+
+  if (!splitgpuvalue(io_data, param, &id, &value, isjson))
+    return;
+
+  intensity = atoi(value);
+  if (intensity < MIN_XINTENSITY || intensity > MAX_XINTENSITY) {
+    message(io_data, MSG_INVXINT, 0, value, isjson);
+    return;
+  }
+
+  gpus[id].dynamic = false;
+  gpus[id].intensity = 0;
+  gpus[id].xintensity = intensity;
+  gpus[id].rawintensity = 0;
+  sprintf(intensitystr, "%d", intensity);
+
+  // fix config with new settings so that we can save them
+  update_config_xintensity(get_gpu_profile(id));
+
+  message(io_data, MSG_GPUXINT, id, intensitystr, isjson);
+}
+
+static void gpurawintensity(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group)
+{
+  int id;
+  char *value;
+  int intensity;
+  char intensitystr[16];
+
+  if (!splitgpuvalue(io_data, param, &id, &value, isjson))
+    return;
+
+  intensity = atoi(value);
+  if (intensity < MIN_RAWINTENSITY || intensity > MAX_RAWINTENSITY) {
+    message(io_data, MSG_INVRAWINT, 0, value, isjson);
+    return;
+  }
+
+  gpus[id].dynamic = false;
+  gpus[id].intensity = 0;
+  gpus[id].xintensity = 0;
+  gpus[id].rawintensity = intensity;
+  sprintf(intensitystr, "%d", intensity);
+
+  // fix config with new settings so that we can save them
+  update_config_rawintensity(get_gpu_profile(id));
+
+  message(io_data, MSG_GPURAWINT, id, intensitystr, isjson);
 }
 
 static void gpumem(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe_unused char *param, bool isjson, __maybe_unused char group)
@@ -2929,6 +2994,8 @@ struct CMDS {
   { "addprofile",    api_profile_add,  true, false },
   { "removeprofile",    api_profile_remove,  true, false },
   { "gpuintensity",       gpuintensity,   true, false },
+  { "gpuxintensity",       gpuxintensity,   true, false },
+  { "gpurawintensity",       gpurawintensity,   true, false },
   { "gpumem",             gpumem,         true, false },
   { "gpuengine",          gpuengine,      true, false },
   { "gpufan",             gpufan,         true, false },

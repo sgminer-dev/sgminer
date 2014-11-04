@@ -143,3 +143,39 @@ void _applog(int prio, const char *str, bool force)
     }
   }
 }
+
+void __debug(const char *filename, const char *fmt, ...)
+{
+  FILE *f;
+  va_list args;
+
+  if (!(f = fopen(((!empty_string(filename))?filename:"debug.log"), "a+"))) {
+    return;
+  }
+
+  //prepend timestamp
+  struct timeval tv = {0, 0};
+  struct tm *tm;
+
+  cgtime(&tv);
+
+  const time_t tmp_time = tv.tv_sec;
+  tm = localtime(&tmp_time);
+
+  fprintf(f, "[%d-%02d-%02d %02d:%02d:%02d] ",
+    tm->tm_year + 1900,
+    tm->tm_mon + 1,
+    tm->tm_mday,
+    tm->tm_hour,
+    tm->tm_min,
+    tm->tm_sec);
+
+  va_start(args, fmt);
+  vfprintf(f, fmt, args);
+  va_end(args);
+
+  //add \n
+  fprintf(f, "\n");
+
+  fclose(f);
+}

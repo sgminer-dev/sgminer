@@ -538,6 +538,11 @@ struct pool *add_pool(void)
   pool->profile = strdup(buf);  //profile blank by default
   pool->algorithm.name[0] = '\0'; //blank algorithm name
 
+  /* intensities default to blank */
+  pool->intensity = strdup(buf);
+  pool->xintensity = strdup(buf);
+  pool->rawintensity = strdup(buf);
+
   pools = (struct pool **)realloc(pools, sizeof(struct pool *) * (total_pools + 2));
   pools[total_pools++] = pool;
   mutex_init(&pool->pool_lock);
@@ -823,21 +828,21 @@ static char *set_pool_lookup_gap(const char *arg)
 static char *set_pool_intensity(const char *arg)
 {
   struct pool *pool = get_current_pool();
-  pool->intensity = arg;
+  opt_set_charp(arg, &pool->intensity);
   return NULL;
 }
 
 static char *set_pool_xintensity(const char *arg)
 {
   struct pool *pool = get_current_pool();
-  pool->xintensity = arg;
+  opt_set_charp(arg, &pool->xintensity);
   return NULL;
 }
 
 static char *set_pool_rawintensity(const char *arg)
 {
   struct pool *pool = get_current_pool();
-  pool->rawintensity = arg;
+  opt_set_charp(arg, &pool->rawintensity);
   return NULL;
 }
 
@@ -1484,10 +1489,6 @@ struct opt_table opt_config_table[] = {
       set_default_xintensity, NULL, NULL,
       "Shader based intensity of GPU scanning (" MIN_XINTENSITY_STR " to "
         MAX_XINTENSITY_STR "), overridden --xintensity|-X and --rawintensity."),
-  OPT_WITH_ARG("--xintensity|-X",
-      set_default_xintensity, NULL, NULL,
-      "Shader based intensity of GPU scanning (" MIN_XINTENSITY_STR " to "
-        MAX_XINTENSITY_STR "), overrides --intensity|-I, overridden by --rawintensity."),
   OPT_WITH_ARG("--rawintensity",
       set_default_rawintensity, NULL, NULL,
       "Raw intensity of GPU scanning (" MIN_RAWINTENSITY_STR " to "
@@ -8405,6 +8406,9 @@ int main(int argc, char *argv[])
   if (unlikely(pthread_mutex_init(&lockstat_lock, NULL)))
     quithere(1, "Failed to pthread_mutex_init lockstat_lock errno=%d", errno);
 #endif
+
+  // initialize default profile (globals) before reading config options
+  init_default_profile();
 
   initial_args = (const char **)malloc(sizeof(char *)* (argc + 1));
   for  (i = 0; i < argc; i++)

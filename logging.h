@@ -92,4 +92,7 @@ extern void _applog(int prio, const char *str, bool force);
 
 #endif
 
+extern void __debug(const char *filename, const char *fmt, ...);
+
+
 #endif /* LOGGING_H */

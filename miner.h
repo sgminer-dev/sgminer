@@ -1303,9 +1303,9 @@ struct pool {
   char *profile;
   algorithm_t algorithm;
   const char *devices;
-  const char *intensity;
-  const char *xintensity;
-  const char *rawintensity;
+  char *intensity;
+  char *xintensity;
+  char *rawintensity;
   const char *lookup_gap;
   const char *gpu_engine;
   const char *gpu_memclock;
