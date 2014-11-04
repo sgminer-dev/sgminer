@@ -1297,20 +1297,20 @@ struct pool {
 
   char *profile;
   algorithm_t algorithm;
-    const char *devices;
-    const char *intensity;
-    const char *xintensity;
-    const char *rawintensity;
-    const char *lookup_gap;
-    const char *gpu_engine;
-    const char *gpu_memclock;
-    const char *gpu_threads;
-    const char *gpu_fan;
-    const char *gpu_powertune;
-    const char *gpu_vddc;
-    const char *shaders;
-    const char *thread_concurrency;
-    const char *worksize;
+  const char *devices;
+  char *intensity;
+  char *xintensity;
+  char *rawintensity;
+  const char *lookup_gap;
+  const char *gpu_engine;
+  const char *gpu_memclock;
+  const char *gpu_threads;
+  const char *gpu_fan;
+  const char *gpu_powertune;
+  const char *gpu_vddc;
+  const char *shaders;
+  const char *thread_concurrency;
+  const char *worksize;
 
   pthread_mutex_t pool_lock;
   cglock_t data_lock;

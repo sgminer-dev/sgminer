@@ -89,6 +89,12 @@ static struct profile *add_profile()
   profile->name = strdup(buf);
   profile->algorithm.name[0] = '\0';
 
+  // intensity set to blank by default
+  buf[0] = 0;
+  profile->intensity = strdup(buf);
+  profile->xintensity = strdup(buf);
+  profile->rawintensity = strdup(buf);
+
   profiles = (struct profile **)realloc(profiles, sizeof(struct profile *) * (total_profiles + 2));
   profiles[total_profiles++] = profile;
 
@@ -141,13 +147,31 @@ static struct profile *get_profile(char *name)
 {
   int i;
 
-  for(i=total_profiles;i--;)
-  {
-    if(!strcasecmp(profiles[i]->name, name))
+  if (empty_string(name)) {
+    return NULL;
+  }
+
+  for (i=0;i<total_profiles;++i) {
+    if (!safe_cmp(profiles[i]->name, name)) {
       return profiles[i];
+    }
   }
 
   return NULL;
+}
+
+struct profile *get_gpu_profile(int gpuid)
+{
+  struct profile *profile;
+  struct pool *pool = pools[gpus[gpuid].thr[0]->pool_no];
+
+  if (!(profile = get_profile(pool->profile))) {
+    if (!(profile = get_profile(default_profile.name))) {
+      profile = &default_profile;
+    }
+  }
+
+  return profile;
 }
 
 /******* Default profile functions used during config parsing *****/
@@ -189,19 +213,19 @@ char *set_default_lookup_gap(const char *arg)
 
 char *set_default_intensity(const char *arg)
 {
-  default_profile.intensity = arg;
+  opt_set_charp(arg, &default_profile.intensity);
   return NULL;
 }
 
 char *set_default_xintensity(const char *arg)
 {
-  default_profile.xintensity = arg;
+  opt_set_charp(arg, &default_profile.xintensity);
   return NULL;
 }
 
 char *set_default_rawintensity(const char *arg)
 {
-  default_profile.rawintensity = arg;
+  opt_set_charp(arg, &default_profile.rawintensity);
   return NULL;
 }
 
@@ -317,21 +341,21 @@ char *set_profile_lookup_gap(const char *arg)
 char *set_profile_intensity(const char *arg)
 {
   struct profile *profile = get_current_profile();
-  profile->intensity = arg;
+  opt_set_charp(arg, &profile->intensity);
   return NULL;
 }
 
 char *set_profile_xintensity(const char *arg)
 {
   struct profile *profile = get_current_profile();
-  profile->xintensity = arg;
+  opt_set_charp(arg, &profile->xintensity);
   return NULL;
 }
 
 char *set_profile_rawintensity(const char *arg)
 {
   struct profile *profile = get_current_profile();
-  profile->rawintensity = arg;
+  opt_set_charp(arg, &profile->rawintensity);
   return NULL;
 }
 
@@ -794,6 +818,20 @@ void load_default_config(void)
 /*******************************************
  * Startup functions
  * *****************************************/
+
+void init_default_profile()
+{
+  char buf[32];
+
+  buf[0] = 0;
+
+  default_profile.name = strdup(buf);
+  default_profile.algorithm.name[0] = 0;
+  default_profile.algorithm.kernelfile = strdup(buf);
+  default_profile.intensity = strdup(buf);
+  default_profile.xintensity = strdup(buf);
+  default_profile.rawintensity = strdup(buf);
+}
 
 // assign default settings from default profile if set
 void load_default_profile()
@@ -1275,17 +1313,23 @@ static json_t *build_pool_json()
       return NULL;
 
     // rawintensity
-    if (!empty_string(pool->rawintensity))
-      if (!build_pool_json_add(obj, "rawintensity", pool->rawintensity, profile->rawintensity, default_profile.rawintensity, pool->pool_no))
+    if (!empty_string(pool->rawintensity)) {
+      if (!build_pool_json_add(obj, "rawintensity", pool->rawintensity, profile->rawintensity, default_profile.rawintensity, pool->pool_no)) {
         return NULL;
+      }
+    }
     // xintensity
-    else if (!empty_string(pool->xintensity))
-      if (!build_pool_json_add(obj, "xintensity", pool->xintensity, profile->xintensity, default_profile.xintensity, pool->pool_no))
+    else if (!empty_string(pool->xintensity)) {
+      if (!build_pool_json_add(obj, "xintensity", pool->xintensity, profile->xintensity, default_profile.xintensity, pool->pool_no)) {
         return NULL;
+      }
+    }
     // intensity
-    else
-      if (!build_pool_json_add(obj, "intensity", pool->intensity, profile->intensity, default_profile.intensity, pool->pool_no))
+    else if (!empty_string(pool->intensity)) {
+      if (!build_pool_json_add(obj, "intensity", pool->intensity, profile->intensity, default_profile.intensity, pool->pool_no)) {
         return NULL;
+      }
+    }
 
     // shaders
     if (!build_pool_json_add(obj, "shaders", pool->shaders, profile->shaders, default_profile.shaders, pool->pool_no))
@@ -1344,12 +1388,14 @@ static json_t *build_profile_json_add(json_t *object, const char *key, const cha
     val = str_compare;
 
   // no value, return...
-  if(empty_string(val))
+  if (empty_string(val)) {
     return object;
+  }
 
   //if the value is the same as default profile and, the current profile is not default profile, return...
-  if((safe_cmp(str_compare, val) == 0) && isdefault == false)
+  if ((safe_cmp(str_compare, val) == 0) && isdefault == false) {
     return object;
+  }
 
   json_profile_add(object, key, json_string(val), parentkey, id);
 
@@ -1383,17 +1429,23 @@ static json_t *build_profile_settings_json(json_t *object, struct profile *profi
     return NULL;
 
   // rawintensity
-  if (!empty_string(profile->rawintensity))
-    if(!build_profile_json_add(object, "rawintensity", profile->rawintensity, default_profile.rawintensity, isdefault, parentkey, profile->profile_no))
+  if (!empty_string(profile->rawintensity) || (isdefault && !empty_string(default_profile.rawintensity))) {
+    if(!build_profile_json_add(object, "rawintensity", profile->rawintensity, default_profile.rawintensity, isdefault, parentkey, profile->profile_no)) {
       return NULL;
+    }
+  }
   // xintensity
-  else if (!empty_string(profile->xintensity))
-    if(!build_profile_json_add(object, "xintensity", profile->xintensity, default_profile.xintensity, isdefault, parentkey, profile->profile_no))
+  else if (!empty_string(profile->xintensity) || (isdefault && !empty_string(default_profile.xintensity))) {
+    if(!build_profile_json_add(object, "xintensity", profile->xintensity, default_profile.xintensity, isdefault, parentkey, profile->profile_no)) {
       return NULL;
+    }
+  }
   // intensity
-  else if (!empty_string(profile->intensity))
-    if(!build_profile_json_add(object, "intensity", profile->intensity, default_profile.intensity, isdefault, parentkey, profile->profile_no))
+  else if (!empty_string(profile->intensity) || (isdefault && !empty_string(default_profile.intensity))) {
+    if(!build_profile_json_add(object, "intensity", profile->intensity, default_profile.intensity, isdefault, parentkey, profile->profile_no)) {
       return NULL;
+    }
+  }
 
   //shaders
   if (!build_profile_json_add(object, "shaders", profile->shaders, default_profile.shaders, isdefault, parentkey, profile->profile_no))
@@ -2062,3 +2114,136 @@ void api_pool_profile(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char
 
   message(io_data, MSG_CHPOOLPR, pool->pool_no, profile->name, isjson);
 }
+
+
+void update_config_intensity(struct profile *profile)
+{
+  int i;
+  char buf[255];
+  memset(buf, 0, 255);
+
+  for (i = 0; i<nDevs; ++i) {
+    if (gpus[i].dynamic) {
+      sprintf(buf, "%s%sd", buf, ((i > 0)?",":""));
+    }
+    else {
+      sprintf(buf, "%s%s%d", buf, ((i > 0)?",":""), gpus[i].intensity);
+    }
+  }
+
+  if (profile->intensity) {
+    free(profile->intensity);
+  }
+
+  profile->intensity = strdup((const char *)buf);
+
+  if (profile->xintensity) {
+    profile->xintensity[0] = 0;
+  }
+
+  if (profile->rawintensity) {
+    profile->rawintensity[0] = 0;
+  }
+
+  // if this profile is also default profile, make sure to set the default_profile structure value
+  if (!safe_cmp(profile->name, default_profile.name)) {
+    if (default_profile.intensity) {
+      free(default_profile.intensity);
+    }
+
+    default_profile.intensity = strdup((const char *)buf);
+
+    if (default_profile.xintensity) {
+      default_profile.xintensity[0] = 0;
+    }
+
+    if (default_profile.rawintensity) {
+      default_profile.rawintensity[0] = 0;
+    }
+  }
+}
+
+void update_config_xintensity(struct profile *profile)
+{
+  int i;
+  char buf[255];
+  memset(buf, 0, 255);
+
+  for (i = 0; i<nDevs; ++i) {
+    sprintf(buf, "%s%s%d", buf, ((i > 0)?",":""), gpus[i].xintensity);
+  }
+
+  if (profile->intensity) {
+    profile->intensity[0] = 0;
+  }
+
+  if (profile->xintensity) {
+    free(profile->xintensity);
+  }
+
+  profile->xintensity = strdup((const char *)buf);
+
+  if (profile->rawintensity) {
+    profile->rawintensity[0] = 0;
+  }
+
+  // if this profile is also default profile, make sure to set the default_profile structure value
+  if (!safe_cmp(profile->name, default_profile.name)) {
+    if (default_profile.intensity) {
+      default_profile.intensity[0] = 0;
+    }
+
+    if (default_profile.xintensity) {
+      free(default_profile.xintensity);
+    }
+
+    default_profile.xintensity = strdup((const char *)buf);
+
+    if (default_profile.rawintensity) {
+      default_profile.rawintensity[0] = 0;
+    }
+  }
+}
+
+void update_config_rawintensity(struct profile *profile)
+{
+  int i;
+  char buf[255];
+  memset(buf, 0, 255);
+
+  for (i = 0; i<nDevs; ++i) {
+    sprintf(buf, "%s%s%d", buf, ((i > 0)?",":""), gpus[i].rawintensity);
+  }
+
+  if (profile->intensity) {
+    profile->intensity[0] = 0;
+  }
+
+  if (profile->xintensity) {
+    profile->xintensity[0] = 0;
+  }
+
+  if (profile->rawintensity) {
+    free(profile->rawintensity);
+  }
+
+  profile->rawintensity = strdup((const char *)buf);
+
+  // if this profile is also default profile, make sure to set the default_profile structure value
+  if (!safe_cmp(profile->name, default_profile.name)) {
+    if (default_profile.intensity) {
+      default_profile.intensity[0] = 0;
+    }
+
+    if (default_profile.xintensity) {
+      default_profile.xintensity[0] = 0;
+    }
+
+    if (default_profile.rawintensity) {
+      free(default_profile.rawintensity);
+    }
+
+    default_profile.rawintensity = strdup((const char *)buf);
+  }
+}
+

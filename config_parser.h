@@ -15,9 +15,9 @@ struct profile {
 
   algorithm_t algorithm;
   const char *devices;
-  const char *intensity;
-  const char *xintensity;
-  const char *rawintensity;
+  char *intensity;
+  char *xintensity;
+  char *rawintensity;
   const char *lookup_gap;
   const char *gpu_engine;
   const char *gpu_memclock;
@@ -42,6 +42,9 @@ extern int json_array_index;
 extern struct profile default_profile;
 extern struct profile **profiles;
 extern int total_profiles;
+
+/* profile helper functions */
+extern struct profile *get_gpu_profile(int gpuid);
 
 /* option parser functions */
 extern char *set_default_algorithm(const char *arg);
@@ -93,6 +96,7 @@ extern char *set_default_config(const char *arg);
 extern void load_default_config(void);
 
 /* startup functions */
+extern void init_default_profile();
 extern void load_default_profile();
 extern void apply_defaults();
 extern void apply_pool_profiles();
@@ -106,5 +110,10 @@ extern void api_profile_list(struct io_data *io_data, __maybe_unused SOCKETTYPE 
 extern void api_profile_add(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group);
 extern void api_profile_remove(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group);
 extern void api_pool_profile(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char *param, bool isjson, __maybe_unused char group);
+
+/* API/UI config update functions */
+extern void update_config_intensity(struct profile *profile);
+extern void update_config_xintensity(struct profile *profile);
+extern void update_config_rawintensity(struct profile *profile);
 
 #endif // CONFIG_PARSER_H
