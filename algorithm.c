@@ -29,6 +29,7 @@
 #include "algorithm/bitblock.h"
 #include "algorithm/x14.h"
 #include "algorithm/fresh.h"
+#include "algorithm/whirlcoin.h"
 #include "algorithm/neoscrypt.h"
 
 #include "compat.h"
@@ -49,7 +50,9 @@ const char *algorithm_type_str[] = {
   "Twecoin",
   "Fugue256",
   "NIST",
-  "Fresh"
+  "Fresh",
+  "Whirlcoin",
+  "Neoscrypt"
 };
 
 void sha256(const unsigned char *message, unsigned int len, unsigned char *digest)
@@ -599,6 +602,34 @@ static cl_int queue_fresh_kernel(struct __clState *clState, struct _dev_blk_ctx 
   return status;
 }
 
+static cl_int queue_whirlcoin_kernel(struct __clState *clState, struct _dev_blk_ctx *blk, __maybe_unused cl_uint threads)
+{
+  cl_kernel *kernel;
+  cl_ulong le_target;
+  cl_int status = 0;
+
+  le_target = *(cl_ulong *)(blk->work->device_target + 24);
+  flip80(clState->cldata, blk->work->data);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+
+  //clbuffer, hashes
+  kernel = &clState->kernel;
+  CL_SET_ARG_N(0,clState->CLbuffer0);
+  CL_SET_ARG_N(1,clState->padbuffer8);
+
+  kernel = clState->extra_kernels;
+  CL_SET_ARG_N(0,clState->padbuffer8);
+
+  CL_NEXTKERNEL_SET_ARG_N(0,clState->padbuffer8);
+
+  //hashes, output, target
+  CL_NEXTKERNEL_SET_ARG_N(0,clState->padbuffer8);
+  CL_SET_ARG_N(1,clState->outputBuffer);
+  CL_SET_ARG_N(2,le_target);
+
+  return status;
+}
+
 typedef struct _algorithm_settings_t {
   const char *name; /* Human-readable identifier */
   algorithm_type_t type; //common algorithm type
@@ -630,6 +661,7 @@ static algorithm_settings_t algos[] = {
   A_SCRYPT( "bufius" ),
   A_SCRYPT( "psw" ),
   A_SCRYPT( "zuikkis" ),
+  A_SCRYPT( "arebyp" ),
 #undef A_SCRYPT
 
 #define A_NEOSCRYPT(a) \
@@ -674,11 +706,14 @@ static algorithm_settings_t algos[] = {
   { "fresh", ALGO_FRESH, "", 1, 256, 256, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 4, 4 * 16 * 4194304, 0, fresh_regenhash, queue_fresh_kernel, gen_hash, NULL},
 
   // kernels starting from this will have difficulty calculated by using fuguecoin algorithm
-#define A_FUGUE(a, b) \
-    { a, ALGO_FUGUE, "", 1, 256, 256, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, b, queue_sph_kernel, sha256, NULL}
-  A_FUGUE( "fuguecoin",   fuguecoin_regenhash),
-  A_FUGUE( "groestlcoin", groestlcoin_regenhash),
-#undef A_FUGUE
+#define A_FUGUE(a, b, c) \
+    { a, ALGO_FUGUE, "", 1, 256, 256, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, b, queue_sph_kernel, c, NULL}
+  A_FUGUE("fuguecoin", fuguecoin_regenhash, sha256),
+  A_FUGUE("groestlcoin", groestlcoin_regenhash, sha256),
+  A_FUGUE("diamond", groestlcoin_regenhash, gen_hash),
+ #undef A_FUGUE
+
+  { "whirlcoin", ALGO_WHIRL, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 3, 8 * 16 * 4194304, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, whirlcoin_regenhash, queue_whirlcoin_kernel, sha256, NULL},
 
   // Terminator (do not remove)
   { NULL, ALGO_UNK, "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL}
@@ -750,6 +785,7 @@ static const char *lookup_algorithm_alias(const char *lookup_alias, uint8_t *nfa
   ALGO_ALIAS("x15old", "bitblockold");
   ALGO_ALIAS("nist5", "talkcoin-mod");
   ALGO_ALIAS("keccak", "maxcoin");
+  ALGO_ALIAS("whirlpool", "whirlcoin");
 
   #undef ALGO_ALIAS
   #undef ALGO_ALIAS_NF

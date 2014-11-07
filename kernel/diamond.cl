@@ -29,8 +29,8 @@
  * Donations to: BTC 1H7qC5uHuGX2d5s9Kuw3k7Wm7xMQzL16SN
  */
 
-#ifndef GROESTLCOIN_CL
-#define GROESTLCOIN_CL
+#ifndef DIAMOND_CL
+#define DIAMOND_CL
 
 #define DC64(x)     ((ulong)(x ## UL))
 #define DEC64E(x)   (*(const __global ulong *) (x));
@@ -1850,4 +1850,4 @@ end:
   if ((g[3 + 8] ^ m[3]) <= target) output[output[0xFF]++] = as_uint(as_uchar4(gid).wzyx);
 }
 
-#endif // GROESTLCOIN_CL
+#endif // DIAMOND_CL

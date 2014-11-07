@@ -1,5 +1,12 @@
 # Release news
 
+## Development 5.1.0-dev
+
+* Added support for neoscrypt (by _ystarnaud_)
+* Implemented the kernel updates for Xn algorithms, groestlcoin and others (by _badman74_)
+* Added support for diamond v2 and whirlcoin (by _badman74_)
+* Added a new scrypt kernel ("arebyp") (by _badman74_)
+
 ## Master
 
 * Added support for animecoin, darkcoin, fuguecoin, groestlcoin, inkcoin,
