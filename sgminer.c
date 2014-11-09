@@ -6197,7 +6197,7 @@ static void apply_initial_gpu_settings(struct pool *pool)
 
   //worksize
   if(!empty_string((opt = get_pool_setting(pool->worksize, default_profile.worksize))))
-    set_worksize((char *)opt);
+    set_worksize(opt);
 
   //apply algorithm
   for (i = 0; i < nDevs; i++)
@@ -6601,7 +6601,7 @@ static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
     if(opt_isset(pool_switch_options, SWITCHER_APPLY_WORKSIZE))
     {
       if(!empty_string((opt = get_pool_setting(work->pool->worksize, default_profile.worksize))))
-        set_worksize((char *)opt);
+        set_worksize(opt);
     }
 
     #ifdef HAVE_ADL

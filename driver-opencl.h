@@ -20,7 +20,7 @@ extern char *set_intensity(const char *arg);
 extern char *set_xintensity(const char *arg);
 extern char *set_rawintensity(const char *arg);
 extern char *set_vector(char *arg);
-extern char *set_worksize(char *arg);
+extern char *set_worksize(const char *arg);
 extern char *set_shaders(char *arg);
 extern char *set_lookup_gap(char *arg);
 extern char *set_thread_concurrency(const char *arg);
