@@ -91,32 +91,38 @@ char *set_vector(char *arg)
   return NULL;
 }
 
-char *set_worksize(char *arg)
+char *set_worksize(const char *arg)
 {
   int i, val = 0, device = 0;
+  char *tmpstr = strdup(arg);
   char *nextptr;
 
-  nextptr = strtok(arg, ",");
-  if (nextptr == NULL)
+  if ((nextptr = strtok(tmpstr, ",")) == NULL) {
+    free(tmpstr);
     return "Invalid parameters for set work size";
-  val = atoi(nextptr);
-  if (val < 1 || val > 9999)
-    return "Invalid value passed to set_worksize";
+  }
 
-  gpus[device++].work_size = val;
-
-  while ((nextptr = strtok(NULL, ",")) != NULL) {
+  do {
     val = atoi(nextptr);
-    if (val < 1 || val > 9999)
+
+    if (val < 1 || val > 9999) {
+      free(tmpstr);
       return "Invalid value passed to set_worksize";
+    }
 
+    applog(LOG_DEBUG, "GPU %d Worksize set to %u.", device, val);
     gpus[device++].work_size = val;
-  }
+  } while ((nextptr = strtok(NULL, ",")) != NULL);
+
+  // if only 1 worksize was passed, assign the same worksize for all remaining GPUs
   if (device == 1) {
-    for (i = device; i < MAX_GPUDEVICES; i++)
+    for (i = device; i < total_devices; ++i) {
       gpus[i].work_size = gpus[0].work_size;
+      applog(LOG_DEBUG, "GPU %d Worksize set to %u.", i, gpus[i].work_size);
+    }
   }
 
+  free(tmpstr);
   return NULL;
 }
 
