@@ -123,8 +123,8 @@
         del /f "$(OutDir)*.exe"
         del /f "$(OutDir)*.dll"
 
-        type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
-        FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+        echo #define USE_GIT_VERSION 1 &gt; "$(ProjectDir)dist\include\gitversion.h"
+        FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt;&gt; "$(ProjectDir)dist\include\gitversion.h"
         exit 0
       </Command>
     </PreBuildEvent>
@@ -165,8 +165,8 @@
         del /f "$(OutDir)*.exe"
         del /f "$(OutDir)*.dll"
 
-        type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
-        FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+        echo #define USE_GIT_VERSION 1 &gt; "$(ProjectDir)dist\include\gitversion.h"
+        FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt;&gt; "$(ProjectDir)dist\include\gitversion.h"
         exit 0
       </Command>
     </PreBuildEvent>
@@ -208,8 +208,8 @@
         del /f "$(OutDir)*.exe"
         del /f "$(OutDir)*.dll"
 
-        type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
-        FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+        echo #define USE_GIT_VERSION 1 &gt; "$(ProjectDir)dist\include\gitversion.h"
+        FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt;&gt; "$(ProjectDir)dist\include\gitversion.h"
         exit 0
       </Command>
     </PreBuildEvent>
@@ -252,8 +252,8 @@
         del /f "$(OutDir)*.exe"
         del /f "$(OutDir)*.dll"
 
-        type nul &gt; "$(ProjectDir)dist\include\gitversion.h"
-        FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt; "$(ProjectDir)dist\include\gitversion.h"
+        echo #define USE_GIT_VERSION 1 &gt; "$(ProjectDir)dist\include\gitversion.h"
+        FOR /F "tokens=*" %%i IN ('call git describe "--abbrev=4" --dirty') DO echo #define GIT_VERSION "%%i" &gt;&gt; "$(ProjectDir)dist\include\gitversion.h"
         exit 0
       </Command>
     </PreBuildEvent>
