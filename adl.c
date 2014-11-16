@@ -1310,7 +1310,7 @@ void gpu_autotune(int gpu, enum dev_enable *denable)
   bool fan_optimal = true, fan_window = true;
   struct cgpu_info *cgpu;
   struct gpu_adl *ga;
-  unsigned int i;
+  int i;
 
   cgpu = &gpus[gpu];
   ga = &cgpu->adl;

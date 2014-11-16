@@ -49,8 +49,6 @@
 
 #define PATH_MAX MAX_PATH
 
-#define R_OK 0
-
 // Libraries to include
 #pragma comment(lib, "winmm.lib")
 #pragma comment(lib, "wsock32.lib")
@@ -69,11 +67,11 @@
 
 #endif
 
-#define VERSION "v5.0.0"
+#define VERSION "v5.0.1"
 #define PACKAGE_NAME "sgminer"
 #define PACKAGE_TARNAME "sgminer"
-#define PACKAGE_VERSION "5.0.0"
-#define PACKAGE_STRING "sgminer 5.0.0"
+#define PACKAGE_VERSION "5.0.1"
+#define PACKAGE_STRING "sgminer 5.0.1"
 #define PACKAGE "sgminer"
 
 #define SGMINER_PREFIX ""

@@ -47,9 +47,6 @@
     <ClCompile Include="..\logging.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\ocl.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\sgminer.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -69,9 +66,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\pool.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\algorithm.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\sph\aes_helper.c">
@@ -196,6 +190,12 @@
     </ClCompile>
     <ClCompile Include="..\sph\whirlpool.c">
       <Filter>Source Files\sph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ocl.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

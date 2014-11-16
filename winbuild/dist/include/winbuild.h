@@ -131,8 +131,6 @@ inline void* memmem (void* buf, size_t buflen, void* pat, size_t patlen)
 	return 0; 
 }
 
-#define va_copy(a, b) memcpy(&(a), &(b), sizeof(va_list))
-
 #define usleep(x) Sleep((x)/1000)
 #define sleep(x) Sleep((x)*1000)
 

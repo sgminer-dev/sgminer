@@ -8040,7 +8040,7 @@ static void probe_pools(void)
 static void restart_mining_threads(unsigned int new_n_threads)
 {
   struct thr_info *thr;
-  unsigned int i, j, k;
+  int i, j, k;
 
   // Stop and free threads
   if (mining_thr)
@@ -8197,7 +8197,6 @@ int main(int argc, char *argv[])
   struct thr_info *thr;
   struct block *block;
   int i;
-  char *s;
 
   /* This dangerous function tramples random dynamically allocated
    * variables so do it before anything at all */

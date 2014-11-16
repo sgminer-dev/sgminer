@@ -25,11 +25,6 @@
  * as we will also check for __int64 etc types.
  * (the definition was used in the automake system) */
 
-/* Bring in the cmake-detected defines */
-#define HAVE_STDINT_H 1
-/* #undef HAVE_INTTYPES_H */
-/* #undef HAVE_SYS_TYPES_H */
-
 /* Include our standard type header for the integer typedef */
 
 #if defined(HAVE_STDINT_H)

@@ -1,1 +1,0 @@
-Curl installation instructions can be found in winbuild/README.txt.

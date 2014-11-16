@@ -15,60 +15,60 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\compat\jansson\src\dump.c">
+    <ClCompile Include="..\..\submodules\jansson\src\dump.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\compat\jansson\src\error.c">
+    <ClCompile Include="..\..\submodules\jansson\src\error.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\compat\jansson\src\hashtable.c">
+    <ClCompile Include="..\..\submodules\jansson\src\hashtable.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\compat\jansson\src\hashtable_seed.c">
+    <ClCompile Include="..\..\submodules\jansson\src\hashtable_seed.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\compat\jansson\src\load.c">
+    <ClCompile Include="..\..\submodules\jansson\src\load.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\compat\jansson\src\memory.c">
+    <ClCompile Include="..\..\submodules\jansson\src\memory.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\compat\jansson\src\pack_unpack.c">
+    <ClCompile Include="..\..\submodules\jansson\src\pack_unpack.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\compat\jansson\src\strbuffer.c">
+    <ClCompile Include="..\..\submodules\jansson\src\strbuffer.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\compat\jansson\src\strconv.c">
+    <ClCompile Include="..\..\submodules\jansson\src\strconv.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\compat\jansson\src\utf.c">
+    <ClCompile Include="..\..\submodules\jansson\src\utf.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\compat\jansson\src\value.c">
+    <ClCompile Include="..\..\submodules\jansson\src\value.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\compat\jansson\src\hashtable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\compat\jansson\src\jansson.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\compat\jansson\src\jansson_private.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\compat\jansson\src\strbuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\compat\jansson\src\utf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="jansson_config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="jansson_private_config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\submodules\jansson\src\hashtable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\submodules\jansson\src\jansson.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\submodules\jansson\src\jansson_private.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\submodules\jansson\src\strbuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\submodules\jansson\src\utf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
