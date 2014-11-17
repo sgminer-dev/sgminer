@@ -66,7 +66,7 @@ Ctrl-D or typing "logout" and pressing the enter key should get you out of the
 window.
 
 **************************************************************************************
-* Download or copy sgminer source to your MSYS working directory                                 *
+* Download or copy sgminer source to your MSYS working directory                     *
 **************************************************************************************
 
 Download sgminer from source. In mingw32, type:
@@ -190,9 +190,8 @@ Make a directory and copy the following files into it. This will be your sgminer
 Folder that you use for mining. Remember the .cl filenames could change on later
 releases. If you installed a different version of libcurl then some of those dll's
 may be different as well.
-  sgminer.exe     from \MinGW\msys\1.0\home\(username)\sgminer-x.x.x
-  *.cl            from \MinGW\msys\1.0\home\(username)\sgminer-x.x.x
-  README          from \MinGW\msys\1.0\home\(username)\sgminer-x.x.x
+  sgminer.exe     from \MinGW\msys\1.0\home\(username)\sgminer
+  kernel folder   from \MinGW\msys\1.0\home\(username)\sgminer
   libcurl.dll     from \MinGW\bin
   libidn-11.dll   from \MinGW\bin
   libeay32.dll    from \MinGW\bin
@@ -200,6 +199,13 @@ may be different as well.
   libpdcurses.dll from \MinGW\bin
   pthreadGC2.dll  from \MinGW\bin
   zlib1.dll       from \MinGW\bin
+  doc folder      from \MinGW\msys\1.0\home\(username)\sgminer (optional)
+  README.md       from \MinGW\msys\1.0\home\(username)\sgminer (optional)
+  AUTHORS.md      from \MinGW\msys\1.0\home\(username)\sgminer (optional)
+  ChangeLog       from \MinGW\msys\1.0\home\(username)\sgminer (optional)
+  COPYING         from \MinGW\msys\1.0\home\(username)\sgminer (optional)
+  example.conf    from \MinGW\msys\1.0\home\(username)\sgminer (optional)
+  NEWS.md         from \MinGW\msys\1.0\home\(username)\sgminer (optional)
 
 **************************************************************************************
 * Optional - Install Git into MinGW/MSYS                                             *
