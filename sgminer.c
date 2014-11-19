@@ -797,6 +797,16 @@ static char *set_pool_devices(const char *arg)
   return NULL;
 }
 
+static char *set_pool_kernelfile(const char *arg)
+{
+  struct pool *pool = get_current_pool();
+  
+  applog(LOG_DEBUG, "Setting pool %i algorithm kernel file to %s", pool->pool_no, arg);
+  pool->algorithm.kernelfile = arg;
+  
+  return NULL;
+}
+
 static char *set_pool_lookup_gap(const char *arg)
 {
   struct pool *pool = get_current_pool();
@@ -1421,6 +1431,9 @@ struct opt_table opt_config_table[] = {
   OPT_WITH_ARG("--keccak-unroll",
       set_int_0_to_9999, opt_show_intval, &opt_keccak_unroll,
       "Set SPH_KECCAK_UNROLL for Xn derived algorithms (Default: 0)"),
+  OPT_WITH_ARG("--kernelfile",
+      set_default_kernelfile, NULL, NULL,
+      "Set the algorithm kernel source file (without file extension)."),
   OPT_WITH_ARG("--lookup-gap",
       set_default_lookup_gap, NULL, NULL,
       "Set GPU lookup gap for scrypt mining, comma separated"),
@@ -1523,6 +1536,9 @@ struct opt_table opt_config_table[] = {
   OPT_WITH_ARG("--pool-device",
       set_pool_devices, NULL, NULL,
       "Select devices to use with pool, one value, range and/or comma separated (e.g. 0-2,4) default: all"),
+  OPT_WITH_ARG("--pool-kernelfile",
+      set_pool_kernelfile, NULL, NULL,
+      "Set the pool's algorithm kernel source file (without file extension)."),
   OPT_WITH_ARG("--pool-lookup-gap",
       set_pool_lookup_gap, NULL, NULL,
       "Set Pool GPU lookup gap for scrypt mining, comma separated"),
@@ -1581,6 +1597,9 @@ struct opt_table opt_config_table[] = {
   OPT_WITH_ARG("--profile-device",
       set_profile_devices, NULL, NULL,
       "Select devices to use with profile, one value, range and/or comma separated (e.g. 0-2,4) default: all"),
+  OPT_WITH_ARG("--profile-kernelfile",
+      set_profile_kernelfile, NULL, NULL,
+      "Set the profile's algorithm kernel source file (without file extension)."),
   OPT_WITH_ARG("--profile-lookup-gap",
       set_profile_lookup_gap, NULL, NULL,
       "Set Profile GPU lookup gap for scrypt mining, comma separated"),
@@ -2865,9 +2884,10 @@ static void show_hash(struct work *work, char *hashshow)
      work->block? " BLOCK!" : "");
   } else {
     swab256(rhash, work->hash);
-    for (ofs = 0; ofs <= 28; ofs ++) {
-      if (rhash[ofs])
+    for (ofs = 0; ofs <= 28; ++ofs) {
+      if (rhash[ofs]) {
         break;
+      }
     }
     hash32 = (uint32_t *)(rhash + ofs);
     h32 = be32toh(*hash32);
@@ -3277,9 +3297,9 @@ static void calc_diff(struct work *work, double known)
   struct sgminer_pool_stats *pool_stats = &(work->pool->sgminer_pool_stats);
   double difficulty;
 
-  if (known)
+  if (known) {
     work->work_difficulty = known;
-  else {
+  } else {
     double d64, dcut64;
 
     d64 = work->pool->algorithm.diff_multiplier2 * truediffone;

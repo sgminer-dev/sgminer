@@ -298,8 +298,9 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
   char filename[255];
   char strbuf[32];
 
-  sprintf(strbuf, "%s.cl", cgpu->algorithm.name);
+  sprintf(strbuf, "%s.cl", (!empty_string(cgpu->algorithm.kernelfile) ? cgpu->algorithm.kernelfile : cgpu->algorithm.name));
   strcpy(filename, strbuf);
+  applog(LOG_DEBUG, "Using source file %s", filename);
 
   /* For some reason 2 vectors is still better even if the card says
    * otherwise, and many cards lie about their max so use 256 as max
@@ -382,7 +383,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
   build_data->opencl_version = get_opencl_version(devices[gpu]);
   build_data->patch_bfi = needs_bfi_patch(build_data);
 
-  strcpy(build_data->binary_filename, cgpu->algorithm.name);
+  strcpy(build_data->binary_filename, (!empty_string(cgpu->algorithm.kernelfile) ? cgpu->algorithm.kernelfile : cgpu->algorithm.name));
   strcat(build_data->binary_filename, name);
   if (clState->goffset)
     strcat(build_data->binary_filename, "g");
@@ -392,6 +393,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
     algorithm->set_compile_options(build_data, cgpu, algorithm);
 
   strcat(build_data->binary_filename, ".bin");
+  applog(LOG_DEBUG, "Using binary file %s", build_data->binary_filename);
 
   // Load program from file or build it if it doesn't exist
   if (!(clState->program = load_opencl_binary_kernel(build_data))) {

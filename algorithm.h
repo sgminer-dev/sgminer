@@ -42,6 +42,7 @@ struct work;
 typedef struct _algorithm_t {
   char     name[20]; /* Human-readable identifier */
   algorithm_type_t type; //algorithm type
+  const char *kernelfile; /* alternate kernel file */
   uint32_t n;        /* N (CPU/Memory tradeoff parameter) */
   uint8_t  nfactor;  /* Factor of N above (n = 2^nfactor) */
   double   diff_multiplier1;
