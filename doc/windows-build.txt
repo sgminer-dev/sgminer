@@ -66,8 +66,14 @@ Ctrl-D or typing "logout" and pressing the enter key should get you out of the
 window.
 
 **************************************************************************************
-* Copy sgminer source to your MSYS working directory                                 *
+* Download or copy sgminer source to your MSYS working directory                     *
 **************************************************************************************
+
+Download sgminer from source. In mingw32, type:
+ git clone git://github.com/sgminer-dev/sgminer.git
+
+or
+
 Copy sgminer source code directory into:
 \MinGW\msys\1.0\home\(folder with your user name)
 
@@ -79,9 +85,9 @@ when unzipped.
 * Install AMD APP SDK, latest version (only if you want GPU mining)                  *
 **************************************************************************************
 Go to this url for the latest AMD APP SDK:
- http://developer.amd.com/tools/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/downloads/
+ http://developer.amd.com/tools-and-sdks/opencl-zone/amd-accelerated-parallel-processing-app-sdk/
 Go to this url for legacy AMD APP SDK's:
- http://developer.amd.com/tools/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/downloads/download-archive/
+ http://developer.amd.com/tools-and-sdks/opencl-zone/amd-accelerated-parallel-processing-app-sdk/download-archive/
 Download and install the Windows 32 bit version.
 Copy the folders in \Program Files (x86)\AMD APP\include to \MinGW\include
 Copy \Program Files (x86)\AMD APP\lib\x86\libOpenCL.a to \MinGW\lib
@@ -92,11 +98,15 @@ Note2: If you update your APP SDK later you might want to recopy the above files
 **************************************************************************************
 * Install AMD ADL SDK, latest version (only if you want GPU monitoring)              *
 **************************************************************************************
+
+Warning: sgminer 5.0.0 does NOT yet support ADL SDK 7.0, so you will have to install the version 6.0 instead.
+This may change in a future version of sgminer.
+
 Go to this url ==> http://developer.amd.com/tools/graphics-development/display-library-adl-sdk/
 Download and unzip the file you downloaded.
 Pull adl_defines.h, adl_sdk.h, and adl_structures.h out of the include folder
 Put those files into the ADL_SDK folder in your source tree as shown below.
-\MinGW\msys\1.0\home\(folder with your user name)\sgminer-x.x.x\ADL_SDK
+\MinGW\msys\1.0\home\(folder with your user name)\sgminer\ADL_SDK
 
 **************************************************************************************
 * Install GTK-WIN, required for Pkg-config in the next step                          *
@@ -125,13 +135,32 @@ in your \MingW\share\aclocal directory.
 **************************************************************************************
 Go to this url ==> http://curl.haxx.se/download.html#Win32
 At the section where it says "Win32 - Generic", Click on the link that indicates
-Win32 2000.XP 7.27.0 libcurl SSL and download it.
-The one I downloaded may not be current for you. Choose the latest.
+Win32 2000.XP 7.xx.x libcurl SSL and download it.
 Extract the files that are in the zip (bin, include, and lib) to their respective
 locations in MinGW (\MinGW\bin, \MinGW\include, and \MinGW\lib).
 Edit the file \MinGW\lib\pkgconfig\libcurl.pc and search for the line that ends 
 with "-lcurl", and make it say "-lcurl -lcurldll".
 Ref. http://old.nabble.com/gcc-working-with-libcurl-td20506927.html
+
+**************************************************************************************
+* Install jansson in the submodules of sgminer                                       *
+**************************************************************************************
+
+Go to this url:
+ http://www.digip.org/jansson/
+
+Download the latest version of jansson available.
+Unzip, extract and copy all the content of the janson-x.x folder into your folder:
+ \MinGW\msys\1.0\home\(folder with your user name)\sgminer\submodules\jansson
+ 
+In mingw32, go to your jansson folder. Usually by typing:
+ cd sgminer/submodules/jansson
+
+Now install jansson by typing:
+autoreconf -i --force --install
+./configure
+make
+make install
 
 **************************************************************************************
 * Build sgminer.exe                                                                  *
@@ -146,7 +175,7 @@ to the next.
 
       adl.sh (optional - see below - skip this entirely)
       autoreconf -fvi
-      CFLAGS="-O2 -msse2" ./configure (additional config options, see below)
+      CFLAGS="-O2 -msse2" ./configure (for GPU mining add --enable-opencl, see below: "Some ./configure options")
       make
       strip sgminer.exe  <== only do this if you are not compiling for debugging
       
@@ -161,15 +190,22 @@ Make a directory and copy the following files into it. This will be your sgminer
 Folder that you use for mining. Remember the .cl filenames could change on later
 releases. If you installed a different version of libcurl then some of those dll's
 may be different as well.
-  sgminer.exe     from \MinGW\msys\1.0\home\(username)\sgminer-x.x.x
-  *.cl            from \MinGW\msys\1.0\home\(username)\sgminer-x.x.x
-  README          from \MinGW\msys\1.0\home\(username)\sgminer-x.x.x
+  sgminer.exe     from \MinGW\msys\1.0\home\(username)\sgminer
+  kernel folder   from \MinGW\msys\1.0\home\(username)\sgminer
   libcurl.dll     from \MinGW\bin
   libidn-11.dll   from \MinGW\bin
   libeay32.dll    from \MinGW\bin
   ssleay32.dll    from \MinGW\bin
   libpdcurses.dll from \MinGW\bin
   pthreadGC2.dll  from \MinGW\bin
+  zlib1.dll       from \MinGW\bin
+  doc folder      from \MinGW\msys\1.0\home\(username)\sgminer (optional)
+  README.md       from \MinGW\msys\1.0\home\(username)\sgminer (optional)
+  AUTHORS.md      from \MinGW\msys\1.0\home\(username)\sgminer (optional)
+  ChangeLog       from \MinGW\msys\1.0\home\(username)\sgminer (optional)
+  COPYING         from \MinGW\msys\1.0\home\(username)\sgminer (optional)
+  example.conf    from \MinGW\msys\1.0\home\(username)\sgminer (optional)
+  NEWS.md         from \MinGW\msys\1.0\home\(username)\sgminer (optional)
 
 **************************************************************************************
 * Optional - Install Git into MinGW/MSYS                                             *
@@ -182,7 +218,7 @@ Extract the share\git-core folder and place it into \MinGW\share.
 After the previous step you should have a folder called \MinGW\share\git-core.
 To test if it is working, open a MinGW shell and type the following:
   git config -–global core.autocrlf false (note: one time run only)
-  git clone git://github.com/veox/sgminer.git
+  git clone git://github.com/sgminer-dev/sgminer.git
 
 If you simply just want to update the source after you have already cloned, type:
   git pull
