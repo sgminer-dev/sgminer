@@ -662,7 +662,7 @@ static char *parse_config_array(json_t *obj, char *parentkey, bool fileconf)
   json_t *val;
 
   //fix parent key - remove extra "s" to match opt names (e.g. --pool-gpu-memclock not --pools-gpu-memclock)
-  if(!strcasecmp(parentkey, "pools") || !strcasecmp(parentkey, "profiles"))
+  if(!strcasecmp(parentkey, "pools") || !strcasecmp(parentkey, "profiles") || !strcasecmp(parentkey, "events"))
     parentkey[(strlen(parentkey) - 1)] = '\0';
 
   json_array_foreach(obj, idx, val)

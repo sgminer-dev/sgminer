@@ -275,6 +275,7 @@
     <ClCompile Include="..\algorithm\darkcoin.c" />
     <ClCompile Include="..\config_parser.c" />
     <ClCompile Include="..\driver-opencl.c" />
+    <ClCompile Include="..\events.c" />
     <ClCompile Include="..\findnonce.c" />
     <ClCompile Include="..\algorithm\fuguecoin.c" />
     <ClCompile Include="..\algorithm\groestlcoin.c" />
@@ -335,6 +336,7 @@
     <ClInclude Include="..\config_parser.h" />
     <ClInclude Include="..\driver-opencl.h" />
     <ClInclude Include="..\elist.h" />
+    <ClInclude Include="..\events.h" />
     <ClInclude Include="..\findnonce.h" />
     <ClInclude Include="..\algorithm\fuguecoin.h" />
     <ClInclude Include="..\algorithm\groestlcoin.h" />
