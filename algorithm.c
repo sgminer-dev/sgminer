@@ -29,6 +29,7 @@
 #include "algorithm/bitblock.h"
 #include "algorithm/x14.h"
 #include "algorithm/fresh.h"
+#include "algorithm/neoscrypt.h"
 
 #include "compat.h"
 
@@ -92,6 +93,17 @@ static void append_scrypt_compiler_options(struct _build_kernel_data *data, stru
   strcat(data->binary_filename, buf);
 }
 
+static void append_neoscrypt_compiler_options(struct _build_kernel_data *data, struct cgpu_info *cgpu, struct _algorithm_t *algorithm)
+{
+  char buf[255];
+  sprintf(buf, " -D MAX_GLOBAL_THREADS=%u", 
+    (unsigned int)cgpu->thread_concurrency);
+  strcat(data->compiler_options, buf);
+  
+  sprintf(buf, "tc%u", (unsigned int)cgpu->thread_concurrency);
+  strcat(data->binary_filename, buf);
+}
+
 static void append_x11_compiler_options(struct _build_kernel_data *data, struct cgpu_info *cgpu, struct _algorithm_t *algorithm)
 {
   char buf[255];
@@ -137,6 +149,30 @@ static cl_int queue_scrypt_kernel(struct __clState *clState, struct _dev_blk_ctx
   CL_SET_VARG(4, &midstate[16]);
   CL_SET_ARG(le_target);
 
+  return status;
+}
+
+static cl_int queue_neoscrypt_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_unused cl_uint threads)
+{
+  cl_kernel *kernel = &clState->kernel;
+  unsigned int num = 0;
+  cl_uint le_target;
+  cl_int status = 0;
+  
+  /* This looks like a unnecessary double cast, but to make sure, that
+   * the target's most significant entry is adressed as a 32-bit value
+   * and not accidently by something else the double cast seems wise.
+   * The compiler will get rid of it anyway. 
+   */
+  le_target = (cl_uint)le32toh(((uint32_t *)blk->work->/*device_*/target)[7]);
+  memcpy(clState->cldata, blk->work->data, 80);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
+  
+  CL_SET_ARG(clState->CLbuffer0);
+  CL_SET_ARG(clState->outputBuffer);
+  CL_SET_ARG(clState->padbuffer8);
+  CL_SET_ARG(le_target);
+  
   return status;
 }
 
@@ -596,6 +632,11 @@ static algorithm_settings_t algos[] = {
   A_SCRYPT( "psw" ),
   A_SCRYPT( "zuikkis" ),
 #undef A_SCRYPT
+
+#define A_NEOSCRYPT(a) \
+  { a, ALGO_NEOSCRYPT, "", 1, 65536, 65536, 0, 0, 0xFF, 0xFFFF000000000000ULL, 0x0000ffffUL, 0, -1, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, neoscrypt_regenhash, queue_neoscrypt_kernel, gen_hash, append_neoscrypt_compiler_options}
+  A_NEOSCRYPT("neoscrypt"),
+#undef A_NEOSCRYPT
 
   // kernels starting from this will have difficulty calculated by using quarkcoin algorithm
 #define A_QUARK(a, b) \

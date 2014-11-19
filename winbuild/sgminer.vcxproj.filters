@@ -197,6 +197,9 @@
     <ClCompile Include="..\algorithm.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\algorithm\neoscrypt.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\adl.h">
@@ -372,6 +375,9 @@
     </ClInclude>
     <ClInclude Include="..\sph\sph_shabal.h">
       <Filter>Header Files\sph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\neoscrypt.h">
+      <Filter>Header Files\algorithm</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

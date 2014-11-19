@@ -34,6 +34,7 @@
 #include "ocl.h"
 #include "ocl/build_kernel.h"
 #include "ocl/binary_kernel.h"
+#include "algorithm/neoscrypt.h"
 
 /* FIXME: only here for global config vars, replace with configuration.h
  * or similar as soon as config is in a struct instead of littered all
@@ -344,19 +345,55 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
     cgpu->lookup_gap = 2;
   }
 
-  if (!cgpu->opt_tc) {
+  // neoscrypt calculates TC differently
+  if (!safe_cmp(cgpu->algorithm.name, "neoscrypt")) {
+    int max_int = ((cgpu->dynamic) ? MAX_INTENSITY : cgpu->intensity);
+    size_t glob_thread_count = 1UL << max_int;
+
+    // if TC is entered by user, use that value... otherwise use default
+    cgpu->thread_concurrency = ((cgpu->opt_tc) ? cgpu->opt_tc : ((glob_thread_count < cgpu->work_size) ? cgpu->work_size : glob_thread_count));
+
+    // if TC * scratchbuf size is too big for memory... reduce to max
+    if (((uint64_t)cgpu->thread_concurrency * NEOSCRYPT_SCRATCHBUF_SIZE) >(uint64_t)cgpu->max_alloc) {
+      /* Selected intensity will not run on this GPU. Not enough memory.
+      * Adapt the memory setting. */
+      glob_thread_count = cgpu->max_alloc / NEOSCRYPT_SCRATCHBUF_SIZE;
+
+      /* Find highest significant bit in glob_thread_count, which gives
+      * the intensity. */
+      while (max_int && ((1U << max_int) & glob_thread_count) == 0) {
+        --max_int;
+      }
+
+      /* Check if max_intensity is >0. */
+      if (max_int < MIN_INTENSITY) {
+        applog(LOG_ERR, "GPU %d: Max intensity is below minimum.", gpu);
+        max_int = MIN_INTENSITY;
+      }
+
+      cgpu->intensity = max_int;
+      cgpu->thread_concurrency = 1U << max_int;
+    }
+
+    applog(LOG_DEBUG, "GPU %d: computing max. global thread count to %u", gpu, (unsigned)(cgpu->thread_concurrency));
+
+  }
+  else if (!cgpu->opt_tc) {
     unsigned int sixtyfours;
 
     sixtyfours =  cgpu->max_alloc / 131072 / 64 / (algorithm->n/1024) - 1;
     cgpu->thread_concurrency = sixtyfours * 64;
     if (cgpu->shaders && cgpu->thread_concurrency > cgpu->shaders) {
       cgpu->thread_concurrency -= cgpu->thread_concurrency % cgpu->shaders;
-      if (cgpu->thread_concurrency > cgpu->shaders * 5)
+      if (cgpu->thread_concurrency > cgpu->shaders * 5) {
         cgpu->thread_concurrency = cgpu->shaders * 5;
+      }
     }
     applog(LOG_DEBUG, "GPU %d: selecting thread concurrency of %d", gpu, (int)(cgpu->thread_concurrency));
-  } else
+  }
+  else {
     cgpu->thread_concurrency = cgpu->opt_tc;
+  }
 
 
   cl_uint slot, cpnd;
@@ -445,17 +482,36 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
   }
 
   size_t bufsize;
+  size_t readbufsize = 128;
 
   if (algorithm->rw_buffer_size < 0) {
-    size_t ipt = (algorithm->n / cgpu->lookup_gap +
-            (algorithm->n % cgpu->lookup_gap > 0));
-    bufsize = 128 * ipt * cgpu->thread_concurrency;
-  } else
-    bufsize = (size_t) algorithm->rw_buffer_size;
+    // calc buffer size for neoscrypt
+    if (!safe_cmp(algorithm->name, "neoscrypt")) {
+      /* The scratch/pad-buffer needs 32kBytes memory per thread. */
+      bufsize = NEOSCRYPT_SCRATCHBUF_SIZE * cgpu->thread_concurrency;
+
+      /* This is the input buffer. For neoscrypt this is guaranteed to be
+      * 80 bytes only. */
+      readbufsize = 80;
+
+      applog(LOG_DEBUG, "Neoscrypt buffer sizes: %lu RW, %lu R", (unsigned long)bufsize, (unsigned long)readbufsize);
+      // scrypt/n-scrypt
+    }
+    else {
+      size_t ipt = (algorithm->n / cgpu->lookup_gap + (algorithm->n % cgpu->lookup_gap > 0));
+      bufsize = 128 * ipt * cgpu->thread_concurrency;
+      applog(LOG_DEBUG, "Scrypt buffer sizes: %lu RW, %lu R", (unsigned long)bufsize, (unsigned long)readbufsize);
+    }
+  }
+  else {
+    bufsize = (size_t)algorithm->rw_buffer_size;
+    applog(LOG_DEBUG, "Buffer sizes: %lu RW, %lu R", (unsigned long)bufsize, (unsigned long)readbufsize);
+  }
 
   clState->padbuffer8 = NULL;
 
   if (bufsize > 0) {
+    applog(LOG_DEBUG, "Creating read/write buffer sized %lu", (unsigned long)bufsize);
     /* Use the max alloc value which has been rounded to a power of
      * 2 greater >= required amount earlier */
     if (bufsize > cgpu->max_alloc) {
@@ -463,7 +519,6 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
            gpu, (unsigned long)(cgpu->max_alloc));
       applog(LOG_WARNING, "Your settings come to %lu", (unsigned long)bufsize);
     }
-    applog(LOG_DEBUG, "Creating buffer sized %lu", (unsigned long)bufsize);
 
     /* This buffer is weird and might work to some degree even if
      * the create buffer call has apparently failed, so check if we
@@ -475,11 +530,14 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
     }
   }
 
-  clState->CLbuffer0 = clCreateBuffer(clState->context, CL_MEM_READ_ONLY, 128, NULL, &status);
+  applog(LOG_DEBUG, "Using read buffer sized %lu", (unsigned long)readbufsize);
+  clState->CLbuffer0 = clCreateBuffer(clState->context, CL_MEM_READ_ONLY, readbufsize, NULL, &status);
   if (status != CL_SUCCESS) {
     applog(LOG_ERR, "Error %d: clCreateBuffer (CLbuffer0)", status);
     return NULL;
   }
+  
+  applog(LOG_DEBUG, "Using output buffer sized %lu", BUFFERSIZE);
   clState->outputBuffer = clCreateBuffer(clState->context, CL_MEM_WRITE_ONLY, BUFFERSIZE, NULL, &status);
 
   if (status != CL_SUCCESS) {

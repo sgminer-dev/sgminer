@@ -65,6 +65,7 @@ sgminer_SOURCES += algorithm/talkcoin.c algorithm/talkcoin.h
 sgminer_SOURCES += algorithm/bitblock.c algorithm/bitblock.h
 sgminer_SOURCES += algorithm/x14.c algorithm/x14.h
 sgminer_SOURCES += algorithm/fresh.c algorithm/fresh.h
+sgminer_SOURCES += algorithm/neoscrypt.c algorithm/neoscrypt.h
 
 bin_SCRIPTS	= $(top_srcdir)/kernel/*.cl
 

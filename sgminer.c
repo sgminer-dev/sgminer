@@ -2019,11 +2019,26 @@ static void update_gbt(struct pool *pool)
 /* Return the work coin/network difficulty */
 static double get_work_blockdiff(const struct work *work)
 {
-  uint8_t pow = work->data[72];
-  int powdiff = (8 * (0x1d - 3)) - (8 * (pow - 3));
-  uint32_t diff32 = be32toh(*((uint32_t *)(work->data + 72))) & 0x00FFFFFF;
-  double numerator = work->pool->algorithm.diff_numerator << powdiff;
-  return numerator / (double)diff32;
+  uint64_t diff64;
+  double numerator;
+
+  // Neoscrypt has the data reversed
+  if (!safe_cmp(work->pool->algorithm.name, "neoscrypt")) {
+    diff64 = bswap_64(((uint64_t)(be32toh(*((uint32_t *)(work->data + 72))) & 0xFFFFFF00)) << 8);
+    numerator = (double)work->pool->algorithm.diff_numerator;
+  }
+  else {
+    uint8_t pow = work->data[72];
+    int powdiff = (8 * (0x1d - 3)) - (8 * (pow - 3));;
+    diff64 = be32toh(*((uint32_t *)(work->data + 72))) & 0x0000000000FFFFFF;
+    numerator = work->pool->algorithm.diff_numerator << powdiff;
+  }
+
+  if (unlikely(!diff64)) {
+    diff64 = 1;
+  }
+
+  return numerator / (double)diff64;
 }
 
 static void gen_gbt_work(struct pool *pool, struct work *work)
@@ -2073,7 +2088,10 @@ static void gen_gbt_work(struct pool *pool, struct work *work)
     free(header);
   }
 
-  calc_midstate(work);
+  // Neoscrypt doesn't calc_midstate()
+  if (safe_cmp(pool->algorithm.name, "neoscrypt")) {
+    calc_midstate(work);
+  }
   local_work++;
   work->pool = pool;
   work->gbt = true;
@@ -2189,10 +2207,15 @@ static bool getwork_decode(json_t *res_val, struct work *work)
     return false;
   }
 
-  if (!jobj_binary(res_val, "midstate", work->midstate, sizeof(work->midstate), false)) {
-    // Calculate it ourselves
-    applog(LOG_DEBUG, "%s: Calculating midstate locally", isnull(get_pool_name(work->pool), ""));
-    calc_midstate(work);
+  // Neoscrypt doesn't calc midstate
+  if (safe_cmp(work->pool->algorithm.name, "neoscrypt")) {
+    if (!jobj_binary(res_val, "midstate", work->midstate, sizeof(work->midstate), false)) {
+      // Calculate it ourselves
+      if (opt_morenotices) {
+        applog(LOG_DEBUG, "%s: Calculating midstate locally", isnull(get_pool_name(work->pool), ""));
+      }
+      calc_midstate(work);
+    }
   }
 
   if (unlikely(!jobj_binary(res_val, "target", work->target, sizeof(work->target), true))) {
@@ -2936,8 +2959,8 @@ static bool submit_upstream_work(struct work *work, CURL *curl, char *curl_err_s
 
   endian_flip128(work->data, work->data);
 
-  /* build hex string */
-  hexstr = bin2hex(work->data, sizeof(work->data));
+  /* build hex string - Make sure to restrict to 80 bytes for Neoscrypt */
+  hexstr = bin2hex(work->data, ((!safe_cmp(work->pool->algorithm.name, "neoscrypt")) ? 80 : sizeof(work->data)));
 
   /* build JSON-RPC request */
   if (work->gbt) {
@@ -3304,11 +3327,19 @@ static void calc_diff(struct work *work, double known)
 
     d64 = work->pool->algorithm.diff_multiplier2 * truediffone;
 
-    dcut64 = le256todouble(work->target);
+    applog(LOG_DEBUG, "calc_diff() algorithm = %s", work->pool->algorithm.name);
+    // Neoscrypt
+    if (!safe_cmp(work->pool->algorithm.name, "neoscrypt")) {
+      dcut64 = (double)*((uint64_t *)(work->target + 22));
+    }
+    else {
+      dcut64 = le256todouble(work->target);  
+    }
     if (unlikely(!dcut64))
       dcut64 = 1;
     work->work_difficulty = d64 / dcut64;
   }
+
   difficulty = work->work_difficulty;
 
   pool_stats->last_diff = difficulty;
@@ -5465,18 +5496,27 @@ static void *stratum_sthread(void *userdata)
     sshare->sshare_time = time(NULL);
     /* This work item is freed in parse_stratum_response */
     sshare->work = work;
-    nonce = *((uint32_t *)(work->data + 76));
+
+    applog(LOG_DEBUG, "stratum_sthread() algorithm = %s", pool->algorithm.name);
+
+    // Neoscrypt is little endian
+    if (!safe_cmp(pool->algorithm.name, "neoscrypt")) {
+      nonce = htobe32(*((uint32_t *)(work->data + 76)));
+      //*((uint32_t *)nonce2) = htole32(work->nonce2);
+    }
+    else {
+      nonce = *((uint32_t *)(work->data + 76));
+    }
     __bin2hex(noncehex, (const unsigned char *)&nonce, 4);
+
+    *((uint64_t *)nonce2) = htole64(work->nonce2);
+    __bin2hex(nonce2hex, nonce2, work->nonce2_len);
     memset(s, 0, 1024);
 
     mutex_lock(&sshare_lock);
     /* Give the stratum share a unique id */
     sshare->id = swork_id++;
     mutex_unlock(&sshare_lock);
-
-    nonce2_64 = (uint64_t *)nonce2;
-    *nonce2_64 = htole64(work->nonce2);
-    __bin2hex(nonce2hex, nonce2, work->nonce2_len);
 
     snprintf(s, sizeof(s),
       "{\"params\": [\"%s\", \"%s\", \"%s\", \"%s\", \"%s\"], \"id\": %d, \"method\": \"mining.submit\"}",
@@ -5885,6 +5925,50 @@ void set_target(unsigned char *dest_target, double diff, double diff_multiplier2
   memcpy(dest_target, target, 32);
 }
 
+/*****************************************************
+* Special set_target() function for Neoscrypt
+****************************************************/
+void set_target_neoscrypt(unsigned char *target, double diff)
+{
+  uint64_t m;
+  int k;
+
+  diff /= 65536.0;
+  for (k = 6; k > 0 && diff > 1.0; --k) {
+    diff /= 4294967296.0;
+  }
+
+  m = 4294901760.0 / diff;
+
+  if (m == 0 && k == 6) {
+    memset(target, 0xff, 32);
+  }
+  else {
+    memset(target, 0, 32);
+    ((uint32_t *)target)[k] = (uint32_t)m;
+    ((uint32_t *)target)[k + 1] = (uint32_t)(m >> 32);
+  }
+
+  if (opt_debug) {
+    /* The target is computed in this systems endianess and stored
+    * in its endianess on a uint32-level. But because the target are
+    * eight uint32s, they are stored in mixed mode, i.e., each uint32
+    * is stored in the local endianess, but the least significant bit
+    * is stored in target[0] bit 0.
+    *
+    * To print this large number in a native human readable form the
+    * order of the array entries is swapped, i.e., target[7] <-> target[0]
+    * and each array entry is byte swapped to have the least significant
+    * bit to the right. */
+    uint32_t swaped[8];
+    swab256(swaped, target);
+    char *htarget = bin2hex((unsigned char *)swaped, 32);
+
+    applog(LOG_DEBUG, "Generated neoscrypt target 0x%s", htarget);
+    free(htarget);
+  }
+}
+
 /* Generates stratum based work based on the most recent notify information
  * from the pool. This will keep generating work while a pool is down so we use
  * other means to detect when the pool has died in stratum_thread */
@@ -5893,12 +5977,12 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
   unsigned char merkle_root[32], merkle_sha[64];
   uint32_t *data32, *swap32;
   uint64_t nonce2le;
-  int i;
+  int i, j;
 
   cg_wlock(&pool->data_lock);
 
   /* Update coinbase. Always use an LE encoded nonce2 to fill in values
-   * from left to right and prevent overflow errors with small n2sizes */
+  * from left to right and prevent overflow errors with small n2sizes */
   nonce2le = htole64(pool->nonce2);
   memcpy(pool->coinbase + pool->nonce2_offset, &nonce2le, pool->n2size);
   work->nonce2 = pool->nonce2++;
@@ -5915,16 +5999,50 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
     gen_hash(merkle_sha, 64, merkle_root);
     memcpy(merkle_sha, merkle_root, 32);
   }
-  data32 = (uint32_t *)merkle_sha;
-  swap32 = (uint32_t *)merkle_root;
-  flip32(swap32, data32);
 
-  /* Copy the data template from header_bin */
-  memcpy(work->data, pool->header_bin, 128);
-  memcpy(work->data + pool->merkle_offset, merkle_root, 32);
+  applog(LOG_DEBUG, "gen_stratum_work() - algorithm = %s", pool->algorithm.name);
+
+  // Different for Neoscrypt because of Little Endian
+  if (!safe_cmp(pool->algorithm.name, "neoscrypt")) {
+    /* Incoming data is in little endian. */
+    memcpy(merkle_root, merkle_sha, 32);
+
+    uint32_t temp = pool->merkle_offset / sizeof(uint32_t), i;
+    /* Put version (4 byte) + prev_hash (4 byte* 8) but big endian encoded
+    * into work. */
+    for (i = 0; i < temp; ++i) {
+      ((uint32_t *)work->data)[i] = be32toh(((uint32_t *)pool->header_bin)[i]);
+    }
+
+    /* Now add the merkle_root (4 byte* 8), but it is encoded in little endian. */
+    temp += 8;
+
+    for (j = 0; i < temp; ++i, ++j) {
+      ((uint32_t *)work->data)[i] = le32toh(((uint32_t *)merkle_root)[j]);
+    }
+
+    /* Add the time encoded in big endianess. */
+    hex2bin((unsigned char *)&temp, pool->swork.ntime, 4);
+
+    /* Add the nbits (big endianess). */
+    ((uint32_t *)work->data)[17] = be32toh(temp);
+    hex2bin((unsigned char *)&temp, pool->swork.nbit, 4);
+    ((uint32_t *)work->data)[18] = be32toh(temp);
+    ((uint32_t *)work->data)[20] = 0x80000000;
+    ((uint32_t *)work->data)[31] = 0x00000280;
+  }
+  else {
+    data32 = (uint32_t *)merkle_sha;
+    swap32 = (uint32_t *)merkle_root;
+    flip32(swap32, data32);
+
+    /* Copy the data template from header_bin */
+    memcpy(work->data, pool->header_bin, 128);
+    memcpy(work->data + pool->merkle_offset, merkle_root, 32);
+  }
 
   /* Store the stratum work diff to check it still matches the pool's
-   * stratum diff when submitting shares */
+  * stratum diff when submitting shares */
   work->sdiff = pool->swork.diff;
 
   /* Copy parameters required for share submission */
@@ -5941,13 +6059,19 @@ static void gen_stratum_work(struct pool *pool, struct work *work)
     applog(LOG_DEBUG, "Generated stratum merkle %s", merkle_hash);
     applog(LOG_DEBUG, "Generated stratum header %s", header);
     applog(LOG_DEBUG, "Work job_id %s nonce2 %"PRIu64" ntime %s", work->job_id,
-           work->nonce2, work->ntime);
+      work->nonce2, work->ntime);
     free(header);
     free(merkle_hash);
   }
 
-  calc_midstate(work);
-  set_target(work->target, work->sdiff, pool->algorithm.diff_multiplier2);
+  // For Neoscrypt use set_target_neoscrypt() function
+  if (!safe_cmp(pool->algorithm.name, "neoscrypt")) {
+    set_target_neoscrypt(work->target, work->sdiff);
+  }
+  else {
+    calc_midstate(work);
+    set_target(work->target, work->sdiff, pool->algorithm.diff_multiplier2);
+  }
 
   local_work++;
   work->pool = pool;
@@ -6124,15 +6248,17 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
   unsigned int options = 0;
   const char *opt1, *opt2;
 
-  if(!pool1 || !pool2)
+  applog(LOG_DEBUG, "compare_pool_settings()");
+
+  if (!pool1 || !pool2)
     return 0;
 
   //compare pool devices
-  opt1 = get_pool_setting(pool1->devices, ((!empty_string(default_profile.devices))?default_profile.devices:"all"));
-  opt2 = get_pool_setting(pool2->devices, ((!empty_string(default_profile.devices))?default_profile.devices:"all"));
+  opt1 = get_pool_setting(pool1->devices, ((!empty_string(default_profile.devices)) ? default_profile.devices : "all"));
+  opt2 = get_pool_setting(pool2->devices, ((!empty_string(default_profile.devices)) ? default_profile.devices : "all"));
 
   //changing devices means a hard reset of mining threads
-  if(strcasecmp(opt1, opt2) != 0)
+  if (strcasecmp(opt1, opt2) != 0)
     options |= (SWITCHER_APPLY_DEVICE | SWITCHER_HARD_RESET);
 
   //compare gpu threads
@@ -6140,11 +6266,11 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
   opt2 = get_pool_setting(pool2->gpu_threads, default_profile.gpu_threads);
 
   //changing gpu threads means a hard reset of mining threads
-  if(strcasecmp(opt1, opt2) != 0)
+  if (strcasecmp(opt1, opt2) != 0)
     options |= (SWITCHER_APPLY_GT | SWITCHER_HARD_RESET);
 
   //compare algorithm
-  if(!cmp_algorithm(&pool1->algorithm, &pool2->algorithm))
+  if (!cmp_algorithm(&pool1->algorithm, &pool2->algorithm))
     options |= (SWITCHER_APPLY_ALGO | SWITCHER_SOFT_RESET);
 
   //lookup gap
@@ -6152,46 +6278,46 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
   opt2 = get_pool_setting(pool2->lookup_gap, default_profile.lookup_gap);
 
   //lookup gap means soft reset but only if hard reset isnt set
-  if(strcasecmp(opt1, opt2) != 0)
+  if (strcasecmp(opt1, opt2) != 0)
     options |= (SWITCHER_APPLY_LG | SWITCHER_SOFT_RESET);
 
   //intensities
   opt1 = get_pool_setting(pool1->rawintensity, default_profile.rawintensity);
   opt2 = get_pool_setting(pool2->rawintensity, default_profile.rawintensity);
 
-  if(strcasecmp(opt1, opt2) != 0)
+  if (strcasecmp(opt1, opt2) != 0)
   {
     //intensity is soft reset
-    if(!empty_string(opt2))
+    if (!empty_string(opt2))
       options |= (SWITCHER_APPLY_RAWINT | SWITCHER_SOFT_RESET);
   }
 
   //xintensity -- only if raw intensity not set
-  if(!opt_isset(options, SWITCHER_APPLY_RAWINT))
+  if (!opt_isset(options, SWITCHER_APPLY_RAWINT))
   {
     opt1 = get_pool_setting(pool1->xintensity, default_profile.xintensity);
     opt2 = get_pool_setting(pool2->xintensity, default_profile.xintensity);
 
     //if different...
-    if(strcasecmp(opt1, opt2) != 0)
+    if (strcasecmp(opt1, opt2) != 0)
     {
       //intensity is soft reset
-      if(!empty_string(opt2))
+      if (!empty_string(opt2))
         options |= (SWITCHER_APPLY_XINT | SWITCHER_SOFT_RESET);
     }
   }
 
   //intensity -- only if raw intensity and xintensity not set
-  if(!opt_isset(options, SWITCHER_APPLY_RAWINT) && !opt_isset(options, SWITCHER_APPLY_XINT))
+  if (!opt_isset(options, SWITCHER_APPLY_RAWINT) && !opt_isset(options, SWITCHER_APPLY_XINT))
   {
     opt1 = get_pool_setting(pool1->intensity, default_profile.intensity);
     opt2 = get_pool_setting(pool2->intensity, default_profile.intensity);
 
     //if different...
-    if(strcasecmp(opt1, opt2) != 0)
+    if (strcasecmp(opt1, opt2) != 0)
     {
       //intensity is soft reset
-      if(!empty_string(opt2))
+      if (!empty_string(opt2))
         options |= (SWITCHER_APPLY_INT | SWITCHER_SOFT_RESET);
       //if blank, set default profile to intensity 8 and apply
       else
@@ -6203,10 +6329,10 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
   opt1 = get_pool_setting(pool1->shaders, default_profile.shaders);
   opt2 = get_pool_setting(pool2->shaders, default_profile.shaders);
 
-  if(strcasecmp(opt1, opt2) != 0)
+  if (strcasecmp(opt1, opt2) != 0)
   {
     //shaders is soft reset
-    if(!empty_string(opt2))
+    if (!empty_string(opt2))
       options |= (SWITCHER_APPLY_SHADER | SWITCHER_SOFT_RESET);
   }
 
@@ -6215,7 +6341,7 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
   opt2 = get_pool_setting(pool2->thread_concurrency, default_profile.thread_concurrency);
 
   //thread-concurrency is soft reset
-  if(strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
+  if (strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
     options |= (SWITCHER_APPLY_TC | SWITCHER_SOFT_RESET);
 
   //worksize
@@ -6223,45 +6349,45 @@ static unsigned long compare_pool_settings(struct pool *pool1, struct pool *pool
   opt2 = get_pool_setting(pool2->worksize, default_profile.worksize);
 
   //worksize is soft reset
-  if(strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
-      options |= (SWITCHER_APPLY_WORKSIZE | SWITCHER_SOFT_RESET);
+  if (strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
+    options |= (SWITCHER_APPLY_WORKSIZE | SWITCHER_SOFT_RESET);
 
-  #ifdef HAVE_ADL
-    //gpu-engine
-    opt1 = get_pool_setting(pool1->gpu_engine, default_profile.gpu_engine);
-    opt2 = get_pool_setting(pool2->gpu_engine, default_profile.gpu_engine);
+#ifdef HAVE_ADL
+  //gpu-engine
+  opt1 = get_pool_setting(pool1->gpu_engine, default_profile.gpu_engine);
+  opt2 = get_pool_setting(pool2->gpu_engine, default_profile.gpu_engine);
 
-    if(strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
-      options |= SWITCHER_APPLY_GPU_ENGINE;
+  if (strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
+    options |= SWITCHER_APPLY_GPU_ENGINE;
 
-    //gpu-memclock
-    opt1 = get_pool_setting(pool1->gpu_memclock, default_profile.gpu_memclock);
-    opt2 = get_pool_setting(pool2->gpu_memclock, default_profile.gpu_memclock);
+  //gpu-memclock
+  opt1 = get_pool_setting(pool1->gpu_memclock, default_profile.gpu_memclock);
+  opt2 = get_pool_setting(pool2->gpu_memclock, default_profile.gpu_memclock);
 
-    if(strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
-      options |= SWITCHER_APPLY_GPU_MEMCLOCK;
+  if (strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
+    options |= SWITCHER_APPLY_GPU_MEMCLOCK;
 
-    //GPU fans
-    opt1 = get_pool_setting(pool1->gpu_fan, default_profile.gpu_fan);
-    opt2 = get_pool_setting(pool2->gpu_fan, default_profile.gpu_fan);
+  //GPU fans
+  opt1 = get_pool_setting(pool1->gpu_fan, default_profile.gpu_fan);
+  opt2 = get_pool_setting(pool2->gpu_fan, default_profile.gpu_fan);
 
-    if(strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
-      options |= SWITCHER_APPLY_GPU_FAN;
+  if (strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
+    options |= SWITCHER_APPLY_GPU_FAN;
 
-    //GPU powertune
-    opt1 = get_pool_setting(pool1->gpu_powertune, default_profile.gpu_powertune);
-    opt2 = get_pool_setting(pool2->gpu_powertune, default_profile.gpu_powertune);
+  //GPU powertune
+  opt1 = get_pool_setting(pool1->gpu_powertune, default_profile.gpu_powertune);
+  opt2 = get_pool_setting(pool2->gpu_powertune, default_profile.gpu_powertune);
 
-    if(strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
-      options |= SWITCHER_APPLY_GPU_POWERTUNE;
+  if (strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
+    options |= SWITCHER_APPLY_GPU_POWERTUNE;
 
-    //GPU vddc
-    opt1 = get_pool_setting(pool1->gpu_vddc, default_profile.gpu_vddc);
-    opt2 = get_pool_setting(pool2->gpu_vddc, default_profile.gpu_vddc);
+  //GPU vddc
+  opt1 = get_pool_setting(pool1->gpu_vddc, default_profile.gpu_vddc);
+  opt2 = get_pool_setting(pool2->gpu_vddc, default_profile.gpu_vddc);
 
-    if(strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
-      options |= SWITCHER_APPLY_GPU_VDDC;
-  #endif
+  if (strcasecmp(opt1, opt2) != 0 && !empty_string(opt2))
+    options |= SWITCHER_APPLY_GPU_VDDC;
+#endif
 
   // Remove soft reset if hard reset is set
   if (opt_isset(options, SWITCHER_HARD_RESET) &&
@@ -6280,6 +6406,8 @@ static void mutex_unlock_cleanup_handler(void *mutex)
 static void get_work_prepare_thread(struct thr_info *mythr, struct work *work)
 {
   int i;
+
+  applog(LOG_DEBUG, "get_work_prepare_thread()");
 
   //if switcher is disabled
   if(opt_switchmode == SWITCH_OFF)
@@ -6608,6 +6736,7 @@ struct work *get_work(struct thr_info *thr, const int thr_id)
     }
   }
 
+  applog(LOG_DEBUG, "preparing thread...");
   get_work_prepare_thread(thr, work);
 
   diff_t = time(NULL) - diff_t;
@@ -6700,7 +6829,16 @@ bool test_nonce(struct work *work, uint32_t nonce)
   uint32_t diff1targ;
 
   rebuild_nonce(work, nonce);
-  diff1targ = work->pool->algorithm.diff1targ;
+
+  applog(LOG_DEBUG, "test_nonce() algorithm = %s", work->pool->algorithm.name);
+
+  // for Neoscrypt, the diff1targe value is in work->target
+  if ((work->pool->algorithm.name, "neoscrypt")) {
+    diff1targ = ((uint32_t *)work->target)[7];
+  }
+  else {
+    diff1targ = work->pool->algorithm.diff1targ;
+  }
 
   return (le32toh(*hash_32) <= diff1targ);
 }

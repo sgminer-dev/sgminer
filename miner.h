@@ -1100,6 +1100,7 @@ extern pthread_cond_t restart_cond;
 extern void clear_stratum_shares(struct pool *pool);
 extern void clear_pool_work(struct pool *pool);
 extern void set_target(unsigned char *dest_target, double diff, double diff_multiplier2);
+extern void set_target_neoscrypt(unsigned char *target, double diff);
 
 extern void kill_work(void);
 

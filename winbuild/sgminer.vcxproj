@@ -263,6 +263,7 @@
     <ClCompile Include="..\algorithm.c" />
     <ClCompile Include="..\algorithm\animecoin.c" />
     <ClCompile Include="..\algorithm\bitblock.c" />
+    <ClCompile Include="..\algorithm\neoscrypt.c" />
     <ClCompile Include="..\algorithm\talkcoin.c" />
     <ClCompile Include="..\algorithm\x14.c" />
     <ClCompile Include="..\algorithm\fresh.c" />
@@ -321,6 +322,7 @@
     <ClInclude Include="..\algorithm.h" />
     <ClInclude Include="..\algorithm\animecoin.h" />
     <ClInclude Include="..\algorithm\bitblock.h" />
+    <ClInclude Include="..\algorithm\neoscrypt.h" />
     <ClInclude Include="..\algorithm\talkcoin.h" />
     <ClInclude Include="..\algorithm\x14.h" />
     <ClInclude Include="..\algorithm\fresh.h" />
