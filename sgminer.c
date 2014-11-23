@@ -8388,6 +8388,7 @@ int main(int argc, char *argv[])
 {
 #ifndef _MSC_VER
   struct sigaction handler;
+  char *s;
 #endif
   struct thr_info *thr;
   struct block *block;
