@@ -1491,7 +1491,7 @@ extern void kill_work(void);
 
 //helper macro to preserve existing code
 #ifndef switch_pools
-  #define switch_pools(p) __switch_pools(p, TRUE)
+  #define switch_pools(p) __switch_pools(p, true)
 #endif
 extern void __switch_pools(struct pool *selected, bool saveprio);
 
