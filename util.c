@@ -1444,9 +1444,9 @@ char *recv_line(struct pool *pool)
   }
 
   buflen = strlen(pool->sockbuf);
-  tok = strtok(pool->sockbuf, "\n");
-  if (!tok) {
-    applog(LOG_DEBUG, "Failed to parse a \\n terminated string in recv_line");
+
+  if ((tok = strtok(pool->sockbuf, "\n")) == NULL) {
+    applog(LOG_DEBUG, "Failed to parse a \\n terminated string in recv_line: buffer = %s", pool->sockbuf);
     goto out;
   }
   sret = strdup(tok);
@@ -1675,12 +1675,16 @@ static bool parse_diff(struct pool *pool, json_t *val)
   if (old_diff != diff) {
     int idiff = diff;
 
-    if ((double)idiff == diff)
+    if ((double)idiff == diff) {
       applog(pool == current_pool() ? LOG_NOTICE : LOG_DEBUG, "%s difficulty changed to %d", get_pool_name(pool), idiff);
-    else
+    }
+    else {
       applog(pool == current_pool() ? LOG_NOTICE : LOG_DEBUG, "%s difficulty changed to %.3f", get_pool_name(pool), diff);
-  } else
+    }
+  }
+  else {
     applog(LOG_DEBUG, "%s difficulty set to %f", get_pool_name(pool), diff);
+  }
 
   return true;
 }
@@ -1806,83 +1810,80 @@ bool parse_method(struct pool *pool, char *s)
   bool ret = false;
   char *buf;
 
-  if (!s)
+  if (!s) {
     return ret;
+  }
 
-  val = JSON_LOADS(s, &err);
-  if (!val) {
+  if (!(val = JSON_LOADS(s, &err))) {
     applog(LOG_INFO, "JSON decode failed(%d): %s", err.line, err.text);
     return ret;
   }
 
-  method = json_object_get(val, "method");
-  if (!method) {
-    json_decref(val);
-    return ret;
+  if (!(method = json_object_get(val, "method"))) {
+    goto done;
   }
+
   err_val = json_object_get(val, "error");
   params = json_object_get(val, "params");
 
   if (err_val && !json_is_null(err_val)) {
     char *ss;
 
-    if (err_val)
+    if (err_val) {
       ss = json_dumps(err_val, JSON_INDENT(3));
-    else
+    }
+    else {
       ss = strdup("(unknown reason)");
+    }
 
     applog(LOG_INFO, "JSON-RPC method decode failed: %s", ss);
 
-    json_decref(val);
     free(ss);
-
-    return ret;
+    goto done;
   }
 
   buf = (char *)json_string_value(method);
   if (!buf) {
-    json_decref(val);
-    return ret;
+    goto done;
   }
 
   if (!strncasecmp(buf, "mining.notify", 13)) {
-    if (parse_notify(pool, params))
+    if (parse_notify(pool, params)) {
       pool->stratum_notify = ret = true;
-    else
+    }
+    else {
       pool->stratum_notify = ret = false;
-    json_decref(val);
-    return ret;
+    }
+
+    goto done;
   }
 
   if (!strncasecmp(buf, "mining.set_difficulty", 21) && parse_diff(pool, params)) {
     ret = true;
-    json_decref(val);
-    return ret;
+    goto done;
   }
 
   if (!strncasecmp(buf, "mining.set_extranonce", 21) && parse_extranonce(pool, params)) {
     ret = true;
-    json_decref(val);
-    return ret;
+    goto done;
   }
 
   if (!strncasecmp(buf, "client.reconnect", 16) && parse_reconnect(pool, params)) {
     ret = true;
-    json_decref(val);
-    return ret;
+    goto done;
   }
 
   if (!strncasecmp(buf, "client.get_version", 18) && send_version(pool, val)) {
     ret = true;
-    json_decref(val);
-    return ret;
+    goto done;
   }
 
   if (!strncasecmp(buf, "client.show_message", 19) && show_message(pool, params)) {
     ret = true;
-    json_decref(val);
-    return ret;
+    goto done;
   }
+
+done:
   json_decref(val);
   return ret;
 }
@@ -1894,11 +1895,11 @@ bool subscribe_extranonce(struct pool *pool)
   json_error_t err;
   bool ret = false;
 
-  sprintf(s, "{\"id\": %d, \"method\": \"mining.extranonce.subscribe\", \"params\": []}",
-    swork_id++);
+  sprintf(s, "{\"id\": %d, \"method\": \"mining.extranonce.subscribe\", \"params\": []}", swork_id++);
 
-  if (!stratum_send(pool, s, strlen(s)))
+  if (!stratum_send(pool, s, strlen(s))) {
     return ret;
+  }
 
   /* Parse all data in the queue and anything left should be the response */
   while (42) {
@@ -1910,12 +1911,15 @@ bool subscribe_extranonce(struct pool *pool)
     }
 
     sret = recv_line(pool);
-    if (!sret)
+    if (!sret) {
       return ret;
-    if (parse_method(pool, sret))
+    }
+    else if (parse_method(pool, sret)) {
       free(sret);
-    else
+    }
+    else {
       break;
+    }
   }
 
   val = JSON_LOADS(sret, &err);
@@ -1968,18 +1972,23 @@ bool auth_stratum(struct pool *pool)
   sprintf(s, "{\"id\": %d, \"method\": \"mining.authorize\", \"params\": [\"%s\", \"%s\"]}",
     swork_id++, pool->rpc_user, pool->rpc_pass);
 
-  if (!stratum_send(pool, s, strlen(s)))
+  if (!stratum_send(pool, s, strlen(s))) {
     return ret;
+  }
 
   /* Parse all data in the queue and anything left should be auth */
   while (42) {
     sret = recv_line(pool);
-    if (!sret)
+
+    if (!sret) {
       return ret;
-    if (parse_method(pool, sret))
+    }
+    else if (parse_method(pool, sret)) {
       free(sret);
-    else
+    }
+    else {
       break;
+    }
   }
 
   val = JSON_LOADS(sret, &err);

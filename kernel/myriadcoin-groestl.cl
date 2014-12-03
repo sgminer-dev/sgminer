@@ -4,7 +4,7 @@
  * ==========================(LICENSE BEGIN)============================
  *
  * Copyright (c) 2014  phm
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -12,10 +12,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -54,22 +54,18 @@ typedef long sph_s64;
 #define SPH_64_TRUE 1
 
 #define SPH_C32(x)    ((sph_u32)(x ## U))
-#define SPH_T32(x)    ((x) & SPH_C32(0xFFFFFFFF))
-#define SPH_ROTL32(x, n)   SPH_T32(((x) << (n)) | ((x) >> (32 - (n))))
+#define SPH_T32(x) (as_uint(x))
+#define SPH_ROTL32(x, n) rotate(as_uint(x), as_uint(n))
 #define SPH_ROTR32(x, n)   SPH_ROTL32(x, (32 - (n)))
 
 #define SPH_C64(x)    ((sph_u64)(x ## UL))
-#define SPH_T64(x)    ((x) & SPH_C64(0xFFFFFFFFFFFFFFFF))
-#define SPH_ROTL64(x, n)   SPH_T64(((x) << (n)) | ((x) >> (64 - (n))))
+#define SPH_T64(x) (as_ulong(x))
+#define SPH_ROTL64(x, n) rotate(as_ulong(x), (n) & 0xFFFFFFFFFFFFFFFFUL)
 #define SPH_ROTR64(x, n)   SPH_ROTL64(x, (64 - (n)))
 
 #define SPH_ECHO_64 1
 #define SPH_SIMD_NOCOPY 0
 #define SPH_CUBEHASH_UNROLL 0
-
-#ifndef SPH_LUFFA_PARALLEL
-  #define SPH_LUFFA_PARALLEL 0
-#endif
 
 #include "groestl.cl"
 
@@ -83,6 +79,14 @@ typedef long sph_s64;
   #define ENC64E(x) (x)
   #define DEC64E(x) (*(const __global sph_u64 *) (x));
 #endif
+
+#define SHL(x, n) ((x) << (n))
+#define SHR(x, n) ((x) >> (n))
+
+#define CONST_EXP2  q[i+0] + SPH_ROTL64(q[i+1], 5)  + q[i+2] + SPH_ROTL64(q[i+3], 11) + \
+                    q[i+4] + SPH_ROTL64(q[i+5], 27) + q[i+6] + SPH_ROTL64(q[i+7], 32) + \
+                    q[i+8] + SPH_ROTL64(q[i+9], 37) + q[i+10] + SPH_ROTL64(q[i+11], 43) + \
+                    q[i+12] + SPH_ROTL64(q[i+13], 53) + (SHR(q[i+14],1) ^ q[i+14]) + (SHR(q[i+15],2) ^ q[i+15])
 
 #define ROL32(x, n)  rotate(x, (uint) n)
 #define SHR(x, n)    ((x) >> n)
@@ -138,34 +142,41 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
     ulong h8[8];
   } hash;
 
-  __local sph_u64 T0_L[256], T1_L[256], T2_L[256], T3_L[256], T4_L[256], T5_L[256], T6_L[256], T7_L[256];
+#if !SPH_SMALL_FOOTPRINT_GROESTL
+  __local sph_u64 T0_C[256], T1_C[256], T2_C[256], T3_C[256];
+  __local sph_u64 T4_C[256], T5_C[256], T6_C[256], T7_C[256];
+#else
+  __local sph_u64 T0_C[256], T4_C[256];
+#endif
   int init = get_local_id(0);
   int step = get_local_size(0);
+
   for (int i = init; i < 256; i += step)
   {
-    T0_L[i] = T0[i];
-    T1_L[i] = T1[i];
-    T2_L[i] = T2[i];
-    T3_L[i] = T3[i];
-    T4_L[i] = T4[i];
-    T5_L[i] = T5[i];
-    T6_L[i] = T6[i];
-    T7_L[i] = T7[i];
+    T0_C[i] = T0[i];
+    T4_C[i] = T4[i];
+#if !SPH_SMALL_FOOTPRINT_GROESTL
+    T1_C[i] = T1[i];
+    T2_C[i] = T2[i];
+    T3_C[i] = T3[i];
+    T5_C[i] = T5[i];
+    T6_C[i] = T6[i];
+    T7_C[i] = T7[i];
+#endif
   }
-  barrier(CLK_LOCAL_MEM_FENCE);
+  barrier(CLK_LOCAL_MEM_FENCE);    // groestl
+#define T0 T0_C
+#define T1 T1_C
+#define T2 T2_C
+#define T3 T3_C
+#define T4 T4_C
+#define T5 T5_C
+#define T6 T6_C
+#define T7 T7_C
 
-#define T0 T0_L
-#define T1 T1_L
-#define T2 T2_L
-#define T3 T3_L
-#define T4 T4_L
-#define T5 T5_L
-#define T6 T6_L
-#define T7 T7_L
-
-  // groestl
 
   sph_u64 H[16];
+//#pragma unroll 15
   for (unsigned int u = 0; u < 15; u ++)
     H[u] = 0;
 #if USE_LE
@@ -193,20 +204,33 @@ __kernel void search(__global unsigned char* block, volatile __global uint* outp
   m[13] = 0;
   m[14] = 0;
   m[15] = 0x100000000000000;
+
+//#pragma unroll 16
   for (unsigned int u = 0; u < 16; u ++)
     g[u] = m[u] ^ H[u];
+
   PERM_BIG_P(g);
   PERM_BIG_Q(m);
+
+//#pragma unroll 16
   for (unsigned int u = 0; u < 16; u ++)
     H[u] ^= g[u] ^ m[u];
   sph_u64 xH[16];
+
+//#pragma unroll 16
   for (unsigned int u = 0; u < 16; u ++)
     xH[u] = H[u];
   PERM_BIG_P(xH);
+
+//#pragma unroll 16
   for (unsigned int u = 0; u < 16; u ++)
     H[u] ^= xH[u];
+
+//#pragma unroll 8
   for (unsigned int u = 0; u < 8; u ++)
     hash.h8[u] = ENC64E(H[u + 8]);
+    barrier(CLK_GLOBAL_MEM_FENCE);
+
   uint temp1;
   uint W0 = SWAP32(hash.h4[0x0]);
   uint W1 = SWAP32(hash.h4[0x1]);

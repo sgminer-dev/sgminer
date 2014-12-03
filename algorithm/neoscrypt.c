@@ -1177,9 +1177,7 @@ void neoscrypt(const uchar *password, uchar *output, uint profile) {
         r = (1 << ((profile >> 5) & 0x7));
     }
 
-    uchar *stack;
-    stack =(uchar*)malloc((N + 3) * r * 2 * SCRYPT_BLOCK_SIZE + stack_align);
-
+    uchar stack[(N + 3) * r * 2 * SCRYPT_BLOCK_SIZE + stack_align];
     /* X = r * 2 * SCRYPT_BLOCK_SIZE */
     X = (uint *) &stack[stack_align & ~(stack_align - 1)];
     /* Z is a copy of X for ChaCha */
@@ -1287,7 +1285,6 @@ void neoscrypt(const uchar *password, uchar *output, uint profile) {
 
     }
 
-    free(stack);
 }
 
 void neoscrypt_regenhash(struct work *work)

@@ -266,6 +266,11 @@ DRIVER_PARSE_COMMANDS(DRIVER_PROTOTYPE)
   #define strtobool(str) ((str && (!strcasecmp(str, "true") || !strcasecmp(str, "yes") || !strcasecmp(str, "1")))?true:false)
 #endif
 
+extern int opt_remoteconf_retry;
+extern int opt_remoteconf_wait;
+extern bool opt_remoteconf_usecache;
+
+
 enum alive {
   LIFE_WELL,
   LIFE_SICK,
@@ -1025,6 +1030,7 @@ extern char *sgminer_path;
 extern int opt_shares;
 extern bool opt_fail_only;
 extern int opt_fail_switch_delay;
+extern int opt_watchpool_refresh;
 extern bool opt_autofan;
 extern bool opt_autoengine;
 extern bool use_curses;
@@ -1099,8 +1105,8 @@ extern pthread_cond_t restart_cond;
 
 extern void clear_stratum_shares(struct pool *pool);
 extern void clear_pool_work(struct pool *pool);
-extern void set_target(unsigned char *dest_target, double diff, double diff_multiplier2);
-extern void set_target_neoscrypt(unsigned char *target, double diff);
+extern void set_target(unsigned char *dest_target, double diff, double diff_multiplier2, const int thr_id);
+extern void set_target_neoscrypt(unsigned char *target, double diff, const int thr_id);
 
 extern void kill_work(void);
 
@@ -1274,6 +1280,7 @@ struct pool {
   bool remove_at_start;
   bool removed;
   bool lp_started;
+  bool backup;
 
   char *hdr_path;
   char *lp_url;
@@ -1481,7 +1488,13 @@ extern void _wlogprint(const char *str);
 extern int curses_int(const char *query);
 extern char *curses_input(const char *query);
 extern void kill_work(void);
-extern void switch_pools(struct pool *selected);
+
+//helper macro to preserve existing code
+#ifndef switch_pools
+  #define switch_pools(p) __switch_pools(p, TRUE)
+#endif
+extern void __switch_pools(struct pool *selected, bool saveprio);
+
 extern void discard_work(struct work *work);
 extern void remove_pool(struct pool *pool);
 //extern void write_config(FILE *fcfg);

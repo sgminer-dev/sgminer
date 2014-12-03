@@ -176,30 +176,42 @@ char *set_lookup_gap(char *arg)
   return NULL;
 }
 
-char *set_thread_concurrency(const char *_arg)
+char *set_thread_concurrency(const char *arg)
 {
-  int i, val = 0, device = 0;
+  int i, device = 0;
+  size_t val = 0;
+  char *tmpstr = strdup(arg);
   char *nextptr;
-  char *arg = (char *)alloca(strlen(_arg) + 1);
-  strcpy(arg, _arg);
 
-  nextptr = strtok(arg, ",");
-  if (nextptr == NULL)
-    return "Invalid parameters for set thread concurrency";
-  val = atoi(nextptr);
-
-  gpus[device++].opt_tc = val;
-
-  while ((nextptr = strtok(NULL, ",")) != NULL) {
-    val = atoi(nextptr);
-
+  // empty string - use 0 and let algo autodetect the TC
+  if (empty_string(tmpstr)) {
+    applog(LOG_DEBUG, "GPU %d Thread Concurrency set to %lu.", device, val);
     gpus[device++].opt_tc = val;
   }
-  if (device == 1) {
-    for (i = device; i < MAX_GPUDEVICES; i++)
-      gpus[i].opt_tc = gpus[0].opt_tc;
+  // not empty string
+  else {
+    if ((nextptr = strtok(tmpstr, ",")) == NULL) {
+      free(tmpstr);
+      return "Invalid parameters for set_thread_concurrency";
+    }
+
+    do {
+      val = (unsigned long)atol(nextptr);
+
+      applog(LOG_DEBUG, "GPU %d Thread Concurrency set to %lu.", device, val);
+      gpus[device++].opt_tc = val;
+    } while ((nextptr = strtok(NULL, ",")) != NULL);
   }
 
+  // if only 1 TC was passed, assign the same worksize for all remaining GPUs
+  if (device == 1) {
+    for (i = device; i < total_devices; ++i) {
+      gpus[i].opt_tc = gpus[0].opt_tc;
+      applog(LOG_DEBUG, "GPU %d Thread Concurrency set to %lu.", i, gpus[i].opt_tc);
+    }
+  }
+
+  free(tmpstr);
   return NULL;
 }
 
@@ -1020,21 +1032,24 @@ static void set_threads_hashes(unsigned int vectors, unsigned int compute_shader
 {
   unsigned int threads = 0;
   while (threads < minthreads) {
+
     if (*rawintensity > 0) {
       threads = *rawintensity;
-    } else if (*xintensity > 0) {
-      if (algorithm->xintensity_shift)
-        threads = compute_shaders * (1 << (algorithm->xintensity_shift + *xintensity));
-      else
-        threads = compute_shaders * *xintensity;
-    } else {
+    }
+    else if (*xintensity > 0) {
+      threads = compute_shaders * ((algorithm->xintensity_shift)?(1 << (algorithm->xintensity_shift + *xintensity)):*xintensity);
+    }
+    else {
       threads = 1 << (algorithm->intensity_shift + *intensity);
     }
+
     if (threads < minthreads) {
-      if (likely(*intensity < MAX_INTENSITY))
+      if (likely(*intensity < MAX_INTENSITY)) {
         (*intensity)++;
-      else
+      }
+      else {
         threads = minthreads;
+      }
     }
   }
 

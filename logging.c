@@ -59,12 +59,20 @@ void applogsiz(int prio, int size, const char* fmt, ...)
 /* high-level logging function, based on global opt_log_level */
 void vapplogsiz(int prio, int size, const char* fmt, va_list args)
 {
-  if (opt_debug || prio != LOG_DEBUG) {
+  if ((opt_debug || prio != LOG_DEBUG)) {
     char *tmp42 = (char *)calloc(size + 1, 1);
     vsnprintf(tmp42, size, fmt, args);
     _applog(prio, tmp42, false);
     free(tmp42);
   }
+#ifdef DEV_DEBUG_MODE
+  else if(prio == LOG_DEBUG) {
+    char *tmp42 = (char *)calloc(size + 1, 1);
+    vsnprintf(tmp42, size, fmt, args);
+    __debug("", tmp42);
+    free(tmp42);
+  }
+#endif
 }
 
 /*
@@ -80,6 +88,13 @@ void _applog(int prio, const char *str, bool force)
   if (0) {}
 #endif
   else {
+
+#ifdef DEV_DEBUG_MODE
+    if(prio == LOG_DEBUG) {
+      __debug("", str);
+    }
+#endif
+
     bool write_console = opt_debug_console || (opt_verbose && prio != LOG_DEBUG) || prio <= opt_log_level;
     bool write_stderr = !isatty(fileno((FILE *)stderr));
     if (!(write_console || write_stderr))
