@@ -346,23 +346,15 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
     cgpu->lookup_gap = 2;
   }
 
-  // neoscrypt calculates TC differently
-  if (!safe_cmp(cgpu->algorithm.name, "neoscrypt")) {
+  // neoscrypt TC
+  if (!safe_cmp(cgpu->algorithm.name, "neoscrypt") && !cgpu->opt_tc) {
     size_t glob_thread_count;
     long max_int;
     unsigned char type = 0;
 
     // determine which intensity type to use
-    // raw intensity is the same as TC so use either or setting...
-    if (cgpu->rawintensity > 0 || cgpu->opt_tc) {
-
-      if (cgpu->opt_tc) {
-        glob_thread_count = cgpu->rawintensity = cgpu->opt_tc;
-      }
-      else {
-        glob_thread_count = cgpu->rawintensity;
-      }
-
+    if (cgpu->rawintensity > 0) {
+      glob_thread_count = cgpu->rawintensity;
       max_int = glob_thread_count;
       type = 2;
     }
