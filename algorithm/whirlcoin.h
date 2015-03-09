@@ -1,5 +1,5 @@
-#ifndef W_H
-#define W_H
+#ifndef WHIRLCOIN_H
+#define WHIRLCOIN_H
 
 #include "miner.h"
 

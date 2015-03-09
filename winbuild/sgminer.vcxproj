@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -265,6 +265,7 @@
     <ClCompile Include="..\algorithm\bitblock.c" />
     <ClCompile Include="..\algorithm\neoscrypt.c" />
     <ClCompile Include="..\algorithm\talkcoin.c" />
+    <ClCompile Include="..\algorithm\whirlpoolx.c" />
     <ClCompile Include="..\algorithm\x14.c" />
     <ClCompile Include="..\algorithm\fresh.c" />
     <ClCompile Include="..\algorithm\whirlcoin.c" />
@@ -326,6 +327,7 @@
     <ClInclude Include="..\algorithm\bitblock.h" />
     <ClInclude Include="..\algorithm\neoscrypt.h" />
     <ClInclude Include="..\algorithm\talkcoin.h" />
+    <ClInclude Include="..\algorithm\whirlpoolx.h" />
     <ClInclude Include="..\algorithm\x14.h" />
     <ClInclude Include="..\algorithm\fresh.h" />
     <ClInclude Include="..\algorithm\whirlcoin.h" />

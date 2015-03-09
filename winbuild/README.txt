@@ -74,15 +74,15 @@ x86 version:
 - open Visual Studio Command Prompt (x86)
 	- go to winbuild folder and execute:
 		nmake -f Makefile.vc mode=static VC=13 WITH_DEVEL=C:\OpenSSL-Win32 WITH_SSL=static ENABLE_SSPI=no ENABLE_IPV6=no ENABLE_IDN=no GEN_PDB=no DEBUG=no MACHINE=x86
-	- copy builds\libcurl-vc10-x86-release-static-ssl-static-spnego\lib\libcurl_a.lib to winbuild\dist\lib\x86
-	- copy builds	\libcurl-vc10-x86-release-static-ssl-static-spnego\include\* winbuild\dist\include\
+	- copy builds\libcurl-vc13-x86-release-static-ssl-static-spnego\lib\libcurl_a.lib to winbuild\dist\lib\x86
+	- copy builds	\libcurl-vc13-x86-release-static-ssl-static-spnego\include\* winbuild\dist\include\
 
 x64 version:
 - open Visual Studio Command Prompt (x64)
 	- go to winbuild folder and execute:
 		nmake -f Makefile.vc mode=static VC=13 WITH_DEVEL=C:\OpenSSL-Win64 WITH_SSL=static ENABLE_SSPI=no ENABLE_IPV6=no ENABLE_IDN=no GEN_PDB=no DEBUG=no MACHINE=x64
-	- copy builds\libcurl-vc10-x64-release-static-ssl-static-spnego\lib\libcurl_a.lib to winbuild\dist\lib\x64
-	- copy builds\libcurl-vc10-x64-release-static-ssl-static-spnego\include\* winbuild\dist\include\
+	- copy builds\libcurl-vc13-x64-release-static-ssl-static-spnego\lib\libcurl_a.lib to winbuild\dist\lib\x64
+	- copy builds\libcurl-vc13-x64-release-static-ssl-static-spnego\include\* winbuild\dist\include\
 
 5. Jansson
 ----------

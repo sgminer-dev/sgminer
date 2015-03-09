@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -206,6 +206,9 @@
     <ClCompile Include="..\events.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\algorithm\whirlpoolx.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\adl.h">
@@ -390,6 +393,9 @@
     </ClInclude>
     <ClInclude Include="..\events.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\whirlpoolx.h">
+      <Filter>Header Files\algorithm</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

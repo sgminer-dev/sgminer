@@ -4,7 +4,7 @@
 
 * Jan Berdajs <mrbrdo at mrbrdo dot net> 15bULC8snaKAMeFb3xBmmhbWj1xyTmBUfm
 * Noel Maersk <veox at wemakethings dot net> 12jF1VExtmmMu8D36vo4Y4CYqLK5yCtLC4
-* troky <troky2001 at yahoo dot com> 15hMFjU8xQhiFzQ19JSaX2y7SV2GAoTuXs
+* troky <troky2001 at yahoo dot com> 1DqHeJdVy4kQX1jHaaVxef9Bgii14pwEbg
 * Yann St.Arnaud <ystarnaud at gmail dot com> 1SLixz2vRvjdpzZTep4Tiqs82Jc28tc6J
 * lasybear <**FIXME**>
 * Luke Dashjr <luke-jr+cgminer @at@ utopios .dot. org> 1QATWksNFGeUJCWBrN4g6hGM178Lovm7Wh
@@ -52,6 +52,7 @@ updated by many others.
 * tonobitc <tonobitc>
 * Perry Huang <perryh>
 * Joseph Bruggeman <jbruggeman>
+* Badman74 <badman74>
 
 ...and many others. See:
 
