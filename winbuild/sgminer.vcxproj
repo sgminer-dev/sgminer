@@ -263,7 +263,10 @@
     <ClCompile Include="..\algorithm.c" />
     <ClCompile Include="..\algorithm\animecoin.c" />
     <ClCompile Include="..\algorithm\bitblock.c" />
+    <ClCompile Include="..\algorithm\lyra2.c" />
+    <ClCompile Include="..\algorithm\lyra2re.c" />
     <ClCompile Include="..\algorithm\neoscrypt.c" />
+    <ClCompile Include="..\algorithm\sponge.c" />
     <ClCompile Include="..\algorithm\talkcoin.c" />
     <ClCompile Include="..\algorithm\whirlpoolx.c" />
     <ClCompile Include="..\algorithm\x14.c" />
@@ -325,7 +328,10 @@
     <ClInclude Include="..\algorithm.h" />
     <ClInclude Include="..\algorithm\animecoin.h" />
     <ClInclude Include="..\algorithm\bitblock.h" />
+    <ClInclude Include="..\algorithm\lyra2.h" />
+    <ClInclude Include="..\algorithm\lyra2re.h" />
     <ClInclude Include="..\algorithm\neoscrypt.h" />
+    <ClInclude Include="..\algorithm\sponge.h" />
     <ClInclude Include="..\algorithm\talkcoin.h" />
     <ClInclude Include="..\algorithm\whirlpoolx.h" />
     <ClInclude Include="..\algorithm\x14.h" />

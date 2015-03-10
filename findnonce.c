@@ -92,7 +92,7 @@ void precalc_hash(dev_blk_ctx *blk, uint32_t *state, uint32_t *data)
   blk->T1 = blk->fcty_e2 = (rotr(F, 2) ^ rotr(F, 13) ^ rotr(F, 22)) + ((F & G) | (H & (F | G)));
   blk->PreVal4_2 = blk->PreVal4 + blk->T1;
   blk->PreVal0 = blk->PreVal4 + blk->ctx_a;
-  blk->PreW31 = 0x00000280 + (rotr(blk->W16,  7) ^ rotr(blk->W16, 18) ^ (blk->W16 >> 3));
+  blk->PreW31 = 0x00000280 + (rotr(blk->W16, 7) ^ rotr(blk->W16, 18) ^ (blk->W16 >> 3));
   blk->PreW32 = blk->W16 + (rotr(blk->W17, 7) ^ rotr(blk->W17, 18) ^ (blk->W17 >> 3));
   blk->PreW18 = data[2] + (rotr(blk->W16, 17) ^ rotr(blk->W16, 19) ^ (blk->W16 >> 10));
   blk->PreW19 = 0x11002000 + (rotr(blk->W17, 17) ^ rotr(blk->W17, 19) ^ (blk->W17 >> 10));
@@ -191,7 +191,7 @@ static void *postcalc_hash(void *userdata)
    * end of the res[] array */
   if (unlikely(pcd->res[found] & ~found)) {
     applog(LOG_WARNING, "%s%d: invalid nonce count - HW error",
-        thr->cgpu->drv->name, thr->cgpu->device_id);
+      thr->cgpu->drv->name, thr->cgpu->device_id);
     hw_errors++;
     thr->cgpu->hw_errors++;
     pcd->res[found] &= found;
@@ -200,7 +200,7 @@ static void *postcalc_hash(void *userdata)
   for (entry = 0; entry < pcd->res[found]; entry++) {
     uint32_t nonce = pcd->res[entry];
     if (found == 0x0F)
-        nonce = swab32(nonce);
+      nonce = swab32(nonce);
 
     applog(LOG_DEBUG, "[THR%d] OCL NONCE %08x (%lu) found in slot %d (found = %d)", thr->id, nonce, nonce, entry, found);
     submit_nonce(thr, pcd->work, nonce);
@@ -233,4 +233,137 @@ void postcalc_hash_async(struct thr_info *thr, struct work *work, uint32_t *res)
     discard_work(pcd->work);
     free(pcd);
   }
+}
+
+// BLAKE 256 14 rounds (standard)
+
+typedef struct
+{
+  uint32_t h[8];
+  uint32_t t;
+} blake_state256;
+
+#define NB_ROUNDS32 14
+
+const uint8_t blake_sigma[][16] =
+{
+  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
+  { 14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3 },
+  { 11, 8, 12, 0, 5, 2, 15, 13, 10, 14, 3, 6, 7, 1, 9, 4 },
+  { 7, 9, 3, 1, 13, 12, 11, 14, 2, 6, 5, 10, 4, 0, 15, 8 },
+  { 9, 0, 5, 7, 2, 4, 10, 15, 14, 1, 11, 12, 6, 8, 3, 13 },
+  { 2, 12, 6, 10, 0, 11, 8, 3, 4, 13, 7, 5, 15, 14, 1, 9 },
+  { 12, 5, 1, 15, 14, 13, 4, 10, 0, 7, 6, 3, 9, 2, 8, 11 },
+  { 13, 11, 7, 14, 12, 1, 3, 9, 5, 0, 15, 4, 8, 6, 2, 10 },
+  { 6, 15, 14, 9, 11, 3, 0, 8, 12, 2, 13, 7, 1, 4, 10, 5 },
+  { 10, 2, 8, 4, 7, 6, 1, 5, 15, 11, 9, 14, 3, 12, 13, 0 },
+  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
+  { 14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3 },
+  { 11, 8, 12, 0, 5, 2, 15, 13, 10, 14, 3, 6, 7, 1, 9, 4 },
+  { 7, 9, 3, 1, 13, 12, 11, 14, 2, 6, 5, 10, 4, 0, 15, 8 },
+  { 9, 0, 5, 7, 2, 4, 10, 15, 14, 1, 11, 12, 6, 8, 3, 13 },
+  { 2, 12, 6, 10, 0, 11, 8, 3, 4, 13, 7, 5, 15, 14, 1, 9 }
+};
+
+const uint32_t blake_u256[16] =
+{
+  0x243f6a88, 0x85a308d3, 0x13198a2e, 0x03707344,
+  0xa4093822, 0x299f31d0, 0x082efa98, 0xec4e6c89,
+  0x452821e6, 0x38d01377, 0xbe5466cf, 0x34e90c6c,
+  0xc0ac29b7, 0xc97c50dd, 0x3f84d5b5, 0xb5470917
+};
+
+#define ROT32(x,n) (((x)<<(32-n))|( (x)>>(n)))
+//#define ROT32(x,n)   (rotate((uint)x, (uint)32-n))
+#define ADD32(x,y)   ((uint32_t)((x) + (y)))
+#define XOR32(x,y)   ((uint32_t)((x) ^ (y)))
+
+#define G(a,b,c,d,i) \
+do { \
+  v[a] += XOR32(m[blake_sigma[r][i]], blake_u256[blake_sigma[r][i + 1]]) + v[b]; \
+  v[d] = ROT32(XOR32(v[d], v[a]), 16); \
+  v[c] += v[d]; \
+  v[b] = ROT32(XOR32(v[b], v[c]), 12); \
+  v[a] += XOR32(m[blake_sigma[r][i + 1]], blake_u256[blake_sigma[r][i]]) + v[b]; \
+  v[d] = ROT32(XOR32(v[d], v[a]), 8); \
+  v[c] += v[d]; \
+  v[b] = ROT32(XOR32(v[b], v[c]), 7); \
+} while (0)
+
+// compress a block
+void blake256_compress_block(blake_state256 *S, uint32_t *m)
+{
+  uint32_t v[16];
+  int i, r;
+  for (i = 0; i < 8; ++i)  v[i] = S->h[i];
+
+  v[8] = blake_u256[0];
+  v[9] = blake_u256[1];
+  v[10] = blake_u256[2];
+  v[11] = blake_u256[3];
+  v[12] = blake_u256[4];
+  v[13] = blake_u256[5];
+  v[14] = blake_u256[6];
+  v[15] = blake_u256[7];
+
+  v[12] ^= S->t;
+  v[13] ^= S->t;
+
+  for (r = 0; r < NB_ROUNDS32; ++r)
+  {
+    /* column step */
+    G(0, 4, 8, 12, 0);
+    G(1, 5, 9, 13, 2);
+    G(2, 6, 10, 14, 4);
+    G(3, 7, 11, 15, 6);
+    /* diagonal step */
+    G(0, 5, 10, 15, 8);
+    G(1, 6, 11, 12, 10);
+    G(2, 7, 8, 13, 12);
+    G(3, 4, 9, 14, 14);
+  }
+
+  for (i = 0; i < 16; ++i)  S->h[i & 7] ^= v[i];
+}
+
+void blake256_init(blake_state256 *S)
+{
+  S->h[0] = 0x6a09e667;
+  S->h[1] = 0xbb67ae85;
+  S->h[2] = 0x3c6ef372;
+  S->h[3] = 0xa54ff53a;
+  S->h[4] = 0x510e527f;
+  S->h[5] = 0x9b05688c;
+  S->h[6] = 0x1f83d9ab;
+  S->h[7] = 0x5be0cd19;
+  S->t = 0;
+}
+
+void blake256_update(blake_state256 *S, const uint32_t *in)
+{
+  uint32_t m[16];
+  int i;
+  S->t = 512;
+  for (i = 0; i < 16; ++i)  m[i] = in[i];
+  blake256_compress_block(S, m);
+}
+
+void precalc_hash_blake256(dev_blk_ctx *blk, uint32_t *state, uint32_t *data)
+{
+  blake_state256 S;
+  blake256_init(&S);
+  blake256_update(&S, data);
+
+  blk->ctx_a = S.h[0];
+  blk->ctx_b = S.h[1];
+  blk->ctx_c = S.h[2];
+  blk->ctx_d = S.h[3];
+  blk->ctx_e = S.h[4];
+  blk->ctx_f = S.h[5];
+  blk->ctx_g = S.h[6];
+  blk->ctx_h = S.h[7];
+
+  blk->cty_a = data[16];
+  blk->cty_b = data[17];
+  blk->cty_c = data[18];
 }

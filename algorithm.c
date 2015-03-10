@@ -32,6 +32,7 @@
 #include "algorithm/whirlcoin.h"
 #include "algorithm/neoscrypt.h"
 #include "algorithm/whirlpoolx.h"
+#include "algorithm/lyra2re.h"
 
 #include "compat.h"
 
@@ -54,7 +55,8 @@ const char *algorithm_type_str[] = {
   "Fresh",
   "Whirlcoin",
   "Neoscrypt",
-  "WhirlpoolX"
+  "WhirlpoolX",
+  "Lyra2RE"
 };
 
 void sha256(const unsigned char *message, unsigned int len, unsigned char *digest)
@@ -653,6 +655,50 @@ static cl_int queue_whirlpoolx_kernel(struct __clState *clState, struct _dev_blk
   return status;
 }
 
+static cl_int queue_lyra2RE_kernel(struct __clState *clState, struct _dev_blk_ctx *blk, __maybe_unused cl_uint threads)
+{
+	cl_kernel *kernel;
+	unsigned int num;
+	cl_int status = 0;
+	cl_ulong le_target;
+
+	le_target = *(cl_ulong *)(blk->work->device_target + 24);
+	flip80(clState->cldata, blk->work->data);
+	status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
+
+	// blake - search
+	kernel = &clState->kernel;
+	num = 0;
+
+	CL_SET_ARG(clState->padbuffer8);
+	CL_SET_ARG(blk->work->blk.ctx_a);
+	CL_SET_ARG(blk->work->blk.ctx_b);
+	CL_SET_ARG(blk->work->blk.ctx_c);
+	CL_SET_ARG(blk->work->blk.ctx_d);
+	CL_SET_ARG(blk->work->blk.ctx_e);
+	CL_SET_ARG(blk->work->blk.ctx_f);
+	CL_SET_ARG(blk->work->blk.ctx_g);
+	CL_SET_ARG(blk->work->blk.ctx_h);
+	CL_SET_ARG(blk->work->blk.cty_a);
+	CL_SET_ARG(blk->work->blk.cty_b);
+	CL_SET_ARG(blk->work->blk.cty_c);
+
+	// bmw - search1
+	kernel = clState->extra_kernels;
+	CL_SET_ARG_0(clState->padbuffer8);
+	// groestl - search2
+	CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+	// skein - search3
+	CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+	// jh - search4
+	num = 0;
+	CL_NEXTKERNEL_SET_ARG(clState->padbuffer8);
+	CL_SET_ARG(clState->outputBuffer);
+	CL_SET_ARG(le_target);
+
+	return status;
+}
+
 typedef struct _algorithm_settings_t {
   const char *name; /* Human-readable identifier */
   algorithm_type_t type; //common algorithm type
@@ -728,6 +774,8 @@ static algorithm_settings_t algos[] = {
 
   { "fresh", ALGO_FRESH, "", 1, 256, 256, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 4, 4 * 16 * 4194304, 0, fresh_regenhash, queue_fresh_kernel, gen_hash, NULL},
 
+  { "lyra2re", ALGO_LYRA2RE, "", 1, 128, 128, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 4, 2 * 8 * 4194304 , 0, lyra2re_regenhash, queue_lyra2RE_kernel, gen_hash, NULL},
+
   // kernels starting from this will have difficulty calculated by using fuguecoin algorithm
 #define A_FUGUE(a, b, c) \
     { a, ALGO_FUGUE, "", 1, 256, 256, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, b, queue_sph_kernel, c, NULL}
@@ -737,7 +785,6 @@ static algorithm_settings_t algos[] = {
  #undef A_FUGUE
 
   { "whirlcoin", ALGO_WHIRL, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 3, 8 * 16 * 4194304, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, whirlcoin_regenhash, queue_whirlcoin_kernel, sha256, NULL},
-
   { "whirlpoolx", ALGO_WHIRL, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, 0, whirlpoolx_regenhash, queue_sph_kernel, gen_hash, NULL },
 
   // Terminator (do not remove)
@@ -812,6 +859,8 @@ static const char *lookup_algorithm_alias(const char *lookup_alias, uint8_t *nfa
   ALGO_ALIAS("keccak", "maxcoin");
   ALGO_ALIAS("whirlpool", "whirlcoin");
   ALGO_ALIAS("whirlpoolx", "whirlpoolx");
+  ALGO_ALIAS("Lyra2RE", "lyra2re");
+  ALGO_ALIAS("lyra2", "lyra2re");
 
   #undef ALGO_ALIAS
   #undef ALGO_ALIAS_NF

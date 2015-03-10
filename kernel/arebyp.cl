@@ -904,7 +904,7 @@ void scrypt_core(uint4 X[8], __global uint4*restrict lookup)
   //------------------------------------------------------------------------------------------------------------
   uint cotmp = x * zSIZE;
   progress = 0;
-  for (i = 0; i < N[NFACTOR] + 512 + 42; i++)
+  for (i = 0; i < N[NFACTOR] + (N[NFACTOR] / LOOKUP_GAP) + 42; i++)
     {
         //if (progress < 2 * N[NFACTOR])
 		{

@@ -209,6 +209,15 @@
     <ClCompile Include="..\algorithm\whirlpoolx.c">
       <Filter>Source Files\algorithm</Filter>
     </ClCompile>
+    <ClCompile Include="..\algorithm\lyra2.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\lyra2re.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\algorithm\sponge.c">
+      <Filter>Source Files\algorithm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\adl.h">
@@ -395,6 +404,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\algorithm\whirlpoolx.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\lyra2.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\lyra2re.h">
+      <Filter>Header Files\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\algorithm\sponge.h">
       <Filter>Header Files\algorithm</Filter>
     </ClInclude>
   </ItemGroup>
