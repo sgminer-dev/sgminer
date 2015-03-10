@@ -39,19 +39,49 @@ __constant static const sph_u64 blake2b_IV[8] =
 };
 
 /*Blake2b's rotation*/
-static inline sph_u64 rotr64( const sph_u64 w, const unsigned c ){
-	return rotate(w, (ulong)(64-c));
-}
 
-/*Blake2b's G function*/
+static inline uint2 ror2(uint2 v, unsigned a) {
+	uint2 result;
+	unsigned n = 64 - a;
+	if (n == 32) { return (uint2)(v.y,v.x); }
+	if (n < 32) {
+		result.y = ((v.y << (n)) | (v.x >> (32 - n)));
+		result.x = ((v.x << (n)) | (v.y >> (32 - n)));
+	}
+	else {
+		result.y = ((v.x << (n - 32)) | (v.y >> (64 - n)));
+		result.x = ((v.y << (n - 32)) | (v.x >> (64 - n)));
+	}
+	return result;
+}
+static inline uint2 ror2l(uint2 v, unsigned a) {
+	uint2 result;
+		result.y = ((v.x << (32-a)) | (v.y >> (a)));
+		result.x = ((v.y << (32-a)) | (v.x >> (a)));
+	return result;
+}
+static inline uint2 ror2r(uint2 v, unsigned a) {
+	uint2 result;
+		result.y = ((v.y << (64-a)) | (v.x >> (a-32)));
+		result.x = ((v.x << (64-a)) | (v.y >> (a-32)));
+	return result;
+}
+/*
 #define G(a,b,c,d) \
   do { \
-a += b; d ^= a; d = SPH_ROTR64(d, 32); \
-c += d; b ^= c; b = SPH_ROTR64(b, 24); \
-a += b; d ^= a; d = SPH_ROTR64(d, 16); \
-c += d; b ^= c; b = SPH_ROTR64(b, 63); \
+a = as_uint2(as_ulong(a)+as_ulong(b)); d ^= a; d = d.yx; \
+c = as_uint2(as_ulong(c)+as_ulong(d)); b ^= c; b = ror2l(b, 24); \
+a = as_uint2(as_ulong(a)+as_ulong(b)); d ^= a; d = ror2l(d, 16); \
+c = as_uint2(as_ulong(c)+as_ulong(d)); b ^= c; b = ror2r(b, 63); \
   } while(0)
-
+*/
+#define G(a,b,c,d) \
+  do { \
+a = as_uint2(as_ulong(a)+as_ulong(b)); d ^= a; d = d.yx; \
+c = as_uint2(as_ulong(c)+as_ulong(d)); b ^= c; b = as_uint2(as_uchar8(b).s34567012); \
+a = as_uint2(as_ulong(a)+as_ulong(b)); d ^= a; d = ror2l(d, 16); \
+c = as_uint2(as_ulong(c)+as_ulong(d)); b ^= c; b = ror2r(b, 63); \
+  } while(0)
 
 /*One Round of the Blake2b's compression function*/
 #define round_lyra(v)  \
@@ -72,7 +102,7 @@ c += d; b ^= c; b = SPH_ROTR64(b, 63); \
 	for (int i = 0; i < 8; i++) \
 				{ \
 \
-		for (int j = 0; j < 12; j++) {state[j] ^= Matrix[12 * i + j][rowIn] + Matrix[12 * i + j][rowInOut];} \
+		for (int j = 0; j < 12; j++) {state[j] ^= as_uint2(as_ulong(Matrix[12 * i + j][rowIn]) + as_ulong(Matrix[12 * i + j][rowInOut]));} \
 		round_lyra(state); \
 		for (int j = 0; j < 12; j++) {Matrix[j + 84 - 12 * i][rowOut] = Matrix[12 * i + j][rowIn] ^ state[j];} \
 \
@@ -97,7 +127,7 @@ c += d; b ^= c; b = SPH_ROTR64(b, 63); \
 	 for (int i = 0; i < 8; i++) \
 	 	 	 	 	 { \
 		 for (int j = 0; j < 12; j++) \
-			 state[j] ^= Matrix[12 * i + j][rowIn] + Matrix[12 * i + j][rowInOut]; \
+			 state[j] ^= as_uint2(as_ulong(Matrix[12 * i + j][rowIn]) + as_ulong(Matrix[12 * i + j][rowInOut])); \
  \
 		 round_lyra(state); \
 		 for (int j = 0; j < 12; j++) {Matrix[j + 12 * i][rowOut] ^= state[j];} \
