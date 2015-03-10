@@ -53,6 +53,7 @@ updated by many others.
 * Perry Huang <perryh>
 * Joseph Bruggeman <jbruggeman>
 * Badman74 <badman74>
+* djm34 <djm4>
 
 ...and many others. See:
 

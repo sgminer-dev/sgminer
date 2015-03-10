@@ -26,7 +26,8 @@ typedef enum {
   ALGO_FRESH,
   ALGO_WHIRL,
   ALGO_NEOSCRYPT,
-  ALGO_LYRA2RE
+  ALGO_LYRA2RE,
+  ALGO_PLUCK
 } algorithm_type_t;
 
 extern const char *algorithm_type_str[];
@@ -59,10 +60,10 @@ typedef struct _algorithm_t {
   size_t n_extra_kernels;
   long rw_buffer_size;
   cl_command_queue_properties cq_properties;
-  void     (*regenhash)(struct work *);
-  cl_int   (*queue_kernel)(struct __clState *, struct _dev_blk_ctx *, cl_uint);
-  void     (*gen_hash)(const unsigned char *, unsigned int, unsigned char *);
-  void     (*set_compile_options)(struct _build_kernel_data *, struct cgpu_info *, struct _algorithm_t *);
+  void(*regenhash)(struct work *);
+  cl_int(*queue_kernel)(struct __clState *, struct _dev_blk_ctx *, cl_uint);
+  void(*gen_hash)(const unsigned char *, unsigned int, unsigned char *);
+  void(*set_compile_options)(struct _build_kernel_data *, struct cgpu_info *, struct _algorithm_t *);
 } algorithm_t;
 
 /* Set default parameters based on name. */

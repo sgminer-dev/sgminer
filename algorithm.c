@@ -33,6 +33,7 @@
 #include "algorithm/neoscrypt.h"
 #include "algorithm/whirlpoolx.h"
 #include "algorithm/lyra2re.h"
+#include "algorithm/pluck.h"
 
 #include "compat.h"
 
@@ -56,7 +57,8 @@ const char *algorithm_type_str[] = {
   "Whirlcoin",
   "Neoscrypt",
   "WhirlpoolX",
-  "Lyra2RE"
+  "Lyra2RE",
+  "Pluck"
 };
 
 void sha256(const unsigned char *message, unsigned int len, unsigned char *digest)
@@ -93,7 +95,7 @@ static void append_scrypt_compiler_options(struct _build_kernel_data *data, stru
 {
   char buf[255];
   sprintf(buf, " -D LOOKUP_GAP=%d -D CONCURRENT_THREADS=%u -D NFACTOR=%d",
-          cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, algorithm->nfactor);
+    cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, algorithm->nfactor);
   strcat(data->compiler_options, buf);
 
   sprintf(buf, "lg%utc%unf%u", cgpu->lookup_gap, (unsigned int)cgpu->thread_concurrency, algorithm->nfactor);
@@ -104,10 +106,10 @@ static void append_neoscrypt_compiler_options(struct _build_kernel_data *data, s
 {
   char buf[255];
   sprintf(buf, " %s-D MAX_GLOBAL_THREADS=%lu ",
-         ((cgpu->lookup_gap > 0)?" -D LOOKUP_GAP=2 ":""), (unsigned long)cgpu->thread_concurrency);
+    ((cgpu->lookup_gap > 0) ? " -D LOOKUP_GAP=2 " : ""), (unsigned long)cgpu->thread_concurrency);
   strcat(data->compiler_options, buf);
 
-  sprintf(buf, "%stc%lu", ((cgpu->lookup_gap > 0)?"lg":""), (unsigned long)cgpu->thread_concurrency);
+  sprintf(buf, "%stc%lu", ((cgpu->lookup_gap > 0) ? "lg" : ""), (unsigned long)cgpu->thread_concurrency);
   strcat(data->binary_filename, buf);
 }
 
@@ -115,10 +117,10 @@ static void append_x11_compiler_options(struct _build_kernel_data *data, struct 
 {
   char buf[255];
   sprintf(buf, " -D SPH_COMPACT_BLAKE_64=%d -D SPH_LUFFA_PARALLEL=%d -D SPH_KECCAK_UNROLL=%u ",
-          ((opt_blake_compact)?1:0), ((opt_luffa_parallel)?1:0), (unsigned int)opt_keccak_unroll);
+    ((opt_blake_compact) ? 1 : 0), ((opt_luffa_parallel) ? 1 : 0), (unsigned int)opt_keccak_unroll);
   strcat(data->compiler_options, buf);
 
-  sprintf(buf, "ku%u%s%s", (unsigned int)opt_keccak_unroll, ((opt_blake_compact)?"bc":""), ((opt_luffa_parallel)?"lp":""));
+  sprintf(buf, "ku%u%s%s", (unsigned int)opt_keccak_unroll, ((opt_blake_compact) ? "bc" : ""), ((opt_luffa_parallel) ? "lp" : ""));
   strcat(data->binary_filename, buf);
 }
 
@@ -130,10 +132,10 @@ static void append_x13_compiler_options(struct _build_kernel_data *data, struct 
   append_x11_compiler_options(data, cgpu, algorithm);
 
   sprintf(buf, " -D SPH_HAMSI_EXPAND_BIG=%d -D SPH_HAMSI_SHORT=%d ",
-          (unsigned int)opt_hamsi_expand_big, ((opt_hamsi_short)?1:0));
+    (unsigned int)opt_hamsi_expand_big, ((opt_hamsi_short) ? 1 : 0));
   strcat(data->compiler_options, buf);
 
-  sprintf(buf, "big%u%s", (unsigned int)opt_hamsi_expand_big, ((opt_hamsi_short)?"hs":""));
+  sprintf(buf, "big%u%s", (unsigned int)opt_hamsi_expand_big, ((opt_hamsi_short) ? "hs" : ""));
   strcat(data->binary_filename, buf);
 }
 
@@ -147,7 +149,7 @@ static cl_int queue_scrypt_kernel(struct __clState *clState, struct _dev_blk_ctx
 
   le_target = *(cl_uint *)(blk->work->device_target + 28);
   memcpy(clState->cldata, blk->work->data, 80);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
   CL_SET_ARG(clState->CLbuffer0);
   CL_SET_ARG(clState->outputBuffer);
@@ -172,7 +174,7 @@ static cl_int queue_neoscrypt_kernel(_clState *clState, dev_blk_ctx *blk, __mayb
    * The compiler will get rid of it anyway. */
   le_target = (cl_uint)le32toh(((uint32_t *)blk->work->/*device_*/target)[7]);
   memcpy(clState->cldata, blk->work->data, 80);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
   CL_SET_ARG(clState->CLbuffer0);
   CL_SET_ARG(clState->outputBuffer);
@@ -189,7 +191,7 @@ static cl_int queue_maxcoin_kernel(struct __clState *clState, struct _dev_blk_ct
   cl_int status = 0;
 
   flip80(clState->cldata, blk->work->data);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
   CL_SET_ARG(clState->CLbuffer0);
   CL_SET_ARG(clState->outputBuffer);
@@ -206,7 +208,7 @@ static cl_int queue_sph_kernel(struct __clState *clState, struct _dev_blk_ctx *b
 
   le_target = *(cl_ulong *)(blk->work->device_target + 24);
   flip80(clState->cldata, blk->work->data);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
   CL_SET_ARG(clState->CLbuffer0);
   CL_SET_ARG(clState->outputBuffer);
@@ -224,7 +226,7 @@ static cl_int queue_darkcoin_mod_kernel(struct __clState *clState, struct _dev_b
 
   le_target = *(cl_ulong *)(blk->work->device_target + 24);
   flip80(clState->cldata, blk->work->data);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
   // blake - search
   kernel = &clState->kernel;
@@ -268,7 +270,7 @@ static cl_int queue_bitblock_kernel(struct __clState *clState, struct _dev_blk_c
 
   le_target = *(cl_ulong *)(blk->work->device_target + 24);
   flip80(clState->cldata, blk->work->data);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
   // blake - search
   kernel = &clState->kernel;
@@ -320,7 +322,7 @@ static cl_int queue_bitblockold_kernel(struct __clState *clState, struct _dev_bl
 
   le_target = *(cl_ulong *)(blk->work->device_target + 24);
   flip80(clState->cldata, blk->work->data);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
   // blake - search
   kernel = &clState->kernel;
@@ -365,7 +367,7 @@ static cl_int queue_marucoin_mod_kernel(struct __clState *clState, struct _dev_b
 
   le_target = *(cl_ulong *)(blk->work->device_target + 24);
   flip80(clState->cldata, blk->work->data);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
   // blake - search
   kernel = &clState->kernel;
@@ -413,7 +415,7 @@ static cl_int queue_marucoin_mod_old_kernel(struct __clState *clState, struct _d
 
   le_target = *(cl_ulong *)(blk->work->device_target + 24);
   flip80(clState->cldata, blk->work->data);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
   // blake - search
   kernel = &clState->kernel;
@@ -457,7 +459,7 @@ static cl_int queue_talkcoin_mod_kernel(struct __clState *clState, struct _dev_b
 
   le_target = *(cl_ulong *)(blk->work->device_target + 24);
   flip80(clState->cldata, blk->work->data);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
   // blake - search
   kernel = &clState->kernel;
@@ -489,7 +491,7 @@ static cl_int queue_x14_kernel(struct __clState *clState, struct _dev_blk_ctx *b
 
   le_target = *(cl_ulong *)(blk->work->device_target + 24);
   flip80(clState->cldata, blk->work->data);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
   // blake - search
   kernel = &clState->kernel;
@@ -539,7 +541,7 @@ static cl_int queue_x14_old_kernel(struct __clState *clState, struct _dev_blk_ct
 
   le_target = *(cl_ulong *)(blk->work->device_target + 24);
   flip80(clState->cldata, blk->work->data);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
   // blake - search
   kernel = &clState->kernel;
@@ -583,7 +585,7 @@ static cl_int queue_fresh_kernel(struct __clState *clState, struct _dev_blk_ctx 
 
   le_target = *(cl_ulong *)(blk->work->device_target + 24);
   flip80(clState->cldata, blk->work->data);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
   // shavite 1 - search
   kernel = &clState->kernel;
@@ -614,22 +616,22 @@ static cl_int queue_whirlcoin_kernel(struct __clState *clState, struct _dev_blk_
 
   le_target = *(cl_ulong *)(blk->work->device_target + 24);
   flip80(clState->cldata, blk->work->data);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
   //clbuffer, hashes
   kernel = &clState->kernel;
-  CL_SET_ARG_N(0,clState->CLbuffer0);
-  CL_SET_ARG_N(1,clState->padbuffer8);
+  CL_SET_ARG_N(0, clState->CLbuffer0);
+  CL_SET_ARG_N(1, clState->padbuffer8);
 
   kernel = clState->extra_kernels;
-  CL_SET_ARG_N(0,clState->padbuffer8);
+  CL_SET_ARG_N(0, clState->padbuffer8);
 
-  CL_NEXTKERNEL_SET_ARG_N(0,clState->padbuffer8);
+  CL_NEXTKERNEL_SET_ARG_N(0, clState->padbuffer8);
 
   //hashes, output, target
-  CL_NEXTKERNEL_SET_ARG_N(0,clState->padbuffer8);
-  CL_SET_ARG_N(1,clState->outputBuffer);
-  CL_SET_ARG_N(2,le_target);
+  CL_NEXTKERNEL_SET_ARG_N(0, clState->padbuffer8);
+  CL_SET_ARG_N(1, clState->outputBuffer);
+  CL_SET_ARG_N(2, le_target);
 
   return status;
 }
@@ -642,61 +644,80 @@ static cl_int queue_whirlpoolx_kernel(struct __clState *clState, struct _dev_blk
 
   le_target = *(cl_ulong *)(blk->work->device_target + 24);
   flip80(clState->cldata, blk->work->data);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL,NULL);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
   //clbuffer, hashes
   kernel = &clState->kernel;
-  CL_SET_ARG_N(0,clState->CLbuffer0);
-  CL_SET_ARG_N(1,clState->padbuffer8);
+  CL_SET_ARG_N(0, clState->CLbuffer0);
+  CL_SET_ARG_N(1, clState->padbuffer8);
 
-  CL_SET_ARG_N(2,clState->outputBuffer);
-  CL_SET_ARG_N(3,le_target);
+  CL_SET_ARG_N(2, clState->outputBuffer);
+  CL_SET_ARG_N(3, le_target);
 
   return status;
 }
 
 static cl_int queue_lyra2RE_kernel(struct __clState *clState, struct _dev_blk_ctx *blk, __maybe_unused cl_uint threads)
 {
-	cl_kernel *kernel;
-	unsigned int num;
-	cl_int status = 0;
-	cl_ulong le_target;
+  cl_kernel *kernel;
+  unsigned int num;
+  cl_int status = 0;
+  cl_ulong le_target;
 
-	le_target = *(cl_ulong *)(blk->work->device_target + 24);
-	flip80(clState->cldata, blk->work->data);
-	status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
+  le_target = *(cl_ulong *)(blk->work->device_target + 24);
+  flip80(clState->cldata, blk->work->data);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
-	// blake - search
-	kernel = &clState->kernel;
-	num = 0;
+  // blake - search
+  kernel = &clState->kernel;
+  num = 0;
 
-	CL_SET_ARG(clState->padbuffer8);
-	CL_SET_ARG(blk->work->blk.ctx_a);
-	CL_SET_ARG(blk->work->blk.ctx_b);
-	CL_SET_ARG(blk->work->blk.ctx_c);
-	CL_SET_ARG(blk->work->blk.ctx_d);
-	CL_SET_ARG(blk->work->blk.ctx_e);
-	CL_SET_ARG(blk->work->blk.ctx_f);
-	CL_SET_ARG(blk->work->blk.ctx_g);
-	CL_SET_ARG(blk->work->blk.ctx_h);
-	CL_SET_ARG(blk->work->blk.cty_a);
-	CL_SET_ARG(blk->work->blk.cty_b);
-	CL_SET_ARG(blk->work->blk.cty_c);
+  CL_SET_ARG(clState->padbuffer8);
+  CL_SET_ARG(blk->work->blk.ctx_a);
+  CL_SET_ARG(blk->work->blk.ctx_b);
+  CL_SET_ARG(blk->work->blk.ctx_c);
+  CL_SET_ARG(blk->work->blk.ctx_d);
+  CL_SET_ARG(blk->work->blk.ctx_e);
+  CL_SET_ARG(blk->work->blk.ctx_f);
+  CL_SET_ARG(blk->work->blk.ctx_g);
+  CL_SET_ARG(blk->work->blk.ctx_h);
+  CL_SET_ARG(blk->work->blk.cty_a);
+  CL_SET_ARG(blk->work->blk.cty_b);
+  CL_SET_ARG(blk->work->blk.cty_c);
 
-	// bmw - search1
-	kernel = clState->extra_kernels;
-	CL_SET_ARG_0(clState->padbuffer8);
-	// groestl - search2
-	CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
-	// skein - search3
-	CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
-	// jh - search4
-	num = 0;
-	CL_NEXTKERNEL_SET_ARG(clState->padbuffer8);
-	CL_SET_ARG(clState->outputBuffer);
-	CL_SET_ARG(le_target);
+  // bmw - search1
+  kernel = clState->extra_kernels;
+  CL_SET_ARG_0(clState->padbuffer8);
+  // groestl - search2
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // skein - search3
+  CL_NEXTKERNEL_SET_ARG_0(clState->padbuffer8);
+  // jh - search4
+  num = 0;
+  CL_NEXTKERNEL_SET_ARG(clState->padbuffer8);
+  CL_SET_ARG(clState->outputBuffer);
+  CL_SET_ARG(le_target);
 
-	return status;
+  return status;
+}
+
+static cl_int queue_pluck_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_unused cl_uint threads)
+{
+  cl_kernel *kernel = &clState->kernel;
+  unsigned int num = 0;
+  cl_uint le_target;
+  cl_int status = 0;
+
+  le_target = (cl_uint)le32toh(((uint32_t *)blk->work->/*device_*/target)[7]);
+  flip80(clState->cldata, blk->work->data);
+  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
+
+  CL_SET_ARG(clState->CLbuffer0);
+  CL_SET_ARG(clState->outputBuffer);
+  CL_SET_ARG(clState->padbuffer8);
+  CL_SET_ARG(le_target);
+
+  return status;
 }
 
 typedef struct _algorithm_settings_t {
@@ -714,81 +735,85 @@ typedef struct _algorithm_settings_t {
   size_t n_extra_kernels;
   long rw_buffer_size;
   cl_command_queue_properties cq_properties;
-  void     (*regenhash)(struct work *);
-  cl_int   (*queue_kernel)(struct __clState *, struct _dev_blk_ctx *, cl_uint);
-  void     (*gen_hash)(const unsigned char *, unsigned int, unsigned char *);
-  void     (*set_compile_options)(build_kernel_data *, struct cgpu_info *, algorithm_t *);
+  void(*regenhash)(struct work *);
+  cl_int(*queue_kernel)(struct __clState *, struct _dev_blk_ctx *, cl_uint);
+  void(*gen_hash)(const unsigned char *, unsigned int, unsigned char *);
+  void(*set_compile_options)(build_kernel_data *, struct cgpu_info *, algorithm_t *);
 } algorithm_settings_t;
 
 static algorithm_settings_t algos[] = {
   // kernels starting from this will have difficulty calculated by using litecoin algorithm
 #define A_SCRYPT(a) \
-    { a, ALGO_SCRYPT, "", 1, 65536, 65536, 0, 0, 0xFF, 0xFFFFFFFFULL, 0x0000ffffUL, 0, -1, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, scrypt_regenhash, queue_scrypt_kernel, gen_hash, append_scrypt_compiler_options}
-  A_SCRYPT( "ckolivas" ),
-  A_SCRYPT( "alexkarnew" ),
-  A_SCRYPT( "alexkarnold" ),
-  A_SCRYPT( "bufius" ),
-  A_SCRYPT( "psw" ),
-  A_SCRYPT( "zuikkis" ),
-  A_SCRYPT( "arebyp" ),
+  { a, ALGO_SCRYPT, "", 1, 65536, 65536, 0, 0, 0xFF, 0xFFFFFFFFULL, 0x0000ffffUL, 0, -1, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, scrypt_regenhash, queue_scrypt_kernel, gen_hash, append_scrypt_compiler_options }
+  A_SCRYPT("ckolivas"),
+  A_SCRYPT("alexkarnew"),
+  A_SCRYPT("alexkarnold"),
+  A_SCRYPT("bufius"),
+  A_SCRYPT("psw"),
+  A_SCRYPT("zuikkis"),
+  A_SCRYPT("arebyp"),
 #undef A_SCRYPT
 
 #define A_NEOSCRYPT(a) \
-    { a, ALGO_NEOSCRYPT, "", 1, 65536, 65536, 0, 0, 0xFF, 0xFFFF000000000000ULL, 0x0000ffffUL, 0, -1, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, neoscrypt_regenhash, queue_neoscrypt_kernel, gen_hash, append_neoscrypt_compiler_options}
+  { a, ALGO_NEOSCRYPT, "", 1, 65536, 65536, 0, 0, 0xFF, 0xFFFF000000000000ULL, 0x0000ffffUL, 0, -1, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, neoscrypt_regenhash, queue_neoscrypt_kernel, gen_hash, append_neoscrypt_compiler_options }
   A_NEOSCRYPT("neoscrypt"),
 #undef A_NEOSCRYPT
 
+#define A_PLUCK(a) \
+  { a, ALGO_PLUCK, "", 1, 65536, 65536, 0, 0, 0xFF, 0xFFFF000000000000ULL, 0x0000ffffUL, 0, -1, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, pluck_regenhash, queue_pluck_kernel, gen_hash, append_neoscrypt_compiler_options }
+  A_PLUCK("pluck"),
+#undef A_PLUCK
   // kernels starting from this will have difficulty calculated by using quarkcoin algorithm
 #define A_QUARK(a, b) \
-    { a, ALGO_QUARK, "", 256, 256, 256, 0, 0, 0xFF, 0xFFFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, b, queue_sph_kernel, gen_hash, append_x11_compiler_options}
-  A_QUARK( "quarkcoin", quarkcoin_regenhash),
-  A_QUARK( "qubitcoin", qubitcoin_regenhash),
-  A_QUARK( "animecoin", animecoin_regenhash),
-  A_QUARK( "sifcoin",   sifcoin_regenhash),
+  { a, ALGO_QUARK, "", 256, 256, 256, 0, 0, 0xFF, 0xFFFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, b, queue_sph_kernel, gen_hash, append_x11_compiler_options }
+  A_QUARK("quarkcoin", quarkcoin_regenhash),
+  A_QUARK("qubitcoin", qubitcoin_regenhash),
+  A_QUARK("animecoin", animecoin_regenhash),
+  A_QUARK("sifcoin", sifcoin_regenhash),
 #undef A_QUARK
 
   // kernels starting from this will have difficulty calculated by using bitcoin algorithm
 #define A_DARK(a, b) \
-    { a, ALGO_X11, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, b, queue_sph_kernel, gen_hash, append_x11_compiler_options}
-  A_DARK( "darkcoin",           darkcoin_regenhash),
-  A_DARK( "inkcoin",            inkcoin_regenhash),
-  A_DARK( "myriadcoin-groestl", myriadcoin_groestl_regenhash),
+  { a, ALGO_X11, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, b, queue_sph_kernel, gen_hash, append_x11_compiler_options }
+  A_DARK("darkcoin", darkcoin_regenhash),
+  A_DARK("inkcoin", inkcoin_regenhash),
+  A_DARK("myriadcoin-groestl", myriadcoin_groestl_regenhash),
 #undef A_DARK
 
-  { "twecoin", ALGO_TWE, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, twecoin_regenhash, queue_sph_kernel, sha256, NULL},
-  { "maxcoin", ALGO_KECCAK, "", 1, 256, 1, 4, 15, 0x0F, 0xFFFFULL, 0x000000ffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, maxcoin_regenhash, queue_maxcoin_kernel, sha256, NULL},
+  { "twecoin", ALGO_TWE, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, twecoin_regenhash, queue_sph_kernel, sha256, NULL },
+  { "maxcoin", ALGO_KECCAK, "", 1, 256, 1, 4, 15, 0x0F, 0xFFFFULL, 0x000000ffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, maxcoin_regenhash, queue_maxcoin_kernel, sha256, NULL },
 
-  { "darkcoin-mod", ALGO_X11, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, darkcoin_regenhash, queue_darkcoin_mod_kernel, gen_hash, append_x11_compiler_options},
+  { "darkcoin-mod", ALGO_X11, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, darkcoin_regenhash, queue_darkcoin_mod_kernel, gen_hash, append_x11_compiler_options },
 
-  { "marucoin", ALGO_X13, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, marucoin_regenhash, queue_sph_kernel, gen_hash, append_x13_compiler_options},
-  { "marucoin-mod", ALGO_X13, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 12, 8 * 16 * 4194304, 0, marucoin_regenhash, queue_marucoin_mod_kernel, gen_hash, append_x13_compiler_options},
-  { "marucoin-modold", ALGO_X13, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, marucoin_regenhash, queue_marucoin_mod_old_kernel, gen_hash, append_x13_compiler_options},
+  { "marucoin", ALGO_X13, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, marucoin_regenhash, queue_sph_kernel, gen_hash, append_x13_compiler_options },
+  { "marucoin-mod", ALGO_X13, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 12, 8 * 16 * 4194304, 0, marucoin_regenhash, queue_marucoin_mod_kernel, gen_hash, append_x13_compiler_options },
+  { "marucoin-modold", ALGO_X13, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, marucoin_regenhash, queue_marucoin_mod_old_kernel, gen_hash, append_x13_compiler_options },
 
-  { "x14", ALGO_X14, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 13, 8 * 16 * 4194304, 0, x14_regenhash, queue_x14_kernel, gen_hash, append_x13_compiler_options},
-  { "x14old", ALGO_X14, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, x14_regenhash, queue_x14_old_kernel, gen_hash, append_x13_compiler_options},
+  { "x14", ALGO_X14, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 13, 8 * 16 * 4194304, 0, x14_regenhash, queue_x14_kernel, gen_hash, append_x13_compiler_options },
+  { "x14old", ALGO_X14, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 8 * 16 * 4194304, 0, x14_regenhash, queue_x14_old_kernel, gen_hash, append_x13_compiler_options },
 
-  { "bitblock", ALGO_X15, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 14, 4 * 16 * 4194304, 0, bitblock_regenhash, queue_bitblock_kernel, gen_hash, append_x13_compiler_options},
-  { "bitblockold", ALGO_X15, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 4 * 16 * 4194304, 0, bitblock_regenhash, queue_bitblockold_kernel, gen_hash, append_x13_compiler_options},
+  { "bitblock", ALGO_X15, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 14, 4 * 16 * 4194304, 0, bitblock_regenhash, queue_bitblock_kernel, gen_hash, append_x13_compiler_options },
+  { "bitblockold", ALGO_X15, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 10, 4 * 16 * 4194304, 0, bitblock_regenhash, queue_bitblockold_kernel, gen_hash, append_x13_compiler_options },
 
-  { "talkcoin-mod", ALGO_NIST, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 4,  8 * 16 * 4194304, 0, talkcoin_regenhash, queue_talkcoin_mod_kernel, gen_hash, append_x11_compiler_options},
+  { "talkcoin-mod", ALGO_NIST, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 4, 8 * 16 * 4194304, 0, talkcoin_regenhash, queue_talkcoin_mod_kernel, gen_hash, append_x11_compiler_options },
 
-  { "fresh", ALGO_FRESH, "", 1, 256, 256, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 4, 4 * 16 * 4194304, 0, fresh_regenhash, queue_fresh_kernel, gen_hash, NULL},
+  { "fresh", ALGO_FRESH, "", 1, 256, 256, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 4, 4 * 16 * 4194304, 0, fresh_regenhash, queue_fresh_kernel, gen_hash, NULL },
 
-  { "lyra2re", ALGO_LYRA2RE, "", 1, 128, 128, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 4, 2 * 8 * 4194304 , 0, lyra2re_regenhash, queue_lyra2RE_kernel, gen_hash, NULL},
+  { "lyra2re", ALGO_LYRA2RE, "", 1, 128, 128, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 4, 2 * 8 * 4194304, 0, lyra2re_regenhash, queue_lyra2RE_kernel, gen_hash, NULL },
 
   // kernels starting from this will have difficulty calculated by using fuguecoin algorithm
 #define A_FUGUE(a, b, c) \
-    { a, ALGO_FUGUE, "", 1, 256, 256, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, b, queue_sph_kernel, c, NULL}
+  { a, ALGO_FUGUE, "", 1, 256, 256, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, b, queue_sph_kernel, c, NULL }
   A_FUGUE("fuguecoin", fuguecoin_regenhash, sha256),
   A_FUGUE("groestlcoin", groestlcoin_regenhash, sha256),
   A_FUGUE("diamond", groestlcoin_regenhash, gen_hash),
- #undef A_FUGUE
+#undef A_FUGUE
 
-  { "whirlcoin", ALGO_WHIRL, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 3, 8 * 16 * 4194304, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, whirlcoin_regenhash, queue_whirlcoin_kernel, sha256, NULL},
+  { "whirlcoin", ALGO_WHIRL, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 3, 8 * 16 * 4194304, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, whirlcoin_regenhash, queue_whirlcoin_kernel, sha256, NULL },
   { "whirlpoolx", ALGO_WHIRL, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, 0, whirlpoolx_regenhash, queue_sph_kernel, gen_hash, NULL },
 
   // Terminator (do not remove)
-  { NULL, ALGO_UNK, "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL}
+  { NULL, ALGO_UNK, "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL }
 };
 
 void copy_algorithm_settings(algorithm_t* dest, const char* algo)
@@ -833,10 +858,10 @@ void copy_algorithm_settings(algorithm_t* dest, const char* algo)
 
 static const char *lookup_algorithm_alias(const char *lookup_alias, uint8_t *nfactor)
 {
-  #define ALGO_ALIAS_NF(alias, name, nf) \
-    if (strcasecmp(alias, lookup_alias) == 0) { *nfactor = nf; return name; }
-  #define ALGO_ALIAS(alias, name) \
-    if (strcasecmp(alias, lookup_alias) == 0) return name;
+#define ALGO_ALIAS_NF(alias, name, nf) \
+  if (strcasecmp(alias, lookup_alias) == 0) { *nfactor = nf; return name; }
+#define ALGO_ALIAS(alias, name) \
+  if (strcasecmp(alias, lookup_alias) == 0) return name;
 
   ALGO_ALIAS_NF("scrypt", "ckolivas", 10);
   ALGO_ALIAS_NF("scrypt", "ckolivas", 10);
@@ -862,8 +887,8 @@ static const char *lookup_algorithm_alias(const char *lookup_alias, uint8_t *nfa
   ALGO_ALIAS("Lyra2RE", "lyra2re");
   ALGO_ALIAS("lyra2", "lyra2re");
 
-  #undef ALGO_ALIAS
-  #undef ALGO_ALIAS_NF
+#undef ALGO_ALIAS
+#undef ALGO_ALIAS_NF
 
   return NULL;
 }
@@ -873,7 +898,7 @@ void set_algorithm(algorithm_t* algo, const char* newname_alias)
   const char *newname;
 
   //load previous algorithm nfactor in case nfactor was applied before algorithm... or default to 10
-  uint8_t old_nfactor = ((algo->nfactor)?algo->nfactor:0);
+  uint8_t old_nfactor = ((algo->nfactor) ? algo->nfactor : 0);
   //load previous kernel file name if was applied before algorithm...
   const char *kernelfile = algo->kernelfile;
   uint8_t nfactor = 10;
@@ -903,20 +928,20 @@ void set_algorithm_nfactor(algorithm_t* algo, const uint8_t nfactor)
   //adjust algo type accordingly
   switch (algo->type)
   {
-    case ALGO_SCRYPT:
-      //if nfactor isnt 10, switch to NSCRYPT
-      if(algo->nfactor != 10)
-        algo->type = ALGO_NSCRYPT;
-      break;
+  case ALGO_SCRYPT:
+    //if nfactor isnt 10, switch to NSCRYPT
+    if (algo->nfactor != 10)
+      algo->type = ALGO_NSCRYPT;
+    break;
     //nscrypt
-    case ALGO_NSCRYPT:
-      //if nfactor is 10, switch to SCRYPT
-      if(algo->nfactor == 10)
-        algo->type = ALGO_SCRYPT;
-      break;
+  case ALGO_NSCRYPT:
+    //if nfactor is 10, switch to SCRYPT
+    if (algo->nfactor == 10)
+      algo->type = ALGO_SCRYPT;
+    break;
     //ignore rest
-    default:
-      break;
+  default:
+    break;
   }
 }
 

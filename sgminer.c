@@ -7080,7 +7080,7 @@ bool test_nonce(struct work *work, uint32_t nonce)
   rebuild_nonce(work, nonce);
 
   // for Neoscrypt, the diff1targ value is in work->target
-  if (!safe_cmp(work->pool->algorithm.name, "neoscrypt")) {
+  if (!safe_cmp(work->pool->algorithm.name, "neoscrypt") || !safe_cmp(work->pool->algorithm.name, "pluck")) {
     diff1targ = ((uint32_t *)work->target)[7];
   }
   else {
