@@ -68,9 +68,7 @@ __constant static const sph_u64 t12[6] =
 0xff00000000000000UL,
 0xff00000000000008UL
 };
-static inline ulong ROTL64(const ulong v, const ulong n){
-	return rotate(v,n); 
-}
+
 
 #define Round512(p0,p1,p2,p3,p4,p5,p6,p7,ROT)  { \
 p0 += p1; p1 = SPH_ROTL64(p1, ROT256[ROT][0]);  p1 ^= p0; \
@@ -84,19 +82,19 @@ p6 += p7; p7 = SPH_ROTL64(p7, ROT256[ROT][3]);  p7 ^= p6; \
 	    Round512(p2, p1, p4, p7, p6, p5, p0, p3, 1); \
 	    Round512(p4, p1, p6, p3, p0, p5, p2, p7, 2); \
 	    Round512(p6, p1, p0, p7, p2, p5, p4, p3, 3); \
-	    p0 += h[((R)+0) % 9];  \ 
-        p1 += h[((R)+1) % 9]; \
-		p2 += h[((R)+2) % 9]; \
-		p3 += h[((R)+3) % 9]; \
-		p4 += h[((R)+4) % 9]; \
-		p5 += h[((R)+5) % 9] + t[((R)+0) % 3]; \
-		p6 += h[((R)+6) % 9] + t[((R)+1) % 3]; \
-		p7 += h[((R)+7) % 9] + R; \
+	    p0 += h[((R)+0) % 9]; \
+      p1 += h[((R)+1) % 9]; \
+      p2 += h[((R)+2) % 9]; \
+      p3 += h[((R)+3) % 9]; \
+      p4 += h[((R)+4) % 9]; \
+      p5 += h[((R)+5) % 9] + t[((R)+0) % 3]; \
+      p6 += h[((R)+6) % 9] + t[((R)+1) % 3]; \
+      p7 += h[((R)+7) % 9] + R; \
 		Round512(p0, p1, p2, p3, p4, p5, p6, p7, 4); \
 		Round512(p2, p1, p4, p7, p6, p5, p0, p3, 5); \
 		Round512(p4, p1, p6, p3, p0, p5, p2, p7, 6); \
 		Round512(p6, p1, p0, p7, p2, p5, p4, p3, 7); \
-		p0 += h[((R)+1) % 9];   \ 
+		p0 += h[((R)+1) % 9]; \
 		p1 += h[((R)+2) % 9]; \
 		p2 += h[((R)+3) % 9]; \
 		p3 += h[((R)+4) % 9]; \

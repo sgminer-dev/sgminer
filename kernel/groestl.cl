@@ -58,7 +58,6 @@
 #endif
 
 #if USE_LE
-
 #if SPH_64
 #define C64e(x)     ((SPH_C64(x) >> 56) \
           | ((SPH_C64(x) >> 40) & SPH_C64(0x000000000000FF00)) \
@@ -1430,3 +1429,124 @@ __constant static const sph_u64 T7[] = {
       ROUND_BIG_Q(a, r); \
     } \
   } while (0)
+
+#if SPH_SMALL_FOOTPRINT_GROESTL
+
+#define RSTT(d, a, b0, b1, b2, b3, b4, b5, b6, b7)   do { \
+		t[d] = T0[B64_0(a[b0])] \
+			^ R64(T0[B64_1(a[b1])],  8) \
+			^ R64(T0[B64_2(a[b2])], 16) \
+			^ R64(T0[B64_3(a[b3])], 24) \
+			^ T4[B64_4(a[b4])] \
+			^ R64(T4[B64_5(a[b5])],  8) \
+			^ R64(T4[B64_6(a[b6])], 16) \
+			^ R64(T4[B64_7(a[b7])], 24); \
+	} while (0)
+
+#else
+
+#define RSTT(d, a, b0, b1, b2, b3, b4, b5, b6, b7)   do { \
+		t[d] = T0[B64_0(a[b0])] \
+			^ T1[B64_1(a[b1])] \
+			^ T2[B64_2(a[b2])] \
+			^ T3[B64_3(a[b3])] \
+			^ T4[B64_4(a[b4])] \
+			^ T5[B64_5(a[b5])] \
+			^ T6[B64_6(a[b6])] \
+			^ T7[B64_7(a[b7])]; \
+	} while (0)
+
+#endif
+#define ROUND_SMALL_P(a, r)   do { \
+		sph_u64 t[8]; \
+		a[0] ^= PC64(0x00, r); \
+		a[1] ^= PC64(0x10, r); \
+		a[2] ^= PC64(0x20, r); \
+		a[3] ^= PC64(0x30, r); \
+		a[4] ^= PC64(0x40, r); \
+		a[5] ^= PC64(0x50, r); \
+		a[6] ^= PC64(0x60, r); \
+		a[7] ^= PC64(0x70, r); \
+		RSTT(0, a, 0, 1, 2, 3, 4, 5, 6, 7); \
+		RSTT(1, a, 1, 2, 3, 4, 5, 6, 7, 0); \
+		RSTT(2, a, 2, 3, 4, 5, 6, 7, 0, 1); \
+		RSTT(3, a, 3, 4, 5, 6, 7, 0, 1, 2); \
+		RSTT(4, a, 4, 5, 6, 7, 0, 1, 2, 3); \
+		RSTT(5, a, 5, 6, 7, 0, 1, 2, 3, 4); \
+		RSTT(6, a, 6, 7, 0, 1, 2, 3, 4, 5); \
+		RSTT(7, a, 7, 0, 1, 2, 3, 4, 5, 6); \
+		a[0] = t[0]; \
+		a[1] = t[1]; \
+		a[2] = t[2]; \
+		a[3] = t[3]; \
+		a[4] = t[4]; \
+		a[5] = t[5]; \
+		a[6] = t[6]; \
+		a[7] = t[7]; \
+	} while (0)
+
+#define ROUND_SMALL_Q(a, r)   do { \
+		sph_u64 t[8]; \
+		a[0] ^= QC64(0x00, r); \
+		a[1] ^= QC64(0x10, r); \
+		a[2] ^= QC64(0x20, r); \
+		a[3] ^= QC64(0x30, r); \
+		a[4] ^= QC64(0x40, r); \
+		a[5] ^= QC64(0x50, r); \
+		a[6] ^= QC64(0x60, r); \
+		a[7] ^= QC64(0x70, r); \
+		RSTT(0, a, 1, 3, 5, 7, 0, 2, 4, 6); \
+		RSTT(1, a, 2, 4, 6, 0, 1, 3, 5, 7); \
+		RSTT(2, a, 3, 5, 7, 1, 2, 4, 6, 0); \
+		RSTT(3, a, 4, 6, 0, 2, 3, 5, 7, 1); \
+		RSTT(4, a, 5, 7, 1, 3, 4, 6, 0, 2); \
+		RSTT(5, a, 6, 0, 2, 4, 5, 7, 1, 3); \
+		RSTT(6, a, 7, 1, 3, 5, 6, 0, 2, 4); \
+		RSTT(7, a, 0, 2, 4, 6, 7, 1, 3, 5); \
+		a[0] = t[0]; \
+		a[1] = t[1]; \
+		a[2] = t[2]; \
+		a[3] = t[3]; \
+		a[4] = t[4]; \
+		a[5] = t[5]; \
+		a[6] = t[6]; \
+		a[7] = t[7]; \
+	} while (0)
+
+#if SPH_SMALL_FOOTPRINT_GROESTL
+
+#define PERM_SMALL_P(a)   do { \
+		int r; \
+		for (r = 0; r < 10; r ++) \
+			ROUND_SMALL_P(a, r); \
+	} while (0)
+
+#define PERM_SMALL_Q(a)   do { \
+		int r; \
+		for (r = 0; r < 10; r ++) \
+			ROUND_SMALL_Q(a, r); \
+	} while (0)
+
+#else
+
+/*
+ * Apparently, unrolling more than that confuses GCC, resulting in
+ * lower performance, even though L1 cache would be no problem.
+ */
+#define PERM_SMALL_P(a)   do { \
+		int r; \
+		for (r = 0; r < 10; r += 2) { \
+			ROUND_SMALL_P(a, r + 0); \
+			ROUND_SMALL_P(a, r + 1); \
+		} \
+	} while (0)
+
+#define PERM_SMALL_Q(a)   do { \
+		int r; \
+		for (r = 0; r < 10; r += 2) { \
+			ROUND_SMALL_Q(a, r + 0); \
+			ROUND_SMALL_Q(a, r + 1); \
+		} \
+	} while (0)
+
+#endif
