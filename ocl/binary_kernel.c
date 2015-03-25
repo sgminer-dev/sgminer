@@ -1,5 +1,7 @@
 #include "binary_kernel.h"
+#include "miner.h"
 #include <sys/stat.h>
+#include <stdio.h>
 
 cl_program load_opencl_binary_kernel(build_kernel_data *data)
 {

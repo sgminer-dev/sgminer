@@ -146,16 +146,6 @@ static cl_int create_opencl_context(cl_context *context, cl_platform_id *platfor
   return status;
 }
 
-static cl_int create_opencl_command_queue(cl_command_queue *command_queue, cl_context *context, cl_device_id *device, cl_command_queue_properties cq_properties)
-{
-  cl_int status;
-  *command_queue = clCreateCommandQueue(*context, *device,
-    cq_properties, &status);
-  if (status != CL_SUCCESS) /* Try again without OOE enable */
-    *command_queue = clCreateCommandQueue(*context, *device, 0, &status);
-  return status;
-}
-
 static float get_opencl_version(cl_device_id device)
 {
   /* Check for OpenCL >= 1.0 support, needed for global offset parameter usage. */
@@ -193,27 +183,56 @@ static bool get_opencl_bit_align_support(cl_device_id *device)
   return !!find;
 }
 
+static cl_int create_opencl_command_queue(cl_command_queue *command_queue, cl_context *context, cl_device_id *device, const void *cq_properties)
+{
+	cl_int status;
+	
+	if(get_opencl_version(*device) < 2.0)	{
+		*command_queue = clCreateCommandQueue(*context, *device, *((const cl_command_queue_properties *)cq_properties), &status);
+		
+		// Didn't work, try again with no properties.
+    if (status != CL_SUCCESS) {
+      *command_queue = clCreateCommandQueue(*context, *device, 0, &status);
+    }
+	}
+	else {
+		*command_queue = clCreateCommandQueueWithProperties(*context, *device, (const cl_queue_properties *)cq_properties, &status);
+		
+		// Didn't work, same deal.
+    if (status != CL_SUCCESS) {
+      *command_queue = clCreateCommandQueueWithProperties(*context, *device, 0, &status);
+    }
+	}
+	
+	return status;
+}
+
 _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *algorithm)
 {
-  _clState *clState = (_clState *)calloc(1, sizeof(_clState));
-  struct cgpu_info *cgpu = &gpus[gpu];
-  cl_platform_id platform = NULL;
-  char pbuff[256];
-  build_kernel_data *build_data = (build_kernel_data *)alloca(sizeof(struct _build_kernel_data));
-  cl_uint preferred_vwidth;
-  cl_device_id *devices;
-  cl_uint numDevices;
-  cl_int status;
+  cl_int status = 0;
+	size_t compute_units = 0;
+	cl_platform_id platform = NULL;
+	struct cgpu_info *cgpu = &gpus[gpu];
+	_clState *clState = (_clState *)calloc(1, sizeof(_clState));
+	cl_uint preferred_vwidth, slot = 0, cpnd = 0, numDevices = clDevicesNum();
+	cl_device_id *devices = (cl_device_id *)alloca(numDevices * sizeof(cl_device_id));
+	build_kernel_data *build_data = (build_kernel_data *)alloca(sizeof(struct _build_kernel_data));
+	char **pbuff = (char **)alloca(sizeof(char *) * numDevices), filename[256];
 
+  // sanity check
   if (!get_opencl_platform(opt_platform_id, &platform)) {
     return NULL;
   }
 
-  numDevices = clDevicesNum();
+  if (numDevices <= 0) {
+    return NULL;
+  }
 
-  if (numDevices <= 0) return NULL;
+  if (gpu >= numDevices) {
+    applog(LOG_ERR, "Invalid GPU %i", gpu);
+    return NULL;
+  }
 
-  devices = (cl_device_id *)alloca(numDevices*sizeof(cl_device_id));
 
   /* Now, get the device list data */
 
@@ -225,34 +244,33 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
 
   applog(LOG_INFO, "List of devices:");
 
-  unsigned int i;
-  for (i = 0; i < numDevices; i++) {
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_NAME, sizeof(pbuff), pbuff, NULL);
-    if (status != CL_SUCCESS) {
-      applog(LOG_ERR, "Error %d: Getting Device Info", status);
+  for (int i = 0; i < numDevices; ++i)	{
+    size_t tmpsize;
+    if (clGetDeviceInfo(devices[i], CL_DEVICE_NAME, 0, NULL, &tmpsize) != CL_SUCCESS) {
+      applog(LOG_ERR, "Error while getting the length of the name for GPU #%d.", i);
       return NULL;
     }
 
-    applog(LOG_INFO, "\t%i\t%s", i, pbuff);
-
-    if (i == gpu) {
-      applog(LOG_INFO, "Selected %i: %s", gpu, pbuff);
-      strncpy(name, pbuff, nameSize);
+    // Does the size include the NULL terminator? Who knows, just add one, it's faster than looking it up.
+    pbuff[i] = (char *)alloca(sizeof(char) * (tmpsize + 1));
+    if (clGetDeviceInfo(devices[i], CL_DEVICE_NAME, sizeof(char) * tmpsize, pbuff[i], NULL) != CL_SUCCESS) {
+      applog(LOG_ERR, "Error while attempting to get device information.");
+		  return NULL;
     }
-  }
 
-  if (gpu >= numDevices) {
-    applog(LOG_ERR, "Invalid GPU %i", gpu);
-    return NULL;
-  }
-
+    applog(LOG_INFO, "\t%i\t%s", i, pbuff[i]);
+	}
+	
+	applog(LOG_INFO, "Selected %d: %s", gpu, pbuff[gpu]);
+  strncpy(name, pbuff[gpu], nameSize);
+  
   status = create_opencl_context(&clState->context, &platform);
   if (status != CL_SUCCESS) {
     applog(LOG_ERR, "Error %d: Creating Context. (clCreateContextFromType)", status);
     return NULL;
   }
 
-  status = create_opencl_command_queue(&clState->commandQueue, &clState->context, &devices[gpu], cgpu->algorithm.cq_properties);
+  status = create_opencl_command_queue(&clState->commandQueue, &clState->context, &devices[gpu], (const void *)&(cgpu->algorithm.cq_properties));
   if (status != CL_SUCCESS) {
     applog(LOG_ERR, "Error %d: Creating Command Queue. (clCreateCommandQueue)", status);
     return NULL;
@@ -274,7 +292,6 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
   }
   applog(LOG_DEBUG, "Max work group size reported %d", (int)(clState->max_work_size));
 
-  size_t compute_units = 0;
   status = clGetDeviceInfo(devices[gpu], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(size_t), (void *)&compute_units, NULL);
   if (status != CL_SUCCESS) {
     applog(LOG_ERR, "Error %d: Failed to clGetDeviceInfo when trying to get CL_DEVICE_MAX_COMPUTE_UNITS", status);
@@ -282,8 +299,10 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
   }
   // AMD architechture got 64 compute shaders per compute unit.
   // Source: http://www.amd.com/us/Documents/GCN_Architecture_whitepaper.pdf
-  clState->compute_shaders = compute_units * 64;
-  applog(LOG_DEBUG, "Max shaders calculated %d", (int)(clState->compute_shaders));
+  clState->compute_shaders = compute_units << 6;
+  applog(LOG_INFO, "Maximum work size for this GPU (%d) is %d.", gpu, clState->max_work_size);
+	applog(LOG_INFO, "Your GPU (#%d) has %d compute units, and all AMD cards in the 7 series or newer (GCN cards) \
+		have 64 shaders per compute unit - this means it has %d shaders.", gpu, compute_units, clState->compute_shaders);
 
   status = clGetDeviceInfo(devices[gpu], CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), (void *)&cgpu->max_alloc, NULL);
   if (status != CL_SUCCESS) {
@@ -297,12 +316,8 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
    * would have otherwise created. The filename is:
    * name + g + lg + lookup_gap + tc + thread_concurrency + nf + nfactor + w + work_size + l + sizeof(long) + .bin
    */
-  char filename[255];
-  char strbuf[32];
 
-  sprintf(strbuf, "%s.cl", (!empty_string(cgpu->algorithm.kernelfile) ? cgpu->algorithm.kernelfile : cgpu->algorithm.name));
-  strcpy(filename, strbuf);
-
+  sprintf(filename, "%s.cl", (!empty_string(cgpu->algorithm.kernelfile) ? cgpu->algorithm.kernelfile : cgpu->algorithm.name));
   applog(LOG_DEBUG, "Using source file %s", filename);
 
   /* For some reason 2 vectors is still better even if the card says
@@ -326,10 +341,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
 
   clState->goffset = true;
 
-  if (cgpu->work_size && cgpu->work_size <= clState->max_work_size)
-    clState->wsize = cgpu->work_size;
-  else
-    clState->wsize = 256;
+  clState->wsize = (cgpu->work_size && cgpu->work_size <= clState->max_work_size) ? cgpu->work_size : 256;
 
   if (!cgpu->opt_lg) {
     applog(LOG_DEBUG, "GPU %d: selecting lookup gap of 2", gpu);
@@ -536,38 +548,32 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
     cgpu->thread_concurrency = cgpu->opt_tc;
   }
 
-  cl_uint slot, cpnd;
-
-  slot = cpnd = 0;
-
   build_data->context = clState->context;
   build_data->device = &devices[gpu];
 
   // Build information
   strcpy(build_data->source_filename, filename);
-  strcpy(build_data->platform, name);
-  strcpy(build_data->sgminer_path, sgminer_path);
-  if (opt_kernel_path && *opt_kernel_path) {
-    build_data->kernel_path = opt_kernel_path;
-  }
-  else {
-    build_data->kernel_path = NULL;
-  }
+	strcpy(build_data->platform, name);
+	strcpy(build_data->sgminer_path, sgminer_path);
 
+  build_data->kernel_path = (*opt_kernel_path) ? opt_kernel_path : NULL;
   build_data->work_size = clState->wsize;
   build_data->has_bit_align = clState->hasBitAlign;
-
   build_data->opencl_version = get_opencl_version(devices[gpu]);
   build_data->patch_bfi = needs_bfi_patch(build_data);
 
-  strcpy(build_data->binary_filename, (!empty_string(cgpu->algorithm.kernelfile) ? cgpu->algorithm.kernelfile : cgpu->algorithm.name));
-  strcat(build_data->binary_filename, name);
-  if (clState->goffset)
+  strcpy(build_data->binary_filename, filename);
+	build_data->binary_filename[strlen(filename) - 3] = 0x00;		// And one NULL terminator, cutting off the .cl suffix.
+	strcat(build_data->binary_filename, pbuff[gpu]);
+
+  if (clState->goffset) {
     strcat(build_data->binary_filename, "g");
+  }
 
   set_base_compiler_options(build_data);
-  if (algorithm->set_compile_options)
+  if (algorithm->set_compile_options) {
     algorithm->set_compile_options(build_data, cgpu, algorithm);
+  }
 
   strcat(build_data->binary_filename, ".bin");
   applog(LOG_DEBUG, "Using binary file %s", build_data->binary_filename);
@@ -576,8 +582,9 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
   if (!(clState->program = load_opencl_binary_kernel(build_data))) {
     applog(LOG_NOTICE, "Building binary %s", build_data->binary_filename);
 
-    if (!(clState->program = build_opencl_kernel(build_data, filename)))
+    if (!(clState->program = build_opencl_kernel(build_data, filename))) {
       return NULL;
+    }
 
     if (save_opencl_kernel(build_data, clState->program)) {
       /* Program needs to be rebuilt, because the binary was patched */

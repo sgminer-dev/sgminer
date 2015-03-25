@@ -655,10 +655,14 @@ static cl_int queue_whirlpoolx_kernel(struct __clState *clState, struct _dev_blk
     tmp[0] = 0;
     whirlpool_round(midblock, tmp);
 
-    for (int x = 0; x < 8; ++x) midblock[x] ^= key[x];
+    for (int x = 0; x < 8; ++x) {
+      midblock[x] ^= key[x];
+    }
   }
 
-  for (int i = 0; i < 8; ++i) midblock[i] ^= ((uint64_t *)(clState->cldata))[i];
+  for (int i = 0; i < 8; ++i) {
+    midblock[i] ^= ((uint64_t *)(clState->cldata))[i];
+  }
 
   status = clSetKernelArg(clState->kernel, 0, sizeof(cl_ulong8), (cl_ulong8 *)&midblock);
   status |= clSetKernelArg(clState->kernel, 1, sizeof(cl_ulong), (void *)(((uint64_t *)clState->cldata) + 8));
@@ -731,27 +735,6 @@ static cl_int queue_pluck_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_un
 
   return status;
 }
-
-typedef struct _algorithm_settings_t {
-  const char *name; /* Human-readable identifier */
-  algorithm_type_t type; //common algorithm type
-  const char *kernelfile; /* alternate kernel file */
-  double   diff_multiplier1;
-  double   diff_multiplier2;
-  double   share_diff_multiplier;
-  uint32_t xintensity_shift;
-  uint32_t intensity_shift;
-  uint32_t found_idx;
-  unsigned long long   diff_numerator;
-  uint32_t diff1targ;
-  size_t n_extra_kernels;
-  long rw_buffer_size;
-  cl_command_queue_properties cq_properties;
-  void(*regenhash)(struct work *);
-  cl_int(*queue_kernel)(struct __clState *, struct _dev_blk_ctx *, cl_uint);
-  void(*gen_hash)(const unsigned char *, unsigned int, unsigned char *);
-  void(*set_compile_options)(build_kernel_data *, struct cgpu_info *, algorithm_t *);
-} algorithm_settings_t;
 
 static algorithm_settings_t algos[] = {
   // kernels starting from this will have difficulty calculated by using litecoin algorithm
@@ -895,7 +878,6 @@ static const char *lookup_algorithm_alias(const char *lookup_alias, uint8_t *nfa
   ALGO_ALIAS("nist5", "talkcoin-mod");
   ALGO_ALIAS("keccak", "maxcoin");
   ALGO_ALIAS("whirlpool", "whirlcoin");
-  ALGO_ALIAS("whirlpoolx", "whirlpoolx");
   ALGO_ALIAS("Lyra2RE", "lyra2re");
   ALGO_ALIAS("lyra2", "lyra2re");
 
@@ -957,8 +939,7 @@ void set_algorithm_nfactor(algorithm_t* algo, const uint8_t nfactor)
   }
 }
 
-bool cmp_algorithm(algorithm_t* algo1, algorithm_t* algo2)
+bool cmp_algorithm(const algorithm_t* algo1, const algorithm_t* algo2)
 {
-  // return (strcmp(algo1->name, algo2->name) == 0) && (algo1->nfactor == algo2->nfactor);
   return (!safe_cmp(algo1->name, algo2->name) && !safe_cmp(algo1->kernelfile, algo2->kernelfile) && (algo1->nfactor == algo2->nfactor));
 }
