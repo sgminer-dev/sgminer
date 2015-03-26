@@ -183,28 +183,14 @@ static bool get_opencl_bit_align_support(cl_device_id *device)
   return !!find;
 }
 
-static cl_int create_opencl_command_queue(cl_command_queue *command_queue, cl_context *context, cl_device_id *device, const void *cq_properties)
+static cl_int create_opencl_command_queue(cl_command_queue *command_queue, cl_context *context, cl_device_id *device, cl_command_queue_properties cq_properties)
 {
-	cl_int status;
-	
-	if(get_opencl_version(*device) < 2.0)	{
-		*command_queue = clCreateCommandQueue(*context, *device, *((const cl_command_queue_properties *)cq_properties), &status);
-		
-		// Didn't work, try again with no properties.
-    if (status != CL_SUCCESS) {
-      *command_queue = clCreateCommandQueue(*context, *device, 0, &status);
-    }
-	}
-	else {
-		*command_queue = clCreateCommandQueueWithProperties(*context, *device, (const cl_queue_properties *)cq_properties, &status);
-		
-		// Didn't work, same deal.
-    if (status != CL_SUCCESS) {
-      *command_queue = clCreateCommandQueueWithProperties(*context, *device, 0, &status);
-    }
-	}
-	
-	return status;
+  cl_int status;
+  *command_queue = clCreateCommandQueue(*context, *device,
+    cq_properties, &status);
+  if (status != CL_SUCCESS) /* Try again without OOE enable */
+    *command_queue = clCreateCommandQueue(*context, *device, 0, &status);
+  return status;
 }
 
 _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *algorithm)
@@ -270,7 +256,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
     return NULL;
   }
 
-  status = create_opencl_command_queue(&clState->commandQueue, &clState->context, &devices[gpu], (const void *)&(cgpu->algorithm.cq_properties));
+  status = create_opencl_command_queue(&clState->commandQueue, &clState->context, &devices[gpu], cgpu->algorithm.cq_properties);
   if (status != CL_SUCCESS) {
     applog(LOG_ERR, "Error %d: Creating Command Queue. (clCreateCommandQueue)", status);
     return NULL;
