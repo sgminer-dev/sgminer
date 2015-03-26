@@ -638,7 +638,7 @@ static cl_int queue_whirlcoin_kernel(struct __clState *clState, struct _dev_blk_
 
 static cl_int queue_whirlpoolx_kernel(struct __clState *clState, struct _dev_blk_ctx *blk, __maybe_unused cl_uint threads)
 {
-  uint64_t midblock[8], key[8], tmp[8] = { 0 };
+  uint64_t midblock[8], key[8] = { 0 }, tmp[8] = { 0 };
   cl_ulong le_target;
   cl_int status;
 
@@ -648,8 +648,7 @@ static cl_int queue_whirlpoolx_kernel(struct __clState *clState, struct _dev_blk
   memcpy(midblock, clState->cldata, 64);
 
   // midblock = n, key = h
-  for (int i = 0; i < 10; ++i)
-  {
+  for (int i = 0; i < 10; ++i) {
     tmp[0] = WHIRLPOOL_ROUND_CONSTANTS[i];
     whirlpool_round(key, tmp);
     tmp[0] = 0;
