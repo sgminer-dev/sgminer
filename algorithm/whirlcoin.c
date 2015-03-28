@@ -49,10 +49,10 @@ Whash_context_holder base_contexts;
 
 void init_whirlcoin_hash_contexts()
 {
-	sph_whirlpool1_init(&base_contexts.whirlpool1);
-	sph_whirlpool1_init(&base_contexts.whirlpool2);
-	sph_whirlpool1_init(&base_contexts.whirlpool3);
-	sph_whirlpool1_init(&base_contexts.whirlpool4);
+  sph_whirlpool1_init(&base_contexts.whirlpool1);
+  sph_whirlpool1_init(&base_contexts.whirlpool2);
+  sph_whirlpool1_init(&base_contexts.whirlpool3);
+  sph_whirlpool1_init(&base_contexts.whirlpool4);
 }
 
 /*
@@ -62,10 +62,10 @@ void init_whirlcoin_hash_contexts()
 static inline void
 be32enc_vect(uint32_t *dst, const uint32_t *src, uint32_t len)
 {
-	uint32_t i;
+  uint32_t i;
 
-	for (i = 0; i < len; i++)
-		dst[i] = htobe32(src[i]);
+  for (i = 0; i < len; i++)
+    dst[i] = htobe32(src[i]);
 }
 
 
@@ -74,33 +74,32 @@ static
 #endif
 inline void whirlcoin_hash(void *state, const void *input)
 {
-    init_whirlcoin_hash_contexts();
+  init_whirlcoin_hash_contexts();
 
-    Whash_context_holder ctx;
-    uint32_t hashA[16], hashB[16];
+  Whash_context_holder ctx;
+  uint32_t hashA[16], hashB[16];
 
-    memcpy(&ctx, &base_contexts, sizeof(base_contexts));
+  memcpy(&ctx, &base_contexts, sizeof(base_contexts));
 
-    sph_whirlpool1 (&ctx.whirlpool1, input, 80);
-    sph_whirlpool1_close (&ctx.whirlpool1, hashA);
+  sph_whirlpool1(&ctx.whirlpool1, input, 80);
+  sph_whirlpool1_close(&ctx.whirlpool1, hashA);
 
-	sph_whirlpool1(&ctx.whirlpool2, hashA, 64);
-    sph_whirlpool1_close(&ctx.whirlpool2, hashB);
+  sph_whirlpool1(&ctx.whirlpool2, hashA, 64);
+  sph_whirlpool1_close(&ctx.whirlpool2, hashB);
 
-    sph_whirlpool1(&ctx.whirlpool3, hashB, 64);
-    sph_whirlpool1_close(&ctx.whirlpool3, hashA);
+  sph_whirlpool1(&ctx.whirlpool3, hashB, 64);
+  sph_whirlpool1_close(&ctx.whirlpool3, hashA);
 
-	sph_whirlpool1(&ctx.whirlpool4, hashA, 64);
-    sph_whirlpool1_close(&ctx.whirlpool4, hashB);
+  sph_whirlpool1(&ctx.whirlpool4, hashA, 64);
+  sph_whirlpool1_close(&ctx.whirlpool4, hashB);
 
-    memcpy(state, hashB, 32);
+  memcpy(state, hashB, 32);
 }
 
 static const uint32_t diff1targ = 0x0000ffff;
 
-
 /* Used externally as confirmation of correct OCL code */
-int whirlcoin_test(unsigned char *pdata, const unsigned char *ptarget, uint32_t nonce)
+int whirlcoin_test_old(unsigned char *pdata, const unsigned char *ptarget, uint32_t nonce)
 {
 	uint32_t tmp_hash7, Htarg = le32toh(((const uint32_t *)ptarget)[7]);
 	uint32_t data[20], ohash[8];
@@ -124,51 +123,52 @@ int whirlcoin_test(unsigned char *pdata, const unsigned char *ptarget, uint32_t 
 
 void whirlcoin_regenhash(struct work *work)
 {
-    uint32_t data[20];
-    uint32_t *nonce = (uint32_t *)(work->data + 76);
-    uint32_t *ohash = (uint32_t *)(work->hash);
+  uint32_t data[20];
+  uint32_t *nonce = (uint32_t *)(work->data + 76);
+  uint32_t *ohash = (uint32_t *)(work->hash);
 
-    be32enc_vect(data, (const uint32_t *)work->data, 19);
-    data[19] = htobe32(*nonce);
-    whirlcoin_hash(ohash, data);
+  be32enc_vect(data, (const uint32_t *)work->data, 19);
+  data[19] = htobe32(*nonce);
+  whirlcoin_hash(ohash, data);
 }
-
+/*
 bool scanhash_whirlcoin(struct thr_info *thr, const unsigned char __maybe_unused *pmidstate,
-		     unsigned char *pdata, unsigned char __maybe_unused *phash1,
-		     unsigned char __maybe_unused *phash, const unsigned char *ptarget,
-		     uint32_t max_nonce, uint32_t *last_nonce, uint32_t n)
+  unsigned char *pdata, unsigned char __maybe_unused *phash1,
+  unsigned char __maybe_unused *phash, const unsigned char *ptarget,
+  uint32_t max_nonce, uint32_t *last_nonce, uint32_t n)
 {
-	uint32_t *nonce = (uint32_t *)(pdata + 76);
-	uint32_t data[20];
-	uint32_t tmp_hash7;
-	uint32_t Htarg = le32toh(((const uint32_t *)ptarget)[7]);
-	bool ret = false;
+  uint32_t *nonce = (uint32_t *)(pdata + 76);
+  uint32_t data[20];
+  uint32_t tmp_hash7;
+  uint32_t Htarg = le32toh(((const uint32_t *)ptarget)[7]);
+  bool ret = false;
 
-	be32enc_vect(data, (const uint32_t *)pdata, 19);
+  be32enc_vect(data, (const uint32_t *)pdata, 19);
 
-	while(1) {
-		uint32_t ostate[8];
+  while (1) {
+    uint32_t ostate[8];
 
-		*nonce = ++n;
-		data[19] = (n);
-		whirlcoin_hash(ostate, data);
-		tmp_hash7 = (ostate[7]);
+    *nonce = ++n;
+    data[19] = (n);
+    whirlcoin_hash(ostate, data);
+    tmp_hash7 = (ostate[7]);
 
-		applog(LOG_INFO, "data7 %08lx",
-					(long unsigned int)data[7]);
+    applog(LOG_INFO, "data7 %08lx",
+      (long unsigned int)data[7]);
 
-		if (unlikely(tmp_hash7 <= Htarg)) {
-			((uint32_t *)pdata)[19] = htobe32(n);
-			*last_nonce = n;
-			ret = true;
-			break;
-		}
+    if (unlikely(tmp_hash7 <= Htarg)) {
+      ((uint32_t *)pdata)[19] = htobe32(n);
+      *last_nonce = n;
+      ret = true;
+      break;
+    }
 
-		if (unlikely((n >= max_nonce) || thr->work_restart)) {
-			*last_nonce = n;
-			break;
-		}
-	}
+    if (unlikely((n >= max_nonce) || thr->work_restart)) {
+      *last_nonce = n;
+      break;
+    }
+  }
 
-	return ret;
+  return ret;
 }
+*/

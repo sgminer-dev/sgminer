@@ -34,7 +34,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "sph/sph_whirlpool.h"
+#include "whirlpoolx.h"
 
 /*
  * Encode a length len/4 vector of (uint32_t) into a length len vector of
@@ -49,56 +49,143 @@ be32enc_vect(uint32_t *dst, const uint32_t *src, uint32_t len)
 		dst[i] = htobe32(src[i]);
 }
 
-inline void whirlpoolx_hash(void *state, const void *input)
+
+void whirlpool_compress(uint8_t state[64], const uint8_t block[64])
 {
-	sph_whirlpool1_context ctx;
+	const int NUM_ROUNDS = 10;
+	uint64_t tempState[8];
+	uint64_t tempBlock[8];
+	int i;
+	
+	// Initialization
+	for (i = 0; i < 8; i++) {
+		tempState[i] = 
+			  (uint64_t)state[i << 3]
+			| (uint64_t)state[(i << 3) + 1] <<  8
+			| (uint64_t)state[(i << 3) + 2] << 16
+			| (uint64_t)state[(i << 3) + 3] << 24
+			| (uint64_t)state[(i << 3) + 4] << 32
+			| (uint64_t)state[(i << 3) + 5] << 40
+			| (uint64_t)state[(i << 3) + 6] << 48
+			| (uint64_t)state[(i << 3) + 7] << 56;
+		tempBlock[i] = (
+			  (uint64_t)block[i << 3]
+			| (uint64_t)block[(i << 3) + 1] <<  8
+			| (uint64_t)block[(i << 3) + 2] << 16
+			| (uint64_t)block[(i << 3) + 3] << 24
+			| (uint64_t)block[(i << 3) + 4] << 32
+			| (uint64_t)block[(i << 3) + 5] << 40
+			| (uint64_t)block[(i << 3) + 6] << 48
+			| (uint64_t)block[(i << 3) + 7] << 56) ^ tempState[i];
+	}
+	
+	// Hashing rounds
+	uint64_t rcon[8];
+	memset(rcon + 1, 0, sizeof(rcon[0]) * 7);
+	for (i = 0; i < NUM_ROUNDS; i++) {
+		rcon[0] = WHIRLPOOL_ROUND_CONSTANTS[i];
+		whirlpool_round(tempState, rcon);
+		whirlpool_round(tempBlock, tempState);
+	}
+	
+	// Final combining
+	for (i = 0; i < 64; i++)
+		state[i] ^= block[i] ^ (uint8_t)(tempBlock[i >> 3] >> ((i & 7) << 3));
+}
+
+
+
+
+
+void whirlpool_round(uint64_t block[8], const uint64_t key[8]) {
+	uint64_t a = block[0];
+	uint64_t b = block[1];
+	uint64_t c = block[2];
+	uint64_t d = block[3];
+	uint64_t e = block[4];
+	uint64_t f = block[5];
+	uint64_t g = block[6];
+	uint64_t h = block[7];
+	
+	uint64_t r;
+	#define DOROW(i, s, t, u, v, w, x, y, z)  \
+		r = MAGIC_TABLE[(uint8_t)s];  r = (r << 56) | (r >> 8);  \
+		r ^= MAGIC_TABLE[(uint8_t)(t >>  8)];  r = (r << 56) | (r >> 8);  \
+		r ^= MAGIC_TABLE[(uint8_t)(u >> 16)];  r = (r << 56) | (r >> 8);  \
+		r ^= MAGIC_TABLE[(uint8_t)(v >> 24)];  r = (r << 56) | (r >> 8);  \
+		r ^= MAGIC_TABLE[(uint8_t)(w >> 32)];  r = (r << 56) | (r >> 8);  \
+		r ^= MAGIC_TABLE[(uint8_t)(x >> 40)];  r = (r << 56) | (r >> 8);  \
+		r ^= MAGIC_TABLE[(uint8_t)(y >> 48)];  r = (r << 56) | (r >> 8);  \
+		r ^= MAGIC_TABLE[(uint8_t)(z >> 56)];  r = (r << 56) | (r >> 8);  \
+		block[i] = r ^ key[i];
+	
+	DOROW(0, a, h, g, f, e, d, c, b)
+	DOROW(1, b, a, h, g, f, e, d, c)
+	DOROW(2, c, b, a, h, g, f, e, d)
+	DOROW(3, d, c, b, a, h, g, f, e)
+	DOROW(4, e, d, c, b, a, h, g, f)
+	DOROW(5, f, e, d, c, b, a, h, g)
+	DOROW(6, g, f, e, d, c, b, a, h)
+	DOROW(7, h, g, f, e, d, c, b, a)
+}
+
+void whirlpool_hash(const uint8_t *message, uint32_t len, uint8_t hash[64]) {
+	memset(hash, 0, 64);
+	
+	uint32_t i;
+	for (i = 0; len - i >= 64; i += 64)
+		whirlpool_compress(hash, message + i);
+	
+	uint8_t block[64];
+	uint32_t rem = len - i;
+	memcpy(block, message + i, rem);
+	
+	block[rem] = 0x80;
+	rem++;
+	if (64 - rem >= 32)
+		memset(block + rem, 0, 56 - rem);
+	else {
+		memset(block + rem, 0, 64 - rem);
+		whirlpool_compress(hash, block);
+		memset(block, 0, 56);
+	}
+	
+	uint64_t longLen = ((uint64_t)len) << 3;
+	for (i = 0; i < 8; i++)
+		block[64 - 1 - i] = (uint8_t)(longLen >> (i * 8));
+	whirlpool_compress(hash, block);
+}
+
+void whirlpoolx_hash(void *state, const void *input)
+{
+	//sph_whirlpool1_context ctx;
     
-	sph_whirlpool1_init(&ctx);
+	//sph_whirlpool1_init(&ctx);
 
     uint8_t digest[64];  
 
-	sph_whirlpool(&ctx, input, 80);
-	sph_whirlpool_close(&ctx, digest);
+	//sph_whirlpool(&ctx, input, 80);
+	//sph_whirlpool_close(&ctx, digest);
+	
+	whirlpool_hash((uint8_t *)input, 80, digest);
+	
+	uint8_t digest_xored[32]; 
 
-	((uint8_t *)state)[0] = digest[0] ^ digest[16];
-	((uint8_t *)state)[1] = digest[1] ^ digest[17];
-	((uint8_t *)state)[2] = digest[2] ^ digest[18];
-	((uint8_t *)state)[3] = digest[3] ^ digest[19];
-	((uint8_t *)state)[4] = digest[4] ^ digest[20];
-	((uint8_t *)state)[5] = digest[5] ^ digest[21];
-	((uint8_t *)state)[6] = digest[6] ^ digest[22];
-	((uint8_t *)state)[7] = digest[7] ^ digest[23];
-	((uint8_t *)state)[8] = digest[8] ^ digest[24];
-	((uint8_t *)state)[9] = digest[9] ^ digest[25];
-	((uint8_t *)state)[10] = digest[10] ^ digest[26];
-	((uint8_t *)state)[11] = digest[11] ^ digest[27];
-	((uint8_t *)state)[12] = digest[12] ^ digest[28];
-	((uint8_t *)state)[13] = digest[13] ^ digest[29];
-	((uint8_t *)state)[14] = digest[14] ^ digest[30];
-	((uint8_t *)state)[15] = digest[15] ^ digest[31];
-	((uint8_t *)state)[16] = digest[16] ^ digest[32];
-	((uint8_t *)state)[17] = digest[17] ^ digest[33];
-	((uint8_t *)state)[18] = digest[18] ^ digest[34];
-	((uint8_t *)state)[19] = digest[19] ^ digest[35];
-	((uint8_t *)state)[20] = digest[20] ^ digest[36];
-	((uint8_t *)state)[21] = digest[21] ^ digest[37];
-	((uint8_t *)state)[22] = digest[22] ^ digest[38];
-	((uint8_t *)state)[23] = digest[23] ^ digest[39];
-	((uint8_t *)state)[24] = digest[24] ^ digest[40];
-	((uint8_t *)state)[25] = digest[25] ^ digest[41];
-	((uint8_t *)state)[26] = digest[26] ^ digest[42];
-	((uint8_t *)state)[27] = digest[27] ^ digest[43];
-	((uint8_t *)state)[28] = digest[28] ^ digest[44];
-	((uint8_t *)state)[29] = digest[29] ^ digest[45];
-	((uint8_t *)state)[30] = digest[30] ^ digest[46];
-	((uint8_t *)state)[31] = digest[31] ^ digest[47];
+	for (uint32_t i = 0; i < (64 / 2); i++)
+	{
+		digest_xored[i] =
+			digest[i] ^ digest[i + ((64 / 2) / 2)]
+		;
+	}
+
+    memcpy(state, digest_xored, sizeof(digest_xored));
 }
 
 static const uint32_t diff1targ = 0x0000ffff;
 
 
 /* Used externally as confirmation of correct OCL code */
-int whirlpoolx_test(unsigned char *pdata, const unsigned char *ptarget, uint32_t nonce)
+int whirlcoin_test(unsigned char *pdata, const unsigned char *ptarget, uint32_t nonce)
 {
 	uint32_t tmp_hash7, Htarg = le32toh(((const uint32_t *)ptarget)[7]);
 	uint32_t data[20], ohash[8];
@@ -131,7 +218,7 @@ void whirlpoolx_regenhash(struct work *work)
     whirlpoolx_hash(ohash, data);
 }
 
-bool scanhash_whirlpoolx(struct thr_info *thr, const unsigned char __maybe_unused *pmidstate,
+bool scanhash_whirlcoin(struct thr_info *thr, const unsigned char __maybe_unused *pmidstate,
 		     unsigned char *pdata, unsigned char __maybe_unused *phash1,
 		     unsigned char __maybe_unused *phash, const unsigned char *ptarget,
 		     uint32_t max_nonce, uint32_t *last_nonce, uint32_t n)
