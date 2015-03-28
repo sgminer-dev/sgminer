@@ -1,8 +1,14 @@
 #ifndef BUILD_KERNEL_H
 #define BUILD_KERNEL_H
 
-#include "ocl.h"
 #include <stdbool.h>
+#include "logging.h"
+
+#ifdef __APPLE_CC__
+#include <OpenCL/opencl.h>
+#else
+#include <CL/cl.h>
+#endif
 
 typedef struct _build_kernel_data {
   char source_filename[255];

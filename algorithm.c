@@ -638,21 +638,36 @@ static cl_int queue_whirlcoin_kernel(struct __clState *clState, struct _dev_blk_
 
 static cl_int queue_whirlpoolx_kernel(struct __clState *clState, struct _dev_blk_ctx *blk, __maybe_unused cl_uint threads)
 {
-  cl_kernel *kernel;
+  uint64_t midblock[8], key[8] = { 0 }, tmp[8] = { 0 };
   cl_ulong le_target;
-  cl_int status = 0;
+  cl_int status;
 
   le_target = *(cl_ulong *)(blk->work->device_target + 24);
   flip80(clState->cldata, blk->work->data);
-  status = clEnqueueWriteBuffer(clState->commandQueue, clState->CLbuffer0, true, 0, 80, clState->cldata, 0, NULL, NULL);
 
-  //clbuffer, hashes
-  kernel = &clState->kernel;
-  CL_SET_ARG_N(0, clState->CLbuffer0);
-  CL_SET_ARG_N(1, clState->padbuffer8);
+  memcpy(midblock, clState->cldata, 64);
 
-  CL_SET_ARG_N(2, clState->outputBuffer);
-  CL_SET_ARG_N(3, le_target);
+  // midblock = n, key = h
+  for (int i = 0; i < 10; ++i) {
+    tmp[0] = WHIRLPOOL_ROUND_CONSTANTS[i];
+    whirlpool_round(key, tmp);
+    tmp[0] = 0;
+    whirlpool_round(midblock, tmp);
+
+    for (int x = 0; x < 8; ++x) {
+      midblock[x] ^= key[x];
+    }
+  }
+
+  for (int i = 0; i < 8; ++i) {
+    midblock[i] ^= ((uint64_t *)(clState->cldata))[i];
+  }
+
+  status = clSetKernelArg(clState->kernel, 0, sizeof(cl_ulong8), (cl_ulong8 *)&midblock);
+  status |= clSetKernelArg(clState->kernel, 1, sizeof(cl_ulong), (void *)(((uint64_t *)clState->cldata) + 8));
+  status |= clSetKernelArg(clState->kernel, 2, sizeof(cl_ulong), (void *)(((uint64_t *)clState->cldata) + 9));
+  status |= clSetKernelArg(clState->kernel, 3, sizeof(cl_mem), (void *)&clState->outputBuffer);
+  status |= clSetKernelArg(clState->kernel, 4, sizeof(cl_ulong), (void *)&le_target);
 
   return status;
 }
@@ -719,27 +734,6 @@ static cl_int queue_pluck_kernel(_clState *clState, dev_blk_ctx *blk, __maybe_un
 
   return status;
 }
-
-typedef struct _algorithm_settings_t {
-  const char *name; /* Human-readable identifier */
-  algorithm_type_t type; //common algorithm type
-  const char *kernelfile; /* alternate kernel file */
-  double   diff_multiplier1;
-  double   diff_multiplier2;
-  double   share_diff_multiplier;
-  uint32_t xintensity_shift;
-  uint32_t intensity_shift;
-  uint32_t found_idx;
-  unsigned long long   diff_numerator;
-  uint32_t diff1targ;
-  size_t n_extra_kernels;
-  long rw_buffer_size;
-  cl_command_queue_properties cq_properties;
-  void(*regenhash)(struct work *);
-  cl_int(*queue_kernel)(struct __clState *, struct _dev_blk_ctx *, cl_uint);
-  void(*gen_hash)(const unsigned char *, unsigned int, unsigned char *);
-  void(*set_compile_options)(build_kernel_data *, struct cgpu_info *, algorithm_t *);
-} algorithm_settings_t;
 
 static algorithm_settings_t algos[] = {
   // kernels starting from this will have difficulty calculated by using litecoin algorithm
@@ -810,7 +804,7 @@ static algorithm_settings_t algos[] = {
 #undef A_FUGUE
 
   { "whirlcoin", ALGO_WHIRL, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 3, 8 * 16 * 4194304, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, whirlcoin_regenhash, queue_whirlcoin_kernel, sha256, NULL },
-  { "whirlpoolx", ALGO_WHIRL, "", 1, 1, 1, 0, 0, 0xFF, 0xFFFFULL, 0x0000ffffUL, 0, 0, 0, whirlpoolx_regenhash, queue_sph_kernel, gen_hash, NULL },
+  { "whirlpoolx", ALGO_WHIRLPOOLX, "", 1, 1, 1, 0, 0, 0xFFU, 0xFFFFULL, 0x0000FFFFUL, 0, 0, 0, whirlpoolx_regenhash, queue_whirlpoolx_kernel, gen_hash, NULL },
 
   // Terminator (do not remove)
   { NULL, ALGO_UNK, "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL }
@@ -883,7 +877,6 @@ static const char *lookup_algorithm_alias(const char *lookup_alias, uint8_t *nfa
   ALGO_ALIAS("nist5", "talkcoin-mod");
   ALGO_ALIAS("keccak", "maxcoin");
   ALGO_ALIAS("whirlpool", "whirlcoin");
-  ALGO_ALIAS("whirlpoolx", "whirlpoolx");
   ALGO_ALIAS("Lyra2RE", "lyra2re");
   ALGO_ALIAS("lyra2", "lyra2re");
 
@@ -945,8 +938,7 @@ void set_algorithm_nfactor(algorithm_t* algo, const uint8_t nfactor)
   }
 }
 
-bool cmp_algorithm(algorithm_t* algo1, algorithm_t* algo2)
+bool cmp_algorithm(const algorithm_t* algo1, const algorithm_t* algo2)
 {
-  // return (strcmp(algo1->name, algo2->name) == 0) && (algo1->nfactor == algo2->nfactor);
   return (!safe_cmp(algo1->name, algo2->name) && !safe_cmp(algo1->kernelfile, algo2->kernelfile) && (algo1->nfactor == algo2->nfactor));
 }
