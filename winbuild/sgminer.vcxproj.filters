@@ -128,9 +128,6 @@
     <ClCompile Include="..\ocl\build_kernel.c">
       <Filter>Source Files\ocl</Filter>
     </ClCompile>
-    <ClCompile Include="..\ocl\patch_kernel.c">
-      <Filter>Source Files\ocl</Filter>
-    </ClCompile>
     <ClCompile Include="..\algorithm\animecoin.c">
       <Filter>Source Files\algorithm</Filter>
     </ClCompile>
@@ -329,9 +326,6 @@
       <Filter>Header Files\ocl</Filter>
     </ClInclude>
     <ClInclude Include="..\ocl\build_kernel.h">
-      <Filter>Header Files\ocl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ocl\patch_kernel.h">
       <Filter>Header Files\ocl</Filter>
     </ClInclude>
     <ClInclude Include="..\algorithm\animecoin.h">

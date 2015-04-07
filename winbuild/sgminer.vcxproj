@@ -294,7 +294,6 @@
     <ClCompile Include="..\ocl.c" />
     <ClCompile Include="..\ocl\binary_kernel.c" />
     <ClCompile Include="..\ocl\build_kernel.c" />
-    <ClCompile Include="..\ocl\patch_kernel.c" />
     <ClCompile Include="..\pool.c" />
     <ClCompile Include="..\algorithm\quarkcoin.c" />
     <ClCompile Include="..\algorithm\qubitcoin.c" />
@@ -361,7 +360,6 @@
     <ClInclude Include="..\ocl.h" />
     <ClInclude Include="..\ocl\binary_kernel.h" />
     <ClInclude Include="..\ocl\build_kernel.h" />
-    <ClInclude Include="..\ocl\patch_kernel.h" />
     <ClInclude Include="..\pool.h" />
     <ClInclude Include="..\algorithm\quarkcoin.h" />
     <ClInclude Include="..\algorithm\qubitcoin.h" />
