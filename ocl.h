@@ -24,7 +24,6 @@ typedef struct __clState {
   cl_mem MidstateBuf;
   cl_mem padbuffer8;
   unsigned char cldata[80];
-  bool hasBitAlign;
   bool goffset;
   cl_uint vwidth;
   size_t max_work_size;

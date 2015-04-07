@@ -44,7 +44,6 @@ sgminer_SOURCES += pool.c pool.h
 sgminer_SOURCES += algorithm.c algorithm.h
 sgminer_SOURCES += config_parser.c config_parser.h
 sgminer_SOURCES += events.c events.h
-sgminer_SOURCES += ocl/patch_kernel.c ocl/patch_kernel.h
 sgminer_SOURCES += ocl/build_kernel.c ocl/build_kernel.h
 sgminer_SOURCES += ocl/binary_kernel.c ocl/binary_kernel.h
 
