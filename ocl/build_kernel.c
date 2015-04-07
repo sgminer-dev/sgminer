@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include "build_kernel.h"
-#include "patch_kernel.h"
 #include "miner.h"
 
 static char *file_contents(const char *filename, int *length)
@@ -52,6 +51,7 @@ static char *file_contents(const char *filename, int *length)
   return (char*)buffer;
 }
 
+// This should NOT be in here! -- Wolf9466
 void set_base_compiler_options(build_kernel_data *data)
 {
   char buf[255];
@@ -61,12 +61,6 @@ void set_base_compiler_options(build_kernel_data *data)
 
   sprintf(buf, "w%dl%d", (int)data->work_size, (int)sizeof(long));
   strcat(data->binary_filename, buf);
-
-  if (data->has_bit_align) {
-    strcat(data->compiler_options, " -D BITALIGN");
-    applog(LOG_DEBUG, "cl_amd_media_ops found, setting BITALIGN");
-  } else
-    applog(LOG_DEBUG, "cl_amd_media_ops not found, will not set BITALIGN");
   
   if (data->kernel_path) {
     strcat(data->compiler_options, " -I \"");
@@ -74,36 +68,8 @@ void set_base_compiler_options(build_kernel_data *data)
     strcat(data->compiler_options, "\"");
   }
 
-  if (data->patch_bfi) {
-    strcat(data->compiler_options, " -D BFI_INT");
-    applog(LOG_DEBUG, "BFI_INT patch requiring device found, patched source with BFI_INT");
-  } else
-    applog(LOG_DEBUG, "BFI_INT patch requiring device not found, will not BFI_INT patch");
-
   if (data->opencl_version < 1.1)
     strcat(data->compiler_options, " -D OCL1");
-}
-
-bool needs_bfi_patch(build_kernel_data *data)
-{
-  if (data->has_bit_align &&
-      (data->opencl_version < 1.2) &&
-        (strstr(data->platform, "Cedar") ||
-         strstr(data->platform, "Redwood") ||
-         strstr(data->platform, "Juniper") ||
-         strstr(data->platform, "Cypress" ) ||
-         strstr(data->platform, "Hemlock" ) ||
-         strstr(data->platform, "Caicos" ) ||
-         strstr(data->platform, "Turks" ) ||
-         strstr(data->platform, "Barts" ) ||
-         strstr(data->platform, "Cayman" ) ||
-         strstr(data->platform, "Antilles" ) ||
-         strstr(data->platform, "Wrestler" ) ||
-         strstr(data->platform, "Zacate" ) ||
-         strstr(data->platform, "WinterPark" )))
-    return true;
-  else
-    return false;
 }
 
 cl_program build_opencl_kernel(build_kernel_data *data, const char *filename)
@@ -198,18 +164,10 @@ bool save_opencl_kernel(build_kernel_data *data, cl_program program)
     goto out;
   }
 
-  /* Patch the kernel if the hardware supports BFI_INT but it needs to
-   * be hacked in */
-  if (data->patch_bfi) {
-    if (kernel_bfi_patch(binaries[slot], binary_sizes[slot]) != 0) {
-      quit(1, "Could not patch BFI_INT, please report this issue.");
-    }
-  }
-
   /* Save the binary to be loaded next time */
   binaryfile = fopen(data->binary_filename, "wb");
   if (!binaryfile) {
-    /* Not fatal, just means we build it again next time, unless BFI patch is needed */
+    /* Not fatal, just means we build it again next time */
     applog(LOG_DEBUG, "Unable to create file %s", data->binary_filename);
     goto out;
   } else {

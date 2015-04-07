@@ -168,21 +168,6 @@ static float get_opencl_version(cl_device_id device)
   return version;
 }
 
-static bool get_opencl_bit_align_support(cl_device_id *device)
-{
-  char extensions[1024];
-  const char * camo = "cl_amd_media_ops";
-  char *find;
-  cl_int status;
-
-  status = clGetDeviceInfo(*device, CL_DEVICE_EXTENSIONS, 1024, (void *)extensions, NULL);
-  if (status != CL_SUCCESS) {
-    return false;
-  }
-  find = strstr(extensions, camo);
-  return !!find;
-}
-
 static cl_int create_opencl_command_queue(cl_command_queue *command_queue, cl_context *context, cl_device_id *device, cl_command_queue_properties cq_properties)
 {
   cl_int status;
@@ -261,8 +246,6 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
     applog(LOG_ERR, "Error %d: Creating Command Queue. (clCreateCommandQueue)", status);
     return NULL;
   }
-
-  clState->hasBitAlign = get_opencl_bit_align_support(&devices[gpu]);
 
   status = clGetDeviceInfo(devices[gpu], CL_DEVICE_PREFERRED_VECTOR_WIDTH_INT, sizeof(cl_uint), (void *)&preferred_vwidth, NULL);
   if (status != CL_SUCCESS) {
@@ -544,9 +527,7 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
 
   build_data->kernel_path = (*opt_kernel_path) ? opt_kernel_path : NULL;
   build_data->work_size = clState->wsize;
-  build_data->has_bit_align = clState->hasBitAlign;
   build_data->opencl_version = get_opencl_version(devices[gpu]);
-  build_data->patch_bfi = needs_bfi_patch(build_data);
 
   strcpy(build_data->binary_filename, filename);
 	build_data->binary_filename[strlen(filename) - 3] = 0x00;		// And one NULL terminator, cutting off the .cl suffix.
@@ -572,23 +553,13 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
       return NULL;
     }
 
-    if (save_opencl_kernel(build_data, clState->program)) {
-      /* Program needs to be rebuilt, because the binary was patched */
-      if (build_data->patch_bfi) {
-        clReleaseProgram(clState->program);
-        clState->program = load_opencl_binary_kernel(build_data);
-      }
-    }
-    else {
-      if (build_data->patch_bfi)
-        quit(1, "Could not save kernel to file, but it is necessary to apply BFI patch");
-    }
+	// If it doesn't work, oh well, build it again next run
+    save_opencl_kernel(build_data, clState->program);
   }
 
   // Load kernels
-  applog(LOG_NOTICE, "Initialising kernel %s with%s bitalign, %spatched BFI, nfactor %d, n %d",
-    filename, clState->hasBitAlign ? "" : "out", build_data->patch_bfi ? "" : "un",
-    algorithm->nfactor, algorithm->n);
+  applog(LOG_NOTICE, "Initialising kernel %s with nfactor %d, n %d",
+    filename, algorithm->nfactor, algorithm->n);
 
   /* get a kernel object handle for a kernel with the given name */
   clState->kernel = clCreateKernel(clState->program, "search", &status);
@@ -596,7 +567,6 @@ _clState *initCl(unsigned int gpu, char *name, size_t nameSize, algorithm_t *alg
     applog(LOG_ERR, "Error %d: Creating Kernel from program. (clCreateKernel)", status);
     return NULL;
   }
-
 
   clState->n_extra_kernels = algorithm->n_extra_kernels;
   if (clState->n_extra_kernels > 0) {
