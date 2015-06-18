@@ -1560,6 +1560,7 @@ static bool parse_notify(struct pool *pool, json_t *val)
   pool->swork.nbit = nbit;
   pool->swork.ntime = ntime;
   pool->swork.clean = clean;
+  pool->swork.diff = pool->next_diff;
   alloc_len = pool->swork.cb_len = cb1_len + pool->n1_len + pool->n2size + cb2_len;
   pool->nonce2_offset = cb1_len + pool->n1_len;
 
@@ -1668,8 +1669,8 @@ static bool parse_diff(struct pool *pool, json_t *val)
     return false;
 
   cg_wlock(&pool->data_lock);
-  old_diff = pool->swork.diff;
-  pool->swork.diff = diff;
+  old_diff = pool->next_diff;
+  pool->next_diff = diff;
   cg_wunlock(&pool->data_lock);
 
   if (old_diff != diff) {
@@ -2560,7 +2561,7 @@ out:
     if (!pool->stratum_url)
       pool->stratum_url = pool->sockaddr_url;
     pool->stratum_active = true;
-    pool->swork.diff = 1;
+    pool->next_diff = pool->swork.diff = 1;
     if (opt_protocol) {
       applog(LOG_DEBUG, "%s confirmed mining.subscribe with extranonce1 %s extran2size %d",
              get_pool_name(pool), pool->nonce1, pool->n2size);
